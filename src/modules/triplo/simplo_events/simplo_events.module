@@ -32,6 +32,7 @@
       $sfTime = date('D m/j g:i a', strtotime('-2 hours', strtotime($mplsTime)));
       $newyorkTime = date('D m/j g:i a', strtotime('+1 hours', strtotime($mplsTime)));
       $berlinTime = date('D m/j g:i a', strtotime('+7 hours', strtotime($mplsTime)));
+      $dhakaTime = date('D m/j g:i a', strtotime('+11 hours', strtotime($mplsTime)));
       $londonTime = date('D m/j g:i a', strtotime('+6 hours', strtotime($mplsTime)));
 
       $timedisplay = '<div class="time-zones">';
@@ -41,6 +42,7 @@
       $timedisplay = $timedisplay . '<div class="zone odd"> <span class="city">New York, USA </span><br>' . $newyorkTime  . '</div><br>';
       $timedisplay = $timedisplay . '<div class="zone even"> <span class="city">London, UK </span><br>' . $londonTime  . '</div><br>';
       $timedisplay = $timedisplay . '<div class="zone odd"> <span class="city">Berlin, Germany </span><br><span class="city">Johannesburg, South Africa </span><br>' . $berlinTime  . '</div><br>';
+      $timedisplay = $timedisplay . '<div class="zone odd"> <span class="city">Berlin, Germany </span><br><span class="city">Dhaka, Bangladesh </span><br>' . $dhakaTime  . '</div><br>';
       $timedisplay = $timedisplay . '<div class="zone even"> <span class="city">Sydney, Austrailia </span><br>' . $sydneyTime  . '</div><br>';
       $timedisplay = $timedisplay . '</div>';
 
