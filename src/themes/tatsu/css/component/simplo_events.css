@@ -73,6 +73,15 @@
 	background-color: #d6f9cf;
 }
 
+.view-schedule .time-zones {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+.view-schedule .zone {
+	max-width: 25%;
+}
+
 
 
 
