@@ -83,6 +83,18 @@
 	max-width: 25%;
 }
 
+@media (max-width: 700px) {
+	.view-schedule .zone {
+		max-width: 50%;
+	}
+}
+
+@media (max-width: 400px) {
+	.view-schedule .zone {
+		max-width: 100%;
+	}
+}
+
 .view-schedule .time {
 	color: red;
 }
