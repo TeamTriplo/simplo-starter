@@ -36,14 +36,14 @@
       $londonTime = date('D m/j g:i a', strtotime('+6 hours', strtotime($mplsTime)));
 
       $timedisplay = '<div class="time-zones">';
-      $timedisplay = $timedisplay . '<div class="zone even"> <div class="header">Start Time</div></div>';
-      $timedisplay = $timedisplay . '<div class="zone odd"> <div class="city">San Francisco, USA</div><div class="time">' . $sfTime . '</div></div>';
-      $timedisplay = $timedisplay . '<div class="zone even"> <div class="city">Chicago, USA</div><div class="city">Lima, Peru</div><div class="time">' . $mplsTime  . '</div></div>';
-      $timedisplay = $timedisplay . '<div class="zone odd"> <div class="city">New York, USA </div><div class="time">' . $newyorkTime  . '</div></div>';
-      $timedisplay = $timedisplay . '<div class="zone even"> <div class="city">London, UK </div><div class="time">' . $londonTime  . '</div></div>';
-      $timedisplay = $timedisplay . '<div class="zone odd"> <div class="city">Berlin, Germany</div><div class="city">Johannesburg, South Africa </div><div class="time">' . $berlinTime  . '</div></div>';
-      $timedisplay = $timedisplay . '<div class="zone even"> <div class="city">Dhaka, Bangladesh </div><div class="time">' . $dhakaTime  . '</div></div>';
-      $timedisplay = $timedisplay . '<div class="zone odd"> <div class="city">Sydney, Austrailia </div><div class="time">' . $sydneyTime  . '</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone even"><div class="header">Start Time</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone odd"><div class="city">San Francisco, USA</div><div class="time">' . $sfTime . '</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone even"><div class="city">Chicago, USA</div><div class="city">Lima, Peru</div><div class="time">' . $mplsTime  . '</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone odd"><div class="city">New York, USA </div><div class="time">' . $newyorkTime  . '</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone even"><div class="city">London, UK </div><div class="time">' . $londonTime  . '</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone odd"><div class="city">Berlin, Germany</div><div class="city">Johannesburg, South Africa </div><div class="time">' . $berlinTime  . '</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone even"><div class="city">Dhaka, Bangladesh </div><div class="time">' . $dhakaTime  . '</div></div>';
+      $timedisplay = $timedisplay . '<div class="zone odd"><div class="city">Sydney, Austrailia </div><div class="time">' . $sydneyTime  . '</div></div>';
       $timedisplay = $timedisplay . '</div>';
 
       $node->field_time_zone_listings['und']['0']['value'] = $timedisplay;
