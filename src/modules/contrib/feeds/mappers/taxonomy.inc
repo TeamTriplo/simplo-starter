@@ -102,7 +102,7 @@ function taxonomy_feeds_set_target(FeedsSource $source, $entity, $target, array 
 
   if (!isset($cache['allowed_vocabularies'][$target])) {
     foreach ($info['settings']['allowed_values'] as $tree) {
-      if ($vocabulary = taxonomy_vocabulary_machine_name_load($tree['vocabulary'])) {
+      if ($vocabulary = taxonomy_vocabulary_load($tree['vocabulary'])) {
         $cache['allowed_vocabularies'][$target][$vocabulary->machine_name] = $vocabulary->machine_name;
       }
     }
@@ -153,8 +153,8 @@ function taxonomy_feeds_set_target(FeedsSource $source, $entity, $target, array 
 
             // Find the first allowed term.
             foreach ($tids['taxonomy_term'] as $possible_term) {
-              if (isset($cache['allowed_values'][$target][$possible_term->tid])) {
-                $tid = $possible_term->tid;
+              if (isset($cache['allowed_values'][$target][$possible_term->entity_id])) {
+                $tid = $possible_term->entity_id;
                 break;
               }
             }
