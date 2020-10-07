@@ -8,8 +8,6 @@ backup.
 You can also schedule the backup operation. Compression of backup files is also
 supported.
 
-You can now backup offsite to Nodesquirrel, and it's free!
-
 There are options to exclude the data from certain tables (such as cache or
 search index tables) to increase efficiency by ignoring data that does not need
 to be backed up or migrated.
@@ -34,14 +32,9 @@ Installation
 
 OPTIONAL:
 * To backup to Amazon S3:
-    - Download the S3 library from http://undesigned.org.za/2007/10/22/amazon-s3-php-class
+    - Download the S3 library from https://github.com/tpyo/amazon-s3-php-class
       and place the file 'S3.php' in the includes directory in this module.
-      The stable version (0.4.0 – 20th Jul 2009) works best with Backup and
-      Migrate.
-* To backup to NodeSquirrel:
-	- Click the NodeSquirrel tab
-	- Create your free account at http://nodesquirrel.com/activate
-	- Backup now!
+* Nodesquirrel has been removed as the service no longer exists.
 
 LIGHTTPD USERS:
 Add the following code to your lighttp.conf to secure your backup directories:
