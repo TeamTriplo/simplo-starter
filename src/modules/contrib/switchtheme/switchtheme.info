@@ -1,0 +1,6 @@
+name = Switchtheme
+description = Allows switching the theme in various means.
+backdrop = 1.x
+type = module
+package = User interface
+configure = admin/config/user-interface/switchtheme
