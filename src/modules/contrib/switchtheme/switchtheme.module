@@ -277,7 +277,7 @@ function switchtheme_switch_form_submit($form, &$form_state) {
 
   // Save the setting for authenticated users, if the "select different theme"
   // permission has been granted.
-  if ($user->uid == 0 || user_access('select different theme')) {
+  if ($user->uid > 0 && user_access('select different theme')) {
     $account = user_load($user->uid);
     $account->data['theme'] = $form_state['values']['theme'];
     user_save($account);

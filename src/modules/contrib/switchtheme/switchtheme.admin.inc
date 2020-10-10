@@ -11,7 +11,7 @@
 function switchtheme_admin_settings($form, &$form_state) {
   $options = switchtheme_options();
   $config = config_get('switchtheme.settings', 'switchtheme_name');
-  dpm($config);
+
   foreach ($options as $name => $label) {
     $form['switchtheme'][$name] = array(
       '#type' => 'textfield',
