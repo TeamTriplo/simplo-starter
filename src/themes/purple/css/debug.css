@@ -1,0 +1,50 @@
+/**
+ * @file
+ * Debugging file.
+ *
+ * Each of the breakpoints below can/should be used to modify each component
+ * as needed. The widths should be modified based on the base font-size, or can
+ * be changed to pixels (for the whole theme) if that's more comvenient.
+ */
+
+ @media (min-width: 31em) {  /* TWEENER - 496px @ 16px font size */
+   .container {
+     background-color: pink;
+   }
+ }
+
+@media (min-width: 34em) { /* SM - 544px @ 16px font size */
+  .container {
+    background-color: red;
+  }
+}
+
+  @media (min-width: 40em) {  /* TWEENER - 640px @ 16px font size */
+    .container {
+      background-color: purple;
+    }
+  }
+
+@media (min-width: 48em) {  /* MD - 768px @ 16px font size */
+  .container {
+    background-color: orange;
+  }
+}
+
+@media (min-width: 62em) { /* LG - 992px @ 16px font size */
+  .container {
+    background-color: yellow;
+  }
+}
+
+@media (min-width: 75em) { /* XL - 1200px @ 16px font size */
+  .container {
+    background-color: green;
+  }
+}
+
+@media (min-width: 86em) { /* XXL - 1376px @ 16px font size */
+  .container {
+    background-color: blue;
+  }
+}
