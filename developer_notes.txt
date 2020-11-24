@@ -12,8 +12,8 @@ Patched modules:
 * 
 *
 
-Patched modules:
-(keep copy of any applied patches in /modules/patches/)
+Patched themes:
+(keep copy of any applied patches in /themes/patches/)
 
 * pelerine
 I submitted a PR to theme logo.
