@@ -145,21 +145,12 @@ function manualcrop_schema() {
 }
 
 /**
- * Add index on vid.
- */
-function manualcrop_update_1001() {
-  if (db_index_exists('manualcrop', 'vid')) {
-    db_drop_index('manualcrop', 'vid');
-  }
-  db_add_index('manualcrop', 'vid', array('vid'));
-}
-
-/**
  * Move manualcrop settings from variables to config.
  */
 function manualcrop_update_1000() {
   // Migrate variables to config.
   $config = config('manualcrop.settings');
+  $file_entity_vars = array();
   if (module_exists('file_entity') && function_exists('file_type_load_all')) {
     // Remove the settings for individual file types.
     foreach (file_type_load_all() as $type) {
@@ -174,12 +165,20 @@ function manualcrop_update_1000() {
   // Delete variables.
   update_variable_del('manualcrop_cache_control');
   update_variable_del('manualcrop_force_effect_order');
-  foreach($file_entity_vars as $file_entity_var) {
+  foreach ($file_entity_vars as $file_entity_var) {
     update_variable_del($file_entity_var);
   }
 }
 
-
+/**
+ * Add index on vid.
+ */
+function manualcrop_update_1001() {
+  if (db_index_exists('manualcrop', 'vid')) {
+    db_drop_index('manualcrop', 'vid');
+  }
+  db_add_index('manualcrop', 'vid', array('vid'));
+}
 
 /**
  * Implements hook_update_last_removed().
