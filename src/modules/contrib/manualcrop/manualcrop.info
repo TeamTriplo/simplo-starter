@@ -10,7 +10,7 @@ dependencies[] = image
 dependencies[] = imgareaselect
 dependencies[] = imagesloaded
 
-; Added by Backdrop CMS packaging script on 2020-02-28
+; Added by Backdrop CMS packaging script on 2020-11-06
 project = manualcrop
-version = 1.x-1.7.3
-timestamp = 1582922813
+version = 1.x-1.7.4
+timestamp = 1604690397
