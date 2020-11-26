@@ -1,0 +1,5 @@
+type = module
+name = Crowdfunding Campaign
+description = Crowdfunding Campaign
+package = Triplo
+backdrop = 1.x

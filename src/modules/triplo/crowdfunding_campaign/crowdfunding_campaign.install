@@ -1,0 +1,560 @@
+<?php
+
+
+    /** 
+     * Implement hook_install()
+    */
+    function crowdfunding_campaign_install() {
+        // Create a vocabulary and some terms
+    
+        $type = array(
+            'type' => 'crowdfunding_offer',
+            'name' => st('Crowdfunding Offer'),
+            'base' => 'node_content',
+            'description' => st("Crowdfunding offer and its related fields"),
+            'settings' => array(
+                'status_default' => NODE_PUBLISHED,
+                'promote_enabled' => FALSE,
+                'node_preview' => TRUE,
+                'promote_default' => FALSE,
+                'sticky_enabled' => FALSE,
+                'sticky_default' => FALSE,
+                'revision_enabled' => TRUE,
+                'revision_default' => FALSE,
+                'node_submitted' => FALSE,
+                'node_user_picture' => FALSE,
+                'comment_default' => COMMENT_NODE_CLOSED,
+                'menu_options' => array('main-menu'),
+            ),
+            'is_new' => TRUE,
+        );
+
+        $type = node_type_set_defaults($type);
+        node_type_save($type);
+        node_add_body_field($type);
+        // Add default alias for page content types.
+        config('path.settings')
+            ->set('node_page_pattern', '[node:title]')
+            ->set('node_post_pattern', 'crowdfunding-offer/[node:title]')
+            ->save();
+        cache_clear_all();
+
+        // Add fields to content type Crowdfunding Offer
+
+        // Field SPPX ID 
+        $field = array(
+            'field_name' => 'field_sppx_id',
+            'type' => 'text',
+            'cardinality' => '1',
+          );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_sppx_id',
+            'entity_type' => 'node',
+            'label' => 'SPPX ID',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('SPPX ID'),
+            'widget' => array(
+                'type' => 'text_textfield'
+            ),
+            'display' => array(
+                'default' => array(
+                    'label' => st('SPPX ID'),
+                    'type' => 'text'
+                )
+            ),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Field SPPX UUID 
+        $field = array(
+            'field_name' => 'field_sppx_uuid',
+            'type' => 'text',
+            'cardinality' => '1',
+          );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_sppx_uuid',
+            'entity_type' => 'node',
+            'label' => 'SPPX UUID',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('SPPX UUID'),
+            'max_length' => 40,
+            'widget' => array(
+                'type' => 'text_textfield'
+            ),
+            'display' => array(
+                'default' => array(
+                    'label' => st('SPPX UUID'),
+                    'type' => 'text'
+                )
+            ),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Issue Link Field 
+        $field = array(
+            'field_name' => 'field_issue_link',
+            'type' => 'link_field',
+            'cardinality' => '1',
+          );
+          field_create_field($field);
+      
+        $instance = array(
+        'field_name' => 'field_issue_link',
+        'entity_type' => 'node',
+        'label' => 'Issue Link',
+        'bundle' => 'crowdfunding_offer',
+        'description' => st('Issue Link'),
+        'widget' => array(
+            'weight' => 0,
+            'type' => 'link_field',
+            'module' => 'link',
+            'active' => 0,
+            'settings' => [],
+        ),
+        'display' => array(
+            'default' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+            'teaser' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+        ),
+        'settings' => array(
+            'title' => 'none',
+            'title_value' => '',
+        )
+        );
+        field_create_instance($instance);
+    
+        // Portal Link Field 
+        $field = array(
+            'field_name' => 'field_portal_link',
+            'type' => 'link_field',
+            'cardinality' => '1',
+          );
+          field_create_field($field);
+      
+        $instance = array(
+        'field_name' => 'field_portal_link',
+        'entity_type' => 'node',
+        'label' => 'Portal Link',
+        'bundle' => 'crowdfunding_offer',
+        'description' => st('Portal Link'),
+        'widget' => array(
+            'weight' => 0,
+            'type' => 'link_field',
+            'module' => 'link',
+            'active' => 0,
+            'settings' => [],
+        ),
+        'display' => array(
+            'default' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+            'teaser' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+        ),
+        'settings' => array(
+            'title' => 'none',
+            'title_value' => '',
+        )
+        );
+        field_create_instance($instance);
+
+        // Forum Link Field 
+        $field = array(
+        'field_name' => 'field_forum_link',
+        'type' => 'link_field',
+        'cardinality' => '1',
+        );
+        field_create_field($field);
+        
+        $instance = array(
+        'field_name' => 'field_forum_link',
+        'entity_type' => 'node',
+        'label' => 'Forum Link',
+        'bundle' => 'crowdfunding_offer',
+        'description' => st('Forum Link'),
+        'widget' => array(
+            'weight' => 0,
+            'type' => 'link_field',
+            'module' => 'link',
+            'active' => 0,
+            'settings' => [],
+        ),
+        'display' => array(
+            'default' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+            'teaser' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+        ),
+        'settings' => array(
+            'title' => 'none',
+            'title_value' => '',
+        )
+        );
+        field_create_instance($instance);
+
+       // Thumbnail Field 
+       $field = array(
+        'field_name' => 'field_thumbnail_link',
+        'type' => 'link_field',
+        'cardinality' => '1',
+        );
+        field_create_field($field);
+        
+        $instance = array(
+        'field_name' => 'field_thumbnail_link',
+        'entity_type' => 'node',
+        'label' => 'Thumbnail',
+        'bundle' => 'crowdfunding_offer',
+        'description' => st('Thumbnail Link'),
+        'widget' => array(
+            'weight' => 0,
+            'type' => 'link_field',
+            'module' => 'link',
+            'active' => 0,
+            'settings' => [],
+        ),
+        'display' => array(
+            'default' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+            'teaser' => array(
+            'type' => 'link_default',
+            'weight' => 10,
+            'label' => 'inline',
+            ),
+        ),
+        'settings' => array(
+            'title' => 'none',
+            'title_value' => '',
+        )
+        );
+        field_create_instance($instance);
+
+        // Field type 
+        $field = array(
+            'field_name' => 'field_type',
+            'type' => 'text',
+            'cardinality' => '1',
+          );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_type',
+            'entity_type' => 'node',
+            'label' => 'Type',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Type'),
+            'widget' => array(
+                'type' => 'text_textfield'
+            ),
+            'display' => array(
+                'default' => array(
+                    'label' => st('Type'),
+                    'type' => 'text'
+                )
+            ),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Field Rule 
+        $field = array(
+            'field_name' => 'field_rule',
+            'type' => 'text',
+            'cardinality' => '1',
+          );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_rule',
+            'entity_type' => 'node',
+            'label' => 'Rule',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Rule'),
+            'widget' => array(
+                'type' => 'text_textfield'
+            ),
+            'display' => array(
+                'default' => array(
+                    'label' => st('Rule'),
+                    'type' => 'text'
+                )
+            ),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Raise minimum
+        $field = array(
+            'field_name' => 'field_raise_minimum',
+            'type' => 'number_integer',
+            'cardinality' => '1',
+          );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_raise_minimum',
+            'entity_type' => 'node',
+            'label' => 'Raise Minimum',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Raise Minimum'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Raise maximum
+
+        $field = array(
+            'field_name' => 'field_raise_maximum',
+            'type' => 'number_integer',
+            'cardinality' => '1',
+            );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_raise_maximum',
+            'entity_type' => 'node',
+            'label' => 'Raise Maximum',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Raise Maximum'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Raise target
+        $field = array(
+            'field_name' => 'field_raise_target',
+            'type' => 'number_integer',
+            'cardinality' => '1',
+            );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_raise_target',
+            'entity_type' => 'node',
+            'label' => 'Raise Target',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Raise Target'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Raised
+        $field = array(
+            'field_name' => 'field_raised',
+            'type' => 'number_integer',
+            'cardinality' => '1',
+            );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_raised',
+            'entity_type' => 'node',
+            'label' => 'Raised',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Raised'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Invest
+
+        $field = array(
+            'field_name' => 'field_invest',
+            'type' => 'number_integer',
+            'cardinality' => '1',
+            );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_invest',
+            'entity_type' => 'node',
+            'label' => 'Invest',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Invest'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Lotsize
+        $field = array(
+            'field_name' => 'field_lotsize',
+            'type' => 'number_integer',
+            'cardinality' => '1',
+            );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_lotsize',
+            'entity_type' => 'node',
+            'label' => 'Lot Size',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Lot Size'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Request 
+        $field = array(
+            'field_name' => 'field_request',
+            'type' => 'number_integer',
+            'cardinality' => '1',
+            );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_request',
+            'entity_type' => 'node',
+            'label' => 'Request',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Request'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Accredited 
+
+        $field = array(
+            'field_name' => 'field_accredited',
+            'type' => 'text',
+            'cardinality' => '1',
+          );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_accredited',
+            'entity_type' => 'node',
+            'label' => 'Accredited',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Accredited'),
+            'widget' => array(
+                'type' => 'text_textfield'
+            ),
+            'display' => array(
+                'default' => array(
+                    'label' => st('Accredited'),
+                    'type' => 'text'
+                )
+            ),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+        // Reviewed
+
+        $field = array(
+            'field_name' => 'field_reviewed',
+            'type' => 'text',
+            'cardinality' => '1',
+          );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_reviewed',
+            'entity_type' => 'node',
+            'label' => 'Reviewed',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Reviewed'),
+            'widget' => array(
+                'type' => 'text_textfield'
+            ),
+            'display' => array(
+                'default' => array(
+                    'label' => st('Reviewed'),
+                    'type' => 'text'
+                )
+            ),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+
+
+        // Status
+
+        $field = array(
+            'field_name' => 'field_status',
+            'type' => 'text',
+            'cardinality' => '1',
+            );
+        field_create_field($field);
+    
+        $instance = array(
+            'field_name' => 'field_status',
+            'entity_type' => 'node',
+            'label' => 'Status',
+            'bundle' => 'crowdfunding_offer',
+            'description' => st('Status'),
+            'settings' => array(
+                'title' => 'none',
+                'title_value' => '',
+            )
+        );
+        field_create_instance($instance);
+        
+       
+    }
