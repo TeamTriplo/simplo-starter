@@ -5,8 +5,6 @@
  */
 
 function crowdfunding_campaign_cron() {
-    // $enti = node_load(14);
-    // print_r($enti);exit;
     global $user;
     $uri = "https://test.sppx.io/api/v0/issue/1f764d1e-a65c-4c86-b4a8-1484c3534cae";
     $response = file_get_contents($uri);
