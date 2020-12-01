@@ -41,6 +41,36 @@
 
       // Add fields to content type Crowdfunding Offer
 
+      // Field Name
+      $field = array(
+        'field_name' => 'field_issue_name',
+        'type' => 'text',
+        'cardinality' => '1',
+      );
+    field_create_field($field);
+
+    $instance = array(
+        'field_name' => 'field_issue_name',
+        'entity_type' => 'node',
+        'label' => 'Name',
+        'bundle' => 'crowdfunding_offer',
+        'description' => st('Name'),
+        'widget' => array(
+            'type' => 'text_textfield'
+        ),
+        'display' => array(
+            'default' => array(
+                'label' => st('Name'),
+                'type' => 'text'
+            )
+        ),
+        'settings' => array(
+            'title' => 'none',
+            'title_value' => '',
+        )
+    );
+    field_create_instance($instance);
+
       // Field SPPX ID 
       $field = array(
           'field_name' => 'field_sppx_id',
