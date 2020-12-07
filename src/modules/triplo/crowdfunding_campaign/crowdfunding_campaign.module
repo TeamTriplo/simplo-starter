@@ -54,7 +54,7 @@ function update_crowdfunding_offer($offer, $issue){
     $caveat_copyright = $issue['caveat']['copyright'];
     $caveat_warning = $issue['caveat']['warning'];
     // Get specific crowdfunding offer node to be updated
-    $node = node_load($offer->nid);                                                  
+    $node = node_load($offer->nid);                                                
     $node->language = LANGUAGE_NONE;                                               
     $node->uid = 1;                                                                
     $node->status = 1;                                                             
@@ -81,8 +81,8 @@ function update_crowdfunding_offer($offer, $issue){
     $node->field_start_date[$node->language][]['value'] = $date_start; //date('Y-m-d h:i:s', strtotime($date_start));
     $node->field_end_date[$node->language][]['value'] = $date_end;//date('Y-m-d h:i:s', strtotime($date_end));
     $node->field_target_date[$node->language][]['value'] = $date_target;//date('Y-m-d h:i:s', strtotime($date_target));
-    $node->field_caveat_copyright[$node->language][]['value'] = $caveat_copyright;
-    $node->field_caveat_warning[$node->language][]['value'] = $caveat_warning;
+    $node->field_caveat_copyright[$node->language][]['value'] = base64_decode($caveat_copyright);
+    $node->field_caveat_warning[$node->language][]['value'] = base64_decode($caveat_warning);
     $node->field_accredited[$node->language][]['value'] = $accredited;
     $node->field_reviewed[$node->language][]['value'] = $reviewed;                                                  
     node_save($node);
