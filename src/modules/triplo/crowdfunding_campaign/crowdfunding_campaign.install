@@ -867,6 +867,57 @@
         ),
         );
       field_create_instance($instance);
+
+    // Teaser Field
+    
+    $field = array(
+      'field_name' => 'field_teaser',
+      'type' => 'text_with_summary',
+      'module' => 'text',
+      'cardinality' => '1',
+      );
+      field_create_field($field);
+
+      $instance = array(
+        'field_name' => 'field_teaser',
+        'entity_type' => 'node',
+        'label' => 'Teaser',
+        'bundle' => 'crowdfunding_offer',
+        'description' => st('Teaser'),
+        'widget' => array(
+          'type' => 'text_textarea_with_summary',
+          'settings' => array(
+            'rows' => 20,
+            'summary_rows' => 5,
+          ),
+          'weight' => '-4',
+          'module' => 'text',
+        ),
+        'settings' => array(
+          'display_summary' => TRUE,
+          'text_processing' => 1,
+          'user_register_form' => FALSE,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'type' => 'text_default',
+            'settings' => array(),
+            'module' => 'text',
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'label' => 'hidden',
+            'type' => 'text_summary_or_trimmed',
+            'settings' => array(
+              'trim_length' => 600,
+            ),
+            'module' => 'text',
+            'weight' => 0,
+          ),
+        ),
+        );
+      field_create_instance($instance);
     }
 
     

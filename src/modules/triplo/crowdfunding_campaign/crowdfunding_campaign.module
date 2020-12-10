@@ -11,23 +11,24 @@ function crowdfunding_campaign_cron() {
       if (!empty($offer->field_sppx_uuid)){
         $sppx_uuid = $offer->field_sppx_uuid['und'][0]['value'];
         $uri = "https://test.sppx.io/api/v0/issue/".$sppx_uuid;
-        $response = file_get_contents($uri);
-        $data = json_decode($response, TRUE);
-        $issue = $data['issue'];
-        update_crowdfunding_offer($offer, $issue);
-      }
+        $response = backdrop_http_request($uri);
+        if ($response->data){
+          $data = json_decode($response->data, TRUE);
+          $issue = $data['issue'];
+          update_crowdfunding_offer($offer, $issue);
+        }
       
+      }
     }
 }
-
 /** 
  * Update Offers with current JSON feed data 
  * @parameter : $offer crowdfunding offer to be updated
  * @parameter : $issue coming from sppx through API as JSON
 */
 
-function update_crowdfunding_offer($offer, $issue){
-  // Get field values from JSON
+function update_crowdfunding_offer(&$offer, $issue){
+  // Get field values from JSON and update offer
   if (!empty($issue)){
     $title = $issue['name'];
     $id = $issue['id'];
@@ -53,39 +54,44 @@ function update_crowdfunding_offer($offer, $issue){
     $date_target = $issue['dates']['target'];
     $caveat_copyright = $issue['caveat']['copyright'];
     $caveat_warning = $issue['caveat']['warning'];
-    // Get specific crowdfunding offer node to be updated
-    $node = node_load($offer->nid);                                                
+    $teaser = $issue['page']['teaser'];
+    // Get specific crowdfunding offer node id to be updated
+    $nid = $offer->nid;
+    $node = node_load($nid);                                               
     $node->language = LANGUAGE_NONE;                                               
     $node->uid = 1;                                                                
     $node->status = 1;                                                             
     $node->promote = 0;                                                            
     $node->comment = 0;
     // Update Field data 
-    $node->field_issue_name[$node->language][]['value'] = $title;
-    $node->field_sppx_id[$node->language][]['value'] = $id;
-    $node->field_sppx_uuid[$node->language][]['value'] = $uuid;
-    $node->field_forum_link[$node->language][]['url'] = $forum_link;
-    $node->field_issue_link[$node->language][]['url'] = $issue_link;
-    $node->field_portal_link[$node->language][]['url'] = $portal_link;
-    $node->field_thumbnail_link[$node->language][]['url'] = $thumbnail_link;
-    $node->field_type[$node->language][]['value'] = $type;
-    $node->field_rule[$node->language][]['value'] = $rule;
-    $node->field_raise_minimum[$node->language][]['value'] = $raise_minimum;
-    $node->field_raise_maximum[$node->language][]['value'] = $raise_maximum;
-    $node->field_raise_target[$node->language][]['value'] = $raise_target;
-    $node->field_raised[$node->language][]['value'] = $raised;
-    $node->field_invest[$node->language][]['value'] = $invest;
-    $node->field_lotsize[$node->language][]['value'] = $lotsize;
-    $node->field_request[$node->language][]['value'] = $request;
-    $node->field_status[$node->language][]['value'] = $status;
-    $node->field_start_date[$node->language][]['value'] = $date_start; //date('Y-m-d h:i:s', strtotime($date_start));
-    $node->field_end_date[$node->language][]['value'] = $date_end;//date('Y-m-d h:i:s', strtotime($date_end));
-    $node->field_target_date[$node->language][]['value'] = $date_target;//date('Y-m-d h:i:s', strtotime($date_target));
-    $node->field_caveat_copyright[$node->language][]['value'] = base64_decode($caveat_copyright);
-    $node->field_caveat_warning[$node->language][]['value'] = base64_decode($caveat_warning);
-    $node->field_accredited[$node->language][]['value'] = $accredited;
-    $node->field_reviewed[$node->language][]['value'] = $reviewed;                                                  
-    node_save($node);
+    $node->field_issue_name['und'][0]['value'] = $title;
+    $node->field_sppx_id['und'][0]['value'] = $id;
+    $node->field_sppx_uuid['und'][0]['value'] = $uuid;
+    $node->field_forum_link['und'][0]['value'] = $forum_link;
+    $node->field_issue_link['und'][0]['value'] = $issue_link;
+    $node->field_portal_link['und'][0]['value'] = $portal_link;
+    $node->field_thumbnail_link['und'][0]['value'] = $thumbnail_link;
+    $node->field_type['und'][0]['value'] = $type;
+    $node->field_rule['und'][0]['value'] = $rule;
+    $node->field_raise_minimum['und'][0]['value'] = $raise_minimum;
+    $node->field_raise_maximum['und'][0]['value'] = $raise_maximum;
+    $node->field_raise_target['und'][0]['value'] = $raise_target;
+    $node->field_raised['und'][0]['value'] = $raised;
+    $node->field_invest['und'][0]['value'] = $invest;
+    $node->field_lotsize['und'][0]['value'] = $lotsize;
+    $node->field_request['und'][0]['value'] = $request;
+    $node->field_status['und'][0]['value'] = $status;
+    $node->field_start_date['und'][0]['value'] = $date_start; //date('Y-m-d h:i:s', strtotime($date_start));
+    $node->field_end_date['und'][0]['value'] = $date_end;//date('Y-m-d h:i:s', strtotime($date_end));
+    $node->field_target_date['und'][0]['value'] = $date_target;//date('Y-m-d h:i:s', strtotime($date_target));
+    $node->field_caveat_copyright['und'][0]['value'] = base64_decode($caveat_copyright);
+    $node->field_caveat_warning['und'][0]['value'] = base64_decode($caveat_warning);
+    $node->field_teaser['und'][0]['value'] = base64_decode($teaser);
+    $node->field_accredited['und'][0]['value'] = $accredited;
+    $node->field_reviewed['und'][0]['value'] = $reviewed;                                                  
+    field_attach_presave('node', $node);
+    field_attach_update('node', $node);
+    entity_get_controller('node')->resetCache(array($node->nid));
   }
 }
 
