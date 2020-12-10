@@ -70,7 +70,7 @@ function update_crowdfunding_offer(&$offer, $issue){
     $node->field_forum_link['und'][0]['value'] = $forum_link;
     $node->field_issue_link['und'][0]['value'] = $issue_link;
     $node->field_portal_link['und'][0]['value'] = $portal_link;
-    $node->field_thumbnail_link['und'][0]['value'] = $thumbnail_link;
+    $node->field_thumbnail_link['und'][0]['url'] = $thumbnail_link;
     $node->field_type['und'][0]['value'] = $type;
     $node->field_rule['und'][0]['value'] = $rule;
     $node->field_raise_minimum['und'][0]['value'] = $raise_minimum;
