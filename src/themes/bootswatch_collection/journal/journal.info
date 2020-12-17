@@ -1,0 +1,11 @@
+name = Journal
+description = Bootswatch Journal varient
+type = theme
+backdrop = 1.x
+base theme = bootstrap_lite
+
+stylesheets[all][] = css/bootstrap.css
+
+
+
+
