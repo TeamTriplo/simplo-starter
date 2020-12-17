@@ -3,3 +3,5 @@ name = Crowdfunding Campaign
 description = Crowdfunding Campaign
 package = Triplo
 backdrop = 1.x
+
+stylesheets[all][] = css/crowdfunding.css

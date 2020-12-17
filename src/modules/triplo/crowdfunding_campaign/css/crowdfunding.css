@@ -1,0 +1,38 @@
+
+
+.crowdfunding {
+	display: grid;
+	grid-template-columns: 60% 40%;
+	align-items: start;
+}
+
+.crowdfunding .leftside {
+	margin-right: 5%;
+} 
+.rightside {
+    padding: 2% 3%;
+    border: 1px solid grey;
+    border-radius: 4px;
+    background-color: #F1F1F1;
+}
+.crowdfunding .rightside {
+	border: 1px solid rgba(0,0,0,1);
+	padding: 15px;
+	margin-right: -150px;
+    margin-left: 80px;
+	display: grid;
+	grid-template-columns: 50% 50%;
+	height: auto;
+} 
+
+.crowdfunding .label {
+	font-weight: 900;
+}
+
+.crowdfunding .break {
+	margin-bottom: 30px;
+}
+
+.crowdfunding div {
+	height: 100%;
+}
