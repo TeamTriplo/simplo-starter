@@ -84,9 +84,9 @@ function styleguide_styleguide() {
     'content' => styleguide_paragraph(1) . '<blockquote>' . styleguide_paragraph(1) . '</blockquote>' . styleguide_paragraph(1),
     'group' => t('Common'),
   );
-  $items['Code block (monospace)'] = array(
+  $items['monospace'] = array(
     'title' => t('Monospace'),
-    'content' => styleguide_paragraph(1) . ' <pre><code>' . styleguide_paragraph(1) . '</code></pre> ' . styleguide_paragraph(1) . '.',
+    'content' => styleguide_paragraph(1) . ' <pre><code>' . styleguide_lorem(1) . '</code></pre> ' . styleguide_paragraph(1),
     'group' => t('Common'),
   );
 
@@ -97,6 +97,22 @@ function styleguide_styleguide() {
   $items['headings'] = array(
     'title' => "Headings",
     'content' => $content,
+    'group' => t('Common'),
+  );
+
+  $link_button = array(
+    '#theme' => 'link',
+    '#text' => styleguide_word(2, 'ucfirst'),
+    '#path' => '<front>',
+    '#options' => array(
+      'attributes' => array(
+        'class' => array('button'),
+      ),
+    ),
+  );
+  $items['link-button'] = array(
+    'title' => t('Link - button'),
+    'content' => backdrop_render($link_button),
     'group' => t('Common'),
   );
 
@@ -159,32 +175,36 @@ function styleguide_styleguide() {
   $messages = array(
     'status' => array(
       t('Every cache cleared.'),
-      t('Page <em>About us</em> has been created.'),
+      t('Page <em>About us</em> has been created. And this is <a href="#">a link</a>.'),
       t('The configuration options have been saved.'),
     ),
-    'warning' => array(
-      t('The site is now in maintenance mode. Only users with the "Access site in maintenance mode" permission will be able to access the site.'),
-    ),
+    'info' => t('The site is telling you something useful. And this is <a href="#">a link</a>.'),
+    'warning' => t('The site is now in maintenance mode. Only users with the "Access site in maintenance mode" permission will be able to access the site. And this is <a href="#">a link</a>.'),
     'error' => array(
       t('You are not authorized to post comments.'),
-      t('Cron run failed.'),
+      t('Cron run failed. And this is <a href="#">a link</a>.'),
     ),
   );
-  $items['status-message'] = array(
-    'title' => t('Status message'),
-    'content' => '<div class="messages status"><h2 class="element-invisible">Status message</h2>' . theme('item_list', array('items' => $messages['status'])) . '</div>',
-    'group' => t('Messages'),
-  );
-  $items['warning-message'] = array(
-    'title' => t('Warning message'),
-    'content' => '<div class="messages warning"><h2 class="element-invisible">Status message</h2>' . $messages['warning'][0] . '</div>',
-    'group' => t('Messages'),
-  );
-  $items['error-message'] = array(
-    'title' => t('Error message'),
-    'content' => '<div class="messages error"><h2 class="element-invisible">Status message</h2>' . theme('item_list', array('items' => $messages['error'])) . '</div>',
-    'group' => t('Messages'),
-  );
+  foreach ($messages as $type => $message) {
+    $content = '<div class="messages ' . $type . '"><h2 class="element-invisible">' . backdrop_ucfirst($type) . ' message</h2>';
+    if (is_array($message)) {
+      $content .= '<ul>';
+      foreach ($message as $text) {
+        $content .= '<li>' . $text . '</li>';
+      }
+      $content .= '</ul>';
+    }
+    else {
+      $content .= $message;
+    }
+    $content .= '</div>';
+
+    $items[$type . '-message'] = array(
+      'title' => t('@type message', array('@type' => backdrop_ucfirst($type))),
+      'content' => $content,
+      'group' => t('Messages'),
+    );
+  }
 
   // Form elements.
   $fake = $form_state = array();
