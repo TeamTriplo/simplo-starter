@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ * Installation functions for Switchtheme module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function switchtheme_uninstall() {
+  db_delete('variable')
+    ->condition('name', 'switchtheme_%', 'LIKE')
+    ->execute;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function switchtheme_update_1000() {
+  $config = config('switchtheme.settings');
+//  db_select('variable')
+  $config->set('switchtheme_name', update_variable_get('switchtheme_name', 'dynamic variable in file /switchtheme/switchtheme.module line 299'));
+  $config->set('switchtheme_browser_enabled', update_variable_get('switchtheme_browser_enabled', 'FALSE'));
+  $config->set('switchtheme_browser_mdparent', update_variable_get('switchtheme_browser_mdparent', 'dynamic variable in file /switchtheme/switchtheme.module line 130'));
+  update_variable_del('switchtheme_name');
+  update_variable_del('switchtheme_browser_enabled');
+  update_variable_del('switchtheme_browser_mdparent');
+}
