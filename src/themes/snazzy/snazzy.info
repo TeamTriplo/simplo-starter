@@ -1,0 +1,20 @@
+name = Snazzy
+description = Stylish modern theme with Color module support.
+type = theme
+backdrop = 1.x
+
+stylesheets[all][] = css/spectral-font.css
+stylesheets[all][] = css/style.css
+stylesheets[all][] = css/components/header.css
+stylesheets[all][] = css/components/backdrop-form.css
+stylesheets[all][] = css/components/comment.css
+stylesheets[all][] = css/components/fieldset.css
+stylesheets[all][] = css/components/vertical-tabs.css
+stylesheets[all][] = css/components/search.css
+stylesheets[all][] = css/components/pager.css
+stylesheets[all][] = css/colors.css
+
+ckeditor_stylesheets[] = css/spectral-font.css
+ckeditor_stylesheets[] = css/style.css
+
+settings[front_header_split] = TRUE
