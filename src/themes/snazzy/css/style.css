@@ -61,6 +61,14 @@ ul.primary li a.active {
     top: 0;
   }
 }
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.l-wrapper {
+  flex: 1 0 auto;
+}
 .submitted,
 .breadcrumb {
   font-size: 94%;
@@ -102,6 +110,8 @@ a:hover::after {
   width: 100%;
   left: 0;
 }
+.cke_bottom a::after,
+.contextual-links-wrapper a::after,
 .layout .tabledrag-handle::after,
 a.button::after,
 .contextual-links a::after,
@@ -158,13 +168,21 @@ a.button::after,
     width: 100%;
   }
 }
+.block-hero {
+  padding: 50px 1rem;
+}
 .block-hero .contextual-links-wrapper {
   top: 40px;
   right: 40px;
 }
 .block-hero .block-title {
-  font-size: 50px;
+  font-size: 36px;
   font-weight: 700;
+}
+@media (min-width: 960px) {
+  .block-hero .block-title {
+    font-size: 50px;
+  }
 }
 .block-hero .block-content {
   font-size: 26px;
@@ -196,6 +214,33 @@ ul.inline li,
 ul.links.inline li {
   padding: 0;
   margin: 10px 10px 10px 0;
+  line-height: 36px;
+}
+.term-page .l-content article ul.inline,
+.view-promoted .view-content ul.inline {
+  flex-direction: row-reverse;
+}
+.node-readmore a {
+  display: inline-block;
+  padding: 0 10px;
+  box-shadow: 0 0 0 2px transparent;
+  transition: box-shadow 0.2s;
+}
+.node-readmore a::after {
+  content: none;
+}
+.view-mode-teaser {
+  margin-bottom: 1.5em;
+  padding-bottom: 1.5em;
+  border-bottom: 1px solid;
+}
+.view-promoted .view-mode-teaser {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.term-page .l-content .view-mode-teaser {
+  padding: 1rem 1rem 2rem;
 }
 table {
   display: block;
