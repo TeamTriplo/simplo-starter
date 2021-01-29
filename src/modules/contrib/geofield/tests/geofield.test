@@ -1,15 +1,16 @@
 <?php
-
 /**
  * @file
  * Tests for geofield.module.
  */
 
+require_once BACKDROP_ROOT . '/core/modules/field/tests/field.test';
+
 class GeofieldBaseTestCase extends FieldTestCase {
   function _testWKTFormatter($id, $geometry, $label) {
     $entity = field_test_entity_test_load($id);
     $entity->content = field_attach_view('test_entity', $entity, 'full');
-    $this->content = drupal_render($entity->content);
+    $this->content = backdrop_render($entity->content);
     $value = $geometry->out('wkt');
     $this->assertText($value, 'WKT output for ' . $label . ' widget is correct.');
   }
@@ -20,7 +21,7 @@ class GeofieldBaseTestCase extends FieldTestCase {
   function _testGeoFieldAPISetup($widget_type, $display_type) {
     // Setup a field and instance
     $entity_type = 'test_entity';
-    $this->field_name = drupal_strtolower($this->randomName());
+    $this->field_name = backdrop_strtolower($this->randomName());
     $this->field = array('field_name' => $this->field_name, 'type' => 'geofield');
     field_create_field($this->field);
     $this->instance = array(
@@ -45,20 +46,12 @@ class GeofieldBaseTestCase extends FieldTestCase {
 
 class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
 
-  public static function getInfo() {
-    return array(
-      'name'  => 'Geofield - Widgets',
-      'description'  => "Test the creation of geofields.",
-      'group' => 'Geofield'
-    );
-  }
-
   function setUp() {
     parent::setUp(array('geofield', 'field_test'));
 
-    $this->admin_user = $this->drupalCreateUser(array('administer filters'));
-    $this->web_user = $this->drupalCreateUser(array('access field_test content', 'administer field_test content', 'administer modules'));
-    $this->drupalLogin($this->web_user);
+    $this->admin_user = $this->backdropCreateUser(array('administer filters'));
+    $this->web_user = $this->backdropCreateUser(array('access field_test content', 'administer field_test content', 'administer modules'));
+    $this->backdropLogin($this->web_user);
   }
 
   // Test fields.
@@ -71,12 +64,12 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $this->_testGeoFieldAPISetup('geofield_latlon', 'geofield_wkt');
     // Display creation form.
     $langcode = LANGUAGE_NONE;
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom][lat]", '', t('Lat/lon widget [lat] is displayed'));
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom][lon]", '', t('Lat/lon widget [lon] is displayed'));
 
     // Submit with some value.
-    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
     $generator = new GeoGenerator();
     $point = $generator->random_point();
     module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
@@ -86,7 +79,7 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
       "{$this->field_name}[$langcode][0][geom][lat]" => $geometry->getY(),
       "{$this->field_name}[$langcode][0][geom][lon]" => $geometry->getX(),
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
     $this->assertRaw(t('test_entity @id has been created.', array('@id' => $id)), t('Lat/lon entity was created'));
@@ -96,12 +89,12 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $this->_testWKTFormatter($id, $geometry, 'lat/lon');
 
     // Edge case, submit with 0,0 value.
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
     $edit = array(
       "{$this->field_name}[$langcode][0][geom][lat]" => '0',
       "{$this->field_name}[$langcode][0][geom][lon]" => '0',
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
     $this->assertRaw(t('test_entity @id has been created.', array('@id' => $id)), t('Lat/lon entity was created with 0,0 value.'));
@@ -109,13 +102,13 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $this->_testWKTFormatter($id, $geometry, 'lat/lon');
 
     // Edge case, no geometry submitted.
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
     $edit = array(
       "{$this->field_name}[$langcode][0][geom][lat]" => '',
       "{$this->field_name}[$langcode][0][geom][lon]" => '',
     );
 
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
     $this->assertRaw(t('test_entity @id has been created.', array('@id' => $id)), t('Lat/lon entity was created with null value.'));
@@ -129,11 +122,11 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $this->_testGeoFieldAPISetup('geofield_wkt', 'geofield_wkt');
     // Display creation form.
     $langcode = LANGUAGE_NONE;
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom]", '', t('WKT widget is displayed'));
 
     // Submit with some value.
-    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
     $generator = new GeoGenerator();
     $wkt = $generator->wkt_generate();
     $geometry = geoPHP::load($wkt, 'wkt');
@@ -141,7 +134,7 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $edit = array(
       "{$this->field_name}[$langcode][0][geom]" => $geometry->out('wkt'),
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
     $this->assertRaw(t('test_entity @id has been created.', array('@id' => $id)), t('WKT entity was created'));
@@ -157,11 +150,11 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $this->_testGeoFieldAPISetup('geofield_geojson', 'geofield_wkt');
     // Display creation form.
     $langcode = LANGUAGE_NONE;
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom]", '', t('GeoJSON widget is displayed'));
 
     // Submit with some value.
-    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
     $generator = new GeoGenerator();
     $wkt = $generator->wkt_generate();
     $geometry = geoPHP::load($wkt, 'wkt');
@@ -169,7 +162,7 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $edit = array(
       "{$this->field_name}[$langcode][0][geom]" => $geometry->out('json'),
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
     $this->assertRaw(t('test_entity @id has been created.', array('@id' => $id)), t('GeoJSON entity was created'));
@@ -185,14 +178,14 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $this->_testGeoFieldAPISetup('geofield_bounds', 'geofield_wkt');
     // Display creation form.
     $langcode = LANGUAGE_NONE;
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom][top]", '', t('Bounds widget field "top" is displayed.'));
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom][bottom]", '', t('Bounds widget field "bottom" is displayed.'));
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom][left]", '', t('Bounds widget field "left" is displayed.'));
     $this->assertFieldByName("{$this->field_name}[$langcode][0][geom][right]", '', t('Bounds widget field "right" is displayed.'));
 
     // Submit with some value.
-    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
     $generator = new GeoGenerator();
     // Instead of calculating 4 separate points, calculate a center point and
     // distance from it.
@@ -207,7 +200,7 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
       "{$this->field_name}[$langcode][0][geom][left]" => $lon - $lon_diff,
     );
 
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
@@ -223,7 +216,7 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
     $this->_testWKTFormatter($id, $geometry, 'wkt');
 
     // Edge case, create with 0, 0, 0, 0.
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
     $edit = array(
       "{$this->field_name}[$langcode][0][geom][top]" => 0,
       "{$this->field_name}[$langcode][0][geom][bottom]" => 0,
@@ -231,7 +224,7 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
       "{$this->field_name}[$langcode][0][geom][left]" => 0,
     );
 
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
@@ -239,26 +232,18 @@ class GeofieldWidgetTestCase extends GeofieldBaseTestCase {
   }
 }
 
-class GeoFieldElementTestCase extends DrupalWebTestCase {
-
-  public static function getInfo() {
-    return array(
-      'name' => 'Geofield FormAPI Elements',
-      'description' => "Test Geofield FormAPI elements.",
-      'group' => 'Geofield',
-    );
-  }
+class GeoFieldElementTestCase extends BackdropWebTestCase {
 
   function setUp() {
-    parent::setUp(array('geofield', 'geofield_test', 'geocoder'));
+    parent::setUp(array('geofield', 'geofield_test'));
 
-    $this->web_user = $this->drupalCreateUser(array('access content'));
-    $this->drupalLogin($this->web_user);
+    $this->web_user = $this->backdropCreateUser(array('access content'));
+    $this->backdropLogin($this->web_user);
   }
 
   function testGeofieldLatLonElement() {
     // Test form element rendering
-    $this->drupalGet('geofield-latlon-element');
+    $this->backdropGet('geofield-latlon-element');
     $this->assertFieldById('edit-geofield-latlon-simple-lat', '', 'Latitude element for simple geofield exists.');
     $this->assertFieldById('edit-geofield-latlon-simple-lon', '', 'Longitude element for simple geofield exists.');
 
@@ -271,7 +256,7 @@ class GeoFieldElementTestCase extends DrupalWebTestCase {
     $edit['geofield_latlon_simple[lon]'] = -86;
     $edit['geofield_latlon_verbose[lat]'] = 25;
     $edit['geofield_latlon_verbose[lon]'] = 54;
-    $this->drupalPost('geofield-latlon-element', $edit, t('Save'));
+    $this->backdropPost('geofield-latlon-element', $edit, t('Save'));
     $this->assertText('Simple - Lat: 41 Lon: -86', "Simple Geofield saved data as expected");
     $this->assertText('Verbose - Lat: 25 Lon: 54', "Verbose Geofield saved data as expected");
   }
@@ -279,20 +264,12 @@ class GeoFieldElementTestCase extends DrupalWebTestCase {
 
 class GeofieldFormatterTestCase extends GeofieldBaseTestCase {
 
-  public static function getInfo() {
-    return array(
-      'name'  => 'Geofield - Formatters',
-      'description'  => "Test the various display formatters of geofields.",
-      'group' => 'Geofield'
-    );
-  }
-
   function setUp() {
     parent::setUp(array('geofield', 'field_test'));
 
-    $this->admin_user = $this->drupalCreateUser(array('administer filters'));
-    $this->web_user = $this->drupalCreateUser(array('access field_test content', 'administer field_test content', 'administer modules'));
-    $this->drupalLogin($this->web_user);
+    $this->admin_user = $this->backdropCreateUser(array('administer filters'));
+    $this->web_user = $this->backdropCreateUser(array('access field_test content', 'administer field_test content', 'administer modules'));
+    $this->backdropLogin($this->web_user);
   }
 
   function testGeofieldWKTFormatter() {
@@ -300,10 +277,10 @@ class GeofieldFormatterTestCase extends GeofieldBaseTestCase {
     $this->_testGeoFieldAPISetup('geofield_wkt', 'geofield_wkt');
     // Display creation form.
     $langcode = LANGUAGE_NONE;
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
 
     // Submit with some value.
-    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
     $generator = new GeoGenerator();
     $wkt = $generator->wkt_generate();
     module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
@@ -312,7 +289,7 @@ class GeofieldFormatterTestCase extends GeofieldBaseTestCase {
     $edit = array(
       "{$this->field_name}[$langcode][0][geom]" => $geometry->out('wkt'),
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
 
@@ -324,10 +301,10 @@ class GeofieldFormatterTestCase extends GeofieldBaseTestCase {
     $this->_testGeoFieldAPISetup('geofield_wkt', 'geofield_geojson');
     // Display creation form.
     $langcode = LANGUAGE_NONE;
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
 
     // Submit with some value.
-    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
     $generator = new GeoGenerator();
     $wkt = $generator->wkt_generate();
     module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
@@ -336,14 +313,14 @@ class GeofieldFormatterTestCase extends GeofieldBaseTestCase {
     $edit = array(
       "{$this->field_name}[$langcode][0][geom]" => $geometry->out('wkt'),
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
 
     // Test GeoJSON output
     $entity = field_test_entity_test_load($id);
     $entity->content = field_attach_view('test_entity', $entity, 'full');
-    $this->content = drupal_render($entity->content);
+    $this->content = backdrop_render($entity->content);
     $value = $geometry->out('json');
     $this->assertText($value, 'GeoJSON output is correct.');
   }
@@ -353,10 +330,10 @@ class GeofieldFormatterTestCase extends GeofieldBaseTestCase {
     $this->_testGeoFieldAPISetup('geofield_wkt', 'geofield_def_list');
     // Display creation form.
     $langcode = LANGUAGE_NONE;
-    $this->drupalGet('test-entity/add/test-bundle');
+    $this->backdropGet('test-entity/add/test-bundle');
 
     // Submit with some value.
-    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
     $generator = new GeoGenerator();
     $wkt = $generator->wkt_generate();
     module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
@@ -365,14 +342,14 @@ class GeofieldFormatterTestCase extends GeofieldBaseTestCase {
     $edit = array(
       "{$this->field_name}[$langcode][0][geom]" => $geometry->out('wkt'),
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
     $id = $match[1];
 
     // Test GeoJSON output
     $entity = field_test_entity_test_load($id);
     $entity->content = field_attach_view('test_entity', $entity, 'full');
-    $this->content = drupal_render($entity->content);
+    $this->content = backdrop_render($entity->content);
     // @TODO: Actually test output... :-/
   }
 }

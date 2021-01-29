@@ -1,6 +1,5 @@
 Geofield
 ========
-
                       __ _      _     _
                      / _(_)    | |   | |
      __ _  ___  ___ | |_ _  ___| | __| |
@@ -9,14 +8,6 @@ Geofield
     \__, |\___|\___/|_| |_|\___|_|\__,_|
      __/ |
     |___/
-
-#### Contents of this File
-
- * About Geofield
- * Install
- * Configure
- * Credits
- * API notes
 
 About Geofield
 --------------
@@ -60,6 +51,18 @@ When you have configured a map in OpenLayers you must define to use the map.
 Go to  /admin/structure/types and choose "Manage display".
 
 Note: you can also add a geofield to a user, a taxonomy term or a comment.
+
+Documentation
+-------------
+
+Additional documentation is located in the Wiki:
+https://github.com/backdrop-contrib/geofield/wiki/Documentation.
+
+Issues
+------
+
+Bugs and Feature requests should be reported in the Issue Queue:
+https://github.com/backdrop-contrib/geofield/issues.
 
 Current Maintainers
 -------------------
@@ -108,3 +111,10 @@ columns, resulting in a point. As a developer this is important to remember if
 you modify geofield information using node_load and node_save. Make sure to
 run any modified geofield instances through geofield_compute_values in order
 to make all columns consistent.
+
+
+License
+-------
+
+This project is GPL v2 software.
+See the LICENSE.txt file in this directory for complete text.
