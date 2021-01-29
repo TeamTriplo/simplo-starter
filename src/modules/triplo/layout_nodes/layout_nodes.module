@@ -1,0 +1,432 @@
+<?php
+/**
+ * @file layout_nodes.module
+ *
+ * This module provides the "layout_node" node type.
+ * Layout-enabled nodes are useful to add additional content to the content area
+ * on a per-node base.
+ */
+
+// ---------------------------------------------------------------------------
+// General Backdrop hooks.
+
+/**
+ * layout_preprocess_layout() adds all these page components to templates 
+ * whether you want them or not, meaning they show up twice: once when the page 
+ * is rendered and again when this node layout is rendered, except if 'admin' 
+ * is true.
+ */
+function layout_nodes_preprocess_layout(&$variables) {
+  if ($variables['layout']->module == 'layout_nodes') {
+    $variables['admin'] = TRUE;
+    $variables['content']['title'] = '';
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function layout_nodes_permission() {
+  return array(
+    'administer layout nodes' => array(
+      'title' => t('Administer layout nodes'),
+      'description' => t('Full administrative access to layout nodes including create, update and delete all'),
+    ),
+    'create layout node content' => array(
+      'title' => t('Create layout node content'),
+      'description' => t('Create layout node content.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function layout_nodes_menu() {
+  $items['admin/structure/layout_nodes/settings/layout-node'] = array(
+    'title' => 'Layout nodes',
+    'description' => 'Configure which content is available to add to layout node displays.',
+    'access arguments' => array('administer layout nodes'),
+    'page callback' => 'layout_nodes_settings',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // Avoid some repetition on these:
+  $base = array(
+    'access callback' => 'layout_nodes_edit_node',
+    'access arguments' => array(1),
+    'page arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['node/%node/layout_node'] = array(
+    'title' => 'Edit template',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('layout_nodes_edit_layout', 1),
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => 'layout_nodes_edit_node',
+    'access arguments' => array(1),
+  );
+
+  $items['node/%node/layout_node_content'] = array(
+    'title' => 'Edit blocks',
+    'page callback' => 'layout_nodes_edit_content',
+    'weight' => 3,
+  ) + $base;
+
+  $items['node/add/layout_node/choose-layout'] = array(
+    'title' => 'Choose layout',
+    'access callback' => 'layout_nodes_add_layout_access_callback',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('layout_nodes_edit_layout'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Access callback to determine if a user has edit access.
+ */
+function layout_nodes_edit_node($node) {
+  if (!isset($node->layout_nodes)) {
+    return FALSE;
+  }
+
+  return node_access('update', $node);
+}
+
+/**
+ * Access callback to determine if user has access to add layout nodes.
+ */
+function layout_nodes_add_layout_access_callback() {
+  return user_access('create layout node content') || user_access('administer layout nodes');
+}
+
+function layout_nodes_admin_paths_alter(&$paths) {
+  $paths['node/*/layout_node'] = TRUE;
+  $paths['node/*/layout_node_content'] = TRUE;
+}
+
+// ---------------------------------------------------------------------------
+// Node hooks.
+/**
+ * Implements hook_access().
+ */
+function layout_nodes_node_access($node, $op, $account) {
+  if ($op == 'create' && $node != 'layout_node') {
+    return NODE_ACCESS_IGNORE;
+  }
+
+  if (is_object($node) && $node->type != 'layout_node') {
+    return NODE_ACCESS_IGNORE;
+  }
+
+  if (user_access('administer layout nodes', $account)) {
+    return NODE_ACCESS_ALLOW;
+  }
+}
+
+/**
+ * Implements hook_form().
+ */
+function layout_nodes_hook_form(&$node, &$form_state) {
+  $form['layout_nodes']['#tree'] = TRUE;
+  if (empty($node->nid) && arg(0) == 'node' && arg(1) == 'add') {
+    // Grab our selected layout from the $node, If it doesn't exist, try arg(3)
+    // and if that doesn't work present them with a list to pick from.
+    $layout_template = isset($node->layout_node) ? $node->layout_node : arg(3);
+    if (empty($layout_template)) {
+      backdrop_goto('node/add/layout_node/choose-layout', array('query' => backdrop_get_query_parameters()));
+    }
+
+    $layout_template_info = layout_get_layout_template_info($layout_template);
+    if (empty($layout_template_info)) {
+      return MENU_NOT_FOUND;
+    }
+    $form['layout_nodes']['layout_template'] = array(
+      '#type' => 'value',
+      '#value' => $layout_template,
+    );
+  }
+
+  $type = node_type_get_type($node);
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+  );
+
+  return $form;
+}
+
+/**
+ * Implements hook_validate().
+ */
+function layout_nodes_hook_validate($node, $form, &$form_state) {
+  if (!$node->nid && empty($node->layout_nodes['layout_template'])) {
+    form_error($form['layout_nodes']['layout'], t('Please select a layout.'));
+  }
+}
+
+/**
+ * Implements hook_load().
+ */
+function layout_nodes_hook_load($nodes) {
+  $result = db_query("SELECT * FROM {layout_nodes} WHERE nid IN (:nids)", array(':nids' => array_keys($nodes)));
+  foreach ($result as $record) {
+    $nodes[$record->nid]->layout_nodes = (array) $record;
+  }
+}
+
+/**
+ * Implements hook_insert().
+ */
+function layout_nodes_hook_insert(&$node) {
+  db_insert('layout_nodes')
+    ->fields(array(
+    'nid' => $node->nid,
+    'module' => 'layout_nodes',
+    'layout_template' => $node->layout_nodes['layout_template'],
+    'settings' => serialize(array(
+      'title' => '',
+      'title_display' => LAYOUT_TITLE_DEFAULT,
+      'title_block' => NULL,
+    ))
+  ))
+    ->execute();
+}
+
+/**
+ * Implements hook_delete().
+ */
+function layout_nodes_hook_delete(&$node) {
+  db_delete('layout_nodes')->condition('nid', $node->nid)->execute();
+  db_delete('layout_node_blocks')->condition('nid', $node->nid)->execute();
+}
+
+/**
+ * Implements hook_view().
+ */
+function layout_nodes_hook_view($node, $view_mode) {
+  static $rendering = array();
+
+  // Prevent loops if someone foolishly puts the node inside itself:
+  if (!empty($rendering[$node->nid])) {
+    return $node;
+  }
+
+  $rendering[$node->nid] = TRUE;
+
+  if ($view_mode == 'teaser') {
+    // Because our teasier is never the same as our content, *always* provide
+    // the read more flag.
+    $node->readmore = TRUE;
+  }
+  else {
+    if (!empty($node->layout_nodes['nid'])) {
+      $display = layout_nodes_layout_load($node);
+
+      // This lets us know if a template is being used by the page or the node.
+      $display->settings['layout_nodes'] = TRUE;
+      $renderer = layout_create_renderer('standard', $display);
+      $node->content['body'] = array(
+        '#markup' => $renderer->render(),
+        '#weight' => 0,
+      );
+    }
+  }
+
+  unset($rendering[$node->nid]);
+  return $node;
+}
+
+// ---------------------------------------------------------------------------
+// Administrative pages.
+/**
+ * Settings for layout nodes.
+ */
+function layout_nodes_settings() {
+  return array();
+}
+
+/**
+ * Pass through to the layout editor.
+ */
+function layout_nodes_edit_layout($form, &$form_state, $node = NULL) {
+  $form['#attached']['js'][] = backdrop_get_path('module', 'layout') . '/js/layout.admin.js';
+  $form['#attached']['css'][] = backdrop_get_path('module', 'layout') . '/css/layout.admin.css';
+
+  $default_template = '';
+  if ($node) {
+    $layout = layout_nodes_layout_load($node);
+    $default_template = $layout->layout_template;
+    $layout->node = $node;
+    $form_state['layout'] = $layout;
+  }
+
+  $form['#attributes'] = array('class' => array('layout-settings-form'));
+
+  $form['layout_template'] = array(
+    '#title' => t('Layout template'),
+    '#type' => 'radios',
+    '#default_value' => $default_template,
+    '#options' => array(),
+    '#wrapper_attributes' => array('class' => array('clearfix', 'layout-options')),
+    '#required' => TRUE,
+  );
+
+  // Get the list of layout template options.
+  $all_template_info = layout_get_layout_template_info();
+  $excluded = config_get('layout.settings', 'excluded_templates');
+  foreach ($all_template_info as $template_name => $template_info) {
+    if (!in_array($template_name, $excluded)) {
+      $form['layout_template']['#options'][$template_name] = theme('layout_template_option', array('template_info' => $template_info));
+    }
+  }
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save layout'),
+    '#submit' => array(
+      'layout_nodes_edit_layout_submit',
+    ),
+  );
+
+  return $form;
+}
+
+/**
+ * Pass through to the layouts content editor.
+ */
+function layout_nodes_edit_layout_submit($form, &$form_state) {
+  // If a layout isnt set yet, this should be a new node being added.
+  if (!isset($form_state['layout'])) {
+    backdrop_goto('node/add/layout-node/' . $form_state['values']['layout_template']);
+  }
+  else {
+    $layout = $form_state['layout'];
+    $layout->setLayoutTemplate($form_state['values']['layout_template']);
+    if (!empty($layout->positions)) {
+      foreach ($layout->positions as $region_id => $uuids) {
+        foreach ($uuids as $block_index => $uuid) {
+          if (isset($layout->content[$uuid])) {
+            layout_nodes_save_block($layout, $region_id, $uuid, $block_index);
+          }
+        }
+      }
+    }
+    db_update('layout_nodes')
+      ->fields(array(
+        'layout_template' => $form_state['values']['layout_template'],
+      ))
+      ->condition('nid', $layout->node->nid, '=')
+      ->execute();
+    backdrop_set_message(t('Layout saved.'));
+  }
+  layout_clear_layout_tempstore('layout-node-' . $layout->node->nid);
+}
+
+/**
+ * Pass through to the layouts content editor.
+ */
+function layout_nodes_edit_content($node) {
+  // Load from database to tempstore as Layout pulls from tempstore to build
+  // the content form and blocks etc.
+  if (!$display = layout_tempstore_load('layout-node-' . $node->nid)) {
+    $display = layout_nodes_layout_load($node);
+    $display->name = 'layout-node-' . $node->nid;
+
+    // Don't use layout_set_layout_tempstore(). It locks the layout.
+    tempstore_set('layout.layout', $display->name, $display, 604800);
+    $display->locked = FALSE;
+  }
+
+  $display->node = $node;
+
+  $display->setPath('node/%');
+  module_load_include('inc', 'layout', 'layout.admin');
+  return backdrop_get_form('layout_content_form', $display);
+}
+
+function layout_nodes_form_layout_content_form_alter(&$form, &$form_state, $form_id) {
+  if ($form['#layout']->module == 'layout_nodes') {
+    $form['actions']['submit']['#submit'] = array('layout_nodes_layout_content_form_submit');
+    $form['actions']['cancel']['#access'] = FALSE;
+  }
+}
+
+function layout_nodes_layout_content_form_submit(&$form, &$form_state) {
+  $layout = $form_state['layout'];
+  // Update the block positions based on the hidden position elements.
+  if (!empty($form_state['values']['content']['positions'])) {
+    foreach ($form_state['values']['content']['positions'] as $region_id => $blocks) {
+      if ($blocks) {
+        $uuids = array_filter(explode(',', $blocks));
+        foreach ($uuids as $block_index => $uuid) {
+          if (isset($layout->content[$uuid])) {
+            layout_nodes_save_block($layout, $region_id, $uuid, $block_index);
+          }
+        }
+      }
+    }
+  }
+
+  layout_clear_layout_tempstore('layout-node-' . $layout->node->nid);
+}
+
+function layout_nodes_save_block($layout, $region_id, $uuid, $block_index) {
+  $block = $layout->content[$uuid];
+
+  $data = array(
+    'nid' => $layout->node->nid,
+    'uuid' => $uuid,
+    'region_id' => $region_id,
+    'block_index' => $block_index,
+    'block_data' => $block,
+    );
+  $exists = db_query('SELECT count(uuid) FROM {layout_node_blocks} WHERE uuid = :uuid', array(':uuid' => $uuid))->fetchField();
+  if ($exists) {
+    backdrop_write_record('layout_node_blocks', $data, 'uuid');
+  }
+  else {
+    backdrop_write_record('layout_node_blocks', $data);
+  }
+}
+
+function layout_nodes_layout_load($node) {
+  // @todo join instead of two queries?
+  // @todo cache this?
+  $result = db_query("SELECT * FROM {layout_nodes} WHERE nid = :nid", array(':nid' => $node->nid))->fetchObject();
+  $blocks = db_query("SELECT * FROM {layout_node_blocks} WHERE nid = :nid", array(':nid' => $node->nid));
+  $config = array();
+  // Create a new display and record that.
+  $layout = new Layout($config);
+  $layout->title = $node->title;
+  $layout->module = $result->module;
+  $layout->layout_template = $result->layout_template;
+  $layout->settings = unserialize($result->settings);
+  $layout->settings += array(
+      'title' => '',
+      'title_display' => LAYOUT_TITLE_DEFAULT,
+      'title_block' => NULL,
+    );
+  $layout->locked = FALSE;
+  $layout->setPath('node/%');
+
+  // Set the node context on our stub layout.
+  $contexts = $layout->getContexts();
+  $contexts[1]->setData($node);
+
+  foreach ($blocks as $data) {
+    $block = unserialize($data->block_data);
+    $layout->content[$data->uuid] = $block;
+    $layout->positions[$data->region_id][$data->block_index] = $data->uuid;
+  }
+
+  return $layout;
+}
+

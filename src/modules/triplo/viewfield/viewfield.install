@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * @file
+ * Installation functions for Viewfield module.
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function viewfield_field_schema($field) {
+  return array(
+    'columns' => array(
+      'vname' => array(
+        'type' => 'varchar',
+        'not null' => FALSE,
+        // Views requires at least 96 chars for the view name and display, plus
+        // we need 1 for our delimiter. Round up to a common value of 128.
+        'length' => 128,
+      ),
+      'vargs' => array(
+        'type' => 'varchar',
+        'not null' => FALSE,
+        'length' => 255,
+      ),
+    ),
+  );
+}
+
+// TODO The old hook_update_N functions cannot be applied to Backdrop.
+function viewfield_update_7200() { }
+
+// TODO The old hook_update_N functions cannot be applied to Backdrop.
+function viewfield_update_7201() { }
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function viewfield_update_last_removed() {
+  return 7201;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function viewfield_update_1000() {
+  $config = config('viewfield.settings');
+}
+
+/**
+ * Implements hook_install().
+ */
+function viewfield_install() {
+  // Dynamically generated variable data was detected.
+}

@@ -1,0 +1,6 @@
+name = Viewfield
+description = Defines a field type to display a view.
+backdrop = 1.x
+type = module
+package = Fields
+dependencies[] = views

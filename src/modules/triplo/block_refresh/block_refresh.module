@@ -1,0 +1,300 @@
+<?php
+/**
+ * @file
+ * Allows blocks to automatically refresh their content.
+ */
+
+define('BLOCK_REFRESH_DEFAULT_AUTOMATIC', FALSE); // autorefresh disabled by default
+define('BLOCK_REFRESH_DEFAULT_MANUAL', FALSE); // manual refresh disabled by default
+define('BLOCK_REFRESH_DEFAULT_INIT', FALSE); // inital refresh disabled by default
+define('BLOCK_REFRESH_DEFAULT_BYPASS_PAGE_CACHE', FALSE); // page cache bypass disabled by default
+define('BLOCK_REFRESH_DEFAULT_BYPASS_EXTERNAL_CACHE', ''); // external cache bypass disabled by default
+define('BLOCK_REFRESH_DEFAULT_AUTOMATIC_TIMER', 120);  // default refreshes every two minutes, if enabled
+
+/**
+ * Implements hook_block_view_alter().
+ *
+ * Adds the jquery to refresh blocks automatically.
+ */
+function block_refresh_block_view_alter(&$data, $block) {
+  if (array_key_exists('block_refresh', $block->settings) && !empty($block->settings['block_refresh'])) {
+    // Add extra settings.
+    $element = backdrop_clean_css_identifier('block-' . $block->module . '-' . $block->delta);
+    $block->settings['block_refresh']['element'] = $element;
+    $block->settings['block_refresh']['module'] = $block->module;
+    $block->settings['block_refresh']['delta'] = $block->delta;
+    $block->settings['block_refresh']['uuid'] = $block->uuid;
+
+    // Add assets to the page.
+    $path = backdrop_get_path('module', 'block_refresh');
+    backdrop_add_js($path . '/js/block_refresh.js', array('scope' => 'footer'));
+    backdrop_add_css($path . '/css/block_refresh.css');
+    backdrop_add_js(array(
+      'block_refresh' => array(
+        'settings' => $block->settings['block_refresh'],
+        'args' => arg(),
+        'query' => block_refresh_get_query_as_string(),
+        'cleanUrl' => (bool) config_get('system.core', 'clean_url'),
+      )
+    ), 'setting');
+
+    /* @todo Find out why #attached does not work here.
+    $data['#attached'] = array(
+      'css' => array($path . '/css/block_refresh.css'),
+      'js' => array($path . '/js/block_refresh.js' => array('scope' => 'footer')),
+    );
+    $data['#attached']['js'][] = array(
+      'data' => array('block_refresh' => $block_refresh_settings),
+      'type' => 'setting',
+    );
+    */
+  }
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds a 'Block Refresh' settings fieldset to the block admin form.
+ */
+function block_refresh_form_layout_block_configure_form_alter(&$form, $form_state) {
+  $form['block_refresh'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Refresh settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+  if (($form_state['block']->module == 'system' && $form_state['block']->delta == 'main')) {
+    $form['block_refresh']['#collapsed'] = FALSE;
+    $form['block_refresh']['no'] = array(
+      '#type' => 'markup',
+      '#markup' => t('The main page content block cannot be refreshed.'),
+    );
+  }
+  else {
+    block_refresh_settings_form_elements($form, $form_state);
+    // Call our submit handler before layout's.
+    array_unshift($form['#submit'], 'block_refresh_submit');
+  }
+}
+
+/**
+ * Helper function: Generates the form elements for block refresh settings.
+ *
+ * @param $form
+ *   The block settings form.
+ */
+function block_refresh_settings_form_elements(&$form, $form_state) {
+  $settings = array();
+  if (isset($form_state['block']->settings['block_refresh'])) {
+    $settings = $form_state['block']->settings['block_refresh'];
+    $form['block_refresh']['#collapsed'] = FALSE;
+  }
+
+  $timer_setting = isset($settings['timer']) ? $settings['timer'] : BLOCK_REFRESH_DEFAULT_AUTOMATIC_TIMER;
+
+  $form['block_refresh']['auto'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Refresh automatically'),
+    '#description' => t('When checked, the content of this block will refresh automatically every @timer seconds (defined below).', array('@timer' => $timer_setting)),
+    '#default_value' => isset($settings['auto']) ? $settings['auto'] : BLOCK_REFRESH_DEFAULT_AUTOMATIC,
+  );
+  $form['block_refresh']['timer'] = array(
+    '#type' => 'number',
+    '#title' => t('Block refresh interval'),
+    '#field_suffix' => t('seconds'),
+    '#default_value' => $timer_setting,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="block_refresh[auto]"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $form['block_refresh']['init'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Refresh on page load'),
+    '#description' => t('When checked, the content of this block will be refreshed every time the page loads.'),
+    '#default_value' => isset($settings['init']) ? $settings['init'] : BLOCK_REFRESH_DEFAULT_INIT,
+  );
+  $form['block_refresh']['manual'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Refresh manually'),
+    '#description' => t('When checked, the content of this block may be refreshed manually by clicking a button in the block\'s header.'),
+    '#default_value' => isset($settings['manual']) ? $settings['manual'] : BLOCK_REFRESH_DEFAULT_MANUAL,
+  );
+
+  $form['block_refresh']['cache'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cache settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['block_refresh']['cache']['bypass_page_cache'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Bypass page cache'),
+    '#description' => t('When checked, the refreshed content of this block will bypass the page cache. If stale content is being served to you due to caching, try checking this box. <em>Warning! this can have a performance impact</em>.'),
+    '#default_value' => isset($settings['bypass_page_cache']) ? $settings['bypass_page_cache'] : BLOCK_REFRESH_DEFAULT_BYPASS_PAGE_CACHE,
+  );
+  $form['block_refresh']['cache']['bypass_external_cache'] = array(
+    '#type' => 'number',
+    '#title' => t('External cache max age'),
+    '#field_suffix' => t('seconds'),
+    '#description' => t('If you wish to override the max age of refreshed data served from an external cache (eg Varnish), enter a value here. Leave blank to use your sitewide default value.'),
+    '#default_value' => isset($settings['bypass_external_cache']) ? $settings['bypass_external_cache'] : BLOCK_REFRESH_DEFAULT_BYPASS_EXTERNAL_CACHE,
+  );
+}
+
+/**
+ * Submit handler for for block_refresh_menu().
+ *
+ * Handles form submissions on the block configuration page.
+ */
+function block_refresh_submit($form, &$form_state) {
+  $settings = array();
+  if (isset($form_state['block']->settings['block_refresh'])) {
+    $settings = $form_state['block']->settings['block_refresh'];
+  }
+
+  if (($form_state['values']['block_refresh']['auto'] == 0) &&
+      ($form_state['values']['block_refresh']['manual'] == 0) &&
+      ($form_state['values']['block_refresh']['init'] == 0)) {
+    // Remove all block refresh settings if refresh is disabled.
+    $form_state['block']->settings['block_refresh'] = array();
+  }
+  else {
+    if (is_null($settings)) {
+      $settings = array();
+    }
+    foreach ($form_state['values']['block_refresh'] as $key => $value) {
+      // Flatten all refresh settings into an one-dimensional array.
+      if (is_array($value)) {
+        foreach ($value as $inner_key => $inner_value) {
+          $settings[$inner_key] = $inner_value;
+        }
+        unset($form_state['values']['block_refresh'][$key]);
+        unset($settings[$key]);
+      }
+      else {
+        $settings[$key] = $value;
+      }
+    }
+
+    $form_state['block']->settings['block_refresh'] = $settings;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function block_refresh_menu() {
+  $items = array();
+  $items['block_refresh'] = array(
+    'title' => 'Block refresh block content',
+    'page callback' => 'block_refresh_block_content',
+    'page arguments' => array(1, 2, 3),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Page callback for /block_refresh/[module]/[delta].
+ *
+ * Displays the block content without any other page information.
+ *
+ * @param string $module
+ *  Module that provided the block.
+ *
+ * @param string $delta
+ *  Identifies which block provided by a given module.
+ *
+ * @return string
+ *  Rendered content of the block.
+ */
+function block_refresh_block_content($module = NULL, $delta = NULL, $uuid = NULL) {
+  // 404 if there is a request directly to /block_refresh or UUID is not set.
+  if (!isset($module) || !isset($delta) || !isset($uuid)) {
+    backdrop_not_found();
+  }
+
+  // Validate args and get referrering page args from end. Set as path.
+  // @todo: extract to a method?
+  $args = arg();
+  if (!empty($args[3]) && $args[0] == 'block_refresh' && $args[1] == $module
+      && $args[2] == $delta && $args[3] == $uuid) {
+    unset($args[0]);
+    unset($args[1]);
+    unset($args[2]);
+    unset($args[3]);
+    $_GET['q'] = implode('/', $args);
+  }
+  else {
+    $_GET['q'] = '';
+    $args = arg();
+  }
+
+  $menu_item_name = array_shift($args);
+  $menu_item = layout_menu_item_load($menu_item_name);
+  $menu_item = layout_menu_item_load($menu_item_name);
+  // Determine the correct layout to use at this path.
+  $layouts = layout_load_multiple_by_path($menu_item->path);
+
+  $match_found = FALSE;
+  foreach ($layouts as $layout) {
+    if ($layout->disabled) {
+      continue;
+    }
+    // Check access to this layout.
+    if ($layout->checkAccess()) {
+      $match_found = TRUE;
+      break;
+    }
+  }
+
+  $settings = $layout->content[$uuid]->settings['block_refresh'];
+
+  // If automatic refresh AND manual refresh are both disabled...
+  if (empty($settings) || (!$settings['auto'] && !$settings['manual'] && !$settings['init'])) {
+    backdrop_not_found();
+  }
+
+  // Bypass page cache if set.
+  if (isset($settings['bypass_page_cache']) && $settings['bypass_page_cache'] == 1) {
+    $GLOBALS['conf']['cache'] = FALSE;
+  }
+
+  // Override external cache max age if set.
+  if (isset($settings['bypass_external_cache']) && $settings['bypass_external_cache'] != '') {
+    backdrop_add_http_header('Cache-Control', 'public, max-age=' . intval($settings['bypass_external_cache']));
+  }
+
+  $output = $layout->content[$uuid]->getContent();
+
+  // Print out the content of the proceeding call
+  print $output;
+}
+
+/**
+ * Private function: Gets all $_GET values (except q and render).
+ *
+ * @return string
+ *  A query string representing the arguments.
+ */
+function block_refresh_get_query_as_string() {
+  $variables = $_GET;
+  if (!empty($variables['q'])) {
+    unset($variables['q']);
+  }
+  if (!empty($variables['render'])) {
+    unset($variables['render']);
+  }
+  if (count($variables) > 0) {
+    $querystring = '?' . http_build_query($variables);
+    return $querystring;
+  }
+  else {
+    return '';
+  }
+}

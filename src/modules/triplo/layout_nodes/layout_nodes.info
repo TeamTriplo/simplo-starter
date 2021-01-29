@@ -1,0 +1,6 @@
+name = Layout nodes
+description = Create nodes that are divided into areas with selectable content.
+tags[] = layouts
+dependencies[] = layout
+backdrop = 1.x
+type = module

@@ -1,0 +1,19 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the block_refresh module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function block_refresh_install() {
+  block_refresh_reset_jq();
+}
+
+/**
+ *  Helper function to register a new plugin with jQuery.
+ */
+function block_refresh_reset_jq() {
+  cache_clear_all('jq_plugins', 'cache');
+}
