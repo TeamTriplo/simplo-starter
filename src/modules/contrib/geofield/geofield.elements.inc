@@ -265,22 +265,21 @@ function geofield_proximity_element_process($element, &$form_state, $form) {
 
   //Create the textfield for distance
   $element['distance'] = array(
-    '#type' => 'textfield',
+    '#type' => 'number',
     '#title' => t('Distance'),
     '#default_value' => !empty($element['#default_value']['distance']) ? $element['#default_value']['distance'] : '',
     '#title_display' => 'invisible',
-    // Allow decimal numbers as distances
-    '#element_validate' => array('element_validate_number'),
+    '#step' => '0.01',
   );
 
   // If #geofield_range is TRUE, create second option for range.
   if (!empty($element['#geofield_range']) && $element['#geofield_range'] == TRUE) {
     $element['distance2'] = array(
-      '#type' => 'textfield',
+      '#type' => 'number',
       '#title' => t('Distance End'),
       '#default_value' => !empty($element['#default_value']['distance2']) ? $element['#default_value']['distance2'] : '',
       '#title_display' => 'invisible',
-      '#element_validate' => array('element_validate_number'),
+      '#step' => '0.01',
     );
   }
 
