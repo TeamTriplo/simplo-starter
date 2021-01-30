@@ -1,0 +1,11 @@
+name = Activity Calendar
+description = Visualizes users' activity over the yearly calendar.
+backdrop = 1.x
+package = Other
+type = module
+configure = admin/config/people/activity_calendar
+
+; Added by Backdrop CMS packaging script on 2021-01-30
+project = activity_calendar
+version = 1.x-1.0.3
+timestamp = 1612010828
