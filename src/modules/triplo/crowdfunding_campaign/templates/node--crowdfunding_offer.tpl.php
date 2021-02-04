@@ -107,9 +107,11 @@
       <section class="leftside">
         <p><img src="<?php print render($content['field_thumbnail_link']['#items'][0]['display_url']); ?>"></p>
         <?php print render($content['body'][0]['#markup']); ?>
+        
+        <div class="label"> Teaser</div><div> <?php print render($content['field_teaser'][0]['#markup']); ?> </div><br><br>
+        <div class="label"> Copyright</div><div> <?php print render($content['field_caveat_copyright'][0]['#markup']); ?></div><br><br>
         <div class="label"> Warning</div><div> <?php print render($content['field_caveat_warning'][0]['#markup']); ?> </div>
-        <div class="label"> Copyright</div><div> <?php print render($content['field_caveat_copyright'][0]['#markup']); ?> </div>
-        <div class="label"> Teaser</div><div> <?php print render($content['field_teaser'][0]['#markup']); ?> </div>
+
       </section>
 
       <section class="rightside">
