@@ -107,9 +107,9 @@
       <section class="leftside">
         <p><img src="<?php print render($content['field_thumbnail_link']['#items'][0]['display_url']); ?>"></p>
         <?php print render($content['body'][0]['#markup']); ?>
-        <div> $<?php print render($content['field_caveat_warning'][0]['#markup']); ?> </div>
-        <div> $<?php print render($content['field_caveat_copyright'][0]['#markup']); ?> </div>
-        <div> $<?php print render($content['field_caveat_warning'][0]['#markup']); ?> </div>
+        <div class="label"> Warning</div><div> <?php print render($content['field_caveat_warning'][0]['#markup']); ?> </div>
+        <div class="label"> Copyright</div><div> <?php print render($content['field_caveat_copyright'][0]['#markup']); ?> </div>
+        <div class="label"> Teaser</div><div> <?php print render($content['field_caveat_teaser'][0]['#markup']); ?> </div>
       </section>
 
       <section class="rightside">
@@ -124,7 +124,8 @@
         <div class="label"> Lotsize:</div><div> <?php print render($content['field_lotsize'][0]['#markup']); ?> </div>
         <div class="label break"> Status:</div><div> <?php print render($content['field_status'][0]['#markup']); ?> </div>
 
-        <div class="label"> End Date:</div><div> $<?php print render($content['field_end_date'][0]['#markup']); ?> </div>
+        <div class="label"> Start Date:</div><div><?php print render($content['field_start_date'][0]['#markup']); ?> </div>
+        <div class="label"> End Date:</div><div><?php print render($content['field_end_date'][0]['#markup']); ?> </div>
 
         <a class="label" href="<?php print render($content['field_forum_link']['#items'][0]['display_url']); ?>"> Forum</a><div> </div>
       </section>
