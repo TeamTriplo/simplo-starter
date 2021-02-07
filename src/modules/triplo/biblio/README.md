@@ -19,6 +19,15 @@ Drupal Biblio module. It defines:
   Congress MODS format for bibliographic data.) The feeds configuration could be
   edited to take data from a URL instead of a local file.
 
+### Submodules
+
+None of the biblio submodules have been ported yet.
+
+If you are using any of the submodules and would like to see them available for
+use in Backdrop, please let us know which you are using on this issue:
+https://github.com/backdrop-contrib/biblio/issues/10
+
+
 Requirements
 ------------
 
@@ -31,16 +40,21 @@ To import bibliographic information from external soures, you will also need:
 - Feeds XPath Parser (feeds_xpathparser)
 - Job Scheduler (job_scheduler) -- required by Feeds, but not used directly
 
+
+Version Numbers
+----------------
+
+The Drupal 7 module is on the 1.x branch.
+
+This Backdrop module is on the 2.x branch because the underlying structure of a
+bibliographic reference has changed sifnificantly: it is now a node.
+
+
 Installation
 ------------
 
 - Install this module using the official Backdrop CMS instructions at
   https://backdropcms.org/guide/modules.
-
-- Visit the configuration page under Administration > Configuration > Category >
-  Foo (admin/config/category/foo) and enter the required information.
-
-- Any additional steps.
 
 Documentation
 -------------
@@ -72,4 +86,3 @@ License
 
 This project is GPL v2 software.
 See the LICENSE.txt file in this directory for complete text.
-

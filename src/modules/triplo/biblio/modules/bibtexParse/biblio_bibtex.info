@@ -1,6 +1,17 @@
+type = module
 name = Biblio - BibTeX
 description = Provides BibTeX import and export to the Biblio module.
 core = 7.x
 package = Biblio
 dependencies[] = biblio
 files[] = PARSEENTRIES.php
+
+; this module has not yet been ported to Backdrop.
+; See https://github.com/backdrop-contrib/biblio/issues/10
+
+hidden = true
+
+; Added by Backdrop CMS packaging script on 2021-02-06
+project = biblio
+version = 1.x-2.0.0
+timestamp = 1612674024

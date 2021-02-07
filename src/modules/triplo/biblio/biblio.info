@@ -1,9 +1,9 @@
+type = module
 name = Biblio
 description = Defines a content type and views for bibliographic references
-package = Miscellaneous
-version = 1.x-1.x
-type = module
 backdrop = 1.x
+package = Biblio
+
 dependencies[] = config
 dependencies[] = date
 dependencies[] = layout
@@ -13,4 +13,10 @@ dependencies[] = taxonomy
 dependencies[] = views
 dependencies[] = multifield
 dependencies[] = field_group
+
 stylesheets[all][] = css/biblio.css
+
+; Added by Backdrop CMS packaging script on 2021-02-06
+project = biblio
+version = 1.x-2.0.0
+timestamp = 1612674024

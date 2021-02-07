@@ -8,7 +8,7 @@
  * @return multitype:string NULL
  */
 function biblio_token_info() {
-  $schema = drupal_get_schema('biblio');
+  $schema = backdrop_get_schema('biblio');
   $fields = array_diff_key($schema['fields'], array('nid' => '', 'vid' => '', 'biblio_formats' => ''));
   $node_token['biblio'] = array(
     'name' => t('Biblio'),
