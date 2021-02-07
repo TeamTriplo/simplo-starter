@@ -1,0 +1,39 @@
+{
+    "_config_name": "field.instance.node.biblio_pub.field_biblio_other_number",
+    "field_name": "field_biblio_other_number",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "label": "Other numbers",
+    "widget": {
+        "weight": "28",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "hidden",
+            "weight": "23",
+            "settings": []
+        },
+        "teaser": {
+            "label": "above",
+            "type": "hidden",
+            "weight": "10",
+            "settings": []
+        }
+    }
+}

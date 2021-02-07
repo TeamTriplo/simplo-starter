@@ -1,0 +1,25 @@
+{
+    "_config_name": "field_group.field_group.node.biblio_pub.form.group_biblio_text",
+    "group_name": "group_biblio_text",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "mode": "form",
+    "children": [
+        "field_biblio_abstract",
+        "field_biblio_full_text"
+    ],
+    "parent_name": "group_biblio_fields",
+    "weight": "3",
+    "label": "Text",
+    "format_type": "tab",
+    "format_settings": {
+        "formatter": "closed",
+        "instance_settings": {
+            "description": "",
+            "classes": "group-biblio-text field-group-tab",
+            "required_fields": 1
+        }
+    },
+    "collapsible": true,
+    "collapsed": true
+}

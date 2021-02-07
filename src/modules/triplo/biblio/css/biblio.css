@@ -1,0 +1,9 @@
+/* CSS for Biblio pages */
+.node-type-biblio-pub .field .field-label {
+  display: inline-block;
+  width: 180px;
+}
+
+.node-type-biblio-pub .field-name-field-biblio-abstract .field-label {
+  float: none;
+}

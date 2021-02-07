@@ -1,0 +1,41 @@
+{
+    "_config_name": "field.instance.node.biblio_pub.field_biblio_secondary_title",
+    "field_name": "field_biblio_secondary_title",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "label": "Journal/Series title",
+    "widget": {
+        "weight": "35",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    },
+    "description": "The meaning of this field depends on the publication type. For journal articles, it would be the journal name. For book sections, it would be the name of the book. For conference papers, it would be the conference.",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "text_default",
+            "weight": "3",
+            "settings": [],
+            "module": "text"
+        },
+        "teaser": {
+            "label": "hidden",
+            "type": "text_default",
+            "weight": "2",
+            "settings": [],
+            "module": "text"
+        }
+    }
+}

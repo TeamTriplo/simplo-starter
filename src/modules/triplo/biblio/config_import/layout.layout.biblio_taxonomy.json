@@ -1,0 +1,160 @@
+{
+    "_config_name": "layout.layout.biblio_taxonomy",
+    "path": "taxonomy/term/%",
+    "name": "biblio_taxonomy",
+    "title": "Biblio author taxonomy",
+    "description": null,
+    "renderer_name": "standard",
+    "module": null,
+    "weight": 0,
+    "storage": 1,
+    "layout_template": "moscone_flipped",
+    "disabled": false,
+    "settings": {
+        "title": "",
+        "title_display": "default",
+        "title_block": null
+    },
+    "positions": {
+        "header": [
+            "fc9bdd92-2328-41ad-b300-df00f710d32a",
+            "cb6bd01b-54c9-43e6-9204-4b37728b4752"
+        ],
+        "top": [
+            "dce23a6b-02bc-4fcc-9a24-3697d6673034"
+        ],
+        "content": [
+            "2e9e2b64-e10a-4ea2-b50d-13ede1c179c4"
+        ],
+        "sidebar": [],
+        "bottom": [],
+        "footer": [],
+        "title": []
+    },
+    "content": {
+        "fc9bdd92-2328-41ad-b300-df00f710d32a": {
+            "plugin": "system:header",
+            "data": {
+                "module": "system",
+                "delta": "header",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": {
+                        "menu": "user-menu",
+                        "logo": 1,
+                        "site_name": 1,
+                        "site_slogan": 1
+                    },
+                    "contexts": []
+                },
+                "uuid": "fc9bdd92-2328-41ad-b300-df00f710d32a",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "cb6bd01b-54c9-43e6-9204-4b37728b4752": {
+            "plugin": "system:main-menu",
+            "data": {
+                "module": "system",
+                "delta": "main-menu",
+                "settings": {
+                    "title_display": "none",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": {
+                        "style": "dropdown",
+                        "level": 1,
+                        "depth": 0
+                    },
+                    "contexts": []
+                },
+                "uuid": "cb6bd01b-54c9-43e6-9204-4b37728b4752",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "dce23a6b-02bc-4fcc-9a24-3697d6673034": {
+            "plugin": "system:breadcrumb",
+            "data": {
+                "module": "system",
+                "delta": "breadcrumb",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": []
+                },
+                "uuid": "dce23a6b-02bc-4fcc-9a24-3697d6673034",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "2e9e2b64-e10a-4ea2-b50d-13ede1c179c4": {
+            "plugin": "views:biblio_publications-block_1",
+            "data": {
+                "module": "views",
+                "delta": "biblio_publications-block_1",
+                "settings": {
+                    "link_to_view": 0,
+                    "more_link": false,
+                    "use_pager": false,
+                    "pager_id": 0,
+                    "items_per_page": "20",
+                    "offset": 0,
+                    "path": "biblio",
+                    "fields_override": null,
+                    "title_display": "none",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": [],
+                    "allowed": [],
+                    "path_override": false,
+                    "exposed": []
+                },
+                "uuid": "2e9e2b64-e10a-4ea2-b50d-13ede1c179c4",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "conditions": [
+        {
+            "plugin": "path",
+            "data": {
+                "settings": {
+                    "visibility_setting": "1",
+                    "paths": "biblio-name/*",
+                    "load_condition_nojs": "Load condition"
+                }
+            }
+        }
+    ]
+}

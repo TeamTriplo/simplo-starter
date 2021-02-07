@@ -1,0 +1,64 @@
+{
+    "_config_name": "field.instance.node.biblio_pub.field_biblio_year",
+    "field_name": "field_biblio_year",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "label": "Year",
+    "widget": {
+        "weight": "34",
+        "type": "date_text",
+        "module": "date",
+        "active": 1,
+        "settings": {
+            "input_format": "Y-m-d",
+            "input_format_custom": "",
+            "year_range": "-3:+3",
+            "increment": 1,
+            "label_position": "none",
+            "text_parts": [],
+            "no_fieldset": 0
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "default_value": "blank",
+        "default_value_code": "",
+        "default_value2": "same",
+        "default_value_code2": "",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "date_default",
+            "weight": "1",
+            "settings": {
+                "format_type": "long",
+                "fromto": "both",
+                "multiple_number": "",
+                "multiple_from": "",
+                "multiple_to": "",
+                "show_remaining_days": 0
+            },
+            "module": "date"
+        },
+        "teaser": {
+            "label": "above",
+            "type": "date_default",
+            "weight": "0",
+            "settings": {
+                "format_type": "long",
+                "multiple_number": "",
+                "multiple_from": "",
+                "multiple_to": "",
+                "fromto": "both",
+                "show_remaining_days": false
+            },
+            "module": "date"
+        }
+    }
+}

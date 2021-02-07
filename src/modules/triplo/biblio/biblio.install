@@ -1,0 +1,47 @@
+<?php
+
+/**
+ * @file
+ * Installation hooks for Biblio module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function biblio_install() {
+  // Import and synchronize the configuration for this module, to get around
+  // https://github.com/backdrop/backdrop-issues/issues/3224
+  // Follows basically the same steps as the batch setup in config.sync.inc.
+
+  // Set up config storage objects for the active config and our directory.
+  $active_storage = config_get_config_storage('active');
+  $directory = BACKDROP_ROOT . '/' . backdrop_get_path('module', 'biblio') . '/config_import';
+  $module_storage = new ConfigFileStorage($directory);
+
+  // Figure out which items need to be imported/updated -- see
+  // config_get_statuses().
+  $active_files = $active_storage->listAll();
+  $module_files = $module_storage->listAll();
+  $create_files = array_diff($module_files, $active_files);
+  $update_files = array_diff($module_files, $create_files);
+  sort($module_files);
+  sort($create_files);
+  sort($update_files);
+
+  // Perform the updates and imports.
+  module_load_include('inc', 'config', 'config.sync');
+  foreach ($create_files as $config_file) {
+    config_sync_file($config_file, 'create', $module_storage->read($config_file));
+  }
+  foreach ($update_files as $config_file) {
+    config_sync_file($config_file, 'update', $module_storage->read($config_file));
+  }
+
+  // Finding the right order to do the imports is difficult. Alphabetical is
+  // pretty close, because it means bundles are before fields, which are before
+  // instances, but it still doesn't all work correctly. So, as a hack, do
+  // them all again as updates to make sure all the database tables are created.
+  foreach ($module_files as $config_file) {
+    config_sync_file($config_file, 'update', $module_storage->read($config_file));
+  }
+}

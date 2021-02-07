@@ -1,0 +1,33 @@
+{
+    "_config_name": "field.instance.multifield.field_biblio_authors.field_biblio_person_role",
+    "field_name": "field_biblio_person_role",
+    "entity_type": "multifield",
+    "bundle": "field_biblio_authors",
+    "label": "Role",
+    "widget": {
+        "weight": "3",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "7"
+        }
+    },
+    "description": "Three-letter code, such as \"aut\" or \"edt\". See <a href=\"http://www.loc.gov/marc/relators/relacode.html\" target=\"_blank\">full list of codes</a>",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "hidden",
+            "weight": "2",
+            "settings": []
+        }
+    }
+}

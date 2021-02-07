@@ -1,0 +1,42 @@
+{
+    "_config_name": "field_group.field_group.node.biblio_pub.form.group_biblio_pub",
+    "group_name": "group_biblio_pub",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "mode": "form",
+    "children": [
+        "field_biblio_alternate_title",
+        "field_biblio_date",
+        "field_biblio_edition",
+        "field_biblio_issue",
+        "field_biblio_lang",
+        "field_biblio_number",
+        "field_biblio_number_of_volumes",
+        "field_biblio_orig_publication",
+        "field_biblio_pages",
+        "field_biblio_refereed",
+        "field_biblio_reprint_edition",
+        "field_biblio_secondary_title",
+        "field_biblio_section",
+        "field_biblio_short_title",
+        "field_biblio_tertiary_title",
+        "field_biblio_translated_title",
+        "field_biblio_type_of_work",
+        "field_biblio_volume",
+        "field_biblio_year"
+    ],
+    "parent_name": "group_biblio_fields",
+    "weight": "4",
+    "label": "Publication",
+    "format_type": "tab",
+    "format_settings": {
+        "formatter": "closed",
+        "instance_settings": {
+            "description": "",
+            "classes": "group-biblio-pub field-group-tab",
+            "required_fields": 1
+        }
+    },
+    "collapsible": true,
+    "collapsed": true
+}

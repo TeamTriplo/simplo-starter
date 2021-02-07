@@ -1,0 +1,42 @@
+{
+    "_config_name": "field.instance.node.biblio_pub.field_biblio_date",
+    "field_name": "field_biblio_date",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "label": "Publication date",
+    "widget": {
+        "weight": "48",
+        "type": "date_text",
+        "module": "date",
+        "active": 1,
+        "settings": {
+            "input_format": "m/d/Y - g:i:sa",
+            "input_format_custom": "",
+            "year_range": "-10:+1",
+            "increment": "1",
+            "label_position": "none",
+            "text_parts": [],
+            "no_fieldset": 0
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "default_value": "blank",
+        "default_value_code": "",
+        "default_value2": "same",
+        "default_value_code2": "",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "hidden",
+            "weight": "13",
+            "settings": []
+        }
+    }
+}

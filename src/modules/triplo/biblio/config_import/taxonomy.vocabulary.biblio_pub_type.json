@@ -1,0 +1,8 @@
+{
+    "_config_name": "taxonomy.vocabulary.biblio_pub_type",
+    "name": "Biblio Publication Type",
+    "machine_name": "biblio_pub_type",
+    "description": "Publication type for Biblio",
+    "hierarchy": "0",
+    "weight": 0
+}

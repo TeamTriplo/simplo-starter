@@ -1,0 +1,66 @@
+{
+    "_config_name": "field.instance.node.biblio_pub.field_biblio_authors",
+    "field_name": "field_biblio_authors",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "label": "Authors",
+    "widget": {
+        "weight": "3",
+        "type": "multifield_default",
+        "module": "multifield",
+        "active": 0,
+        "settings": []
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": [
+        {
+            "field_biblio_person": {
+                "und": []
+            },
+            "field_biblio_person_cat": {
+                "und": [
+                    {
+                        "value": "primary"
+                    }
+                ]
+            },
+            "field_biblio_person_role": {
+                "und": [
+                    {
+                        "value": "aut"
+                    }
+                ]
+            },
+            "id": null,
+            "actions": {
+                "remove_button": "Remove"
+            }
+        }
+    ],
+    "default_value_function": null,
+    "settings": {
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "multifield_default",
+            "weight": "2",
+            "settings": {
+                "view_mode": "default"
+            },
+            "module": "multifield"
+        },
+        "teaser": {
+            "label": "hidden",
+            "type": "multifield_default",
+            "weight": "0",
+            "settings": {
+                "view_mode": "default"
+            },
+            "module": "multifield"
+        }
+    }
+}

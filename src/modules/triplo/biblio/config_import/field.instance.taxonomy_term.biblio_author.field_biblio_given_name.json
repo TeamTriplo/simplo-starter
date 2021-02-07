@@ -1,0 +1,33 @@
+{
+    "_config_name": "field.instance.taxonomy_term.biblio_author.field_biblio_given_name",
+    "field_name": "field_biblio_given_name",
+    "entity_type": "taxonomy_term",
+    "bundle": "biblio_author",
+    "label": "Given name(s)",
+    "widget": {
+        "weight": "1",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "inline",
+            "type": "hidden",
+            "weight": "0",
+            "settings": []
+        }
+    }
+}

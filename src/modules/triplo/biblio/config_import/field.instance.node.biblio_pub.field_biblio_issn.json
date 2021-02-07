@@ -1,0 +1,39 @@
+{
+    "_config_name": "field.instance.node.biblio_pub.field_biblio_issn",
+    "field_name": "field_biblio_issn",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "label": "ISSN",
+    "widget": {
+        "weight": "24",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "hidden",
+            "weight": "21",
+            "settings": []
+        },
+        "teaser": {
+            "label": "above",
+            "type": "hidden",
+            "weight": "33",
+            "settings": []
+        }
+    }
+}

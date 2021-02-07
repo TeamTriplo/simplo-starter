@@ -1,0 +1,410 @@
+<?php
+/**
+ * @file
+ * Biblio module for Backdrop: provides bibliographic references content type.
+ */
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the taxonomy term form.
+ */
+function biblio_form_taxonomy_form_term_alter(&$form, &$form_state, $form_id) {
+  $is_author = FALSE;
+  $is_biblio = FALSE;
+  if (isset($form['#vocabulary'])) {
+    $vocabulary = $form['#vocabulary']->machine_name;
+    if ($vocabulary == 'biblio_author') {
+      $is_biblio = TRUE;
+      $is_author = TRUE;
+    }
+    elseif ($vocabulary == 'biblio_keywords' || $vocabulary == 'biblio_pub_type') {
+      $is_biblio = TRUE;
+    }
+  }
+
+  if (!$is_biblio) {
+    return;
+  }
+
+  if ($is_author) {
+    $form['name']['#description'] = t('Displayed name for this person, such as "Smith, Mary J."');
+  }
+
+  $form['description']['#access'] = FALSE;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function biblio_theme($existing, $type, $theme, $path) {
+  $themes['node__biblio_pub'] = array(
+    'render element' => 'elements',
+    'base hook' => 'node',
+    'template' => 'node--biblio-pub',
+    'path' => backdrop_get_path('module', 'biblio') . '/templates',
+  );
+
+  $themes['biblio_authors'] = array(
+    'variables' => array('url' => NULL, 'title' => NULL),
+    'file' => 'biblio.theme.inc',
+  );
+
+  return $themes;
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for node.
+ */
+function biblio_preprocess_node(&$variables) {
+  $node = $variables['node'];
+  // Add theme suggestion for node type.
+  $variables['theme_hook_suggestions'][] = 'node__' . $node->type;
+
+  // Group authors by role.
+  $field_biblio_authors = array();
+  if (isset($variables['field_biblio_authors']) && is_array($variables['field_biblio_authors'])) {
+    foreach ($variables['field_biblio_authors'] as $delta => $author) {
+      $lang = LANGUAGE_NONE;
+      $role = $author['field_biblio_person_role'][$lang][0]['value'];
+      if (!array_key_exists($role, $field_biblio_authors)) {
+        $field_biblio_authors[$role] = array();
+      }
+      $field_biblio_authors[$role][] = $author;
+    }
+  }
+
+  // Format the authors.
+  $content = '';
+  $formatted_authors = array();
+  foreach ($field_biblio_authors as $role => $set) {
+    // Get the official role label.
+    $role_label = biblio_get_author_roles($role);
+
+    $formatted_authors[$role_label] = '';
+    $authors_by_role = $field_biblio_authors[$role];
+    $num_authors = count($authors_by_role);
+    for ($i = 0; $i < $num_authors; $i++) {
+      if (isset($authors_by_role[$i]['field_biblio_person']['und'][0]['taxonomy_term'])) {
+        $term = $authors_by_role[$i]['field_biblio_person']['und'][0]['taxonomy_term'];
+        $formatted_authors[$role_label] .= l($term->name, 'taxonomy/term/' . $term->tid);
+        if ($i < $num_authors - 2) {
+          $formatted_authors[$role_label] .= ", ";
+        }
+        else if ($i == $num_authors - 2) {
+          $formatted_authors[$role_label] .= ", and ";
+        }
+      }
+    }
+
+    $content .= theme('biblio_authors', array(
+      'role' => $role_label,
+      'authors' => $formatted_authors[$role_label]));
+  }
+
+  // Save authors as its own variable.
+  if (!empty($formatted_authors)) {
+    $variables['formatted_authors'] = $formatted_authors;
+  }
+
+  // Override the content variable with our special version.
+  $variables['content']['field_biblio_authors'] = array(
+    '#type' => 'markup',
+    '#markup' => $content,
+  );
+}
+
+/**
+ * [biblio_get_author_roles description]
+ * @param  string $code
+ *   Three letter code indicating author role. See the complete list at
+ *   http://www.loc.gov/marc/relators/relacode.html.
+ *
+ * @return array $mapping
+ */
+function biblio_get_author_roles($code = FALSE) {
+  $mapping = array(
+    'abr' => 'Abridger',
+    'acp' => 'Art copyist',
+    'act' => 'Actor',
+    'adi' => 'Art director',
+    'adp' => 'Adapter',
+    'aft' => 'Author of afterword, colophon, etc.',
+    'anl' => 'Analyst',
+    'anm' => 'Animator',
+    'ann' => 'Annotator',
+    'ant' => 'Bibliographic antecedent',
+    'ape' => 'Appellee',
+    'apl' => 'Appellant',
+    'app' => 'Applicant',
+    'aqt' => 'Author in quotations or text abstracts',
+    'arc' => 'Architect',
+    'ard' => 'Artistic director',
+    'arr' => 'Arranger',
+    'art' => 'Artist',
+    'asg' => 'Assignee',
+    'asn' => 'Associated name',
+    'ato' => 'Autographer',
+    'att' => 'Attributed name',
+    'auc' => 'Auctioneer',
+    'aud' => 'Author of dialog',
+    'aui' => 'Author of introduction, etc.',
+    'aus' => 'Screenwriter',
+    'aut' => 'Author',
+    'bdd' => 'Binding designer',
+    'bjd' => 'Bookjacket designer',
+    'bkd' => 'Book designer',
+    'bkp' => 'Book producer',
+    'blw' => 'Blurb writer',
+    'bnd' => 'Binder',
+    'bpd' => 'Bookplate designer',
+    'brd' => 'Broadcaster',
+    'brl' => 'Braille embosser',
+    'bsl' => 'Bookseller',
+    'cas' => 'Caster',
+    'ccp' => 'Conceptor',
+    'chr' => 'Choreographer',
+    'clb' => 'Collaborator',
+    'cli' => 'Client',
+    'cll' => 'Calligrapher',
+    'clr' => 'Colorist',
+    'clt' => 'Collotyper',
+    'cmm' => 'Commentator',
+    'cmp' => 'Composer',
+    'cmt' => 'Compositor',
+    'cnd' => 'Conductor',
+    'cng' => 'Cinematographer',
+    'cns' => 'Censor',
+    'coe' => 'Contestant-appellee',
+    'col' => 'Collector',
+    'com' => 'Compiler',
+    'con' => 'Conservator',
+    'cor' => 'Collection registrar',
+    'cos' => 'Contestant',
+    'cot' => 'Contestant-appellant',
+    'cou' => 'Court governed',
+    'cov' => 'Cover designer',
+    'cpc' => 'Copyright claimant',
+    'cpe' => 'Complainant-appellee',
+    'cph' => 'Copyright holder',
+    'cpl' => 'Complainant',
+    'cpt' => 'Complainant-appellant',
+    'cre' => 'Creator',
+    'crp' => 'Correspondent',
+    'crr' => 'Corrector',
+    'crt' => 'Court reporter',
+    'csl' => 'Consultant',
+    'csp' => 'Consultant to a project',
+    'cst' => 'Costume designer',
+    'ctb' => 'Contributor',
+    'cte' => 'Contestee-appellee',
+    'ctg' => 'Cartographer',
+    'ctr' => 'Contractor',
+    'cts' => 'Contestee',
+    'ctt' => 'Contestee-appellant',
+    'cur' => 'Curator',
+    'cwt' => 'Commentator for written text',
+    'dbp' => 'Distribution place',
+    'dfd' => 'Defendant',
+    'dfe' => 'Defendant-appellee',
+    'dft' => 'Defendant-appellant',
+    'dgg' => 'Degree granting institution',
+    'dgs' => 'Degree supervisor',
+    'dis' => 'Dissertant',
+    'dln' => 'Delineator',
+    'dnc' => 'Dancer',
+    'dnr' => 'Donor',
+    'dpc' => 'Depicted',
+    'dpt' => 'Depositor',
+    'drm' => 'Draftsman',
+    'drt' => 'Director',
+    'dsr' => 'Designer',
+    'dst' => 'Distributor',
+    'dtc' => 'Data contributor',
+    'dte' => 'Dedicatee',
+    'dtm' => 'Data manager',
+    'dto' => 'Dedicator',
+    'dub' => 'Dubious author',
+    'edc' => 'Editor of compilation',
+    'edm' => 'Editor of moving image work',
+    'edt' => 'Editor',
+    'egr' => 'Engraver',
+    'elg' => 'Electrician',
+    'elt' => 'Electrotyper',
+    'eng' => 'Engineer',
+    'enj' => 'Enacting jurisdiction',
+    'etr' => 'Etcher',
+    'evp' => 'Event place',
+    'exp' => 'Expert',
+    'fac' => 'Facsimilist',
+    'fds' => 'Film distributor',
+    'fld' => 'Field director',
+    'flm' => 'Film editor',
+    'fmd' => 'Film director',
+    'fmk' => 'Filmmaker',
+    'fmo' => 'Former owner',
+    'fmp' => 'Film producer',
+    'fnd' => 'Funder',
+    'fpy' => 'First party',
+    'frg' => 'Forger',
+    'gis' => 'Geographic information specialist',
+    'grt' => 'Graphic technician',
+    'his' => 'Host institution',
+    'hnr' => 'Honoree',
+    'hst' => 'Host',
+    'ill' => 'Illustrator',
+    'ilu' => 'Illuminator',
+    'ins' => 'Inscriber',
+    'inv' => 'Inventor',
+    'isb' => 'Issuing body',
+    'itr' => 'Instrumentalist',
+    'ive' => 'Interviewee',
+    'ivr' => 'Interviewer',
+    'jud' => 'Judge',
+    'jug' => 'Jurisdiction governed',
+    'lbr' => 'Laboratory',
+    'lbt' => 'Librettist',
+    'ldr' => 'Laboratory director',
+    'led' => 'Lead',
+    'lee' => 'Libelee-appellee',
+    'lel' => 'Libelee',
+    'len' => 'Lender',
+    'let' => 'Libelee-appellant',
+    'lgd' => 'Lighting designer',
+    'lie' => 'Libelant-appellee',
+    'lil' => 'Libelant',
+    'lit' => 'Libelant-appellant',
+    'lsa' => 'Landscape architect',
+    'lse' => 'Licensee',
+    'lso' => 'Licensor',
+    'ltg' => 'Lithographer',
+    'lyr' => 'Lyricist',
+    'mcp' => 'Music copyist',
+    'mdc' => 'Metadata contact',
+    'med' => 'Medium',
+    'mfp' => 'Manufacture place',
+    'mfr' => 'Manufacturer',
+    'mod' => 'Moderator',
+    'mon' => 'Monitor',
+    'mrb' => 'Marbler',
+    'mrk' => 'Markup editor',
+    'msd' => 'Musical director',
+    'mte' => 'Metal-engraver',
+    'mtk' => 'Minute taker',
+    'mus' => 'Musician',
+    'nrt' => 'Narrator',
+    'opn' => 'Opponent',
+    'org' => 'Originator',
+    'orm' => 'Organizer',
+    'osp' => 'Onscreen presenter',
+    'oth' => 'Other',
+    'own' => 'Owner',
+    'pan' => 'Panelist',
+    'pat' => 'Patron',
+    'pbd' => 'Publishing director',
+    'pbl' => 'Publisher',
+    'pdr' => 'Project director',
+    'pfr' => 'Proofreader',
+    'pht' => 'Photographer',
+    'plt' => 'Platemaker',
+    'pma' => 'Permitting agency',
+    'pmn' => 'Production manager',
+    'pop' => 'Printer of plates',
+    'ppm' => 'Papermaker',
+    'ppt' => 'Puppeteer',
+    'pra' => 'Praeses',
+    'prc' => 'Process contact',
+    'prd' => 'Production personnel',
+    'pre' => 'Presenter',
+    'prf' => 'Performer',
+    'prg' => 'Programmer',
+    'prm' => 'Printmaker',
+    'prn' => 'Production company',
+    'pro' => 'Producer',
+    'prp' => 'Production place',
+    'prs' => 'Production designer',
+    'prt' => 'Printer',
+    'prv' => 'Provider',
+    'pta' => 'Patent applicant',
+    'pte' => 'Plaintiff-appellee',
+    'ptf' => 'Plaintiff',
+    'pth' => 'Patent holder',
+    'ptt' => 'Plaintiff-appellant',
+    'pup' => 'Publication place',
+    'rbr' => 'Rubricator',
+    'rcd' => 'Recordist',
+    'rce' => 'Recording engineer',
+    'rcp' => 'Addressee',
+    'rdd' => 'Radio director',
+    'red' => 'Redaktor',
+    'ren' => 'Renderer',
+    'res' => 'Researcher',
+    'rev' => 'Reviewer',
+    'rpc' => 'Radio producer',
+    'rps' => 'Repository',
+    'rpt' => 'Reporter',
+    'rpy' => 'Responsible party',
+    'rse' => 'Respondent-appellee',
+    'rsg' => 'Restager',
+    'rsp' => 'Respondent',
+    'rsr' => 'Restorationist',
+    'rst' => 'Respondent-appellant',
+    'rth' => 'Research team head',
+    'rtm' => 'Research team member',
+    'sad' => 'Scientific advisor',
+    'sce' => 'Scenarist',
+    'scl' => 'Sculptor',
+    'scr' => 'Scribe',
+    'sds' => 'Sound designer',
+    'sec' => 'Secretary',
+    'sgd' => 'Stage director',
+    'sgn' => 'Signer',
+    'sht' => 'Supporting host',
+    'sll' => 'Seller',
+    'sng' => 'Singer',
+    'spk' => 'Speaker',
+    'spn' => 'Sponsor',
+    'spy' => 'Second party',
+    'srv' => 'Surveyor',
+    'std' => 'Set designer',
+    'stg' => 'Setting',
+    'stl' => 'Storyteller',
+    'stm' => 'Stage manager',
+    'stn' => 'Standards body',
+    'str' => 'Stereotyper',
+    'tcd' => 'Technical director',
+    'tch' => 'Teacher',
+    'ths' => 'Thesis advisor',
+    'tld' => 'Television director',
+    'tlp' => 'Television producer',
+    'trc' => 'Transcriber',
+    'trl' => 'Translator',
+    'tyd' => 'Type designer',
+    'tyg' => 'Typographer',
+    'uvp' => 'University place',
+    'vac' => 'Voice actor',
+    'vdg' => 'Videographer',
+    'voc' => ' Vocalist',
+    'wac' => 'Writer of added commentary',
+    'wal' => 'Writer of added lyrics',
+    'wam' => 'Writer of accompanying material',
+    'wat' => 'Writer of added text',
+    'wdc' => 'Woodcutter',
+    'wde' => 'Wood engraver',
+    'win' => 'Writer of introduction',
+    'wit' => 'Witness',
+    'wpr' => 'Writer of preface',
+    'wst' => 'Writer of supplementary textual content',
+
+  );
+
+  if ($code) {
+    if (isset($mapping[$code])) {
+      return $mapping[$code];
+    }
+    else {
+      return $code;
+    }
+  }
+  else {
+    return $mapping;
+  }
+}

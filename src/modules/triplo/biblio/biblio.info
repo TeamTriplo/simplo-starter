@@ -1,0 +1,16 @@
+name = Biblio
+description = Defines a content type and views for bibliographic references
+package = Miscellaneous
+version = 1.x-1.x
+type = module
+backdrop = 1.x
+dependencies[] = config
+dependencies[] = date
+dependencies[] = layout
+dependencies[] = link
+dependencies[] = node
+dependencies[] = taxonomy
+dependencies[] = views
+dependencies[] = multifield
+dependencies[] = field_group
+stylesheets[all][] = css/biblio.css

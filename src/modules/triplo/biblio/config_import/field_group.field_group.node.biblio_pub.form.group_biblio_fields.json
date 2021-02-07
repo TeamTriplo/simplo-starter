@@ -1,0 +1,30 @@
+{
+    "_config_name": "field_group.field_group.node.biblio_pub.form.group_biblio_fields",
+    "group_name": "group_biblio_fields",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "mode": "form",
+    "children": [
+        "group_biblio_authors",
+        "group_biblio_ids",
+        "group_biblio_keywords",
+        "group_biblio_locators",
+        "group_biblio_notes",
+        "group_biblio_pub",
+        "group_biblio_publisher",
+        "group_biblio_text"
+    ],
+    "parent_name": "",
+    "weight": "2",
+    "label": "Fields",
+    "format_type": "tabs",
+    "format_settings": {
+        "formatter": "",
+        "instance_settings": {
+            "classes": "group-biblio-fields field-group-tabs",
+            "id": ""
+        }
+    },
+    "collapsible": false,
+    "collapsed": false
+}

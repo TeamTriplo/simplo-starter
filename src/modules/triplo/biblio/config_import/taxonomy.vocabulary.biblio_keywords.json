@@ -1,0 +1,8 @@
+{
+    "_config_name": "taxonomy.vocabulary.biblio_keywords",
+    "name": "Biblio Keywords",
+    "machine_name": "biblio_keywords",
+    "description": "Keywords for Biblio",
+    "hierarchy": "0",
+    "weight": 0
+}

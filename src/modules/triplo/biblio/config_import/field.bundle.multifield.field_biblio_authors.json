@@ -1,0 +1,10 @@
+{
+    "_config_name": "field.bundle.multifield.field_biblio_authors",
+    "bundle": "field_biblio_authors",
+    "entity_type": "multifield",
+    "view_modes": [],
+    "extra_fields": {
+        "form": [],
+        "display": []
+    }
+}

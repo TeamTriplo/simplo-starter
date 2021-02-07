@@ -1,0 +1,40 @@
+{
+    "_config_name": "field.instance.node.biblio_pub.field_biblio_issue",
+    "field_name": "field_biblio_issue",
+    "entity_type": "node",
+    "bundle": "biblio_pub",
+    "label": "Issue",
+    "widget": {
+        "weight": "44",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "text_default",
+            "weight": "5",
+            "settings": [],
+            "module": "text"
+        },
+        "teaser": {
+            "label": "above",
+            "type": "hidden",
+            "weight": "31",
+            "settings": []
+        }
+    }
+}
