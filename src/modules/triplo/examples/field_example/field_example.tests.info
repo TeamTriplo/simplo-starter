@@ -1,0 +1,10 @@
+[FieldExampleTest]
+name = Field example functionality
+description = Create a content type with example_field_rgb fields, create a node, check for correct values.
+group = Example modules
+file = field_example.test
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

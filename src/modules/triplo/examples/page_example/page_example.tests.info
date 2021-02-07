@@ -1,0 +1,10 @@
+[PageExampleTestCase]
+name = Page example functionality
+description = Creates a page and renders the content based on arguments passed in the URL.
+group = Example modules
+file = page_example.test
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

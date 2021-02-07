@@ -1,0 +1,11 @@
+name = Image Example
+description = Example implementation of image.module hooks.
+package = Example modules
+version = BACKDROP_VERSION
+backdrop = 1.x
+dependencies[] = image
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

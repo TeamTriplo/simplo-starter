@@ -1,0 +1,126 @@
+<?php
+
+/**
+ * @file
+ * Tests for menu example module.
+ */
+
+/**
+ * Functional tests for the Menu Example module.
+ *
+ * @ingroup menu_example
+ */
+class MenuExampleTestCase extends BackdropWebTestCase {
+
+  /**
+   * Enable modules and create user with specific permissions.
+   */
+  public function setUp() {
+    parent::setUp('menu_example');
+    $this->webUser = $this->backdropCreateUser(
+      array(
+        'administer blocks',
+        'administer layouts',
+      )
+    );
+  }
+
+  /**
+   * Test the various menus.
+   */
+  public function testMenuExample() {
+    // Login the admin user.
+    $this->backdropLogin($this->webUser);
+
+    $this->backdropGet('admin/structure/layouts/manage/default');
+    // Add a block to the sidebar.
+    $this->clickLink(t('Add block'), 3);
+
+    // Enable the Menu example menu block and verify.
+    $this->clickLink(t('Menu example menu'));
+    $this->backdropPost(NULL, array(), t('Add block'));
+
+    // Save the layout.
+    $this->backdropPost(NULL, array(), t('Save layout'));
+
+    // Logout the user.
+    $this->backdropLogout();
+
+    $this->backdropGet('examples/menu_example');
+    $this->clickLink(t('Menu Example'));
+    $this->assertText(t('This is the base page of the Menu Example'));
+
+    $this->clickLink(t('Custom Access Example'));
+    $this->assertText(t('Custom Access Example'));
+
+    $this->clickLink(t('examples/menu_example/custom_access/page'));
+    $this->assertResponse(403);
+
+    $this->backdropGet('examples/menu_example/permissioned');
+    $this->assertText(t('Permissioned Example'));
+
+    $this->clickLink('examples/menu_example/permissioned/controlled');
+    $this->assertResponse(403);
+
+    $this->backdropGet('examples/menu_example');
+
+    $this->clickLink(t('MENU_CALLBACK example'));
+
+    $this->backdropGet('examples/menu_example/path_only/callback');
+    $this->assertText(t('The menu entry for this page is of type MENU_CALLBACK'));
+
+    $this->backdropGet('examples/menu_example');
+
+    $this->clickLink(t('Tabs'));
+    $this->assertText(t('This is the "tabs" menu entry'));
+
+    $this->backdropGet('examples/menu_example/tabs/second');
+    $this->assertText(t('This is the tab "second" in the "basic tabs" example'));
+
+    $this->clickLink(t('third'));
+    $this->assertText(t('This is the tab "third" in the "basic tabs" example'));
+
+    $this->clickLink(t('Extra Arguments'));
+
+    $this->backdropGet('examples/menu_example/use_url_arguments/one/two');
+    $this->assertText(t('Argument 1=one'));
+
+    $this->clickLink(t('Placeholder Arguments'));
+
+    $this->clickLink(t('examples/menu_example/placeholder_argument/3343/display'));
+    $this->assertRaw('<div>3343</div>');
+
+    $this->clickLink(t('Processed Placeholder Arguments'));
+    $this->assertText(t('Loaded value was jackpot! default'));
+
+    // Create a user with permissions to access protected menu entry.
+    $web_user = $this->backdropCreateUser(array('access protected menu example'));
+
+    // Use custom overridden backdropLogin function to verify the user is logged
+    // in.
+    $this->backdropLogin($web_user);
+
+    // Check that our title callback changing /user dynamically is working.
+    // Using &#039; because of the format_username function.
+    $this->assertRaw(t("@name&#039;s account", array('@name' => format_username($web_user))), format_string('Title successfully changed to account name: %name.', array('%name' => $web_user->name)));
+
+    // Now start testing other menu entries.
+    $this->backdropGet('examples/menu_example');
+
+    $this->clickLink(t('Custom Access Example'));
+    $this->assertText(t('Custom Access Example'));
+
+    $this->backdropGet('examples/menu_example/custom_access/page');
+    $this->assertResponse(200);
+
+    $this->backdropGet('examples/menu_example/permissioned');
+    $this->assertText('Permissioned Example');
+    $this->clickLink('examples/menu_example/permissioned/controlled');
+    $this->assertText('This menu entry will not show');
+
+    $this->backdropGet('examples/menu_example/menu_altered_path');
+    $this->assertText('This menu item was created strictly to allow the hook_menu_alter()');
+
+  }
+
+}

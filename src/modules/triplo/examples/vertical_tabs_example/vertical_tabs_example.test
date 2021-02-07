@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file
+ * Test file for vertical_tabs_example module.
+ */
+
+/**
+ * Default test case for the vertical_tabs_example module.
+ *
+ * @ingroup vertical_tabs_example
+ */
+class VerticalTabsExampleTestCase extends BackdropWebTestCase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp() {
+    parent::setUp('vertical_tabs_example');
+  }
+
+  /**
+   * Tests the menu paths defined in vertical_tabs_example module.
+   */
+  public function testVerticalTabsExampleMenus() {
+    $paths = array(
+      'examples/vertical_tabs',
+    );
+    foreach ($paths as $path) {
+      $this->backdropGet($path);
+      $this->assertResponse(200, '200 response for path: ' . $path);
+    }
+  }
+}

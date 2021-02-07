@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ * Test cases for Testing the token example module.
+ */
+
+/**
+ * Functional tests for the Token Example module.
+ *
+ * @ingroup token_example
+ */
+class TokenExampleTestCase extends BackdropWebTestCase {
+
+  protected $webUser;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp() {
+    parent::setUp('token_example');
+    $this->webUser = $this->backdropCreateUser();
+    $this->backdropLogin($this->webUser);
+  }
+
+  /**
+   * Test interface.
+   */
+  public function testInterface() {
+    $filtered_id = config_get('filter.format.filtered_html', 'format');
+    $default_format_id = filter_default_format($this->webUser);
+
+    $this->backdropGet('examples/token');
+    $this->assertFieldByName('node');
+    $this->assertNoFieldByName('user');
+
+    $edit = array(
+      'text' => 'User [current-user:name] is trying the token example!',
+    );
+    $this->backdropPost(NULL, $edit, t('Submit'));
+    $this->assertText('User ' . $this->webUser->name . ' is trying the token example!');
+
+    // Create a node and then make the 'Plain text' text format the default.
+    $node = $this->backdropCreateNode(array('title' => 'Example node', 'status' => NODE_PUBLISHED));
+    config_set('filter.format.plain_text', 'weight', -10);
+
+    $this->backdropGet('examples/token');
+
+    $edit = array(
+      'text' => 'Would you like to view the [node:type-name] [node:title] with text format [node:body-format] (ID [node:body-format:id])?',
+      'node' => $node->nid,
+    );
+    $this->backdropPost(NULL, $edit, t('Submit'));
+    $this->assertText('Would you like to view the Page Example node with text format Filtered HTML (ID ' . $filtered_id . ')?');
+
+    $edit = array(
+      'text' => 'Your default text format is [default-format:name] (ID [default-format:id]).',
+    );
+    $this->backdropPost(NULL, $edit, t('Submit'));
+    $this->assertText('Your default text format is Filtered HTML (ID ' . $default_format_id . ')');
+  }
+}

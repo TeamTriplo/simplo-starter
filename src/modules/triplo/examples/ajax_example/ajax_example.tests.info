@@ -1,0 +1,10 @@
+[AjaxExampleTestCase]
+name = Ajax example functionality
+description = Checks behavior of the Ajax Example.
+group = Example modules
+file = ajax_example.test
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

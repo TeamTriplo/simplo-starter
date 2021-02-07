@@ -1,0 +1,10 @@
+[EmailExampleTestCase]
+name = Email example functionality
+description = Verify email submission using the contact form.
+group = Example modules
+file = email_example.test
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

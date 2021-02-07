@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * This file serves as a stub file for the many Examples modules in the
+ * @link http://DOCUMENTATION_PENDING/project/examples Examples for Developers Project @endlink
+ * which you can download and experiment with.
+ *
+ * One might say that examples.module is an example of documentation. However,
+ * note that the example submodules define many doxygen groups, which may or
+ * may not be a good strategy for other modules.
+ */
+
+/**
+ * @defgroup examples Examples
+ * @{
+ * Well-documented API examples for a broad range of Backdrop core
+ * functionality.
+ *
+ * Developers can learn how to use a particular API quickly by experimenting
+ * with the examples, and adapt them for their own use.
+ *
+ * Based on the Examples for Developers Project at
+ * http://DOCUMENTATION_PENDING/project/examples
+ */
+
+
+/**
+ * @} End of 'defgroup examples'.
+ */

@@ -1,0 +1,316 @@
+<?php
+
+/**
+ * @file
+ * Demonstrates render arrays.
+ */
+
+/**
+ * @defgroup render_example Example: Render
+ * @ingroup examples
+ * @{
+ * Demonstrate how render arrays are arranged and how they can be altered.
+ * This alters blocks and the page to show the actual render array
+ * that is being used to create each item.
+ *
+ * @see backdrop_render()
+ */
+
+// This allows backdrop_var_export() to work.
+require_once BACKDROP_ROOT . '/core/includes/utility.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function render_example_menu() {
+  $items['examples/render_example'] = array(
+    'title' => 'Render Example',
+    'page callback' => 'render_example_info',
+    'access callback' => TRUE,
+  );
+  $items['examples/render_example/arrays'] = array(
+    'title' => 'Render array examples',
+    'page callback' => 'render_example_arrays',
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Simple basic information about the module; an entry point.
+ */
+function render_example_info() {
+  return t('The render example provides a <a href="!arrays">demonstration of of render array usage</a></li>', array('!arrays' => url('examples/render_example/arrays')));
+}
+
+
+/**
+ * Provides a number of render arrays and show what they do.
+ *
+ * Each array is keyed by a description; it's returned for rendering at page
+ * render time. It's easy to add new examples to this.
+ *
+ * The array items in $demos are intended to be raw, normal render arrays
+ * that can be experimented with to end up with different outcomes.
+ */
+function render_example_arrays() {
+
+  // Interval in seconds for cache update with #cache.
+  $interval = 60;
+
+  $demos = array(
+    // Demonstrate the simplest markup, a #markup element.
+    t('Super simple #markup')  => array(
+      '#markup' => t('Some basic text in a #markup (shows basic markup and how it is rendered)'),
+    ),
+
+    // Shows how #prefix and #suffix can add markup into an array.
+    t('Using #prefix and #suffix') => array(
+      '#markup' => t('This one adds a prefix and suffix, which put a div around the item'),
+      '#prefix' => '<div><br/>(prefix)<br/>',
+      '#suffix' => '<br/>(suffix)</div>',
+    ),
+
+    // When #theme is provided, it is the #theme function's job to figure out
+    // the meaning of the render array. The #theme function receives the entire
+    // element in $variables and must return it, where it will be the content
+    // of '#children'. When a #theme or other function is provided, custom
+    // properties can be invented and used as needed, as the #separator
+    // property provided here.
+    //
+    // If #theme is not provided, either explicitly or by the underlying
+    // element, then the children are rendered using their own properties and
+    // the results go into #children.
+    t('theme for an element') => array(
+      'child' => array(
+        array(t('This is some text that should be put together')),
+        array(t('This is some more text that we need')),
+      ),
+      // An element we've created which will be used by our theming function.
+      '#separator' => ' | ',
+      '#theme' => 'render_example_aggregate',
+    ),
+
+    // #theme_wrappers provides an array of theme functions which theme the
+    // envelope or "wrapper" of a set of child elements. The theme function
+    // finds its element children (the sub-arrays) already rendered in
+    // '#children'.
+    t('theme_wrappers demonstration') => array(
+      'child1' => array('#markup' => t('Markup for child1')),
+      'child2' => array('#markup' => t('Markup for child2')),
+      '#theme_wrappers' => array('render_example_add_div', 'render_example_add_notes'),
+    ),
+
+    // Add '#pre_render' and '#post_render' handlers.
+    // - '#pre_render' functions get access to the array before it is rendered
+    //   and can change it. This is similar to a theme function, but it is a
+    //   specific fixed function and changes the array in place rather than
+    //   rendering it..
+    // - '#post_render' functions get access to the rendered content, but also
+    //   have the original array available.
+    t('pre_render and post_render') => array(
+      '#markup' => '<div style="color:green">' . t('markup for pre_render and post_render example') . '</div>',
+      '#pre_render' => array('render_example_add_suffix'),
+      '#post_render' => array('render_example_add_prefix'),
+    ),
+
+    // Cache an element for $interval seconds using #cache.
+    // The assumption here is that this is an expensive item to render, perhaps
+    // large or otherwise expensive. Of course here it's just a piece of markup,
+    // so we don't get the value.
+    //
+    // #cache allows us to set
+    // - 'keys', an array of strings that will create the string cache key.
+    // - 'bin', the cache bin
+    // - 'expire', the expire timestamp. Note that this is actually limited
+    //   to the granularity of a cron run.
+    // - 'granularity', a bitmask determining at what level the caching is done
+    //   (user, role, page).
+    t('cache demonstration') => array(
+      // If your expensive function were to be executed here it would happen
+      // on every page load regardless of the cache. The actual markup is
+      // added via the #pre_render function, so that backdrop_render() will only
+      // execute the expensive function if this array has not been cached.
+      '#markup' => '',
+      '#pre_render' => array('render_example_cache_pre_render'),
+      '#cache' => array(
+        'keys' => array('render_example', 'cache', 'demonstration'),
+        'bin' => 'cache',
+        'expire' => time() + $interval,
+        'granularity' => BACKDROP_CACHE_PER_PAGE | BACKDROP_CACHE_PER_ROLE,
+      ),
+    ),
+  );
+
+  // The rest of this function just places the above arrays in a context where
+  // they can be rendered (hopefully attractively and usefully) on the page.
+  $page_array = array();
+  foreach ($demos as $key => $item) {
+    $page_array[$key]['#theme_wrappers'] = array('render_array');
+    $page_array[$key]['#description'] = $key;
+
+    $page_array[$key]['unrendered'] = array(
+      '#prefix' => '<div class="unrendered-label">' . t('Unrendered array (as plain text and with a krumo version)') . ':</div>',
+      '#type' => 'markup',
+      '#markup' => htmlentities(backdrop_var_export($item)),
+    );
+    $page_array[$key]['kpr'] = array(
+      // The kpr() function is from devel module and is here only allow us
+      // to output the array in a way that's easy to explore.
+      '#markup' => kpr($item, TRUE),
+    );
+    $page_array[$key]['hr'] = array('#markup' => '<hr/>');
+    $page_array[$key]['rendered'] = array($item);
+    $page_array[$key]['rendered']['#prefix'] = '<p><em>Rendered version (light blue)</em>:</p>' . '<div class="rendered">';
+    $page_array[$key]['rendered']['#suffix'] = '</div>';
+  }
+
+  return $page_array;
+}
+
+/**
+ * A '#pre_render' function.
+ *
+ * @param array $element
+ *   The element which will be rendered.
+ *
+ * @return array
+ *   The altered element. In this case we add the #markup.
+ */
+function render_example_cache_pre_render($element) {
+  $element['#markup'] = render_example_cache_expensive();
+
+  // The following line is due to the bug described in
+  // http://DOCUMENTATION_PENDING/node/914792. A #markup element's #pre_render must set
+  // #children because it replaces the default #markup pre_render, which is
+  // backdrop_pre_render_markup().
+  $element['#children'] = $element['#markup'];
+  return $element;
+}
+
+/**
+ * A potentially expensive function.
+ *
+ * @return string
+ *   Some demo text.
+ */
+function render_example_cache_expensive() {
+  $interval = 60;
+  $time_message = t('The current time was %time when this was cached. Updated every %interval seconds', array('%time' => date('r'), '%interval' => $interval));
+  // Uncomment the following line to demonstrate that this function is not
+  // being run when the rendered array is cached.
+  // backdrop_set_message($time_message);
+  return $time_message;
+}
+
+/**
+ * A '#pre_render' function.
+ *
+ * @param array $element
+ *   The element which will be rendered.
+ *
+ * @return array
+ *   The altered element. In this case we add a #prefix to it.
+ */
+function render_example_add_suffix($element) {
+  $element['#suffix'] = '<div style="color:red">' . t('This #suffix was added by a #pre_render') . '</div>';
+
+  // The following line is due to the bug described in
+  // http://DOCUMENTATION_PENDING/node/914792. A #markup element's #pre_render must set
+  // #children because it replaces the default #markup pre_render, which is
+  // backdrop_pre_render_markup().
+  $element['#children'] = $element['#markup'];
+  return $element;
+}
+
+/**
+ * A '#post_render' function to add a little markup onto the end markup.
+ *
+ * @param string $markup
+ *   The rendered element.
+ * @param array $element
+ *   The element which was rendered (for reference)
+ *
+ * @return string
+ *   Markup altered as necessary. In this case we add a little postscript to it.
+ */
+function render_example_add_prefix($markup, $element) {
+  $markup = '<div style="color:blue">This markup was added after rendering by a #post_render</div>' . $markup;
+  return $markup;
+}
+
+/**
+ * A #theme function.
+ *
+ * This #theme function has the responsibility of consolidating/rendering the
+ * children's markup and returning it, where it will be placed in the
+ * element's #children property.
+ */
+function theme_render_example_aggregate($variables) {
+  $output = '';
+  foreach (element_children($variables['element']['child']) as $item) {
+    $output .= $variables['element']['child'][$item][0] . $variables['element']['#separator'];
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function render_example_theme() {
+  $items = array(
+    'render_example_add_div' => array(
+      'render element' => 'element',
+    ),
+    'render_example_add_notes' => array(
+      'render element' => 'element',
+    ),
+    'render_array' => array(
+      'render element' => 'element',
+    ),
+    'render_example_aggregate' => array(
+      'render element' => 'element',
+    ),
+  );
+  return $items;
+}
+
+/**
+ * Wraps a div around the already-rendered #children.
+ */
+function theme_render_example_add_div($variables) {
+  $element = $variables['element'];
+  $output = '<div class="render-example-wrapper-div">';
+  $output .= $element['#children'];
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Wraps a div and add a little text after the rendered #children.
+ */
+function theme_render_example_add_notes($variables) {
+  $element = $variables['element'];
+  $output = '<div class="render-example-notes-wrapper-div">';
+  $output .= $element['#children'];
+  $output .= '<em>' . t('This is a note added by a #theme_wrapper') . '</em>';
+  $output .= '</div>';
+
+  return $output;
+}
+
+/**
+ * Themes the render array (from the demonstration page).
+ */
+function theme_render_array($variables) {
+  $heading = '<div class="render-header">' . $variables['element']['#description'] . '</div>';
+
+  $rendered = '<div class="render-array">' . $heading . $variables['element']['#children'] . '</div>';
+  return $rendered;
+}
+
+/**
+ * @} End of "defgroup render_example".
+ */

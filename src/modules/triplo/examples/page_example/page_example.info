@@ -1,0 +1,10 @@
+name = Page example
+description = An example module showing how to define a page to be displayed to the user at a given URL.
+package = Example modules
+version = BACKDROP_VERSION
+backdrop = 1.x
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

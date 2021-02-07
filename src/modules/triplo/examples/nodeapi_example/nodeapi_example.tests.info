@@ -1,0 +1,10 @@
+[NodeApiExampleTestCase]
+name = Node API example functionality
+description = Demonstrate Node API hooks that allow altering a node.
+group = Example modules
+file = nodeapi_example.test
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

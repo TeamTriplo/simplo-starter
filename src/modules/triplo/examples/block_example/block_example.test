@@ -1,0 +1,118 @@
+<?php
+/**
+ * @file
+ * Test case for testing the block example module.
+ */
+
+/**
+ * Functional tests for the Block Example module.
+ *
+ * @ingroup block_example
+ */
+class BlockExampleTestCase extends BackdropWebTestCase {
+
+  protected $webUser;
+
+  /**
+   * Enable modules and create user with specific permissions.
+   */
+  public function setUp() {
+    parent::setUp('block_example', 'search');
+    // Create user. Search content permission granted for the search block to
+    // be shown.
+    $this->webUser = $this->backdropCreateUser(
+      array(
+        'administer blocks',
+        'search content',
+        'access contextual links',
+        'administer layouts',
+      )
+    );
+  }
+
+  /**
+   * Functional test for our block example.
+   *
+   * Login user, create an example node, and test block functionality through
+   * the admin and user interfaces.
+   */
+  public function testBlockExampleBasic() {
+    // Login the admin user.
+    $this->backdropLogin($this->webUser);
+
+    $this->backdropGet('admin/structure/layouts/manage/default');
+    // Add a block to the sidebar.
+    $this->clickLink(t('Add block'), 3);
+
+    // Find the blocks in the 'Add block' modal.
+    $this->assertRaw(t('Example: configurable text string'), 'Block configurable-string found.');
+    $this->assertRaw(t('Example: subclass block'), 'Block subclass-block found.');
+    $this->assertRaw(t('Example: uppercase this please'), 'Block uppercase-block found.');
+    $this->assertNoRaw(t('Example: Node Context'), 'Block node-context-block not found.');
+
+    // Enable the Configurable text block and verify.
+    $this->clickLink(t('Example: configurable text string'));
+    $this->backdropPost(NULL, array(), t('Add block'));
+
+    // Record the UUID for the newly added block.
+    $last_block = $this->xpath('(//*[contains(@class,:region)]//*[@data-block-id])[last()]', array(
+      ':region' => 'l-sidebar',
+    ));
+    $block_uuid = (string) $last_block[0]['data-block-id'];
+    $block_edit_url = 'admin/structure/layouts/manage/default/configure-block/editor/' . $block_uuid;
+    
+    // Confirm the block exists, and is the right place.
+    $this->assertText('Example: configurable text string');
+    // Save the layout.
+    $this->backdropPost(NULL, array(), t('Save layout'));
+
+    // Verify that block is there.
+    $this->backdropGet('examples/block_example');
+    $this->assertRaw(t('Title of first block (example_configurable_text)'), 'Block configurable text found.');
+    $elements = $this->xpath('//*[contains(@class,:region)]//*[contains(@class,:block)]', array(
+      ':region' => 'l-sidebar',
+      ':block' => 'block-block-example-example-configurable-text',
+    ));
+    $this->assertEqual(count($elements), 1, 'The sample block was found in the sidebar.');
+
+    // Change content of configurable text block.
+    $string = $this->randomName();
+    $string2 = $this->randomName();
+    $edit = array(
+      'block_settings[example_string]' => $string,
+    );
+    $this->backdropPost($block_edit_url, $edit, t('Update block'));
+    $this->backdropPost(NULL, array(), t('Save layout'));
+    
+    // Verify that new content is shown.
+    $this->backdropGet('examples/block_example');
+    $this->assertRaw($string, 'Content of configurable text block successfully verified.');
+
+    // Make sure our example uppercased block is shown as altered by the
+    // hook_block_view_alter().
+    $this->backdropGet('admin/structure/layouts/manage/default');
+    $this->clickLink(t('Add block'), 3);
+    $this->clickLink(t('Example: uppercase this please'));
+    $this->backdropPost(NULL, array(), t('Add block'));
+    $this->backdropPost(NULL, array(), t('Save layout'));
+
+    // Verify that block is there.
+    $this->backdropGet('examples/block_example');
+    $this->assertRaw(t('UPPERCASE THIS PLEASE'), 'Block uppercase text found.');
+
+    // Make sure our example subclass block is shown.
+    $this->backdropGet('admin/structure/layouts/manage/default');
+    $this->clickLink(t('Add block'), 3);
+    $this->clickLink(t('Example: subclass block'));
+    $edit = array(
+      'content[value]' => $string2,
+    );
+    $this->backdropPost(NULL, $edit, t('Add block'));
+    $this->backdropPost(NULL, array(), t('Save layout'));
+
+    // Verify that block is there.
+    $this->backdropGet('examples/block_example');
+    $this->assertRaw(t('The following is the content of the example subclass block'), 'Block subclass header found.');
+    $this->assertRaw($string2, 'Block subclass content found.');
+  }
+}

@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the nodeapi_example module.
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup nodeapi_example
+ */
+function nodeapi_example_schema() {
+  $schema['nodeapi_example'] = array(
+    'description' => 'Stores information of extended content.',
+    'fields' => array(
+      'nid'    => array(
+        'description' => 'Node ID that the rating is applied to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'vid'    => array(
+        'description' => 'Revision ID, as we are tracking rating with node revisions',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rating' => array(
+        'description' => 'The rating of the node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('vid'),
+    'indexes' => array(
+      'nid'   => array('nid'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ *
+ * We need to set a default nodeapi_example_node_type_<contentType> setting of 0
+ * for each available node type.
+ *
+ * We call node_type_get_types() to get a list of all node types.
+ *
+ * @ingroup nodeapi_example
+ */
+function nodeapi_example_install() {
+  $config = config('nodeapi_example.settings');
+  $node_types = array_keys(node_type_get_types());
+  foreach($node_types as $type) {
+    $config->set('nodeapi_example_node_type_' . $type, 0);
+  }
+  $config->save();
+}
+

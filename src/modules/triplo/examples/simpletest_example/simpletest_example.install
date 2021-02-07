@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the simpletest_example module.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Creates a 'simpletest_example' node type.
+ * @ingroup simpletest_example
+ */
+function simpletest_example_install() {
+  $simpletest_example_node_type = array(
+    'type' => 'simpletest_example',
+    'name' => t('Simpletest Example Node Type'),
+    'base' => 'node_content',
+    'description' => t('simpletest_example page node type.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+    'is_new' => TRUE,
+    'settings' => array(
+      'promote_enabled' => FALSE,
+    ),
+  );
+
+  $simpletest_example_node_type = node_type_set_defaults($simpletest_example_node_type);
+  node_type_save($simpletest_example_node_type);
+  node_add_body_field($simpletest_example_node_type);
+}

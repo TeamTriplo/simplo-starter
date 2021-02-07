@@ -1,0 +1,10 @@
+[JsExampleTestCase]
+name = Javascript example functionality
+description = Functional tests for the JavaScript Example module.
+group = Example modules
+file = js_example.test
+
+; Added by Backdrop CMS packaging script on 2017-06-24
+project = examples
+version = 1.x-1.0.1
+timestamp = 1498309295

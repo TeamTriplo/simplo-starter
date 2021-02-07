@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * @file
+ * test file for action_example module.
+ */
+
+/**
+ * Default test case for the action_example module.
+ *
+ * @ingroup action_example
+ */
+class ActionExampleTestCase extends BackdropWebTestCase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp() {
+    parent::setUp('action_example');
+  }
+
+  /**
+   * Test Action Example.
+   *
+   * 1. action_example_basic_action: Configure an action_example_basic_action to
+   *    execute from a form submit function.
+   * 2. action_example_unblock_user_action: Configure a User action to be
+   *    executed from a Views bulk operations form.
+   * 3. action_example_node_unpublish_action: Configure a Node action to be
+   *    executed from a Views bulk operations form.
+   */
+  public function testActionExample() {
+    // Create an administrative user.
+    $admin_user = $this->backdropCreateUser(
+      array(
+        'access comments',
+        'access content',
+        'post comments',
+        'skip comment approval',
+        'create post content',
+        'access user profiles',
+        'administer users',
+        'administer account settings',
+        'view own unpublished content',
+      )
+    );
+    $this->backdropLogin($admin_user);
+
+    // 1. Submit the simple action form and see if it puts the message on the
+    // screen.
+    $this->backdropPost('examples/action_example/basic', array(), t('Execute'));
+
+    $this->assertText(t('action_example_basic_action fired'));
+
+    // 2. Unblock user from a Views list.
+    $normal_user = $this->backdropCreateUser();
+    // Create blocked user.
+    $normal_user->status = 0;
+    $normal_user->save();
+    $normal_user = user_load($normal_user->uid, TRUE);
+    $this->assertFalse($normal_user->status, 'Normal user status has been set to blocked');
+
+    $edit = array(
+      'bulk_form[0]' => 1,
+      'action' => 'action_example_unblock_user_action',
+    );
+    $this->backdropGet('examples/ajax_example/actions-example-user-list');
+    $this->backdropPost('examples/ajax_example/actions-example-user-list', $edit, t('Execute'));
+    $this->assertRaw(t('Unblocked user %name', array('%name' => $normal_user->name)));
+
+    $this->backdropGet("user/$normal_user->uid");
+    $normal_user = user_load($normal_user->uid, TRUE);
+    $this->assertTrue($normal_user->status, 'Normal user status has been set to unblocked');
+
+    // 3. Unpublish a node from a Views list.
+    $node = $this->backdropCreateNode(array(
+      'type' => 'page',
+      'uid' => $admin_user->uid,
+    ));
+    $edit = array(
+      'bulk_form[2]' => 1,
+      'action' => 'action_example_node_unpublish_action',
+    );
+    $this->backdropPost('examples/ajax_example/actions-example-node-list', $edit, t('Execute'));
+    $this->assertRaw(t('Set Page %title unpublished', array('%title' => $node->title)));
+  }
+}
