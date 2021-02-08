@@ -57,7 +57,7 @@ function update_crowdfunding_offer(&$offer, $issue){
     $teaser = $issue['page']['teaser'];
     // Get specific crowdfunding offer node id to be updated
     $nid = $offer->nid;
-    $node = node_load($nid);                                               
+    $node = node_load($nid);                               
     $node->language = LANGUAGE_NONE;                                               
     $node->uid = 1;                                                                
     $node->status = 1;                                                             
@@ -70,6 +70,7 @@ function update_crowdfunding_offer(&$offer, $issue){
     $node->field_forum_link['und'][0]['value'] = $forum_link;
     $node->field_issue_link['und'][0]['value'] = $issue_link;
     $node->field_portal_link['und'][0]['value'] = $portal_link;
+    $node->field_thumbnail_link['und'][0]['title'] = $title;
     $node->field_thumbnail_link['und'][0]['url'] = $thumbnail_link;
     $node->field_type['und'][0]['value'] = $type;
     $node->field_rule['und'][0]['value'] = $rule;
@@ -129,4 +130,17 @@ function crowdfunding_campaign_theme_registry_alter(&$theme_registry) {
       $theme_registry[$key]['type'] = 'module';
     }
   }
+}
+
+/**
+ * Implements hook_form_alter()
+ */
+
+function crowdfunding_campaign_form_alter(&$form, &$form_state, $form_id) {
+  // FIXIT
+  if ($form_id == 'crowdfunding_offer_node_form'){
+    $form['#submit'][] = 'crowdfunding_campaign_form_submit';
+    //array_unshift($form['#submit'], 'crowdfunding_campaign_form_submit');
+  }
+  //print_r($form);exit;
 }
