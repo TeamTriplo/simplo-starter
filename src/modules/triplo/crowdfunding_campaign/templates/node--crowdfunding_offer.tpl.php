@@ -86,6 +86,13 @@
 ?>
 <article id="node-<?php print $node->nid; ?>" class="<?php print implode(' ', $classes); ?> clearfix"<?php print backdrop_attributes($attributes); ?>>
 
+  <div class="hero_image_wrapper">
+    <?php print render($content['field_hero_image']); ?>
+    <div class="hero_page_title">
+      <div class="container"></div>
+    </div>
+  </div>
+
   <?php print render($title_prefix); ?>
   <?php if (!$page && !empty($title)): ?>
     <h2><a href="<?php print $node_url; ?>" rel="bookmark"><?php print $title; ?></a></h2>

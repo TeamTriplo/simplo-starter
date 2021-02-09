@@ -5,3 +5,5 @@ package = Triplo
 backdrop = 1.x
 
 stylesheets[all][] = css/crowdfunding.css
+
+scripts[] = js/crowdfunding.js
