@@ -57,7 +57,7 @@ function update_crowdfunding_offer(&$offer, $issue){
     $teaser = $issue['page']['teaser'];
     // Get specific crowdfunding offer node id to be updated
     $nid = $offer->nid;
-    $node = node_load($nid);                                               
+    $node = node_load($nid);                               
     $node->language = LANGUAGE_NONE;                                               
     $node->uid = 1;                                                                
     $node->status = 1;                                                             
@@ -70,6 +70,7 @@ function update_crowdfunding_offer(&$offer, $issue){
     $node->field_forum_link['und'][0]['value'] = $forum_link;
     $node->field_issue_link['und'][0]['value'] = $issue_link;
     $node->field_portal_link['und'][0]['value'] = $portal_link;
+    $node->field_thumbnail_link['und'][0]['title'] = $title;
     $node->field_thumbnail_link['und'][0]['url'] = $thumbnail_link;
     $node->field_type['und'][0]['value'] = $type;
     $node->field_rule['und'][0]['value'] = $rule;
@@ -88,10 +89,12 @@ function update_crowdfunding_offer(&$offer, $issue){
     $node->field_caveat_warning['und'][0]['value'] = base64_decode($caveat_warning);
     $node->field_teaser['und'][0]['value'] = base64_decode($teaser);
     $node->field_accredited['und'][0]['value'] = $accredited;
-    $node->field_reviewed['und'][0]['value'] = $reviewed;                                                  
+    $node->field_reviewed['und'][0]['value'] = $reviewed;      
+
     field_attach_presave('node', $node);
     field_attach_update('node', $node);
     entity_get_controller('node')->resetCache(array($node->nid));
+                                        
   }
 }
 
@@ -129,4 +132,78 @@ function crowdfunding_campaign_theme_registry_alter(&$theme_registry) {
       $theme_registry[$key]['type'] = 'module';
     }
   }
+}
+
+/**
+ * Implements hook_node_presave()
+ *  Assign API data to the node we are going to save
+ */
+
+function crowdfunding_campaign_node_presave(Node $node) {
+  if($node->type == 'crowdfunding_offer' && empty($node->nid)){
+    if (!empty($node->field_sppx_uuid)){
+      $sppx_uuid = $node->field_sppx_uuid['und'][0]['value'];
+      $uri = "https://test.sppx.io/api/v0/issue/".$sppx_uuid;
+      $response = backdrop_http_request($uri);
+      if ($response->data){
+        $data = json_decode($response->data, TRUE);
+        $issue = $data['issue'];
+        if (!empty($issue)){
+          $title = $issue['name'];
+          $id = $issue['id'];
+          $uuid = $issue['uuid'];
+          $forum_link = $issue['links']['forum'];
+          $issue_link = $issue['links']['website'];
+          $portal_link = $issue['links']['portal'];
+          $thumbnail_link =  $issue['media']['thumb'];
+          $type = $issue['raise']['type'];
+          $rule = $issue['raise']['rule'];
+          $raise_minimum = $issue['raise']['minimum'];
+          $raise_maximum = $issue['raise']['maximum'];
+          $raise_target = $issue['raise']['target'];
+          $raised = $issue['raise']['raised'];
+          $invest = $issue['raise']['invest'];
+          $lotsize = $issue['raise']['lotsize'];
+          $request = $issue['raise']['request'];
+          $status = $issue['raise']['status'];
+          $accredited = $issue['raise']['accredited'];
+          $reviewed = $issue['raise']['reviewed'];
+          $date_start = $issue['dates']['start'];
+          $date_end = $issue['dates']['end'];
+          $date_target = $issue['dates']['target'];
+          $caveat_copyright = $issue['caveat']['copyright'];
+          $caveat_warning = $issue['caveat']['warning'];
+          $teaser = $issue['page']['teaser'];
+          // Update Field data 
+          $node->field_issue_name['und'][0]['value'] = $title;
+          $node->field_sppx_id['und'][0]['value'] = $id;
+          $node->field_sppx_uuid['und'][0]['value'] = $uuid;
+          $node->field_forum_link['und'][0]['value'] = $forum_link;
+          $node->field_issue_link['und'][0]['value'] = $issue_link;
+          $node->field_portal_link['und'][0]['value'] = $portal_link;
+          $node->field_thumbnail_link['und'][0]['title'] = $title;
+          $node->field_thumbnail_link['und'][0]['url'] = $thumbnail_link;
+          $node->field_type['und'][0]['value'] = $type;
+          $node->field_rule['und'][0]['value'] = $rule;
+          $node->field_raise_minimum['und'][0]['value'] = $raise_minimum;
+          $node->field_raise_maximum['und'][0]['value'] = $raise_maximum;
+          $node->field_raise_target['und'][0]['value'] = $raise_target;
+          $node->field_raised['und'][0]['value'] = $raised;
+          $node->field_invest['und'][0]['value'] = $invest;
+          $node->field_lotsize['und'][0]['value'] = $lotsize;
+          $node->field_request['und'][0]['value'] = $request;
+          $node->field_status['und'][0]['value'] = $status;
+          $node->field_start_date['und'][0]['value'] = $date_start; //date('Y-m-d h:i:s', strtotime($date_start));
+          $node->field_end_date['und'][0]['value'] = $date_end;//date('Y-m-d h:i:s', strtotime($date_end));
+          $node->field_target_date['und'][0]['value'] = $date_target;//date('Y-m-d h:i:s', strtotime($date_target));
+          $node->field_caveat_copyright['und'][0]['value'] = base64_decode($caveat_copyright);
+          $node->field_caveat_warning['und'][0]['value'] = base64_decode($caveat_warning);
+          $node->field_teaser['und'][0]['value'] = base64_decode($teaser);
+          $node->field_accredited['und'][0]['value'] = $accredited;
+          $node->field_reviewed['und'][0]['value'] = $reviewed; 
+        }
+      }
+    }
+  }
+
 }
