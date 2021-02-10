@@ -1,9 +1,16 @@
+.node-type-crowdfunding-offer .l-header {
+	margin: 0;
+}
+.node-type-crowdfunding-offer .node-crowdfunding-offer .hero_image_wrapper {
+	display: none;
+}
 .hero_image_wrapper {
+	border-bottom: 10px solid #000;
 	line-height: 0;
 	position: relative;
 }
 .hero_image_wrapper:after {
-	background: rgba(0, 0, 0, 0.5);
+	background: rgba(0, 0, 0, 0.2);
 	bottom: 0;
 	content: "";
 	left: 0;
@@ -12,9 +19,13 @@
 	top: 0;
 }
 .hero_image_wrapper img {
+	height: 300px;
+	object-fit: cover;
+	object-position: 50% 50%;
 	width: 100%;
 }
 .hero_image_wrapper .hero_page_title {
+	font-weight: bold;
 	padding: 50px 0 15px;
 	position: absolute;
 	top: 0;
@@ -34,9 +45,13 @@
 
 .crowdfunding {
 	display: grid;
-	grid-template-columns: 66% 34%;
+	grid-template-columns: 60% 40%;
 	align-items: start;
 }
+.crowdfunding .label {
+	font-weight: 900;
+}
+
 .crowdfunding .leftside {
 	padding-right: 30px;
 }
@@ -44,23 +59,58 @@
 	margin-top: 0;
 }
 .crowdfunding .rightside {
-    background-color: #F1F1F1;
-	border: 1px solid rgba(0,0,0,1);
-    border-radius: 4px;
-	padding: 15px;
+	border: 1px solid #3F3F3F;
+	padding: 0 15px 15px;
+}
+.crowdfunding .rightside .rightside_top {
+	background: #3F3F3F;
+	color: #FFFFFF;
 	display: grid;
+	font-size: 14px;
 	grid-template-columns: 50% 50%;
+	line-height: 26px;
+	margin-bottom: 15px;
+	padding: 0 5px;
+	width: 100%;
+}
+.crowdfunding .rightside .rightside_top .item > div {
+	display: inline-block;
+}
+
+.crowdfunding .block_item {
+	margin: 0 0 15px;
+}
+.crowdfunding .block_item .block_item_title {
+	font-size: 18px;
+	font-weight: bold;
+}
+.crowdfunding .block_item .block_item_inner {
+	background-color: #F1F1F1;
+	border: 1px solid #DDDDDD;
+	display: grid;
+	font-size: 12px;
 	height: auto;
-} 
-
-.crowdfunding .label {
-	font-weight: 900;
+	padding: 15px;
 }
-
-.crowdfunding .break {
-	margin-bottom: 30px;
+.crowdfunding .block_item .block_item_inner.three_col {
+	grid-template-columns: 33.333333% 33.333333% 33.333333%;
 }
-
-.crowdfunding div {
-	height: 100%;
+.crowdfunding .block_item .block_item_inner.two_col {
+	grid-template-columns: 50% 50% ;
+}
+.crowdfunding .forum a {
+	background: #F1F1F1;
+	border: 2px solid #000;
+	color: #000;
+	display: block;
+	font-weight: bold;
+	padding: 2px 5px;
+	text-align: center;
+	text-decoration: none;
+	text-transform: uppercase;
+	transition: 0.5s;
+}
+.crowdfunding .forum a:hover {
+	background: #3F3F3F;
+	color: #FFFFFF;
 }

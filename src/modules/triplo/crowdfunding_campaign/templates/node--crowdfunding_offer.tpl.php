@@ -122,21 +122,74 @@
       </section>
 
       <section class="rightside">
-        <div class="label"> ID:</div><div> $<?php print render($content['field_sppx_id'][0]['#markup']); ?> </div>
-        <div class="label break"> Type:</div><div> $<?php print render($content['field_type'][0]['#markup']); ?> </div>
+        <div class="row">
+          <div class="rightside_top">
+            <div class="item">
+              <div class="label"> ID:</div>
+              <div> $<?php print render($content['field_sppx_id'][0]['#markup']); ?> </div>
+            </div>
 
-        <div class="label"> Minimum Raise:</div><div> $<?php print render($content['field_raise_minimum'][0]['#markup']); ?> </div>
-        <div class="label"> Maximum Raise:</div><div> $<?php print render($content['field_raise_maximum'][0]['#markup']); ?> </div>
-        <div class="label break"> Target Raise:</div><div> $<?php print render($content['field_raise_target'][0]['#markup']); ?> </div>
+            <div class="item">
+              <div class="label"> Type:</div>
+              <div> $<?php print render($content['field_type'][0]['#markup']); ?> </div>
+            </div>
+          </div>
+        </div>
+        <div class="rightside_inner">
 
-        <div class="label"> Raised so far:</div><div> $<?php print render($content['field_raised'][0]['#markup']); ?> </div>
-        <div class="label"> Lotsize:</div><div> <?php print render($content['field_lotsize'][0]['#markup']); ?> </div>
-        <div class="label break"> Status:</div><div> <?php print render($content['field_status'][0]['#markup']); ?> </div>
+          <div class="block_item">
+            <div class="block_item_title">Raise</div>
+            <div class="block_item_inner three_col">
+              <div class="item">
+                <div class="label"> Minimum Raise:</div>
+                <div> $<?php print render($content['field_raise_minimum'][0]['#markup']); ?> </div>
+              </div>
+              <div class="item">
+                <div class="label"> Maximum Raise:</div>
+                <div> $<?php print render($content['field_raise_maximum'][0]['#markup']); ?> </div>
+              </div>
+              <div class="item">
+                <div class="label"> Target Raise:</div>
+                <div> $<?php print render($content['field_raise_target'][0]['#markup']); ?> </div>
+              </div>
+            </div>
+          </div>
 
-        <div class="label"> Start Date:</div><div><?php print render($content['field_start_date'][0]['#markup']); ?> </div>
-        <div class="label"> End Date:</div><div><?php print render($content['field_end_date'][0]['#markup']); ?> </div>
+          <div class="block_item">
+            <div class="block_item_title">Raised so far</div>
+            <div class="block_item_inner three_col">
+              <div class="item">
+                <div class="label"> Raised so far:</div>
+                <div> $<?php print render($content['field_raised'][0]['#markup']); ?> </div>
+              </div>
+              <div class="item">
+                <div class="label"> Lotsize:</div>
+                <div> <?php print render($content['field_lotsize'][0]['#markup']); ?> </div>
+              </div>
+              <div class="item">
+                <div class="label"> Status:</div>
+                <div> <?php print render($content['field_status'][0]['#markup']); ?> </div>
+              </div>
+            </div>
+          </div>
 
-        <a class="label" href="<?php print render($content['field_forum_link']['#items'][0]['display_url']); ?>"> Forum</a><div> </div>
+          <div class="block_item">
+            <div class="block_item_title">Date</div>
+            <div class="block_item_inner two_col">
+              <div class="item">
+                <div class="label"> Start Date:</div>
+                <div><?php print render($content['field_start_date'][0]['#markup']); ?> </div>
+              </div>
+              <div class="item">
+                <div class="label"> End Date:</div>
+                <div><?php print render($content['field_end_date'][0]['#markup']); ?> </div>
+              </div>
+            </div>
+          </div>
+          <div class="forum">
+            <a href="<?php print render($content['field_forum_link']['#items'][0]['display_url']); ?>"> Forum</a>
+          </div>
+        </div>
       </section>
   </div>
   
