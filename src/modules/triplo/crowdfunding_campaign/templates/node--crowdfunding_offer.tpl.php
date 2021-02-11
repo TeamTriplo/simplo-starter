@@ -112,11 +112,11 @@
       hide($content['links']);
     ?>
       <section class="leftside">
-        <p><img src="<?php print render($content['field_thumbnail_link']['#items'][0]['url']); ?>"></p>
+        <p class="campaign-thumbnail"><img src="<?php print render($content['field_thumbnail_link']['#items'][0]['url']); ?>"></p>
         <?php print render($content['body'][0]['#markup']); ?>
-        <div> <?php print render($content['field_teaser'][0]['#markup']); ?> </div>
-        <div> <?php print render($content['field_caveat_warning'][0]['#markup']); ?> </div>
-        <div> <?php print render($content['field_caveat_copyright'][0]['#markup']); ?></div>
+        <div class="campaign-teaser"> <?php print render($content['field_teaser'][0]['#markup']); ?> </div>
+        <div class="campaign-caveat"> <?php print render($content['field_caveat_warning'][0]['#markup']); ?> </div>
+        <div class="campaign-copyright"> <?php print render($content['field_caveat_copyright'][0]['#markup']); ?></div>
       </section>
 
       <section class="rightside">
@@ -136,18 +136,18 @@
         <div class="rightside_inner">
 
           <div class="block_item">
-            <div class="block_item_title">Raise</div>
+            <div class="block_item_title campaign_raise">Raise</div>
             <div class="block_item_inner three_col">
               <div class="item">
-                <div class="label"> Minimum Raise:</div>
+                <div class="label campaign-minimum-raise"> Minimum Raise:</div>
                 <div> $<?php print render($content['field_raise_minimum'][0]['#markup']); ?> </div>
               </div>
               <div class="item">
-                <div class="label"> Maximum Raise:</div>
+                <div class="label campaign-maximum-raise"> Maximum Raise:</div>
                 <div> $<?php print render($content['field_raise_maximum'][0]['#markup']); ?> </div>
               </div>
               <div class="item">
-                <div class="label"> Target Raise:</div>
+                <div class="label campaign-target-raise"> Target Raise:</div>
                 <div> $<?php print render($content['field_raise_target'][0]['#markup']); ?> </div>
               </div>
             </div>
@@ -157,28 +157,28 @@
             <div class="block_item_title">Raised so far</div>
             <div class="block_item_inner three_col">
               <div class="item">
-                <div class="label"> Raised so far:</div>
+                <div class="label campaign-raised"> Raised so far:</div>
                 <div> $<?php print render($content['field_raised'][0]['#markup']); ?> </div>
               </div>
               <div class="item">
-                <div class="label"> Lotsize:</div>
+                <div class="label campaign-lotsize"> Lotsize:</div>
                 <div> <?php print render($content['field_lotsize'][0]['#markup']); ?> </div>
               </div>
               <div class="item">
-                <div class="label"> Status:</div>
+                <div class="label campaign-status"> Status:</div>
                 <div> <?php print render($content['field_status'][0]['#markup']); ?> </div>
               </div>
             </div>
           </div>
 
           <div class="block_item">
-            <div class="block_item_title">Date</div>
+            <div class="block_item_title campaign-date">Date</div>
             <div class="block_item_inner two_col">
-              <div class="item">
+              <div class="item campaign-start-date">
                 <div class="label"> Start Date:</div>
                 <div><?php print render($content['field_start_date'][0]['#markup']); ?> </div>
               </div>
-              <div class="item">
+              <div class="item campaign-end-date">
                 <div class="label"> End Date:</div>
                 <div><?php print render($content['field_end_date'][0]['#markup']); ?> </div>
               </div>
