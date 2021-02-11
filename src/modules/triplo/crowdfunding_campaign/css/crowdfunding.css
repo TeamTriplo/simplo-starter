@@ -114,3 +114,12 @@
 	background: #3F3F3F;
 	color: #FFFFFF;
 }
+.campaign-caveat {
+  border: 1px solid black;
+  padding: 15px 15px 0 15px;
+  border-radius: 7px;
+  background: #F1F1F1;
+  margin-bottom: 20px;
+  font-style: italic;
+  font-size: 80%;
+}
