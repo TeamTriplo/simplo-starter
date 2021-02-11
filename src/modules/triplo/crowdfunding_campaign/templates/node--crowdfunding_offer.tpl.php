@@ -118,77 +118,81 @@
         <div class="campaign-caveat"> <?php print render($content['field_caveat_warning'][0]['#markup']); ?> </div>
         <div class="campaign-copyright"> <?php print render($content['field_caveat_copyright'][0]['#markup']); ?></div>
       </section>
-
-      <section class="rightside">
-        <div class="row">
-          <div class="rightside_top">
-            <div class="item">
-              <div class="label"> ID:</div>
-              <div> $<?php print render($content['field_sppx_id'][0]['#markup']); ?> </div>
-            </div>
-
-            <div class="item">
-              <div class="label"> Type:</div>
-              <div> $<?php print render($content['field_type'][0]['#markup']); ?> </div>
-            </div>
-          </div>
-        </div>
-        <div class="rightside_inner">
-
-          <div class="block_item">
-            <div class="block_item_title campaign_raise">Raise</div>
-            <div class="block_item_inner three_col">
+      <?php 
+        $visibility = $node->field_visibility['und'][0]['value'];
+      ?>
+      <?php if ($visibility == 'open' ) :?>
+        <section class="rightside">
+          <div class="row">
+            <div class="rightside_top">
               <div class="item">
-                <div class="label campaign-minimum-raise"> Minimum Raise:</div>
-                <div> $<?php print render($content['field_raise_minimum'][0]['#markup']); ?> </div>
+                <div class="label"> ID:</div>
+                <div> $<?php print render($content['field_sppx_id'][0]['#markup']); ?> </div>
               </div>
+
               <div class="item">
-                <div class="label campaign-maximum-raise"> Maximum Raise:</div>
-                <div> $<?php print render($content['field_raise_maximum'][0]['#markup']); ?> </div>
-              </div>
-              <div class="item">
-                <div class="label campaign-target-raise"> Target Raise:</div>
-                <div> $<?php print render($content['field_raise_target'][0]['#markup']); ?> </div>
+                <div class="label"> Type:</div>
+                <div> $<?php print render($content['field_type'][0]['#markup']); ?> </div>
               </div>
             </div>
           </div>
+          <div class="rightside_inner">
 
-          <div class="block_item">
-            <div class="block_item_title">Raised so far</div>
-            <div class="block_item_inner three_col">
-              <div class="item">
-                <div class="label campaign-raised"> Raised so far:</div>
-                <div> $<?php print render($content['field_raised'][0]['#markup']); ?> </div>
-              </div>
-              <div class="item">
-                <div class="label campaign-lotsize"> Lotsize:</div>
-                <div> <?php print render($content['field_lotsize'][0]['#markup']); ?> </div>
-              </div>
-              <div class="item">
-                <div class="label campaign-status"> Status:</div>
-                <div> <?php print render($content['field_status'][0]['#markup']); ?> </div>
+            <div class="block_item">
+              <div class="block_item_title campaign_raise">Raise</div>
+              <div class="block_item_inner three_col">
+                <div class="item">
+                  <div class="label campaign-minimum-raise"> Minimum Raise:</div>
+                  <div> $<?php print render($content['field_raise_minimum'][0]['#markup']); ?> </div>
+                </div>
+                <div class="item">
+                  <div class="label campaign-maximum-raise"> Maximum Raise:</div>
+                  <div> $<?php print render($content['field_raise_maximum'][0]['#markup']); ?> </div>
+                </div>
+                <div class="item">
+                  <div class="label campaign-target-raise"> Target Raise:</div>
+                  <div> $<?php print render($content['field_raise_target'][0]['#markup']); ?> </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="block_item">
-            <div class="block_item_title campaign-date">Date</div>
-            <div class="block_item_inner two_col">
-              <div class="item campaign-start-date">
-                <div class="label"> Start Date:</div>
-                <div><?php print render($content['field_start_date'][0]['#markup']); ?> </div>
-              </div>
-              <div class="item campaign-end-date">
-                <div class="label"> End Date:</div>
-                <div><?php print render($content['field_end_date'][0]['#markup']); ?> </div>
+            <div class="block_item">
+              <div class="block_item_title">Raised so far</div>
+              <div class="block_item_inner three_col">
+                <div class="item">
+                  <div class="label campaign-raised"> Raised so far:</div>
+                  <div> $<?php print render($content['field_raised'][0]['#markup']); ?> </div>
+                </div>
+                <div class="item">
+                  <div class="label campaign-lotsize"> Lotsize:</div>
+                  <div> <?php print render($content['field_lotsize'][0]['#markup']); ?> </div>
+                </div>
+                <div class="item">
+                  <div class="label campaign-status"> Status:</div>
+                  <div> <?php print render($content['field_status'][0]['#markup']); ?> </div>
+                </div>
               </div>
             </div>
+
+            <div class="block_item">
+              <div class="block_item_title campaign-date">Date</div>
+              <div class="block_item_inner two_col">
+                <div class="item campaign-start-date">
+                  <div class="label"> Start Date:</div>
+                  <div><?php print render($content['field_start_date'][0]['#markup']); ?> </div>
+                </div>
+                <div class="item campaign-end-date">
+                  <div class="label"> End Date:</div>
+                  <div><?php print render($content['field_end_date'][0]['#markup']); ?> </div>
+                </div>
+              </div>
+            </div>
+            <div class="forum">
+              <a href="<?php print render($content['field_forum_link']['#items'][0]['display_url']); ?>"> Forum</a>
+            </div>
           </div>
-          <div class="forum">
-            <a href="<?php print render($content['field_forum_link']['#items'][0]['display_url']); ?>"> Forum</a>
-          </div>
-        </div>
-      </section>
+        </section>
+      <?php endif;?>
   </div>
   
   <?php print render($content['links']); ?>

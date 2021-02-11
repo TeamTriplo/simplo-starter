@@ -9,9 +9,9 @@
     
       $type = array(
           'type' => 'crowdfunding_offer',
-          'name' => st('Crowdfunding Offer'),
+          'name' => st('Campaign'),
           'base' => 'node_content',
-          'description' => st("Crowdfunding offer and its related fields"),
+          'description' => st("Crowdfunding campaign and its related fields"),
           'settings' => array(
               'status_default' => NODE_PUBLISHED,
               'promote_enabled' => FALSE,
@@ -917,6 +917,36 @@
           ),
         ),
         );
+      field_create_instance($instance);
+
+      // Field Visibility
+      $field = array(
+        'field_name' => 'field_visibility',
+        'type' => 'text',
+        'cardinality' => '1',
+      );
+      field_create_field($field);
+
+      $instance = array(
+          'field_name' => 'field_visibility',
+          'entity_type' => 'node',
+          'label' => 'Visibility',
+          'bundle' => 'crowdfunding_offer',
+          'description' => st('Visibility of the Campaign'),
+          'widget' => array(
+              'type' => 'text_textfield'
+          ),
+          'display' => array(
+              'default' => array(
+                  'label' => st('Visibility'),
+                  'type' => 'text'
+              )
+          ),
+          'settings' => array(
+              'title' => 'none',
+              'title_value' => '',
+          )
+      );
       field_create_instance($instance);
     }
 

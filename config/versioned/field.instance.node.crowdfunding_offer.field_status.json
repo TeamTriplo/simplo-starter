@@ -1,0 +1,35 @@
+{
+    "_config_name": "field.instance.node.crowdfunding_offer.field_status",
+    "field_name": "field_status",
+    "entity_type": "node",
+    "label": "Status",
+    "bundle": "crowdfunding_offer",
+    "description": "Status",
+    "settings": {
+        "title": "none",
+        "title_value": "",
+        "text_processing": 0,
+        "user_register_form": false
+    },
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "widget": {
+        "type": "text_textfield",
+        "settings": {
+            "size": 60
+        },
+        "weight": "12",
+        "module": "text"
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "text_default",
+            "settings": [],
+            "module": "text",
+            "weight": 22
+        }
+    }
+}

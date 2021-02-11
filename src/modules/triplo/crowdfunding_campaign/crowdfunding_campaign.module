@@ -33,6 +33,7 @@ function update_crowdfunding_offer(&$offer, $issue){
     $title = $issue['name'];
     $id = $issue['id'];
     $uuid = $issue['uuid'];
+    $visibility = $issue['visibility'];
     $forum_link = $issue['links']['forum'];
     $issue_link = $issue['links']['website'];
     $portal_link = $issue['links']['portal'];
@@ -89,7 +90,8 @@ function update_crowdfunding_offer(&$offer, $issue){
     $node->field_caveat_warning['und'][0]['value'] = base64_decode($caveat_warning);
     $node->field_teaser['und'][0]['value'] = base64_decode($teaser);
     $node->field_accredited['und'][0]['value'] = $accredited;
-    $node->field_reviewed['und'][0]['value'] = $reviewed;      
+    $node->field_reviewed['und'][0]['value'] = $reviewed;     
+    $node->field_visibility['und'][0]['value'] = $visibility;     
 
     field_attach_presave('node', $node);
     field_attach_update('node', $node);
@@ -152,6 +154,7 @@ function crowdfunding_campaign_node_presave(Node $node) {
           $title = $issue['name'];
           $id = $issue['id'];
           $uuid = $issue['uuid'];
+          $visibility = $issue['visibility'];
           $forum_link = $issue['links']['forum'];
           $issue_link = $issue['links']['website'];
           $portal_link = $issue['links']['portal'];
@@ -201,6 +204,7 @@ function crowdfunding_campaign_node_presave(Node $node) {
           $node->field_teaser['und'][0]['value'] = base64_decode($teaser);
           $node->field_accredited['und'][0]['value'] = $accredited;
           $node->field_reviewed['und'][0]['value'] = $reviewed; 
+          $node->field_visibility['und'][0]['value'] = $visibility;  
         }
       }
     }

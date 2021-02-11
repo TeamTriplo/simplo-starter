@@ -1,0 +1,57 @@
+{
+    "_config_name": "field.instance.node.crowdfunding_offer.field_portal_link",
+    "field_name": "field_portal_link",
+    "entity_type": "node",
+    "label": "Portal Link",
+    "bundle": "crowdfunding_offer",
+    "description": "Portal Link",
+    "widget": {
+        "weight": "0",
+        "type": "link_field",
+        "module": "link",
+        "active": 0,
+        "settings": []
+    },
+    "display": {
+        "default": {
+            "type": "link_default",
+            "weight": 10,
+            "label": "inline",
+            "settings": [],
+            "module": "link"
+        },
+        "teaser": {
+            "type": "link_default",
+            "weight": 10,
+            "label": "inline",
+            "settings": [],
+            "module": "link"
+        }
+    },
+    "settings": {
+        "title": "none",
+        "title_value": "",
+        "attributes": {
+            "target": "default",
+            "class": "",
+            "configurable_class": 0,
+            "rel": "",
+            "title": "",
+            "configurable_title": 0
+        },
+        "url": 0,
+        "title_label_use_field_label": false,
+        "title_maxlength": 128,
+        "enable_tokens": 0,
+        "display": {
+            "url_cutoff": 80
+        },
+        "rel_remove": "default",
+        "validate_url": 1,
+        "user_register_form": false
+    },
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null
+}

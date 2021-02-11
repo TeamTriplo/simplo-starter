@@ -1,0 +1,19 @@
+{
+    "_config_name": "field.field.field_forum_link",
+    "field_name": "field_forum_link",
+    "type": "link_field",
+    "cardinality": "1",
+    "module": "link",
+    "active": 1,
+    "locked": 0,
+    "translatable": 0,
+    "deleted": 0,
+    "entity_types": [],
+    "settings": [],
+    "storage": {
+        "type": "field_sql_storage",
+        "settings": [],
+        "module": "field_sql_storage",
+        "active": 1
+    }
+}
