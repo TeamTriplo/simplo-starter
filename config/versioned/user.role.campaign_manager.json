@@ -1,0 +1,6 @@
+{
+    "_config_name": "user.role.campaign_manager",
+    "name": "campaign_manager",
+    "label": "Campaign Manager",
+    "weight": 6
+}

@@ -5,7 +5,16 @@
      * Implement hook_install()
     */
     function crowdfunding_campaign_install() {
-        // Create a vocabulary and some terms
+      // Create Campaign Manager Role
+
+      $roles = user_roles(TRUE);
+      if (!in_array('campaign_manager', $roles)) {
+        $role_campaign_manager = new stdClass();
+        $role_campaign_manager->label = 'Campaign Manager';
+        $role_campaign_manager->name = 'campaign_manager';
+        user_role_save($role_campaign_manager);
+      }
+      // Create a Content type Campaign (crowdfunding_offer)
     
       $type = array(
           'type' => 'crowdfunding_offer',
