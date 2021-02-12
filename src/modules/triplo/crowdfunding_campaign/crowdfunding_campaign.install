@@ -8,7 +8,7 @@
 
       // Create a Content type Campaign (crowdfunding_offer)
       $type = array(
-          'type' => 'crowdfunding_offer',
+          'type' => 'campaign',
           'name' => st('Campaign'),
           'base' => 'node_content',
           'description' => st("Crowdfunding campaign and its related fields"),

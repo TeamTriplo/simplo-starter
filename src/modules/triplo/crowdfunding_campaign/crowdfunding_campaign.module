@@ -106,7 +106,7 @@ function update_crowdfunding_offer(&$offer, $issue){
 function get_crowdfunding_offer_list(){
   $query = new EntityFieldQuery();
   $result = $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'crowdfunding_offer')
+    ->entityCondition('bundle', 'campaign')
     ->execute();
   $nodes = node_load_multiple(array_keys($result['node']));
   return $nodes;
@@ -142,7 +142,7 @@ function crowdfunding_campaign_theme_registry_alter(&$theme_registry) {
  */
 
 function crowdfunding_campaign_node_presave(Node $node) {
-  if($node->type == 'crowdfunding_offer' && empty($node->nid)){
+  if($node->type == 'campaign' && empty($node->nid)){
     if (!empty($node->field_sppx_uuid)){
       $sppx_uuid = $node->field_sppx_uuid['und'][0]['value'];
       $uri = "https://test.sppx.io/api/v0/issue/".$sppx_uuid;
