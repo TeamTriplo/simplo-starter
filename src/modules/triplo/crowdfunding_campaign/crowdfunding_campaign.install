@@ -5,17 +5,8 @@
      * Implement hook_install()
     */
     function crowdfunding_campaign_install() {
-      // Create Campaign Manager Role
 
-      $roles = user_roles(TRUE);
-      if (!in_array('campaign_manager', $roles)) {
-        $role_campaign_manager = new stdClass();
-        $role_campaign_manager->label = 'Campaign Manager';
-        $role_campaign_manager->name = 'campaign_manager';
-        user_role_save($role_campaign_manager);
-      }
       // Create a Content type Campaign (crowdfunding_offer)
-    
       $type = array(
           'type' => 'crowdfunding_offer',
           'name' => st('Campaign'),
@@ -957,7 +948,59 @@
           )
       );
       field_create_instance($instance);
+
+      // Create Campaign Manager Role
+
+      $campaign_manager_role = new stdClass();
+      $campaign_manager_role->name = 'campaign_manager';
+      $campaign_manager_role->label = st('Campaign Manager');
+      $campaign_manager_role->weight = 2;
+      user_role_save($campaign_manager_role);
+
+      $campaign_manager_permissions = array(
+        'view own unpublished content',
+        'view any unpublished content',
+        'view revisions',
+        'revert revisions',
+        'delete revisions',
+        'create page content',
+        'edit own page content',
+        'edit any page content',
+        'delete own page content',
+        'delete any page content',
+        'create post content',
+        'edit own post content',
+        'edit any post content',
+        'delete own post content',
+        'delete any post content',
+        'create crowdfunding_offer content',
+        'edit own crowdfunding_offer content',
+        'edit any crowdfunding_offer content',
+        'delete own crowdfunding_offer content',
+        'delete any crowdfunding_offer content',
+        'access dashboard',
+        'view the administration theme',
+        'access administration bar',
+        'access content overview',
+        'access administration pages',
+        'access site in maintenance mode',
+        'flush caches',
+        'edit terms in tags',
+        'delete terms in tags',
+        'administer taxonomy',
+        'administer nodes',
+        'search content',
+        'use advanced search',
+        $filtered_html_permission,
+      );
+      user_role_grant_permissions('campaign_manager', $campaign_manager_permissions);
+
+      $administrator_permissions = array(
+        'create crowdfunding_offer content',
+        'edit own crowdfunding_offer content',
+        'edit any crowdfunding_offer content',
+        'delete own crowdfunding_offer content',
+        'delete any crowdfunding_offer content',
+      );
+      user_role_grant_permissions('administrator', $administrator_permissions);
     }
-
-    
-
