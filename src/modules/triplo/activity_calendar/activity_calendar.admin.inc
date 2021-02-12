@@ -64,8 +64,8 @@ function activity_calendar_admin_form($form, &$form_state) {
     '#markup' => '
     <div id="activity-calendar">
     <div class="control-buttons">
-    <button id="PreviousDomain" class="btn previous">' . t('Previous') . '</button>
-    <button id="NextDomain" class="btn next">' . t('Next') . '</button>
+    <button id="PreviousDomain" class="button previous">' . t('Previous') . '</button>
+    <button id="NextDomain" class="button next">' . t('Next') . '</button>
     </div>
     <div id="heatmap"></div>
     </div>
@@ -136,7 +136,7 @@ function activity_calendar_admin_form($form, &$form_state) {
 
   $form['wrapper']['points'] = [
     '#type' => 'fieldset',
-    '#title' => t('Activity points'),
+    '#title' => t('Node & Comment points'),
     '#description' => t('Select user actions which increment their activity points.'),
   ];
 
@@ -159,23 +159,22 @@ function activity_calendar_admin_form($form, &$form_state) {
   foreach (node_type_get_names() as $type => $name) {
     $form['wrapper']['points']['node_types']['node_type_' . $type] = [
       '#type' => 'checkbox',
-      '#title' => check_plain($name),
+      '#title' => t(check_plain($name)),
       '#default_value' => ($config->get('node_type_' . $type)) ? TRUE : FALSE,
     ];
-  }
-
-  $form['wrapper']['points']['node_points'] = [
-    '#type' => 'textfield',
-    '#title' => t('Node points'),
-    '#description' => t('Indicate how many points user gets by submitting a new node.'),
-    '#default_value' => $config->get('node_points'),
-    '#size' => 10,
-    '#states' => [
-      'invisible' => [
-        ':input[name="nodes"]' => ['checked' => FALSE],
+    $form['wrapper']['points']['node_types'][$type . '_points'] = [
+      '#type' => 'textfield',
+      '#title' => t(check_plain($name) . ' ' . 'points'),
+      '#description' => t('Indicate how many points user gets by submitting a new ' . $type . '.'),
+      '#default_value' => ($config->get($type . '_points')) ? $config->get($type . '_points') : $config->get('node_points'),
+      '#size' => 10,
+      '#states' => [
+        'invisible' => [
+          ":input[name=node_type_$type]" => ['checked' => FALSE],
+        ],
       ],
-    ],
-  ];
+    ];
+  }
 
   if (module_exists('comment')) {
     $form['wrapper']['points']['comments'] = [
@@ -183,18 +182,60 @@ function activity_calendar_admin_form($form, &$form_state) {
       '#title' => t('Submitting comments'),
       '#default_value' => $config->get('comments'),
     ];
-    $form['wrapper']['points']['comment_points'] = [
-      '#type' => 'textfield',
-      '#title' => t('Comment points'),
-      '#description' => t('Indicate how many points user gets by submitting a new comment.'),
-      '#size' => 10,
-      '#default_value' => $config->get('comment_points'),
+    $form['wrapper']['points']['comment_node_types'] = [
+      '#type' => 'fieldset',
+      '#title' => t('Node type comments'),
+      '#description' => t('Select content types that are counted when collecting activity points for their comments.'),
       '#states' => [
         'invisible' => [
           ':input[name="comments"]' => ['checked' => FALSE],
         ],
       ],
     ];
+    foreach (node_type_get_names() as $type => $name) {
+      $type_comments = $type . '_comments';
+      $form['wrapper']['points']['comment_node_types'][$type_comments] = [
+        '#type' => 'checkbox',
+        '#title' => t(check_plain($name)),
+        '#default_value' => ($config->get($type_comments)) ? TRUE : FALSE,
+      ];
+      $form['wrapper']['points']['comment_node_types'][$type . '_comment_points'] = [
+        '#type' => 'textfield',
+        '#title' => t(check_plain($name) . ' ' . 'comment points'),
+        '#description' => t('Points for submitting a ' . $type . ' comment.'),
+        '#default_value' => ($config->get($type . '_comment_points')) ? $config->get($type . '_comment_points') : $config->get('comment_points'),
+        '#size' => 10,
+        '#states' => [
+          'invisible' => [
+            ":input[name=$type_comments]" => ['checked' => FALSE],
+          ],
+        ],
+      ];
+    }
+  }
+
+  // Create fieldset wrapper for contributed modules.
+  $form['wrapper']['contrib'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Contributed module points'),
+    '#description' => t('Configure activity points for contributed modules.'),
+  ];
+
+  // Check if any contributed module implemented hook_calendar().
+  module_invoke_all('calendar');
+  foreach (module_implements('calendar') as $module) {
+    $result[$module] = module_invoke($module, 'calendar');
+    $form['wrapper']['contrib'][$module] = [
+      '#type' => 'textfield',
+      '#title' => t($result[$module]['module_name']),
+      '#description' => t('Number of points assigned for this activity.'),
+      '#size' => 10,
+      '#default_value' => $config->get($module),
+    ];
+  }
+  // Unset fieldset wrapper for contributed modules if none found.
+  if (!isset($module)) {
+    unset($form['wrapper']['contrib']);
   }
 
   return system_settings_form($form);
@@ -204,12 +245,29 @@ function activity_calendar_admin_form($form, &$form_state) {
  * Form validate for admin form.
  */
 function activity_calendar_admin_form_validate($form, &$form_state) {
-  foreach (['node_points', 'comment_points'] as $field) {
-    if (!is_numeric($form_state['values'][$field])) {
-      form_set_error($field, t('The field must be numeric.'));
+  if ($form_state['values']['nodes'] == 0 && $form_state['values']['comments'] == 0) {
+    form_set_error('activity_calendar', t('You must select at least one of user actions under the "Node & Comment points" section.'));
+  }
+  if ($form_state['values']['nodes'] == 1) {
+    foreach (node_type_get_names() as $type => $name) {
+      if ($form_state['values']['node_type_' . $type] == 1) {
+        $enabled_content_type = TRUE;
+        break; // Found at least one enabled content type.
+      }
+    }
+    if (!isset($enabled_content_type)) {
+      form_set_error('activity_calendar', t('You must select at least one of content types under the "Node types" section.'));
     }
   }
-  if ($form_state['values']['nodes'] == 0 && $form_state['values']['nodes'] == 0) {
-    form_set_error('activity_calendar', t('You must select at least one of user actions under the "Activity points" section.'));
+  if ($form_state['values']['comments'] == 1) {
+    foreach (node_type_get_names() as $type => $name) {
+      if ($form_state['values'][$type . '_comments'] == 1) {
+        $enabled_ct_comments = TRUE;
+        break; // Found at least one enabled content type.
+      }
+    }
+    if (!isset($enabled_ct_comments)) {
+      form_set_error('activity_calendar', t('You must select at least one of content types under the "Node type comments" section.'));
+    }
   }
 }
