@@ -20,7 +20,7 @@ $plugin = array(
  * Process Markup
  */
 function geocoder_kml($kml_string, $options = array()) {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   return geoPHP::load($kml_string, 'kml');
 }
 

@@ -19,7 +19,7 @@ $plugin = array(
  * Process Markup
  */
 function geocoder_latlon($latlon_string, $options = array()) {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
 
   $delims = array("," , "/" , " " , "\t");
 

@@ -234,7 +234,7 @@ function geocoder_service_callback($handler) {
 
   $format = isset($_GET['output']) ?  $_GET['output'] : 'json';
 
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   geocoder_service_check_request($handler, $format);
   $geom = geocoder($handler, $_GET['data']);
 
@@ -311,7 +311,7 @@ function geocoder_cache_get($handler, $data, $options) {
   $data = compact('handler', 'data', 'options');
   $cid = _geocoder_cache_cid($data);
 
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   if ($cache = cache_get($cid, 'cache_geocoder')) {
     return $cache->data['geometry'];
   }

@@ -23,7 +23,7 @@ $plugin = array(
  * Process GPX
  */
 function geocoder_gpx($gpx_string, $options = array()) {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   return geoPHP::load($gpx_string, 'gpx');
 }
 

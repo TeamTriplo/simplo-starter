@@ -30,7 +30,7 @@ function geocoder_google($address, $options = array()) {
     usleep($delay * 1000);
   }
 
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
 
   $query = array('address' => $address);
 

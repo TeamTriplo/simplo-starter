@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Geocoder Widget.
+ */
 
 /**
  * Implements hook_field_widget_info().
@@ -460,7 +464,8 @@ function geocoder_widget_parse_addressfield($field_item) {
   $address[] = !empty($field_item['locality']) ? $field_item['locality'] : NULL;
   if (!empty($field_item['country']) && !empty($field_item['administrative_area'])) {
     module_load_include('inc', 'addressfield', 'addressfield.administrative_areas');
-    $address[] = addressfield_get_administrative_areas($field_item['country'])[$field_item['administrative_area']];
+    $country = addressfield_get_administrative_areas($field_item['country']);
+    $address[] = $country[$field_item['administrative_area']];
   }
   else {
     $address[] = !empty($field_item['administrative_area']) ? $field_item['administrative_area'] : NULL;
