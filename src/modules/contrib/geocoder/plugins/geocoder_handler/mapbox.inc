@@ -35,7 +35,7 @@ function geocoder_mapbox($address, $options = array()) {
   $request = backdrop_http_request("https://api.mapbox.com/geocoding/v5/mapbox.places/" . urlencode($address) . ".json?access_token=$access_token");
   $data = json_decode($request->data);
 
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   return _geocoder_mapbox_geometry($data);
 }
 

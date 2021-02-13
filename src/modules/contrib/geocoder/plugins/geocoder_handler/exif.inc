@@ -24,7 +24,7 @@ function geocoder_exif($uri, $options = array()) {
   }
 
   // The user has permission to access the file. Geocode it.
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   if ($data = exif_read_data(backdrop_realpath($uri))) {
     if (!isset($data['GPSLatitudeRef'])) return FALSE;
     $lat = geocoder_exif_from($data['GPSLatitudeRef'], $data['GPSLatitude']);
