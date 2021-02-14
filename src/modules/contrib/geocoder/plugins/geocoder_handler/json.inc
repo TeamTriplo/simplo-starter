@@ -20,7 +20,7 @@ $plugin = array(
  * Process Markup
  */
 function geocoder_json($json_string, $options = array()) {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   return geoPHP::load($json_string, 'json');
 }
 
