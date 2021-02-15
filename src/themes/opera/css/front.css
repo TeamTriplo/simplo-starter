@@ -1,22 +1,25 @@
 
 /* Setting CSS Variables */
 :root {
-  --block-one: white;
-  --block-two: #c5283d;
-  --block-three: #481d24;
-  --block-three: #255f85;
-  --block-four: #e9724c;
+  --color-one: white;
+  --color-two: #c5283d;
+  --color-three: #481d24;
+  --color-four: #255f85;
+  --color-five: #e9724c;
 }
 
-.l-content div.block:nth-of-type(1) {
-	background-color: var(--block-one);
+.l-content div.block:nth-of-type(4n+1) {
+	background-color: var(--color-one);
 }
-.l-content div.block:nth-of-type(2) {
-	background-color: var(--block-two);
+.l-content div.block:nth-of-type(4n+2) {
+	background-color: var(--color-two);
+	color: white;
 }
-.l-content div.block:nth-of-type(3) {
-	background-color: var(--block-three);
+.l-content div.block:nth-of-type(4n+3) {
+	background-color: var(--color-three);
+	color: white;
 }
-.l-content div.block:nth-of-type(4) {
-	background-color: var(--block-three);
+.l-content div.block:nth-of-type(4n+4) {
+	background-color: var(--color-four);
+	color: white;
 }
