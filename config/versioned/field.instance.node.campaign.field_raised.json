@@ -1,10 +1,10 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_raise_maximum",
-    "field_name": "field_raise_maximum",
+    "_config_name": "field.instance.node.campaign.field_raised",
+    "field_name": "field_raised",
     "entity_type": "node",
-    "label": "Raise Maximum",
-    "bundle": "crowdfunding_offer",
-    "description": "Raise Maximum",
+    "label": "Raised",
+    "bundle": "campaign",
+    "description": "Raised",
     "settings": {
         "title": "none",
         "title_value": "",
@@ -21,7 +21,7 @@
     "widget": {
         "type": "number",
         "settings": [],
-        "weight": "4",
+        "weight": 6,
         "module": "number"
     },
     "display": {
@@ -35,7 +35,7 @@
                 "prefix_suffix": true
             },
             "module": "number",
-            "weight": 14
+            "weight": 16
         }
     }
 }

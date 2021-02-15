@@ -1,10 +1,10 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_lotsize",
-    "field_name": "field_lotsize",
+    "_config_name": "field.instance.node.campaign.field_raise_maximum",
+    "field_name": "field_raise_maximum",
     "entity_type": "node",
-    "label": "Lot Size",
-    "bundle": "crowdfunding_offer",
-    "description": "Lot Size",
+    "label": "Raise Maximum",
+    "bundle": "campaign",
+    "description": "Raise Maximum",
     "settings": {
         "title": "none",
         "title_value": "",
@@ -21,7 +21,7 @@
     "widget": {
         "type": "number",
         "settings": [],
-        "weight": "8",
+        "weight": 4,
         "module": "number"
     },
     "display": {
@@ -35,7 +35,7 @@
                 "prefix_suffix": true
             },
             "module": "number",
-            "weight": 18
+            "weight": 14
         }
     }
 }

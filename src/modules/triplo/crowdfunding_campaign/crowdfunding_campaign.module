@@ -17,7 +17,7 @@ function crowdfunding_campaign_cron() {
           $issue = $data['issue'];
           update_crowdfunding_offer($offer, $issue);
         }
-      
+
       }
     }
 }
@@ -210,4 +210,72 @@ function crowdfunding_campaign_node_presave(Node $node) {
     }
   }
 
+}
+
+/**
+ * Implements hook_menu
+ */
+
+function crowdfunding_campaign_menu() {
+  $items['sppx-login'] = array(
+    'title' => 'SPPX Login',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('crowdfunding_campaign_sppx_login_form'),
+    'menu_name' => 'main-menu',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM
+  );
+  return $items;
+}
+
+/** 
+ * Custom sppx login form
+*/
+function crowdfunding_campaign_sppx_login_form(&$form, &$form_state) {
+
+  $form['sppx_username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('SPPX username'),
+    '#required' => TRUE,
+    '#attributes' => array('class' => array('sppx-username')),
+  );
+  $form['sppx_pass'] = array(
+    '#title' => t('SPPX password'),
+    '#type' => 'password',
+    '#required' => TRUE,
+    '#description' => $description,
+    '#password_toggle' => TRUE
+  );
+  $form['sppx_login_submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Login'),
+  );
+  
+  return $form;
+}
+
+/**
+ * SPPX login form validate
+  */
+function crowdfunding_campaign_sppx_login_form_validate(&$form, &$form_state) {
+
+}
+
+/** 
+ * SPPX login form submit
+*/
+function crowdfunding_campaign_sppx_login_form_submit(&$form, &$form_state) {
+
+  $sppx_username = $form_state['input']['sppx_username'];
+  $sppx_pass = $form_state['input']['sppx_pass'];
+  $request_uri = 'https://test.sppx.io/api/v0/user/login';
+  $data = array(
+    'username' => $sppx_username,
+    'password' => $sppx_pass,
+    'grant_type' => 'password',
+    'client_id' => 'UUID'
+  );
+  $request_options = array('method' => 'POST', 'data' => http_build_query($data));
+  $response = backdrop_http_request($request_uri, $request_options);
+  
 }

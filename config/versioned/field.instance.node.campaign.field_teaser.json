@@ -1,10 +1,10 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_caveat_warning",
-    "field_name": "field_caveat_warning",
+    "_config_name": "field.instance.node.campaign.field_teaser",
+    "field_name": "field_teaser",
     "entity_type": "node",
-    "label": "Caveat warning",
-    "bundle": "crowdfunding_offer",
-    "description": "Caveat warning",
+    "label": "Teaser",
+    "bundle": "campaign",
+    "description": "Teaser",
     "widget": {
         "type": "text_textarea_with_summary",
         "settings": {

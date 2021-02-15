@@ -1,25 +1,25 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_sppx_id",
-    "field_name": "field_sppx_id",
+    "_config_name": "field.instance.node.campaign.field_type",
+    "field_name": "field_type",
     "entity_type": "node",
-    "label": "SPPX ID",
-    "bundle": "crowdfunding_offer",
-    "description": "SPPX ID",
+    "label": "Type",
+    "bundle": "campaign",
+    "description": "Type",
     "widget": {
         "type": "text_textfield",
         "settings": {
             "size": 60
         },
-        "weight": "-2",
+        "weight": 1,
         "module": "text"
     },
     "display": {
         "default": {
-            "label": "SPPX ID",
+            "label": "Type",
             "type": "text",
             "settings": [],
             "module": "",
-            "weight": 2
+            "weight": 11
         }
     },
     "settings": {

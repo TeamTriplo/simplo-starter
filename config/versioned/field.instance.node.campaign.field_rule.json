@@ -1,25 +1,25 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_type",
-    "field_name": "field_type",
+    "_config_name": "field.instance.node.campaign.field_rule",
+    "field_name": "field_rule",
     "entity_type": "node",
-    "label": "Type",
-    "bundle": "crowdfunding_offer",
-    "description": "Type",
+    "label": "Rule",
+    "bundle": "campaign",
+    "description": "Rule",
     "widget": {
         "type": "text_textfield",
         "settings": {
             "size": 60
         },
-        "weight": "1",
+        "weight": 2,
         "module": "text"
     },
     "display": {
         "default": {
-            "label": "Type",
+            "label": "Rule",
             "type": "text",
             "settings": [],
             "module": "",
-            "weight": 11
+            "weight": 12
         }
     },
     "settings": {

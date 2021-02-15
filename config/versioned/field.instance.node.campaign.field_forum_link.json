@@ -1,12 +1,12 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_portal_link",
-    "field_name": "field_portal_link",
+    "_config_name": "field.instance.node.campaign.field_forum_link",
+    "field_name": "field_forum_link",
     "entity_type": "node",
-    "label": "Portal Link",
-    "bundle": "crowdfunding_offer",
-    "description": "Portal Link",
+    "label": "Forum Link",
+    "bundle": "campaign",
+    "description": "Forum Link",
     "widget": {
-        "weight": "0",
+        "weight": 0,
         "type": "link_field",
         "module": "link",
         "active": 0,

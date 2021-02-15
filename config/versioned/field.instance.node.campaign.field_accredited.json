@@ -1,25 +1,25 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_issue_name",
-    "field_name": "field_issue_name",
+    "_config_name": "field.instance.node.campaign.field_accredited",
+    "field_name": "field_accredited",
     "entity_type": "node",
-    "label": "Name",
-    "bundle": "crowdfunding_offer",
-    "description": "Name",
+    "label": "Accredited",
+    "bundle": "campaign",
+    "description": "Accredited",
     "widget": {
         "type": "text_textfield",
         "settings": {
             "size": 60
         },
-        "weight": "-3",
+        "weight": 10,
         "module": "text"
     },
     "display": {
         "default": {
-            "label": "Name",
+            "label": "Accredited",
             "type": "text",
             "settings": [],
             "module": "",
-            "weight": 1
+            "weight": 20
         }
     },
     "settings": {

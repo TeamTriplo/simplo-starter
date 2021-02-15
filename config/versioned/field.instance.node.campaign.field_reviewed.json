@@ -1,25 +1,25 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_rule",
-    "field_name": "field_rule",
+    "_config_name": "field.instance.node.campaign.field_reviewed",
+    "field_name": "field_reviewed",
     "entity_type": "node",
-    "label": "Rule",
-    "bundle": "crowdfunding_offer",
-    "description": "Rule",
+    "label": "Reviewed",
+    "bundle": "campaign",
+    "description": "Reviewed",
     "widget": {
         "type": "text_textfield",
         "settings": {
             "size": 60
         },
-        "weight": "2",
+        "weight": 11,
         "module": "text"
     },
     "display": {
         "default": {
-            "label": "Rule",
+            "label": "Reviewed",
             "type": "text",
             "settings": [],
             "module": "",
-            "weight": 12
+            "weight": 21
         }
     },
     "settings": {

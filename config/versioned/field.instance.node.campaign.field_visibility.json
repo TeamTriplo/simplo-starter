@@ -1,16 +1,16 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_visibility",
+    "_config_name": "field.instance.node.campaign.field_visibility",
     "field_name": "field_visibility",
     "entity_type": "node",
     "label": "Visibility",
-    "bundle": "crowdfunding_offer",
+    "bundle": "campaign",
     "description": "Visibility of the Campaign",
     "widget": {
         "type": "text_textfield",
         "settings": {
             "size": 60
         },
-        "weight": "13",
+        "weight": 13,
         "module": "text"
     },
     "display": {

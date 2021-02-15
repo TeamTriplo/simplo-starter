@@ -1,8 +1,8 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.body",
+    "_config_name": "field.instance.node.campaign.body",
     "field_name": "body",
     "entity_type": "node",
-    "bundle": "crowdfunding_offer",
+    "bundle": "campaign",
     "label": "Body",
     "widget": {
         "type": "text_textarea_with_summary",
@@ -10,7 +10,7 @@
             "rows": 10,
             "summary_rows": 5
         },
-        "weight": "-4",
+        "weight": -4,
         "module": "text"
     },
     "settings": {

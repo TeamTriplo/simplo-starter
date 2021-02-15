@@ -1,9 +1,9 @@
 {
-    "_config_name": "field.instance.comment.comment_node_crowdfunding_offer.comment_body",
+    "_config_name": "field.instance.comment.comment_node_campaign.comment_body",
     "field_name": "comment_body",
     "label": "Comment",
     "entity_type": "comment",
-    "bundle": "comment_node_crowdfunding_offer",
+    "bundle": "comment_node_campaign",
     "settings": {
         "text_processing": 1,
         "user_register_form": false

@@ -1,25 +1,25 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_accredited",
-    "field_name": "field_accredited",
+    "_config_name": "field.instance.node.campaign.field_sppx_id",
+    "field_name": "field_sppx_id",
     "entity_type": "node",
-    "label": "Accredited",
-    "bundle": "crowdfunding_offer",
-    "description": "Accredited",
+    "label": "SPPX ID",
+    "bundle": "campaign",
+    "description": "SPPX ID",
     "widget": {
         "type": "text_textfield",
         "settings": {
             "size": 60
         },
-        "weight": "10",
+        "weight": -2,
         "module": "text"
     },
     "display": {
         "default": {
-            "label": "Accredited",
+            "label": "SPPX ID",
             "type": "text",
             "settings": [],
             "module": "",
-            "weight": 20
+            "weight": 2
         }
     },
     "settings": {

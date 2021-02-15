@@ -1,10 +1,10 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_invest",
-    "field_name": "field_invest",
+    "_config_name": "field.instance.node.campaign.field_raise_minimum",
+    "field_name": "field_raise_minimum",
     "entity_type": "node",
-    "label": "Invest",
-    "bundle": "crowdfunding_offer",
-    "description": "Invest",
+    "label": "Raise Minimum",
+    "bundle": "campaign",
+    "description": "Raise Minimum",
     "settings": {
         "title": "none",
         "title_value": "",
@@ -21,7 +21,7 @@
     "widget": {
         "type": "number",
         "settings": [],
-        "weight": "7",
+        "weight": 3,
         "module": "number"
     },
     "display": {
@@ -35,7 +35,7 @@
                 "prefix_suffix": true
             },
             "module": "number",
-            "weight": 17
+            "weight": 13
         }
     }
 }

@@ -1,12 +1,12 @@
 {
-    "_config_name": "field.instance.node.crowdfunding_offer.field_end_date",
-    "field_name": "field_end_date",
+    "_config_name": "field.instance.node.campaign.field_start_date",
+    "field_name": "field_start_date",
     "entity_type": "node",
-    "label": "Date End",
-    "bundle": "crowdfunding_offer",
-    "description": "Date End",
+    "label": "Date start",
+    "bundle": "campaign",
+    "description": "Date start",
     "widget": {
-        "weight": "0",
+        "weight": 0,
         "type": "date_text",
         "module": "date",
         "active": 1,
