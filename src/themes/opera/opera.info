@@ -4,12 +4,6 @@ description = Opera theme
 backdrop = 1.x
 version = 1.x
 
-type = theme
-name = Basis
-description = The default front-end theme for Backdrop CMS, which can make a great base theme.
-backdrop = 1.x
-version = BACKDROP_VERSION
-
 ; Add theme Bootstrap CSS files
 stylesheets[all][] = css/bootstrap/bootstrap.min.css
 
