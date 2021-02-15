@@ -1,0 +1,19 @@
+.block {
+	padding: 20px 0;
+}
+
+.l-header .block {
+	padding: 0;
+}
+
+.block-hero {
+	margin: 0;
+}
+
+.block-hero-image {
+	min-height: 450px;
+}
+
+.block-hero-no-image {
+	min-height: 300px;
+}
