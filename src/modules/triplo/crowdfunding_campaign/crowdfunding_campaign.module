@@ -265,17 +265,19 @@ function crowdfunding_campaign_sppx_login_form_validate(&$form, &$form_state) {
  * SPPX login form submit
 */
 function crowdfunding_campaign_sppx_login_form_submit(&$form, &$form_state) {
-
   $sppx_username = $form_state['input']['sppx_username'];
   $sppx_pass = $form_state['input']['sppx_pass'];
-  $request_uri = 'https://test.sppx.io/api/v0/user/login';
-  $data = array(
-    'username' => $sppx_username,
-    'password' => $sppx_pass,
-    'grant_type' => 'password',
-    'client_id' => 'UUID'
-  );
-  $request_options = array('method' => 'POST', 'data' => http_build_query($data));
-  $response = backdrop_http_request($request_uri, $request_options);
-  
+  $query_params = 'username='.$sppx_username.'&'.'password='.$sppx_pass;
+  $request_uri = 'https://test.sppx.io/api/v0/user/login?'.$query_params;
+  $response = backdrop_http_request($request_uri); 
+  if($response->code == '200'){
+    if ($response->data){
+      $response_json = $response->data;
+      $response_data = json_decode($response_json, TRUE);
+      $access_token = $response_data['token']['access_token'];
+      $refresh_token = $response_data['token']['refresh_token'];
+      $success_message = t("You are successfully logged in using your SPPX account.\n"."Your access token is ".$access_token."\n");
+      backdrop_set_message($success_message, 'status');
+    }
+  }
 }
