@@ -37,7 +37,7 @@
 	margin: 0;
 }
 
-.node-type-crowdfunding-offer main.l-content {
+.node-type-campaign main.l-content {
 	flex: auto;
 	max-width: unset;
 	width: 100%;
@@ -122,4 +122,8 @@
   margin-bottom: 20px;
   font-style: italic;
   font-size: 80%;
+}
+
+.crowdfunding-campaign-sppx-login-form .form-submit {
+	background: #E0A300;
 }

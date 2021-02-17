@@ -111,6 +111,11 @@
         "access contextual links",
         "administer layouts",
         "administer flexible templates",
-        "access administration bar"
+        "access administration bar",
+        "create campaign content",
+        "edit own campaign content",
+        "edit any campaign content",
+        "delete own campaign content",
+        "delete any campaign content"
     ]
 }

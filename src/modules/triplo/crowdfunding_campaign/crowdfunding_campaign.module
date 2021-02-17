@@ -1,10 +1,11 @@
 <?php
 
-/*/**
+/*
  * Implements hook_cron()
  */
 
 function crowdfunding_campaign_cron() {
+
     global $user;
     $available_offers = get_crowdfunding_offer_list();
     foreach($available_offers as $offer){
@@ -17,7 +18,7 @@ function crowdfunding_campaign_cron() {
           $issue = $data['issue'];
           update_crowdfunding_offer($offer, $issue);
         }
-      
+
       }
     }
 }
@@ -28,6 +29,7 @@ function crowdfunding_campaign_cron() {
 */
 
 function update_crowdfunding_offer(&$offer, $issue){
+
   // Get field values from JSON and update offer
   if (!empty($issue)){
     $title = $issue['name'];
@@ -104,9 +106,10 @@ function update_crowdfunding_offer(&$offer, $issue){
  * Get List of Crowdfunding Offer available currently
 */
 function get_crowdfunding_offer_list(){
+
   $query = new EntityFieldQuery();
   $result = $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'crowdfunding_offer')
+    ->entityCondition('bundle', 'campaign')
     ->execute();
   $nodes = node_load_multiple(array_keys($result['node']));
   return $nodes;
@@ -118,6 +121,7 @@ function get_crowdfunding_offer_list(){
  * Implements hook_theme_registry_alter().
  */
 function crowdfunding_campaign_theme_registry_alter(&$theme_registry) {
+
   // Defined path to the current module's 'templates' directory.
   $module_path = backdrop_get_path('module', 'crowdfunding_campaign') . '/templates';
 
@@ -142,7 +146,8 @@ function crowdfunding_campaign_theme_registry_alter(&$theme_registry) {
  */
 
 function crowdfunding_campaign_node_presave(Node $node) {
-  if($node->type == 'crowdfunding_offer' && empty($node->nid)){
+
+  if($node->type == 'campaign' && empty($node->nid)){
     if (!empty($node->field_sppx_uuid)){
       $sppx_uuid = $node->field_sppx_uuid['und'][0]['value'];
       $uri = "https://test.sppx.io/api/v0/issue/".$sppx_uuid;
@@ -211,3 +216,168 @@ function crowdfunding_campaign_node_presave(Node $node) {
   }
 
 }
+
+/**
+ * Implements hook_menu
+ */
+
+function crowdfunding_campaign_menu() {
+
+  $items['sppx-login'] = array(
+    'title' => 'SPPX Login',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('crowdfunding_campaign_sppx_login_form'),
+    'menu_name' => 'main-menu',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM
+  );
+  return $items;
+}
+
+/** 
+ * Custom sppx login form
+*/
+function crowdfunding_campaign_sppx_login_form(&$form, &$form_state) {
+
+  $form['sppx_username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('SPPX username'),
+    '#required' => TRUE,
+    '#attributes' => array('class' => array('sppx-username')),
+  );
+  $form['sppx_pass'] = array(
+    '#title' => t('SPPX password'),
+    '#type' => 'password',
+    '#required' => TRUE,
+    '#description' => $description,
+    '#password_toggle' => TRUE
+  );
+  $form['sppx_login_submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Verify'),
+  );
+  
+  return $form;
+}
+
+/**
+ * SPPX login form validate
+  */
+function crowdfunding_campaign_sppx_login_form_validate(&$form, &$form_state) {
+
+  $sppx_username = $form_state['input']['sppx_username'];
+  $sppx_pass = $form_state['input']['sppx_pass'];
+  if(isset($sppx_username) && isset($sppx_pass)){
+    $response = get_crowdfunding_campaign_sppx_login($sppx_username, $sppx_pass);
+    if($response->code != '200'){
+      $response_json = $response->data;
+      $response_data = json_decode($response_json, TRUE);
+      $error_message = $response_data['status']['memo'];
+      form_set_error('sppx_account', t($error_message));
+    }
+  }
+
+}
+
+/**
+ * SPPX login through API
+ * @param username
+ * @param password
+ * @return http-response 
+  */
+function get_crowdfunding_campaign_sppx_login($username, $password){
+
+    $query_params = 'username='.$username.'&'.'password='.$password;
+    $request_uri = 'https://test.sppx.io/api/v0/user/login?'.$query_params;
+    $response = backdrop_http_request($request_uri); 
+    return $response;
+}
+/** 
+ * SPPX login form submit
+*/
+function crowdfunding_campaign_sppx_login_form_submit(&$form, &$form_state) {
+
+  $sppx_username = $form_state['input']['sppx_username'];
+  $sppx_pass = $form_state['input']['sppx_pass'];
+  $response = get_crowdfunding_campaign_sppx_login($sppx_username, $sppx_pass);
+  if($response->code == '200'){
+    if ($response->data){
+      $response_json = $response->data;
+      $response_data = json_decode($response_json, TRUE);
+      $access_token = $response_data['token']['access_token'];
+      $refresh_token = $response_data['token']['refresh_token'];
+      // Store sppx access_token and refresh_token  in session
+      if(!isset($_SESSION)) 
+      { 
+        session_start(); 
+      } 
+      unset($_SESSION['sppx']);
+      $_SESSION['sppx']['access_token'] = $access_token;
+      $_SESSION['sppx']['refresh_token'] = $refresh_token;
+      $success_message = t("You have successfully verified your SPPX account");
+      backdrop_set_message($success_message, 'status');
+    }
+  }
+}
+
+/**  
+ * Check if SPPX user is verified or not
+ */
+
+ function is_sppx_user_verified(){
+   if (isset($_SESSION['sppx']['access_token'])){
+    return TRUE;
+   }
+   return FALSE;
+ }
+
+ /** 
+  * Implements hook_preprocess_node()
+ */
+function crowdfunding_campaign_preprocess_node(&$vars){
+  
+  if(isset($vars['node']) && $vars['node']->type == 'campaign'){
+    $vars['sppx_login_form'] = backdrop_get_form('crowdfunding_campaign_sppx_login_form');
+  }
+  
+}
+
+/** 
+ * Implements hook_form_FORM_ID_alter()
+*/
+
+function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+  // print_r($form['field_invest']['#access']);exit;
+  global $user;
+  // Check to see if $user has the campaign_manager role.
+  if ($user->uid > 1 && in_array('campaign_manager', array_values($user->roles))) {
+    $form['field_invest']['#access'] = FALSE;
+    $form['field_issue_name']['#access'] = FALSE;
+    $form['field_sppx_id']['#access'] = FALSE;
+    $form['field_issue_link']['#access'] = FALSE;
+    $form['field_portal_link']['#access'] = FALSE;
+    $form['field_forum_link']['#access'] = FALSE;
+    $form['field_thumbnail_link']['#access'] = FALSE;
+    $form['field_type']['#access'] = FALSE;
+    $form['field_rule']['#access'] = FALSE;
+    $form['field_raise_minimum']['#access'] = FALSE;
+    $form['field_raise_maximum']['#access'] = FALSE;
+    $form['field_raise_target']['#access'] = FALSE;
+    $form['field_raised']['#access'] = FALSE;
+    $form['field_lotsize']['#access'] = FALSE;
+    $form['field_request']['#access'] = FALSE;
+    $form['field_accredited']['#access'] = FALSE;
+    $form['field_reviewed']['#access'] = FALSE;
+    $form['field_status']['#access'] = FALSE;
+    $form['field_start_date']['#access'] = FALSE;
+    $form['field_end_date']['#access'] = FALSE;
+    $form['field_target_date']['#access'] = FALSE;
+    $form['field_caveat_copyright']['#access'] = FALSE;
+    $form['field_caveat_warning']['#access'] = FALSE;
+    $form['field_teaser']['#access'] = FALSE;
+    $form['field_visibility']['#access'] = FALSE;
+    $form['body']['#access'] = FALSE;
+
+  }
+}
+

@@ -1,0 +1,41 @@
+{
+    "_config_name": "field.instance.node.campaign.field_raise_minimum",
+    "field_name": "field_raise_minimum",
+    "entity_type": "node",
+    "label": "Raise Minimum",
+    "bundle": "campaign",
+    "description": "Raise Minimum",
+    "settings": {
+        "title": "none",
+        "title_value": "",
+        "min": "",
+        "max": "",
+        "prefix": "",
+        "suffix": "",
+        "user_register_form": false
+    },
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "widget": {
+        "type": "number",
+        "settings": [],
+        "weight": "3",
+        "module": "number"
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "number_integer",
+            "settings": {
+                "thousand_separator": "",
+                "decimal_separator": ".",
+                "scale": 0,
+                "prefix_suffix": true
+            },
+            "module": "number",
+            "weight": 13
+        }
+    }
+}

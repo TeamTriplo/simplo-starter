@@ -6,9 +6,9 @@
     */
     function crowdfunding_campaign_install() {
 
-      // Create a Content type Campaign (crowdfunding_offer)
+      // Create a Content type Campaign (campaign)
       $type = array(
-          'type' => 'crowdfunding_offer',
+          'type' => 'campaign',
           'name' => st('Campaign'),
           'base' => 'node_content',
           'description' => st("Crowdfunding campaign and its related fields"),
@@ -53,7 +53,7 @@
         'field_name' => 'field_issue_name',
         'entity_type' => 'node',
         'label' => 'Name',
-        'bundle' => 'crowdfunding_offer',
+        'bundle' => 'campaign',
         'description' => st('Name'),
         'widget' => array(
             'type' => 'text_textfield'
@@ -83,7 +83,7 @@
           'field_name' => 'field_sppx_id',
           'entity_type' => 'node',
           'label' => 'SPPX ID',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('SPPX ID'),
           'widget' => array(
               'type' => 'text_textfield'
@@ -113,7 +113,7 @@
           'field_name' => 'field_sppx_uuid',
           'entity_type' => 'node',
           'label' => 'SPPX UUID',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('SPPX UUID'),
           'max_length' => 40,
           'widget' => array(
@@ -144,7 +144,7 @@
       'field_name' => 'field_issue_link',
       'entity_type' => 'node',
       'label' => 'Issue Link',
-      'bundle' => 'crowdfunding_offer',
+      'bundle' => 'campaign',
       'description' => st('Issue Link'),
       'widget' => array(
           'weight' => 0,
@@ -184,7 +184,7 @@
       'field_name' => 'field_portal_link',
       'entity_type' => 'node',
       'label' => 'Portal Link',
-      'bundle' => 'crowdfunding_offer',
+      'bundle' => 'campaign',
       'description' => st('Portal Link'),
       'widget' => array(
           'weight' => 0,
@@ -224,7 +224,7 @@
       'field_name' => 'field_forum_link',
       'entity_type' => 'node',
       'label' => 'Forum Link',
-      'bundle' => 'crowdfunding_offer',
+      'bundle' => 'campaign',
       'description' => st('Forum Link'),
       'widget' => array(
           'weight' => 0,
@@ -264,7 +264,7 @@
       'field_name' => 'field_thumbnail_link',
       'entity_type' => 'node',
       'label' => 'Thumbnail',
-      'bundle' => 'crowdfunding_offer',
+      'bundle' => 'campaign',
       'description' => st('Thumbnail Link'),
       'widget' => array(
           'weight' => 0,
@@ -304,7 +304,7 @@
           'field_name' => 'field_type',
           'entity_type' => 'node',
           'label' => 'Type',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Type'),
           'widget' => array(
               'type' => 'text_textfield'
@@ -334,7 +334,7 @@
           'field_name' => 'field_rule',
           'entity_type' => 'node',
           'label' => 'Rule',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Rule'),
           'widget' => array(
               'type' => 'text_textfield'
@@ -364,7 +364,7 @@
           'field_name' => 'field_raise_minimum',
           'entity_type' => 'node',
           'label' => 'Raise Minimum',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Raise Minimum'),
           'settings' => array(
               'title' => 'none',
@@ -386,7 +386,7 @@
           'field_name' => 'field_raise_maximum',
           'entity_type' => 'node',
           'label' => 'Raise Maximum',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Raise Maximum'),
           'settings' => array(
               'title' => 'none',
@@ -407,7 +407,7 @@
           'field_name' => 'field_raise_target',
           'entity_type' => 'node',
           'label' => 'Raise Target',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Raise Target'),
           'settings' => array(
               'title' => 'none',
@@ -428,7 +428,7 @@
           'field_name' => 'field_raised',
           'entity_type' => 'node',
           'label' => 'Raised',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Raised'),
           'settings' => array(
               'title' => 'none',
@@ -450,7 +450,7 @@
           'field_name' => 'field_invest',
           'entity_type' => 'node',
           'label' => 'Invest',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Invest'),
           'settings' => array(
               'title' => 'none',
@@ -471,7 +471,7 @@
           'field_name' => 'field_lotsize',
           'entity_type' => 'node',
           'label' => 'Lot Size',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Lot Size'),
           'settings' => array(
               'title' => 'none',
@@ -492,7 +492,7 @@
           'field_name' => 'field_request',
           'entity_type' => 'node',
           'label' => 'Request',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Request'),
           'settings' => array(
               'title' => 'none',
@@ -514,7 +514,7 @@
           'field_name' => 'field_accredited',
           'entity_type' => 'node',
           'label' => 'Accredited',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Accredited'),
           'widget' => array(
               'type' => 'text_textfield'
@@ -545,7 +545,7 @@
           'field_name' => 'field_reviewed',
           'entity_type' => 'node',
           'label' => 'Reviewed',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Reviewed'),
           'widget' => array(
               'type' => 'text_textfield'
@@ -577,7 +577,7 @@
           'field_name' => 'field_status',
           'entity_type' => 'node',
           'label' => 'Status',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Status'),
           'settings' => array(
               'title' => 'none',
@@ -601,7 +601,7 @@
       'field_name' => 'field_start_date',
       'entity_type' => 'node',
       'label' => 'Date start',
-      'bundle' => 'crowdfunding_offer',
+      'bundle' => 'campaign',
       'description' => st('Date start'),
       'widget' => array(
         'weight' => 0,
@@ -661,7 +661,7 @@
       'field_name' => 'field_end_date',
       'entity_type' => 'node',
       'label' => 'Date End',
-      'bundle' => 'crowdfunding_offer',
+      'bundle' => 'campaign',
       'description' => st('Date End'),
       'widget' => array(
         'weight' => 0,
@@ -721,7 +721,7 @@
       'field_name' => 'field_target_date',
       'entity_type' => 'node',
       'label' => 'Date Target',
-      'bundle' => 'crowdfunding_offer',
+      'bundle' => 'campaign',
       'description' => st('Date Target'),
       'widget' => array(
         'weight' => 0,
@@ -781,7 +781,7 @@
         'field_name' => 'field_caveat_copyright',
         'entity_type' => 'node',
         'label' => 'Caveat copyright',
-        'bundle' => 'crowdfunding_offer',
+        'bundle' => 'campaign',
         'description' => st('Caveat copyright'),
         'widget' => array(
           'type' => 'text_textarea_with_summary',
@@ -831,7 +831,7 @@
         'field_name' => 'field_caveat_warning',
         'entity_type' => 'node',
         'label' => 'Caveat warning',
-        'bundle' => 'crowdfunding_offer',
+        'bundle' => 'campaign',
         'description' => st('Caveat warning'),
         'widget' => array(
           'type' => 'text_textarea_with_summary',
@@ -882,7 +882,7 @@
         'field_name' => 'field_teaser',
         'entity_type' => 'node',
         'label' => 'Teaser',
-        'bundle' => 'crowdfunding_offer',
+        'bundle' => 'campaign',
         'description' => st('Teaser'),
         'widget' => array(
           'type' => 'text_textarea_with_summary',
@@ -931,7 +931,7 @@
           'field_name' => 'field_visibility',
           'entity_type' => 'node',
           'label' => 'Visibility',
-          'bundle' => 'crowdfunding_offer',
+          'bundle' => 'campaign',
           'description' => st('Visibility of the Campaign'),
           'widget' => array(
               'type' => 'text_textfield'
@@ -973,11 +973,11 @@
         'edit any post content',
         'delete own post content',
         'delete any post content',
-        'create crowdfunding_offer content',
-        'edit own crowdfunding_offer content',
-        'edit any crowdfunding_offer content',
-        'delete own crowdfunding_offer content',
-        'delete any crowdfunding_offer content',
+        'create campaign content',
+        'edit own campaign content',
+        'edit any campaign content',
+        'delete own campaign content',
+        'delete any campaign content',
         'access dashboard',
         'view the administration theme',
         'access administration bar',
@@ -996,11 +996,11 @@
       user_role_grant_permissions('campaign_manager', $campaign_manager_permissions);
 
       $administrator_permissions = array(
-        'create crowdfunding_offer content',
-        'edit own crowdfunding_offer content',
-        'edit any crowdfunding_offer content',
-        'delete own crowdfunding_offer content',
-        'delete any crowdfunding_offer content',
+        'create campaign content',
+        'edit own campaign content',
+        'edit any campaign content',
+        'delete own campaign content',
+        'delete any campaign content',
       );
       user_role_grant_permissions('administrator', $administrator_permissions);
     }
