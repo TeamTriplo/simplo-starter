@@ -6,7 +6,7 @@
     "bundle": "campaign",
     "description": "Issue Link",
     "widget": {
-        "weight": 0,
+        "weight": "0",
         "type": "link_field",
         "module": "link",
         "active": 0,

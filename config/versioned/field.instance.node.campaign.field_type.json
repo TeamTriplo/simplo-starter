@@ -10,7 +10,7 @@
         "settings": {
             "size": 60
         },
-        "weight": 1,
+        "weight": "1",
         "module": "text"
     },
     "display": {

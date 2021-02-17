@@ -6,7 +6,7 @@
     "bundle": "campaign",
     "description": "Date Target",
     "widget": {
-        "weight": 0,
+        "weight": "0",
         "type": "date_text",
         "module": "date",
         "active": 1,

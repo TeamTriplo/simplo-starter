@@ -120,9 +120,10 @@
       </section>
       <?php 
         $visibility = $node->field_visibility['und'][0]['value'];
+        session_start();
       ?>
-      <?php if ($visibility == 'open' ) :?>
-        <section class="rightside">
+      <section class="rightside">
+        <?php if ($visibility == 'open' || (isset($_SESSION['sppx']['access_token']) && !empty($_SESSION['sppx']['access_token']))) :?>
           <div class="row">
             <div class="rightside_top">
               <div class="item">
@@ -191,8 +192,11 @@
               <a href="<?php print render($content['field_forum_link']['#items'][0]['display_url']); ?>"> Forum</a>
             </div>
           </div>
-        </section>
-      <?php endif;?>
+        <?php else: ?>
+          <div class="not-open">To see the details of this campaign, we need to verify your Silicon Prairie account here</div>
+          <?php  print render($sppx_login_form); ?>
+          <?php endif;?>
+      </section>
   </div>
   
   <?php print render($content['links']); ?>

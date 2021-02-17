@@ -21,7 +21,7 @@
     "widget": {
         "type": "number",
         "settings": [],
-        "weight": 7,
+        "weight": "7",
         "module": "number"
     },
     "display": {
