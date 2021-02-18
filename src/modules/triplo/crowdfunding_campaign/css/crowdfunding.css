@@ -1,8 +1,12 @@
-.node-type-crowdfunding-offer .l-header {
+.node-type-campaign .l-header {
 	margin: 0;
 }
-.node-type-crowdfunding-offer .node-crowdfunding-offer .hero_image_wrapper {
+.node-type-campaign .node-campaign .hero_image_wrapper {
 	display: none;
+}
+
+.node-type-campaign .l-header {
+	margin: 0;
 }
 .hero_image_wrapper {
 	border-bottom: 10px solid #000;

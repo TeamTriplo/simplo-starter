@@ -101,6 +101,50 @@
       );
       field_create_instance($instance);
 
+
+      // Create default hero image for campaigns
+
+      $module_path = backdrop_get_path('module', 'crowdfunding_campaign');
+      $image_path = $module_path . '/images/hero-background.jpg';
+      $image_object = file_get_contents($image_path);
+      file_unmanaged_save_data($image_object, 'public://hero-background.jpg');
+
+      // Field SPPX ID 
+      $field = array(
+          'field_name' => 'field_hero_image',
+          'type' => 'image',
+          'cardinality' => '1',
+          'settings' => array(
+            'uri_scheme' => 'public',
+            'default_image' => 'public://hero-background.jpg',
+          ),
+        );
+      field_create_field($field);
+  
+      $instance = array(
+          'field_name' => 'field_hero_image',
+          'entity_type' => 'node',
+          'label' => 'Hero Image',
+          'bundle' => 'campaign',
+          'description' => st('Banner image for top of page.'),
+          'widget' => array(
+              'type' => 'image_image'
+          ),
+          'display' => array(
+              'default' => array(
+                  'label' => 'hidden',
+                  'type' => 'image'
+              )
+          ),
+          'default_value' => null,
+          'default_value_function' => null,
+          'setting' => array(
+            'file_directory' => '',
+            'file_extensions' => 'png gif jpg jpeg',
+          )
+      );
+      field_create_instance($instance);
+
       // Field SPPX UUID 
       $field = array(
           'field_name' => 'field_sppx_uuid',
@@ -391,6 +435,8 @@
           'settings' => array(
               'title' => 'none',
               'title_value' => '',
+              "min" => "0",
+              "max" => "100000000",
           )
       );
       field_create_instance($instance);
@@ -412,6 +458,8 @@
           'settings' => array(
               'title' => 'none',
               'title_value' => '',
+              "min" => "0",
+              "max" => "100000000",
           )
       );
       field_create_instance($instance);
@@ -433,6 +481,8 @@
           'settings' => array(
               'title' => 'none',
               'title_value' => '',
+              "min" => "0",
+              "max" => "100000000",
           )
       );
       field_create_instance($instance);

@@ -217,23 +217,6 @@ function crowdfunding_campaign_node_presave(Node $node) {
 
 }
 
-/**
- * Implements hook_menu
- */
-
-function crowdfunding_campaign_menu() {
-
-  $items['sppx-login'] = array(
-    'title' => 'SPPX Login',
-    'page callback' => 'backdrop_get_form',
-    'page arguments' => array('crowdfunding_campaign_sppx_login_form'),
-    'menu_name' => 'main-menu',
-    'access callback' => TRUE,
-    'type' => MENU_NORMAL_ITEM
-  );
-  return $items;
-}
-
 /** 
  * Custom sppx login form
 */
@@ -350,7 +333,11 @@ function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_stat
   // print_r($form['field_invest']['#access']);exit;
   global $user;
   // Check to see if $user has the campaign_manager role.
-  if ($user->uid > 1 && in_array('campaign_manager', array_values($user->roles))) {
+
+  // if ($user->uid > 1 && in_array('campaign_manager', array_values($user->roles))) {
+
+    $form['field_sppx_uuid']['#weight'] = 1;
+    $form['field_hero_image']['#weight'] = 2;
     $form['field_invest']['#access'] = FALSE;
     $form['field_issue_name']['#access'] = FALSE;
     $form['field_sppx_id']['#access'] = FALSE;
@@ -377,7 +364,6 @@ function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_stat
     $form['field_teaser']['#access'] = FALSE;
     $form['field_visibility']['#access'] = FALSE;
     $form['body']['#access'] = FALSE;
-
-  }
+  // }
 }
 
