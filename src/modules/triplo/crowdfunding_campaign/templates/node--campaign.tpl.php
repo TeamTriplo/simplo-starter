@@ -194,7 +194,7 @@
           </div>
         <?php else: ?>
           <div class="not-open">To see the details of this campaign, we need to verify your Silicon Prairie account here</div>
-          <?php  print render($sppx_login_form); ?>
+          <?php  print backdrop_render($sppx_login_form); ?>
           <?php endif;?>
       </section>
   </div>
