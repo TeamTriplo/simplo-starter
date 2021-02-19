@@ -331,38 +331,55 @@ function crowdfunding_campaign_preprocess_node(&$variables){
 function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_state, $form_id) {
 
   global $user;
-  // Check to see if $user has the campaign_manager role.
+  $campaign_fields = array('issue_name',
+                           'sppx_id',
+                           'issue_link',
+                           'portal_link',
+                           'forum_link',
+                           'thumbnail_link',
+                            'type',
+                            'rule',
+                            'raise_minimum',
+                            'raise_maximum',
+                            'raise_target',
+                            'raised',
+                            'lotsize',
+                            'request',
+                            'accredited',
+                            'reviewed',
+                            'status',
+                            'start_date',
+                            'end_date',
+                            'target_date',
+                            'caveat_copyright',
+                            'caveat_warning',
+                            'teaser',
+                            'invest',
+                            'visibility',
+                            'body'
+                          );
 
-  // if ($user->uid > 1 && in_array('campaign_manager', array_values($user->roles))) {
+  $form['field_sppx_uuid']['#weight'] = 1;
+  $form['field_hero_image']['#weight'] = 2;
+  foreach($campaign_fields as $campaign_field){
+    if($campaign_field == 'body'){
+      $form[$campaign_field]['#access'] = FALSE;
+    }
+    $form['field_'.$campaign_field]['#access'] = FALSE;
+  }
+  if ($user->uid == 1){
+    $form['field_fieldgroup'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Additional data'),
+      '#weight' => 3,
+      '#collapsible' => true,
+      '#collapsed' => true,
+    );
+    foreach($campaign_fields as $campaign_field){
+      $form['field_fieldgroup']['field_'.$campaign_field] = $form['field_'.$campaign_field];
+      $form['field_fieldgroup']['field_'.$campaign_field]['#access'] = TRUE;
+    }
+  }
 
-    $form['field_sppx_uuid']['#weight'] = 1;
-    $form['field_hero_image']['#weight'] = 2;
-    $form['field_invest']['#access'] = FALSE;
-    $form['field_issue_name']['#access'] = FALSE;
-    $form['field_sppx_id']['#access'] = FALSE;
-    $form['field_issue_link']['#access'] = FALSE;
-    $form['field_portal_link']['#access'] = FALSE;
-    $form['field_forum_link']['#access'] = FALSE;
-    $form['field_thumbnail_link']['#access'] = FALSE;
-    $form['field_type']['#access'] = FALSE;
-    $form['field_rule']['#access'] = FALSE;
-    $form['field_raise_minimum']['#access'] = FALSE;
-    $form['field_raise_maximum']['#access'] = FALSE;
-    $form['field_raise_target']['#access'] = FALSE;
-    $form['field_raised']['#access'] = FALSE;
-    $form['field_lotsize']['#access'] = FALSE;
-    $form['field_request']['#access'] = FALSE;
-    $form['field_accredited']['#access'] = FALSE;
-    $form['field_reviewed']['#access'] = FALSE;
-    $form['field_status']['#access'] = FALSE;
-    $form['field_start_date']['#access'] = FALSE;
-    $form['field_end_date']['#access'] = FALSE;
-    $form['field_target_date']['#access'] = FALSE;
-    $form['field_caveat_copyright']['#access'] = FALSE;
-    $form['field_caveat_warning']['#access'] = FALSE;
-    $form['field_teaser']['#access'] = FALSE;
-    $form['field_visibility']['#access'] = FALSE;
-    $form['body']['#access'] = FALSE;
-  // }
 }
 
