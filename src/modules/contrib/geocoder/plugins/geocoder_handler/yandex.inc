@@ -62,7 +62,7 @@ function geocoder_yandex_field($field, $field_item) {
 }
 
 function _geocoder_yandex_geometry(&$data) {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
 
   if (isset($data->error)) {
     $args = array(

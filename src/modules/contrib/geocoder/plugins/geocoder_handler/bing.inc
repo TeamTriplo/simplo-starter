@@ -20,7 +20,7 @@ $plugin = array(
  * Geocode an address.
  */
 function geocoder_bing($address, $options = array()) {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   $config = config('geocoder.settings');
 
   if (!empty($config->get('geocoder_apikey_bing'))) {

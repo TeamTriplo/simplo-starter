@@ -34,7 +34,7 @@ function geocoder_yahoo($address, $options = array()) {
   $request = backdrop_http_request("http://where.yahooapis.com/geocode?location=" . urlencode($address) . "&flags=J&appid={$consumer_key}");
   $data = json_decode($request->data);
 
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   return _geocoder_yahoo_geometry($data);
 }
 

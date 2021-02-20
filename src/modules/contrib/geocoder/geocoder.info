@@ -2,11 +2,6 @@ type = module
 name = Geocoder
 description = An API and widget to geocode various known data into other GIS data types.
 backdrop = 1.x
-dependencies[] = geophp
+dependencies[] = geofield
 
 configure = admin/config/content/geocoder
-
-; Added by Backdrop CMS packaging script on 2018-12-11
-project = geocoder
-version = 1.x-1.0.0
-timestamp = 1544596431
