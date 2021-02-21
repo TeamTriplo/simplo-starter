@@ -22,7 +22,7 @@ a {
 
 a:focus,
 a:hover {
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 a:active {
