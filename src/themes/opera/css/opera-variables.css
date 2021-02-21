@@ -1,0 +1,24 @@
+/*  
+ * This file contains any css variables that we are setting 
+ * for the theme. This file will also be overriden by the color module. 
+ */
+
+ /* Setting CSS Variables - Default */
+ 
+:root {
+  --color-one: #686963;
+  --text-one: #fffff1;
+  --link-one: #b2bc21;
+  --color-two: #db5461;
+  --text-two: #002000;
+  --link-two: #b2bc22;
+  --color-three: #8aa29e;
+  --text-three: #fffff3; 
+  --link-three: #b2bc23;
+  --color-four: #f1edee;
+  --text-four: #020020;  
+  --link-four: #b2bc24;
+  --color-five: #3d5467;
+  --text-five: #fffff5;
+  --link-five: #b2bc25;
+}
