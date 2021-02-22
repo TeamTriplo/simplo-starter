@@ -1,0 +1,1 @@
+<div>You have an open session with SPPX. When you are done, <a href="/logout">[Logout]</a> to end your session.</div>

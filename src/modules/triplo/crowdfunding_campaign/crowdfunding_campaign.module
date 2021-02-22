@@ -148,6 +148,8 @@ function crowdfunding_campaign_theme_registry_alter(&$theme_registry) {
 function crowdfunding_campaign_node_presave(Node $node) {
 
   if($node->type == 'campaign' && empty($node->nid)){
+    print_r('heeeeeeeeeee');
+    exit;
     if (!empty($node->field_sppx_uuid)){
       $sppx_uuid = $node->field_sppx_uuid['und'][0]['value'];
       $uri = "https://test.sppx.io/api/v0/issue/".$sppx_uuid;
@@ -232,7 +234,6 @@ function crowdfunding_campaign_sppx_login_form(&$form, &$form_state) {
     '#title' => t('SPPX password'),
     '#type' => 'password',
     '#required' => TRUE,
-    '#description' => $description,
     '#password_toggle' => TRUE
   );
   $form['sppx_login_submit'] = array(
@@ -382,4 +383,66 @@ function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_stat
   }
 
 }
+
+/**
+ * Implements hook_block_info().
+ *
+ */
+function crowdfunding_campaign_block_info() {
+ 
+  $blocks['sppx_user_session'] = array(
+    // info: The name of the block.
+    'info' => t('SPPX session'),
+    'description' => 'Block to show sppx session information and logout button',
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ *
+ */
+function crowdfunding_campaign_block_view($delta = '', $settings = array(), $contexts = array()) {
+  // The $delta parameter tells us which block is being requested.
+  switch ($delta) {
+    case 'sppx_user_session':
+      $block['subject'] = t('SPPX session');
+      $block['content'] = get_sppx_user_session();
+      break;
+  }
+  return $block;
+}
+
+/**  
+ * Get SPPX user session data 
+ */
+
+function get_sppx_user_session(){
+
+  if(!isset($_SESSION)) 
+  { 
+    session_start(); 
+  } 
+  if (!empty($_SESSION['sppx'])){
+    $acess_token = $_SESSION['sppx']['access_token'];
+  }
+  return theme('sppx_session_info', array('token' => $access_token));
+}
+
+/**
+ * Implements hook_theme().
+ */
+function crowdfunding_campaign_theme($existing, $type, $theme, $path) {
+
+  $custom_theme = array();
+  $custom_theme['sppx_session_info'] = array(
+    'template' => 'block-sppx-session-info',
+    'path' => backdrop_get_path('module', 'crowdfunding_campaign') . '/templates',
+  );
+  
+  return $custom_theme;
+}
+
+
 

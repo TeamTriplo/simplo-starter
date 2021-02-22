@@ -4,9 +4,10 @@
     "name": "default",
     "title": "Default Layout",
     "description": null,
+    "renderer_name": "standard",
     "module": "layout",
     "weight": 0,
-    "storage": 4,
+    "storage": 2,
     "layout_template": "moscone_flipped",
     "disabled": false,
     "settings": {
@@ -19,17 +20,21 @@
             "84c43df4-1165-4faf-8700-c362a7153c0b",
             "13b2f325-af26-40bb-8c61-97fe1d93f19f"
         ],
+        "top": [
+            "09f11b4e-877e-45ab-9000-a4c6254faa04"
+        ],
         "content": [
+            "792d7dcc-ccae-456b-be00-cc3f74278954",
             "default"
         ],
+        "sidebar": [],
+        "bottom": [],
         "footer": [
             "cd4d033d-3f67-4191-8655-85ee758877c0"
         ],
-        "sidebar": [],
-        "top": [
-            "09f11b4e-877e-45ab-9000-a4c6254faa04"
-        ]
+        "title": []
     },
+    "contexts": [],
     "content": {
         "84c43df4-1165-4faf-8700-c362a7153c0b": {
             "plugin": "system:header",
@@ -99,6 +104,31 @@
                     "contexts": []
                 },
                 "uuid": "09f11b4e-877e-45ab-9000-a4c6254faa04",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "792d7dcc-ccae-456b-be00-cc3f74278954": {
+            "plugin": "crowdfunding_campaign:sppx_user_session",
+            "data": {
+                "module": "crowdfunding_campaign",
+                "delta": "sppx_user_session",
+                "settings": {
+                    "title_display": "none",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": [],
+                    "admin_label": "SPPX user session",
+                    "admin_description": "Block to show SPPX user session information"
+                },
+                "uuid": "792d7dcc-ccae-456b-be00-cc3f74278954",
                 "style": {
                     "plugin": "default",
                     "data": {
