@@ -22,6 +22,21 @@ function crowdfunding_campaign_cron() {
       }
     }
 }
+
+/**
+* Implements hook_menu().
+*/
+function crowdfunding_campaign_menu() {
+  $items['sppx-logout'] = array(
+    'page callback' => 'logout_sppx_session',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+
+
 /** 
  * Update Offers with current JSON feed data 
  * @parameter : $offer crowdfunding offer to be updated
@@ -148,8 +163,6 @@ function crowdfunding_campaign_theme_registry_alter(&$theme_registry) {
 function crowdfunding_campaign_node_presave(Node $node) {
 
   if($node->type == 'campaign' && empty($node->nid)){
-    print_r('heeeeeeeeeee');
-    exit;
     if (!empty($node->field_sppx_uuid)){
       $sppx_uuid = $node->field_sppx_uuid['und'][0]['value'];
       $uri = "https://test.sppx.io/api/v0/issue/".$sppx_uuid;
@@ -276,6 +289,24 @@ function get_crowdfunding_campaign_sppx_login($username, $password){
     $response = backdrop_http_request($request_uri); 
     return $response;
 }
+
+/**
+ * SPPX session logout through API
+ * @param access_token
+ * @return http-response 
+  */
+  function logout_crowdfunding_campaign_sppx_session($access_token){
+    $request_uri = 'https://test.sppx.io/api/v0/user/logout';
+    $headers = array('Authorization' => 'Bearer '.$access_token,
+                    'Accept' => 'application/vnd.api+json',
+                    'Content-Type' => 'application/vnd.api+json',
+                    'cache-control' => 'no-cache');
+    $options = array('headers' => $headers);
+    $response = backdrop_http_request($request_uri, $options); 
+    return $response;
+}
+
+
 /** 
  * SPPX login form submit
 */
@@ -423,11 +454,12 @@ function get_sppx_user_session(){
   if(!isset($_SESSION)) 
   { 
     session_start(); 
-  } 
-  if (!empty($_SESSION['sppx'])){
-    $acess_token = $_SESSION['sppx']['access_token'];
   }
-  return theme('sppx_session_info', array('token' => $access_token));
+  $access_token = Null;
+  if (!empty($_SESSION['sppx'])){
+    $access_token = $_SESSION['sppx']['access_token'];
+  }
+  return theme('sppx_session_info', array('access_token' => $access_token));
 }
 
 /**
@@ -439,10 +471,29 @@ function crowdfunding_campaign_theme($existing, $type, $theme, $path) {
   $custom_theme['sppx_session_info'] = array(
     'template' => 'block-sppx-session-info',
     'path' => backdrop_get_path('module', 'crowdfunding_campaign') . '/templates',
+    'variables' => array('access_token' => Null)
   );
   
   return $custom_theme;
 }
+
+/**  
+ * Logout SPPX session 
+ */
+
+ function logout_sppx_session(){
+
+  if(!isset($_SESSION)){
+    session_start(); 
+  }
+  if (!empty($_SESSION['sppx'])){
+    $access_token = $_SESSION['sppx']['access_token'];
+  }
+  $data = array();
+  $response = logout_crowdfunding_campaign_sppx_session($access_token);
+  $response_json = $response->data;
+  return backdrop_json_output($response_json);
+ }
 
 
 

@@ -131,3 +131,10 @@
 .crowdfunding-campaign-sppx-login-form .form-submit {
 	background: #E0A300;
 }
+.sppx-session {
+	padding: 10px;
+	border: 1px solid;
+	margin-bottom: 10px;
+	background: #E0A300;
+}
+
