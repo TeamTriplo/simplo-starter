@@ -34,8 +34,12 @@
   color: var(--text-five);
 }
 
+
 .layout--boxton.layout-front .l-content div.block:last-of-type {
   background-color: white;
   color: black;
 }
 
+.layout--boxton.layout-front .l-content div.block:last-of-type a {
+  color: inherit;
+}
