@@ -22,6 +22,21 @@ function crowdfunding_campaign_cron() {
       }
     }
 }
+
+/**
+* Implements hook_menu().
+*/
+function crowdfunding_campaign_menu() {
+  $items['sppx-logout'] = array(
+    'page callback' => 'logout_sppx_session',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+
+
 /** 
  * Update Offers with current JSON feed data 
  * @parameter : $offer crowdfunding offer to be updated
@@ -232,7 +247,6 @@ function crowdfunding_campaign_sppx_login_form(&$form, &$form_state) {
     '#title' => t('SPPX password'),
     '#type' => 'password',
     '#required' => TRUE,
-    '#description' => $description,
     '#password_toggle' => TRUE
   );
   $form['sppx_login_submit'] = array(
@@ -275,6 +289,24 @@ function get_crowdfunding_campaign_sppx_login($username, $password){
     $response = backdrop_http_request($request_uri); 
     return $response;
 }
+
+/**
+ * SPPX session logout through API
+ * @param access_token
+ * @return http-response 
+  */
+  function logout_crowdfunding_campaign_sppx_session($access_token){
+    $request_uri = 'https://test.sppx.io/api/v0/user/logout';
+    $headers = array('Authorization' => 'Bearer '.$access_token,
+                    'Accept' => 'application/vnd.api+json',
+                    'Content-Type' => 'application/vnd.api+json',
+                    'cache-control' => 'no-cache');
+    $options = array('headers' => $headers);
+    $response = backdrop_http_request($request_uri, $options); 
+    return $response;
+}
+
+
 /** 
  * SPPX login form submit
 */
@@ -382,4 +414,92 @@ function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_stat
   }
 
 }
+
+/**
+ * Implements hook_block_info().
+ *
+ */
+function crowdfunding_campaign_block_info() {
+ 
+  $blocks['sppx_user_session'] = array(
+    // info: The name of the block.
+    'info' => t('SPPX session'),
+    'description' => 'Block to show sppx session information and logout button',
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ *
+ */
+function crowdfunding_campaign_block_view($delta = '', $settings = array(), $contexts = array()) {
+  // The $delta parameter tells us which block is being requested.
+  switch ($delta) {
+    case 'sppx_user_session':
+      $block['subject'] = t('SPPX session');
+      $block['content'] = get_sppx_user_session();
+      break;
+  }
+  return $block;
+}
+
+/**  
+ * Get SPPX user session data 
+ */
+
+function get_sppx_user_session(){
+
+  if(!isset($_SESSION)) 
+  { 
+    session_start(); 
+  }
+  $access_token = Null;
+  if (!empty($_SESSION['sppx'])){
+    $access_token = $_SESSION['sppx']['access_token'];
+  }
+  return theme('sppx_session_info', array('access_token' => $access_token));
+}
+
+/**
+ * Implements hook_theme().
+ */
+function crowdfunding_campaign_theme($existing, $type, $theme, $path) {
+
+  $custom_theme = array();
+  $custom_theme['sppx_session_info'] = array(
+    'template' => 'block-sppx-session-info',
+    'path' => backdrop_get_path('module', 'crowdfunding_campaign') . '/templates',
+    'variables' => array('access_token' => Null)
+  );
+  
+  return $custom_theme;
+}
+
+/**  
+ * Logout SPPX session 
+ */
+
+ function logout_sppx_session(){
+
+  if(!isset($_SESSION)){
+    session_start(); 
+  }
+  if (!empty($_SESSION['sppx'])){
+    $access_token = $_SESSION['sppx']['access_token'];
+  }
+  $data = array();
+  $response = logout_crowdfunding_campaign_sppx_session($access_token);
+  $response_json = $response->data;
+  $response_data = json_decode($response_json, TRUE);
+  $response_code =  $response_data['status']['code'];
+  if($response_code == '200'){
+    // Clear sppx session data 
+    unset($_SESSION['sppx']);
+  }
+  return backdrop_json_output($response_json);
+ }
+
+
 
