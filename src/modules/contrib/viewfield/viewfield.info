@@ -1,0 +1,11 @@
+name = Viewfield
+description = Defines a field type to display a view.
+backdrop = 1.x
+type = module
+package = Fields
+dependencies[] = views
+
+; Added by Backdrop CMS packaging script on 2018-08-25
+project = viewfield
+version = 1.x-1.0.0
+timestamp = 1535187841
