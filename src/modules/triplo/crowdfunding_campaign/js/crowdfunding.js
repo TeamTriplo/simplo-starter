@@ -29,5 +29,28 @@ jQuery(document).ready(function($) {
       return false;
     });
 
+    function checkSPPXTokenStatus(){
+      $.ajax({
+        url: "/sppx-check-token-status",
+        type: "post",
+        success: function (response) {
+          let result = JSON.parse(response);
+          response_code =  result['code'];
+          if(response_code != '200'){
+            alert('Your session has timed out. You will need to login again');
+            location.href = location.href
+          }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          console.log(textStatus, errorThrown);
+        }
+      });
+    }
+    // Call Ajax checkSPPXTokenStatus in every 1 mins
+    if ($('div.sppx-session').length) {
+      setInterval(checkSPPXTokenStatus, 120000);
+    }
+         
+
   });
 });

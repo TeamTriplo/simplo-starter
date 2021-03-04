@@ -32,6 +32,11 @@ function crowdfunding_campaign_menu() {
     'type' => MENU_CALLBACK,
     'access callback' => TRUE,
   );
+  $items['sppx-check-token-status'] = array(
+    'page callback' => 'check_sppx_access_token_status',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
   return $items;
 }
 
@@ -489,7 +494,6 @@ function crowdfunding_campaign_theme($existing, $type, $theme, $path) {
   if (!empty($_SESSION['sppx'])){
     $access_token = $_SESSION['sppx']['access_token'];
   }
-  $data = array();
   $response = logout_crowdfunding_campaign_sppx_session($access_token);
   $response_json = $response->data;
   $response_data = json_decode($response_json, TRUE);
@@ -502,4 +506,33 @@ function crowdfunding_campaign_theme($existing, $type, $theme, $path) {
  }
 
 
+/** 
+ * Check SPPX token status if already expired or not
+ * For now we use logout API to get the status. There should have a separate API to check 
+ * access token status.
+ * TODO - Fix it later with appropriate API
+*/
 
+function check_sppx_access_token_status(){
+
+  if(!isset($_SESSION)){
+    session_start(); 
+  }
+  if (!empty($_SESSION['sppx'])){
+    $access_token = $_SESSION['sppx']['access_token'];
+  }
+  $data = array();
+  $response = logout_crowdfunding_campaign_sppx_session($access_token);
+  $response_json = $response->data;
+  $response_data = json_decode($response_json, TRUE);
+  $response_code =  $response_data['status']['code'];
+  $data['code'] = $response_code;
+  if($response_code == '401'){
+    // Clear sppx session data
+    unset($_SESSION['sppx']);
+    $data['code'] = $response_code;
+    $data['reason'] = $response_data['status']['reason'];
+    $data['message'] = $response_data['status']['memo'];
+  }
+  return backdrop_json_output(json_encode($data));
+}
