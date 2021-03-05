@@ -15,11 +15,8 @@ jQuery(document).ready(function($) {
           success: function (response) {
             let result = JSON.parse(response);
             response_code =  result['status']['code'];
-            if(response_code != '200'){
-              alert(result['status']['memo']);
-            }else{
-              location.href = location.href
-            }
+            // Refresh current page
+            location.href = location.href
           },
           error: function(jqXHR, textStatus, errorThrown) {
             console.log(textStatus, errorThrown);
