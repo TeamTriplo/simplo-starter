@@ -498,10 +498,10 @@ function crowdfunding_campaign_theme($existing, $type, $theme, $path) {
   $response_json = $response->data;
   $response_data = json_decode($response_json, TRUE);
   $response_code =  $response_data['status']['code'];
-  if($response_code == '200'){
-    // Clear sppx session data 
-    unset($_SESSION['sppx']);
-  }
+  // Clear sppx session data 
+  unset($_SESSION['sppx']);
+  $success_message = t("You have successfully logged out");
+  backdrop_set_message($success_message, 'status');
   return backdrop_json_output($response_json);
  }
 
