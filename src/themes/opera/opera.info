@@ -43,6 +43,10 @@ stylesheets[all][] = css/opera-variables.css
 ; Add theme JS files
 scripts[] = js/scripts.js
 
+; Configuration specifically for Utility CSS module. Classes added to this list
+; will be available as autocomplete in the block UI where users are allowed to add classes.
+utility_css[recipes][] = 'info-block'
+
 ; We need at least one setting for the theme settings page to appear in the
 ; menu. Color module provides our defaults, so we just register a dummy setting.
 settings[color] = true
