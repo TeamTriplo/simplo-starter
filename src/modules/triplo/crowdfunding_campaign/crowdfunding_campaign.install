@@ -434,9 +434,7 @@
           'description' => st('Raise Maximum'),
           'settings' => array(
               'title' => 'none',
-              'title_value' => '',
-              "min" => "0",
-              "max" => "100000000",
+              'title_value' => ''
           )
       );
       field_create_instance($instance);
@@ -457,9 +455,7 @@
           'description' => st('Raise Target'),
           'settings' => array(
               'title' => 'none',
-              'title_value' => '',
-              "min" => "0",
-              "max" => "100000000",
+              'title_value' => ''
           )
       );
       field_create_instance($instance);
@@ -480,9 +476,7 @@
           'description' => st('Raised'),
           'settings' => array(
               'title' => 'none',
-              'title_value' => '',
-              "min" => "0",
-              "max" => "100000000",
+              'title_value' => ''
           )
       );
       field_create_instance($instance);
