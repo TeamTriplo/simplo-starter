@@ -404,6 +404,8 @@ function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_stat
     }
     $form['field_'.$campaign_field]['#access'] = FALSE;
   }
+  // Added default max to avoid maximum validation for this integer field
+  $form['field_raise_maximum']['und'][0]['value']['#max'] = '1000000000000';
   if ($user->uid == 1){
     $form['field_fieldgroup'] = array(
       '#type' => 'fieldset',
