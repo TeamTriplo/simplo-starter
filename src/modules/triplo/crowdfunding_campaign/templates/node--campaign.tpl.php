@@ -120,7 +120,6 @@
       </section>
       <?php 
         $visibility = $node->field_visibility['und'][0]['value'];
-        session_start();
       ?>
       <section class="rightside">
         <?php if ($visibility == 'open' || (isset($_SESSION['sppx']['access_token']) && !empty($_SESSION['sppx']['access_token']))) :?>
