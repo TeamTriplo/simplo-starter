@@ -120,6 +120,7 @@
       </section>
       <?php 
         $visibility = $node->field_visibility['und'][0]['value'];
+        $issue_uuid = $node->field_sppx_uuid['und'][0]['value'];
       ?>
       <section class="rightside">
         <?php if ($visibility == 'open' || (isset($_SESSION['sppx']['access_token']) && !empty($_SESSION['sppx']['access_token']))) :?>
@@ -189,6 +190,7 @@
             </div>
             <div class="forum">
               <a href="<?php print render($content['field_forum_link']['#items'][0]['display_url']); ?>"> Forum</a>
+              <a class="sppx-invest" href="/sppx-pledge/<?php print $issue_uuid; ?>"> Invest</a>
             </div>
           </div>
         <?php else: ?>

@@ -37,6 +37,13 @@ function crowdfunding_campaign_menu() {
     'type' => MENU_CALLBACK,
     'access callback' => TRUE,
   );
+  // SPPX Invest 
+  $items['sppx-pledge/%'] = array(
+    'page callback' => 'pledge_sppx_invest',
+    'page arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
   return $items;
 }
 
@@ -240,7 +247,7 @@ function crowdfunding_campaign_node_presave(Node $node) {
 /** 
  * Custom sppx login form
 */
-function crowdfunding_campaign_sppx_login_form(&$form, &$form_state) {
+function crowdfunding_campaign_sppx_login_form($form, $form_state) {
 
   $form['sppx_username'] = array(
     '#type' => 'textfield',
@@ -265,7 +272,7 @@ function crowdfunding_campaign_sppx_login_form(&$form, &$form_state) {
 /**
  * SPPX login form validate
   */
-function crowdfunding_campaign_sppx_login_form_validate(&$form, &$form_state) {
+function crowdfunding_campaign_sppx_login_form_validate(&$form, $form_state) {
 
   $sppx_username = $form_state['input']['sppx_username'];
   $sppx_pass = $form_state['input']['sppx_pass'];
@@ -315,7 +322,7 @@ function get_crowdfunding_campaign_sppx_login($username, $password){
 /** 
  * SPPX login form submit
 */
-function crowdfunding_campaign_sppx_login_form_submit(&$form, &$form_state) {
+function crowdfunding_campaign_sppx_login_form_submit(&$form, $form_state) {
 
   $sppx_username = $form_state['input']['sppx_username'];
   $sppx_pass = $form_state['input']['sppx_pass'];
@@ -365,7 +372,7 @@ function crowdfunding_campaign_preprocess_node(&$variables){
  * Implements hook_form_FORM_ID_alter()
 */
 
-function crowdfunding_campaign_form_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+function crowdfunding_campaign_form_campaign_node_form_alter(&$form, $form_state, $form_id) {
 
   global $user;
   $campaign_fields = array('issue_name',
@@ -537,4 +544,29 @@ function check_sppx_access_token_status(){
     $data['message'] = $response_data['status']['memo'];
   }
   return backdrop_json_output(json_encode($data));
+}
+
+
+/** 
+ * Pledge SPPX Invest 
+*/
+
+function pledge_sppx_invest($issue_uuid){
+
+  if(!isset($_SESSION)){
+    session_start(); 
+  }
+  if (!empty($_SESSION['sppx'])){
+    $access_token = $_SESSION['sppx']['access_token'];
+  }
+  $request_uri = 'https://test.sppx.io/api/v0/issue/'.$issue_uuid.'/pledge';
+  $headers = array('Authorization' => 'Bearer '.$access_token,
+                  'Accept' => 'application/vnd.api+json',
+                  'Content-Type' => 'application/vnd.api+json',
+                  'cache-control' => 'no-cache');
+  $options = array('headers' => $headers);
+  $response = backdrop_http_request($request_uri, $options); 
+  $response_json = $response->data;
+  $response_data = json_decode($response_json, TRUE);
+  return $response_data;
 }
