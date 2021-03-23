@@ -39,9 +39,9 @@ function crowdfunding_campaign_menu() {
   );
   // SPPX Invest 
   $items['sppx-pledge/%'] = array(
-    'page callback' => 'pledge_sppx_invest',
+    'page callback' => 'get_sppx_pledge_invest',
     'page arguments' => array(1),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_NORMAL_ITEM,
     'access callback' => TRUE,
   );
   return $items;
@@ -487,6 +487,12 @@ function crowdfunding_campaign_theme($existing, $type, $theme, $path) {
     'path' => backdrop_get_path('module', 'crowdfunding_campaign') . '/templates',
     'variables' => array('access_token' => Null)
   );
+
+  $custom_theme['sppx_pledge_info'] = array(
+    'template' => 'block-sppx-pledge-info',
+    'path' => backdrop_get_path('module', 'crowdfunding_campaign') . '/templates',
+    'variables' => array('pledge' => Null)
+  );
   
   return $custom_theme;
 }
@@ -551,7 +557,7 @@ function check_sppx_access_token_status(){
  * Pledge SPPX Invest 
 */
 
-function pledge_sppx_invest($issue_uuid){
+function get_sppx_pledge_invest($issue_uuid){
 
   if(!isset($_SESSION)){
     session_start(); 
@@ -566,7 +572,14 @@ function pledge_sppx_invest($issue_uuid){
                   'cache-control' => 'no-cache');
   $options = array('headers' => $headers);
   $response = backdrop_http_request($request_uri, $options); 
-  $response_json = $response->data;
-  $response_data = json_decode($response_json, TRUE);
-  return $response_data;
+  $response_data_json = $response->data;
+  $response_data = json_decode($response_data_json, TRUE);
+
+  if ($response_data['status']['code'] == '200'){
+    $status_message = $response_data['status']['memo'];
+    $pledge = $response_data['pledge'];
+  }
+  return theme('sppx_pledge_info', array('status' => $status_message,
+                                         'pledge' => $pledge)
+                                        );
 }
