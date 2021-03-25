@@ -27,6 +27,8 @@
     </table>
 <?php endif;?>
 <hr>
+<h3>New pledge of Individual Support</h3>
+<?php print backdrop_render($pledge_form);?>
 <div class="pledge-notes">
     <p><?php print base64_decode($pledge['notes']);?></p>
 </div>
