@@ -49,15 +49,13 @@ class DashboardManageContentBlock extends Block {
       array('data' => t('Manage')),
     );
     $rows = array();
-
     // Check access, then add a link to create content.
     if ($access) {
       foreach ($node_types as $machine => $node_type) {
         // If no types are specified, show all types.
         if (empty($this->settings['types']) || in_array($machine, $this->settings['types'])) {
-          $type_url_string = str_replace('_', '-', $node_type->type);
-          $create = l(t('Create', array('@type' => t($node_type->name))), 'node/add/' . $type_url_string, array('html' => TRUE));
-          $manage = l(t('Manage', array('@type' => t($node_type->name))), 'admin/content/node', array('html' => TRUE, 'query' => array('status' => 'All', 'type' => $type_url_string)));
+          $create = l(t('Create', array('@type' => t($node_type->name))), 'node/add/' . $node_type->type, array('html' => TRUE));
+          $manage = l(t('Manage', array('@type' => t($node_type->name))), 'admin/content/node', array('html' => TRUE, 'query' => array('status' => 'All', 'type' => $node_type->type)));
           $rows[] = array(
             'data' => array(
               check_plain(t($node_type->name)),
@@ -67,6 +65,7 @@ class DashboardManageContentBlock extends Block {
           );
         }
       }
+      // exit;
     }
     else {
       return array();
