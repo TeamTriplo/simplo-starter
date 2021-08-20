@@ -1,11 +1,3 @@
-/* Special classes for Tatsu theme to be changed by color module */
-
-.tatsu-header-color {
-  background: #20252e;
-}
-
-/* END: Special classes for Tatsu theme to be changed by color module */
-
 /**
  * @file
  * Colors and appearance styles.
@@ -30,7 +22,7 @@ a {
 
 a:focus,
 a:hover {
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 a:active {
@@ -231,7 +223,7 @@ fieldset .fieldset-legend {
 
 .l-header .site-name {
   font-weight: 200;
-  text-align: center;
+  text-align: left;
 }
 
 .header-site-name-link {
@@ -312,6 +304,11 @@ fieldset .fieldset-legend {
   }
 }
 
+.header-menu a:hover, .header-menu a:active {
+    background: transparent;
+    text-decoration: underline;
+}
+
 /**
  * Responsive menu styles
  */
@@ -338,11 +335,16 @@ fieldset .fieldset-legend {
   }
 
   .js .menu-dropdown > li:hover {
-    background-color: #114a75;
+    background-color: var(--color-one);
+    filter: brightness(80%);
+    color: white;
+  }
+  .js .menu-dropdown > li:hover a {
+    color: var(--link-one);
   }
 
-  .js .menu-dropdown > li.has-children > a:hover,
-  .js .menu-dropdown > li.has-children > a:focus {
+  .js .block-system-main-menu .menu-dropdown > li.has-children > a:hover,
+  .js .block-system-main-menu .menu-dropdown > li.has-children > a:focus {
     background-color: #114a75;
   }
 
@@ -1245,8 +1247,9 @@ div.error:before {
   /* background-image: linear-gradient(transparent, transparent), url(../../../misc/message-error.svg); */
 }
 
-/* Color classes for UI */
+/* Bootstrap can override elements in admin menu. This should fix that. */
 
-
-
-
+#admin-bar .dropdown li > a, 
+#admin-bar .dropdown li > span {
+  margin-bottom: 0;
+}

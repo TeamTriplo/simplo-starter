@@ -55,6 +55,6 @@ function _geocoder_mapquest_nominatim_geometry(&$data) {
   if (!isset($data[0]->lon)) {
     return NULL;
   }
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   return new Point($data[0]->lon, $data[0]->lat);
 }

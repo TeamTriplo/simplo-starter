@@ -1,19 +1,27 @@
-.block {
+.layout-front .block {
 	padding: 20px 0;
 }
 
-.l-header .block {
+.layout-front .l-header .block {
 	padding: 0;
 }
 
-.block-hero {
+.layout-front .block-hero {
 	margin: 0;
 }
 
-.block-hero-image {
+.layout-front .block-hero-image {
 	min-height: 450px;
 }
 
-.block-hero-no-image {
+.layout-front .block-hero-no-image {
 	min-height: 300px;
+}
+
+.layout-front .l-page-title {
+	padding: 0;
+}
+
+.l-footer {
+	margin: 0;
 }

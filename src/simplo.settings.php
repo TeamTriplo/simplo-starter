@@ -331,6 +331,13 @@ $settings['404_fast_html'] = '<!DOCTYPE html><html><head><title>404 Not Found</t
  */
 $settings['backdrop_drupal_compatibility'] = TRUE;
 
+$settings['trusted_host_patterns'] = array(
+  '^simplo\.site$',
+  '^.+\.simplo\.site$',
+  '^simplo\.site',
+  '^.+\.simplo\.site',
+);
+
 /**
  * Include a local settings file.
  *

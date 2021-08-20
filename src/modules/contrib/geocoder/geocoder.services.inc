@@ -69,7 +69,7 @@ function geocoder_services_access($handler, $data, $output) {
  * @return object
  */
 function geocoder_services_geocode($handler, $data, $format = 'default') {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   geocoder_service_check_request($handler, $format);
 
   $geom = geocoder($handler, $data);
@@ -83,7 +83,7 @@ function geocoder_services_geocode($handler, $data, $format = 'default') {
 }
 
 function geocoder_services_capabilities() {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
 
   $handlers = array();
   foreach (geocoder_handler_info() as $hid => $handler) {

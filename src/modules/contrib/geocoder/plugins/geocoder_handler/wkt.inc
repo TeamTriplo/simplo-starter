@@ -20,7 +20,7 @@ $plugin = array(
  * Process WKT
  */
 function geocoder_wkt($wkt, $options = array()) {
-  geophp_load();
+  module_load_include('inc', 'geofield', 'libraries/geophp/geoPHP');
   return geoPHP::load($wkt, 'wkt');
 }
 

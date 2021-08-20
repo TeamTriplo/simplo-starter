@@ -148,10 +148,11 @@
   margin-bottom: 3rem;
 }
 
-.header-menu ul.links {
+/*.header-menu ul.links {
   position: absolute;
   right: 0px;
-}
+  top: 0;
+}*/
 
 div.block-layout-custom-block[style] {
   padding-top: 10px;

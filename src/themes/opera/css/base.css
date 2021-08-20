@@ -197,6 +197,10 @@ table [aria-sort] img {
   visibility: hidden;
 }
 
+tr.even, tr.odd {
+  background-color: transparent;
+}
+
 /**
  * Fieldset styles
  */
