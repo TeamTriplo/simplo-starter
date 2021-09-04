@@ -13,27 +13,18 @@
  */
 ?>
 <div class="<?php print implode(' ', $classes); ?>"<?php print backdrop_attributes($attributes); ?>>
-
-<?php if ($variables['is_front']) {
-	    
-	} ?>
-
-<?php print render($title_prefix); ?>
-<?php if ($title): ?>
+  <?php print render($title_prefix); ?>
   <?php if ($variables['is_front']): ?>
-  	<h2 class="block-title container"><?php print $title; ?></h2>
+    <div class="block--inner-wrapper container">
   <?php else: ?>
-    <h2 class="block-title"><?php print $title; ?></h2>
+    <div class="block--inner-wrapper">
   <?php endif; ?>
-<?php endif; ?>
-<?php print render($title_suffix); ?>
-  <?php if ($variables['is_front']): ?>
-  	  <div class="block-content container">
-	    <?php print render($content); ?>
-	  </div>
-  <?php else: ?>
-  	  <div class="block-content">
-	    <?php print render($content); ?>
-	  </div>
-  <?php endif; ?>
+    <?php if ($title): ?>
+      <h2 class="block-title"><?php print $title; ?></h2>
+    <?php endif; ?>
+    <?php print render($title_suffix); ?>
+      <div class="block-content">
+        <?php print render($content); ?>
+      </div>
+    </div>
 </div>
