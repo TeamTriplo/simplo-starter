@@ -1,0 +1,8 @@
+type = module
+name = FAQ Recipe
+description = A recipe to build a FAQ feature on your site.
+package = Recipes
+backdrop = 1.x
+
+dependencies[] = views
+dependencies[] = views_bootstrap

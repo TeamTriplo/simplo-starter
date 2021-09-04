@@ -1,5 +1,0 @@
-type = module
-name = Config Batch Import
-description = Import feature recipes
-package = Triplo
-backdrop = 1.x

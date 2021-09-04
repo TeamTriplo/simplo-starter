@@ -1,0 +1,38 @@
+{
+    "_config_name": "field.instance.node.testimonial.field_testimonial_author",
+    "field_name": "field_testimonial_author",
+    "entity_type": "node",
+    "bundle": "testimonial",
+    "label": "Author",
+    "widget": {
+        "weight": "-3",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    },
+    "description": "The author of the testimonial",
+    "required": 0,
+    "deleted": 0,
+    "default_value": [
+        {
+            "value": ""
+        }
+    ],
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "text_default",
+            "weight": "3",
+            "settings": [],
+            "module": "text"
+        }
+    }
+}
