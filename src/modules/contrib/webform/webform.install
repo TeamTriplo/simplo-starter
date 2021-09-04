@@ -1451,3 +1451,23 @@ function webform_update_1605() {
   $config->set('webform_fieldset_wrap', FALSE);
   $config->save();
 }
+
+/**
+ * Add setting: webform_export_use_progressive_batch.
+ */
+function webform_update_1606() {
+  $config = config('webform.settings');
+  $config->set('webform_export_use_progressive_batch', update_variable_get('webform_export_use_progressive_batch', TRUE));
+  $config->save();
+
+  update_variable_del('webform_export_use_progressive_batch');
+}
+
+/**
+ * Remove webform_email_replyto setting since core always sets Reply-to header.
+ */
+function webform_update_1607() {
+  $config = config('webform.settings');
+  $config->clear('webform_email_replyto');
+  $config->save();
+}
