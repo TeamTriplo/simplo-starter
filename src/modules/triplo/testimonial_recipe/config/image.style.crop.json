@@ -1,0 +1,19 @@
+{
+    "_config_name": "image.style.crop",
+    "label": "Crop",
+    "name": "crop",
+    "effects": [
+        {
+            "name": "manualcrop_crop_and_scale",
+            "data": {
+                "width": "300",
+                "height": "200",
+                "upscale": 1,
+                "respectminimum": 1,
+                "onlyscaleifcrop": 0,
+                "style_name": "crop"
+            },
+            "weight": 0
+        }
+    ]
+}
