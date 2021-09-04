@@ -1,4 +1,5 @@
 type = module
 name = Testimonial Recipe
 description = A simple config recipe for testimonials
+package = Recipes
 backdrop = 1.x
