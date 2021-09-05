@@ -23,7 +23,8 @@
             "manualcrop_maximize_default_crop_area": 0,
             "manualcrop_styles_mode": "include",
             "manualcrop_styles_list": [],
-            "manualcrop_require_cropping": []
+            "manualcrop_require_cropping": [],
+            "browser_view": "image_library"
         }
     },
     "description": "",
@@ -51,9 +52,19 @@
             "settings": {
                 "image_style": "crop",
                 "image_link": "",
-                "image_float": ""
+                "image_float": "",
+                "image_load": "auto"
             },
             "module": "image"
+        },
+        "teaser": {
+            "label": "hidden",
+            "type": "file_rendered",
+            "weight": "0",
+            "settings": {
+                "file_view_mode": "default"
+            },
+            "module": "file"
         }
     }
 }

@@ -37,6 +37,13 @@
             "settings": [],
             "module": "text",
             "weight": 4
+        },
+        "teaser": {
+            "label": "hidden",
+            "type": "text_default",
+            "weight": "1",
+            "settings": [],
+            "module": "text"
         }
     }
 }

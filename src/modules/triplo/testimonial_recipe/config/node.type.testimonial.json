@@ -5,7 +5,7 @@
     "base": "node_content",
     "module": "node",
     "node_preview": "1",
-    "description": "",
+    "description": "Add a client, customer, or stakeholder testimonial. ",
     "help": "",
     "modified": true,
     "disabled": false,
@@ -50,7 +50,9 @@
             "search_index": "Submitted by [node:author] on [node:created]",
             "search_result": "Submitted by [node:author] on [node:created]"
         },
-        "submitted_by_comment": "Submitted by [comment:author] on [comment:created]"
+        "submitted_by_comment": "Submitted by [comment:author] on [comment:created]",
+        "menu_default": 0,
+        "node_submitted_format": "[node:created:medium] by [node:author]"
     },
     "orig_type": "testimonial"
 }
