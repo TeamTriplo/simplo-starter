@@ -4,7 +4,14 @@ description = Tests if contextual links are showing on the home page depending o
 group = Contextual
 file = contextual.test
 
+<<<<<<< HEAD
 ; Added by Backdrop CMS packaging script on 2021-09-02
 project = backdrop
 version = 1.20.0-preview
 timestamp = 1630631777
+=======
+; Added by Backdrop CMS packaging script on 2021-09-15
+project = backdrop
+version = 1.20.0
+timestamp = 1631745433
+>>>>>>> main

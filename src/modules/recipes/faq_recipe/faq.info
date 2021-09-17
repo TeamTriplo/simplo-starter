@@ -1,0 +1,14 @@
+type = module
+name = FAQ Recipe
+description = A recipe to build a FAQ feature on your site.
+package = Recipes
+backdrop = 1.x
+
+dependencies[] = system (>=1.20.0)
+dependencies[] = views
+dependencies[] = views_bootstrap
+
+; Added by Backdrop CMS packaging script on 2021-09-16
+project = faq_recipe
+version = 1.x-1.0.1
+timestamp = 1631852092

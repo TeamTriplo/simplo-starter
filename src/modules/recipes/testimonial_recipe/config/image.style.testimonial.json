@@ -1,0 +1,15 @@
+{
+    "_config_name": "image.style.testimonial",
+    "label": "Testimonial",
+    "name": "testimonial",
+    "effects": [
+        {
+            "name": "image_scale_and_crop",
+            "data": {
+                "width": "400",
+                "height": "400"
+            },
+            "weight": 1
+        }
+    ]
+}
