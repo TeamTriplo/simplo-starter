@@ -1759,7 +1759,7 @@ function webform_node_load($nodes, $types) {
   }
 
   // Load the components, emails, and defaults for all webform-enabled nodes.
-  // @todo: Increase efficiency here by pulling in all information all at once
+  // @todo Increase efficiency here by pulling in all information all at once
   // instead of individual queries.
   foreach ($nodes as $nid => $node) {
     if (!in_array($node->type, $webform_types)) {
@@ -2221,6 +2221,9 @@ function webform_mail($key, &$message, $params) {
   $message['headers'] = array_merge($message['headers'], $params['headers']);
   $message['subject'] = $params['subject'];
   $message['body'][] = $params['message'];
+
+  // Ensure the From address matches Webform's global default.
+  $message['from'] = $message['headers']['From'] = $params['email']['from'];
 }
 
 /**
@@ -2264,8 +2267,8 @@ function webform_block_view($delta = '') {
   // Load node in current language.
   if (module_exists('translation')) {
     global $language;
-    if (($translations = translation_node_get_translations($nid)) && (isset($translations[$language->language]))) {
-      $nid = $translations[$language->language]->nid;
+    if (($translations = translation_node_get_translations($nid)) && (isset($translations[$language->langcode]))) {
+      $nid = $translations[$language->langcode]->nid;
     }
   }
 
@@ -4341,10 +4344,6 @@ function webform_variable_get($variable) {
       $result = config_get('webform.settings', 'webform_default_subject');
       break;
 
-    case 'webform_email_replyto':
-      $result = config_get('webform.settings', 'webform_email_replyto');
-      break;
-
     case 'webform_email_html_capable':
       $result = config_get('webform.settings', 'webform_email_html_capable');
       break;
@@ -4371,6 +4370,10 @@ function webform_variable_get($variable) {
 
     case 'webform_date_type':
       $result = config_get('webform.settings', 'webform_date_type');
+      break;
+
+    case 'webform_export_use_progressive_batch':
+      $result = config_get('webform.settings', 'webform_export_use_progressive_batch');
       break;
 
     case 'webform_export_format':
@@ -4660,6 +4663,17 @@ function webform_valid_email_address(&$emails, $allow_tokens = FALSE, $format = 
   }
   $emails = implode(', ', $email_array);
   return $count;
+}
+
+/**
+ * Wrapper for webform_valid_email_address(). Counts valid email addresses.
+ *
+ * This takes all parameters by value, allowing it it to be used as a filter.
+ *
+ * @see webform_valid_email_address()
+ */
+function webform_valid_email_address_filter($emails, $allow_tokens = FALSE, $format = NULL) {
+  return webform_valid_email_address($emails, $allow_tokens, $format);
 }
 
 /**
