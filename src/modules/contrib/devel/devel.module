@@ -254,6 +254,28 @@ function devel_menu() {
     'file' => 'devel.pages.inc',
     'weight' => 100,
   );
+  $items['file/%file/devel'] = array(
+    'title' => t('Devel'),
+    'page callback' => 'devel_load_object',
+    'page arguments' => array('file', 1),
+    'access arguments' => array('access devel information'),
+    'file' => 'devel.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 100,
+  );
+  $items['file/%file/devel/load'] = array(
+    'title' => t('Load'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['file/%file/devel/render'] = array(
+    'title' => t('Render'),
+    'page callback' => 'devel_render_object',
+    'page arguments' => array('file', 1),
+    'access arguments' => array('access devel information'),
+    'file' => 'devel.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 100,
+  );
 
   return $items;
 }
@@ -1097,39 +1119,28 @@ function devel_get_core_version($version) {
   return $version_parts[0];
 }
 
-// See http://drupal.org/node/126098
+/**
+ * This function has introduced as part of http://drupal.org/node/126098 for the
+ * original Drupal version of this module, but it's not required in Backdrop; it
+ * is retained only for the purpose of backwards compatibility.
+ *
+ * The original version of this function would parse the buffered output of
+ * phpinfo(), then look for a line that contains the string "Zend Optimizer"
+ * plus its version, and then return TRUE if the version is equal to or grater
+ * than 3.2.8, or if Zend Optimizer was not installed; FALSE otherwise.
+ *
+ * In the meantime, since PHP v5.3, Zend Optimizer has been deprecated, and was
+ * replaced by Zend Guard.
+ *
+ * Because of all the above, and since Backdrop supports only PHP 5.3.2+ (see:
+ * https://backdropcms.org/requirements), this function now returns TRUE if the
+ * detected PHP version is equal to or greater than 5.3.2, FALSE otherwise.
+ */
 function devel_is_compatible_optimizer() {
-   ob_start();
-   phpinfo();
-   $info = ob_get_contents();
-   ob_end_clean();
-
-   // Match the Zend Optimizer version in the phpinfo information
-   $found = preg_match('/Zend&nbsp;Optimizer&nbsp;v([0-9])\.([0-9])\.([0-9])/', $info, $matches);
-
-   if ($matches) {
-     $major = $matches[1];
-     $minor = $matches[2];
-     $build = $matches[3];
-
-     if ($major >= 3) {
-       if ($minor >= 3) {
-         return TRUE;
-       }
-       elseif ($minor == 2 && $build >= 8) {
-         return TRUE;
-       }
-       else {
-         return FALSE;
-       }
-    }
-    else {
-      return FALSE;
-    }
+  if (version_compare(phpversion(), BACKDROP_MINIMUM_PHP) < 0) {
+    return FALSE;
   }
-  else {
-    return TRUE;
-  }
+  return TRUE;
 }
 
 /**
@@ -1183,6 +1194,9 @@ function devel_execute_form_submit($form, &$form_state) {
  */
 function devel_switch_user($name = NULL) {
   global $user;
+
+  cache('cache_entity_node')->flush();
+  cache('page')->flush();
 
   if ($user->uid) {
     module_invoke_all('user_logout', $user);
@@ -1540,7 +1554,13 @@ function dargs($always = TRUE) {
   static $printed;
   if ($always || !$printed) {
     $bt = debug_backtrace();
-    print kdevel_print_object($bt[1]['args']);
+    $print = kdevel_print_object($bt[1]['args']);
+    if (Database::getConnectionInfo('simpletest_original_default')) {
+      trigger_error($print);
+    }
+    else {
+      print $print;
+    }
     $printed = TRUE;
   }
 }
@@ -1595,9 +1615,41 @@ function dpq($query, $return = FALSE, $name = NULL) {
 function dpm($input, $name = NULL, $type = 'status') {
   if (user_access('access devel information')) {
     $export = kprint_r($input, TRUE, $name);
-    backdrop_set_message($export, $type);
+    if (Database::getConnectionInfo('simpletest_original_default')) {
+      // Simpletest is running. Trigger error to send debug information to the
+      // test report page.
+      trigger_error($export);
+    }
+    else {
+      backdrop_set_message($export, $type);
+    }
   }
   return $input;
+}
+
+/**
+ * Execute dpm() only once.
+ *
+ * @param $input
+ *   An arbitrary value to output.
+ * @param string $name
+ *   Optional name for identifying the output.
+ * @param string $type
+ *   Optional message type for backdrop_set_message(), defaults to 'status'.
+ *
+ * @return input
+ *   The unaltered input value.
+ *
+ * @see dpm()
+ */
+function dpm_once($input, $name = NULL, $type = 'status') {
+  $backtrace = debug_backtrace();
+  $caller = array_shift($backtrace);
+  $executed = &backdrop_static(__FUNCTION__ . $caller['file'] . $caller['line'], FALSE);
+  if (!$executed) {
+    dpm($input, $name, $type);
+    $executed = TRUE;
+  }
 }
 
 /**
@@ -1615,7 +1667,14 @@ function dpm($input, $name = NULL, $type = 'status') {
 function dvm($input, $name = NULL) {
   if (user_access('access devel information')) {
     $export = dprint_r($input, TRUE, $name, 'backdrop_var_export', FALSE);
-    backdrop_set_message($export);
+    if (Database::getConnectionInfo('simpletest_original_default')) {
+      // Simpletest is running. Trigger error to send debug information to the
+      // test report page.
+      trigger_error($export);
+    }
+    else {
+      backdrop_set_message($export);
+    }
   }
   return $input;
 }
@@ -1691,6 +1750,9 @@ function dprint_r($input, $return = FALSE, $name = NULL, $function = 'print_r', 
 
     if ($return) {
       return $printed_value;
+    }
+    elseif (Database::getConnectionInfo('simpletest_original_default')) {
+      trigger_error($printed_value);
     }
     else {
       print $printed_value;
