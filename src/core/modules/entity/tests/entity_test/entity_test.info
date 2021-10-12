@@ -7,14 +7,7 @@ backdrop = 1.x
 dependencies[] = entity
 hidden = TRUE
 
-<<<<<<< HEAD
-; Added by Backdrop CMS packaging script on 2021-09-02
+; Added by Backdrop CMS packaging script on 2021-10-10
 project = backdrop
-version = 1.20.0-preview
-timestamp = 1630631777
-=======
-; Added by Backdrop CMS packaging script on 2021-09-15
-project = backdrop
-version = 1.20.0
-timestamp = 1631745433
->>>>>>> main
+version = 1.20.1
+timestamp = 1633924670

@@ -21,13 +21,6 @@ function taxonomy_overview_vocabularies() {
 
   foreach ($vocabularies as $vocabulary) {
     $term_count = db_query("SELECT count(tid) FROM {taxonomy_term_data} WHERE vocabulary = :vocab", array(':vocab' => $vocabulary->machine_name))->fetchField();
-<<<<<<< HEAD
-
-    if (taxonomy_vocabulary_access(FALSE, $vocabulary)) {
-      $row = array();
-      $row[] = array(
-        'data' => theme('taxonomy_vocabulary_name', array('vocabulary' => $vocabulary)),
-=======
     if (taxonomy_vocabulary_access(FALSE, $vocabulary)) {
       $row = array();
       $row[] = array(
@@ -35,7 +28,6 @@ function taxonomy_overview_vocabularies() {
           'label' => $vocabulary->name,
           'machine_name' => $vocabulary->machine_name,
         )),
->>>>>>> main
         'class' => array('vocabulary-name'),
         'data-label' => t('Vocabulary name'),
       );
@@ -83,12 +75,6 @@ function taxonomy_overview_vocabularies() {
 function _vocabulary_get_operations($vocabulary) {
   $links = array();
 
-<<<<<<< HEAD
-  $links['list'] = array(
-    'title' => t('List terms'),
-    'href' => 'admin/structure/taxonomy/' . $vocabulary->machine_name,
-  );
-=======
   // Allow access to the terms listing for the vocabulary if the user has:
   // - any of the create/update (edit)/delete permissions,
   // - or the the 'administer taxonomy' permission.
@@ -98,7 +84,6 @@ function _vocabulary_get_operations($vocabulary) {
       'href' => 'admin/structure/taxonomy/' . $vocabulary->machine_name,
     );
   }
->>>>>>> main
   if (taxonomy_vocabulary_access('create', $vocabulary)) {
     $links['add'] = array(
       'title' => t('Add terms'),
