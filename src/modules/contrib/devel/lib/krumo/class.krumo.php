@@ -1010,6 +1010,7 @@ This is a list of all the values from the <code><b><?php echo realpath($ini_file
   <ul class="krumo-node">
   <?php
 
+  $_recursion_marker = krumo::_marker();
   if ($_is_object && get_class($data) != 'stdClass') {
     // this part for protected/private properties only
     $refl = new ReflectionClass($data);
@@ -1039,9 +1040,8 @@ This is a list of all the values from the <code><b><?php echo realpath($ini_file
     ? array_keys(get_object_vars($data))
     : array_keys($data);
 
-  // itterate
+  // iterate
   //
-  $_recursion_marker = krumo::_marker();
   foreach($keys as $k) {
 
     // skip marker
@@ -1150,10 +1150,14 @@ This is a list of all the values from the <code><b><?php echo realpath($ini_file
   * @static
   */
   Private Static Function _object(&$data, $name) {
+    $count = 1;
+    if (is_array($data) || $data instanceof Countable) {
+      $count = count($data);
+    }
 ?>
 <li class="krumo-child">
 
-  <div class="krumo-element<?php echo count($data) > 0 ? ' krumo-expand' : '';?>">
+  <div class="krumo-element<?php echo $count > 0 ? ' krumo-expand' : '';?>">
 
       <?php /* DEVEL: added htmlSpecialChars */ ?>
       <a class="krumo-name"><?php echo htmlSpecialChars($name);?></a>
