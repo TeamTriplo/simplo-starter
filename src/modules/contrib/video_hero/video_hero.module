@@ -1,0 +1,40 @@
+<?php
+/**
+ * @file
+ * A hero block with a video background.
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function video_hero_autoload_info() {
+  return array(
+    'BlockVideoHero' => 'includes/block.video_hero.inc',
+  );
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function video_hero_block_info() {
+  $blocks['video_hero'] = array(
+    'info' => t('Video Hero Block'),
+    'description' => t('A video hero block often consists of text over a background video.'),
+    'class' => 'BlockVideoHero',
+  );
+
+  return $blocks;
+}
+
+/**
+ * Prepares variables for video_hero blocks.
+ */
+function video_hero_preprocess_block(&$variables) {
+  // Add the hero background video.
+  $block = $variables['block'];
+  if (get_class($block) == 'BlockVideoHero') {
+    if (isset($block->settings['video'])) {
+      $variables['classes'][] = 'block-video-hero';
+    }
+  }
+}

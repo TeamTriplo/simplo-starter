@@ -40,6 +40,8 @@ Maintainers
 -----------
 
 - Nate Haug (https://github.com/quicksketch/)
+- Jen Lampton (https://github.com/jenlampton)
+- Alan Mels (https://github.com/alanmels)
 
 Originally written for Drupal by
 
