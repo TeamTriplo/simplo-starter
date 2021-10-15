@@ -152,6 +152,11 @@ function devel_generate_content($form_state) {
 }
 
 function devel_generate_add_comments($node, $users, $max_comments, $title_length = 8) {
+  // Exit early, if max comments was set to 0.
+  if ($max_comments == 0) {
+    return;
+  }
+
   $num_comments = mt_rand(1, $max_comments);
   for ($i = 1; $i <= $num_comments; $i++) {
     $comment = new Comment();
@@ -159,7 +164,7 @@ function devel_generate_add_comments($node, $users, $max_comments, $title_length
     $comment->cid = NULL;
     $comment->name = 'devel generate';
     $comment->mail = 'devel_generate@example.com';
-    $comment->timestamp = mt_rand($node->created, REQUEST_TIME);
+    $comment->created = mt_rand($node->created, REQUEST_TIME);
 
     switch ($i % 3) {
       case 1:
@@ -677,6 +682,9 @@ function devel_generate_content_add_node(&$results) {
 
   // See devel_generate_nodeapi() for actions that happen before and after this save.
   node_save($node);
+  
+  // Generate comments.
+  devel_generate_add_comments($node, $users, $results['max_comments'], $results['title_length']);
 }
 
 /*
