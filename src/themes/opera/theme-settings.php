@@ -20,6 +20,7 @@ if (module_exists('color')) {
     'set1bg',
     'set1text',
     'set1links',
+    'set1menu',
   );
   foreach ($fields as $field) {
     $form['set_one'][$field] = color_get_color_element($form['theme']['#value'], $field, $form);
