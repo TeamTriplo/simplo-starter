@@ -7,10 +7,24 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height:  100%;
+}
+
 body {
   font-size: 16px;
   line-height: 1.6;
   color: #000001;
+
+}
+
+.layout-flexible-content {
+  display: flex;
+  flex-direction:  column;
+}
+
+.flexible-row {
+  flex: 1 0 auto;
 }
 
 li {
