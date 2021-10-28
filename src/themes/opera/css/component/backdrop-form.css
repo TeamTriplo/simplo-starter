@@ -154,8 +154,8 @@ button.form-submit,
   line-height: 2.875;
   border: 0;
   padding: 0 1.5625em;
-  margin-bottom: 1em;
-  margin-right: 1em; /* LTR */
+  margin-bottom: 0;
+  margin-right: 0; /* LTR */
   -webkit-transition:
     background-color 0.6s ease 0s,
     color 0.6s ease 0s;

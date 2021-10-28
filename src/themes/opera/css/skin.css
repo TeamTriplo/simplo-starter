@@ -541,7 +541,7 @@ button.form-submit,
   color: #333333;
   letter-spacing: 0.025em;
   line-height: 1.9;
-  background: #d5d5d5;
+  background: var(--color-one);
 }
 
 .button:hover,
@@ -549,7 +549,8 @@ button.form-submit,
 input.form-submit:hover,
 input.form-submit:focus {
   color: #333333;
-  background: #d5d5d5;
+  background: white;
+  border: 2px solid grey;
 }
 
 .button:active,
@@ -566,7 +567,7 @@ button.button-primary,
 .ui-widget-content .ui-state-default,
 .ui-widget-header .ui-state-default {
   color: white;
-  background: #0074bd;
+  background: var(--color-one);
   border: none;
 }
 
