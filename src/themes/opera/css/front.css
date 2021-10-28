@@ -59,3 +59,30 @@
 .front .l-content div.block p:last-of-type {
   margin-bottom:  0;
 }
+
+.front .layout-front .block {
+  padding: 20px 0;
+}
+
+.front .layout-front .l-header .block {
+  padding: 0;
+}
+
+.front .layout-front .block-hero {
+  margin: 0;
+}
+
+.front div.flexible-row div.block-hero-image,
+.front .layout-front  .block-hero-image {
+  min-height: 400px;
+}
+
+.front div.flexible-row div.block-hero-no-image,
+.front .layout-front .block-hero-no-image {
+  min-height: 400px;
+}
+
+.front div.flexible-row div.block .l-page-title,
+.front .layout-front .l-page-title {
+  padding: 0;
+}
