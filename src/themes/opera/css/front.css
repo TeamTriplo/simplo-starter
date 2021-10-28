@@ -2,6 +2,14 @@
  * These are the rules to manage the blocks on the front page only.
  */
 
+
+.front div.flexible-row div.block,
+.front .l-content div.block {
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+}
+
 .front .l-content div.block:nth-of-type(1) {
   background-color: white;
   color: black;
@@ -45,4 +53,9 @@
 
 .front .l-content div.block:last-of-type a {
   color: inherit;
+}
+
+.front div.flexible-row div.block p:last-of-type,
+.front .l-content div.block p:last-of-type {
+  margin-bottom:  0;
 }
