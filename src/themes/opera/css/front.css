@@ -7,14 +7,17 @@
   color: black;
 }
 
+.front .flexible-row div.block:nth-of-type(3n+2),
 .front .l-content div.block:nth-of-type(3n+2) {
   background-color: var(--color-three);
   color: var(--text-three);
 }
+.front .flexible-row div.block:nth-of-type(3n+3),
 .front .l-content div.block:nth-of-type(3n+3) {
   background-color: var(--color-four);
   color: var(--text-four);
 }
+.front .flexible-row div.block:nth-of-type(3n+4),
 .front .l-content div.block:nth-of-type(3n+4) {
   background-color: var(--color-five);
   color: var(--text-five);
@@ -34,7 +37,7 @@
   color: var(--text-five);
 }
 
-
+.front div.flexible-row div.block:last-of-type,
 .front .l-content div.block:last-of-type {
   background-color: white;
   color: black;
