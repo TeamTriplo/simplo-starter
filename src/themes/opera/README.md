@@ -58,3 +58,13 @@ Please, feel free to provide feedback on these features and/or the implementatio
 3) So far, this theme inherits a lot of it's default styling from Basis and Tatsu, but with improvements. That may change over time.  
 
 Here is a 30 minute video discussion of several members of the Backdrop CMS community talking about how to build a contrib theme like this one. https://youtu.be/BeEzXuwLxo8 
+
+# Credits
+
+Default hero image = Vienna State Opera
+Jiuguang Wang
+https://www.flickr.com/photos/jiuguangw/5943433030
+Attribution-ShareAlike 2.0 Generic
+https://creativecommons.org/licenses/by-sa/2.0/
+
+
