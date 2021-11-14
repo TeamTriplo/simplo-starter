@@ -141,9 +141,11 @@
   display: flex;
 }
 
-.block-hero-image {
-  background-position: center center;
-}
+// This was centering image, but that was a difficult setting to manage. @TODO
+
+// .block-hero-image {
+//   background-position: center center;
+// }
 
 .views-row {
   margin-bottom: 3rem;

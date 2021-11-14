@@ -548,6 +548,9 @@ button.form-submit,
 .button:focus,
 input.form-submit:hover,
 input.form-submit:focus {
+    a {
+    color: green;
+  }
   color: #333333;
   background: white;
   border: 2px solid grey;
@@ -575,8 +578,11 @@ input.button-primary:hover,
 input.button-primary:focus,
 button.button-primary:hover,
 button.button-primary:focus {
-  color: white;
+  color: green;
   background-color: #114a75;
+  a {
+    color:  green;
+  }
 }
 
 input.button-primary:active,
@@ -1258,8 +1264,38 @@ div.error:before {
   margin-bottom: 0;
 }
 
-
-
 .field-name-body{
   padding: 0 0 15px;
+}
+
+
+/* Promobox view on default home page */
+
+.view-card-grid .views-grid-box {
+  border: none;
+}
+
+.block-views-card-grid-block {
+  margin-top: -2em;
+  background-color: #f2f2f2;
+}
+
+/* Making views grid mobile friendly for 3, 4, or 5 columns */
+
+.views-view-grid-cols-3,
+.views-view-grid-cols-4,
+.views-view-grid-cols-5 {
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 48em) {
+  .views-view-grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .views-view-grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .views-view-grid-cols-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }

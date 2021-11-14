@@ -223,26 +223,6 @@ ul.action-links a:after {
   background-color: #bcbbbb;
 }
 
-/*  components/pager.css  */
-
-.pager-first a:before,
-.pager-first a:after,
-.pager-previous a:before,
-.pager-next a:before,
-.pager-last a:before,
-.pager-last a:after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  width: 0.5em;
-  height: 0.5em;
-  border: 0.125rem solid #ffffff;
-  -webkit-transform: translate(-50%, -50%) rotate(45deg);
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
 /*  components/progress.css  */
 
 .progress .bar {
