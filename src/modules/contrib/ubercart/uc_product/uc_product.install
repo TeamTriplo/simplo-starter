@@ -1,0 +1,467 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_product module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function uc_product_schema() {
+  $schema = array();
+
+  $schema['uc_product_classes'] = array(
+    'description' => 'The list of product node types.',
+    'fields' => array(
+      'pcid' => array(
+        'description' => 'The node type identifier.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'name' => array(
+        'description' => 'The human-readable name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'description' => 'The description of the node type.',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('pcid'),
+  );
+
+  $schema['uc_product_features'] = array(
+    'description' => 'Stores information of features added to products.',
+    'fields' => array(
+      'pfid' => array(
+        'description' => 'Primary key: the product feature id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'The {node}.nid of the product that has this feature.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'fid' => array(
+        'description' => 'The type of feature.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'description' => 'The description of the feature.',
+        'type' => 'text',
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+    'primary key' => array('pfid'),
+    'foreign keys' => array(
+      'uc_product' => array(
+        'table' => 'uc_product',
+        'columns' => array('nid' => 'nid'),
+      ),
+    ),
+  );
+
+  $schema['uc_products'] = array(
+    'description' => 'Product information for nodes.',
+    'fields' => array(
+      'vid' => array(
+        'description' => 'The {node}.vid of the product.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'description' => 'The {node}.nid of the product.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'model' => array(
+        'description' => 'SKU or model number.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'list_price' => array(
+        'description' => 'Suggested retail price.',
+        'type' => 'numeric',
+        'precision' => 16,
+        'scale' => 5,
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'cost' => array(
+        'description' => 'The amount the store pays to sell the product.',
+        'type' => 'numeric',
+        'precision' => 16,
+        'scale' => 5,
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'sell_price' => array(
+        'description' => 'The amount the customer pays for the product.',
+        'type' => 'numeric',
+        'precision' => 16,
+        'scale' => 5,
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'weight' => array(
+        'description' => 'Physical weight.',
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'weight_units' => array(
+        'description' => 'Unit of measure for the weight field.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'lb',
+      ),
+      'length' => array(
+        'description' => 'Physical length of the product or its packaging.',
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'width' => array(
+        'description' => 'Physical width of the product or its packaging.',
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'height' => array(
+        'description' => 'Physical height of the product or its packaging.',
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'length_units' => array(
+        'description' => 'Unit of measure for the length, width, and height.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'in',
+      ),
+      'pkg_qty' => array(
+        'description' => 'The number of this product that fit in one package.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'default_qty' => array(
+        'description' => 'The default value for the quantity field in the "Add to Cart" form.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'ordering' => array(
+        'description' => 'The sort criteria for products.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'shippable' => array(
+        'description' => 'Boolean flag signifying that the product can be shipped.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+    'primary key' => array('vid'),
+    'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array(
+          'nid' => 'nid',
+          'vid' => 'vid',
+        ),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_disable().
+ *
+ * Disables the 'uc_products' view.
+ */
+function uc_product_disable() {
+  $config = config('views.view.uc_products');
+  $config->set('disabled', TRUE);
+  $config->save();
+}
+
+/**
+ * Implements hook_enable().
+ *
+ * Sets up the body and a default image field for products.
+ */
+function uc_product_enable() {
+  $body_label = t('Description');
+
+  node_types_rebuild();
+  $types = node_type_get_types();
+  foreach ($types as $type) {
+    if ($type->module == 'uc_product') {
+      node_add_body_field($type, $body_label);
+      uc_product_set_teaser_display($type->type);
+    }
+  }
+
+  uc_product_add_default_image_field();
+
+  // Make sure 'uc_products' view gets enabled.
+  $config = config('views.view.uc_products');
+  $config->set('disabled', FALSE);
+  $config->save();
+}
+
+/**
+ * Sets default display settings for product teasers.
+ */
+function uc_product_set_teaser_display($type) {
+  $settings = field_bundle_settings('node', $type);
+  $settings['view_modes']['teaser']['custom_settings'] = TRUE;
+
+  $fields = array('model', 'list_price', 'cost', 'weight', 'dimensions');
+  foreach ($fields as $field) {
+    $settings['extra_fields']['display'][$field]['teaser'] = array(
+      'weight' => 0,
+      'visible' => FALSE,
+    );
+  }
+
+  field_bundle_settings('node', $type, $settings);
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_product_update_last_removed() {
+  return 7300;
+}
+
+/**
+ * Convert Ubercart Product settings to config.
+ */
+function uc_product_update_1000() {
+  $config = config('uc_product.settings');
+  $config->set('uc_product_image_widget', update_variable_get('uc_product_image_widget', NULL));
+  $config->set('uc_product_add_to_cart_qty', update_variable_get('uc_product_add_to_cart_qty', 0));
+  $config->set('uc_product_update_node_view', update_variable_get('uc_product_update_node_view', 0));
+  $config->set('uc_product_shippable_product', update_variable_get('uc_product_shippable_product', 1));
+
+  $config->save();
+
+  update_variable_del('uc_product_image_widget');
+  update_variable_del('uc_product_add_to_cart_qty');
+  update_variable_del('uc_product_update_node_view');
+  update_variable_del('uc_product_shippable_product');
+}
+
+/**
+ * Clear unused config setting and sets 'uc_product_shippable' correctly for all node types.
+ */
+function uc_product_update_1001() {
+  $config = config('uc_product.settings');
+  $config->clear('uc_product_shippable_typetype');
+  $config->clear('uc_product_shippable_nodetype');
+  foreach (node_type_get_types() as $type) {
+    $config->set('uc_product_shippable_' . $type->type, update_variable_get('uc_product_shippable_' . $type->type, 1));
+    update_variable_del('uc_product_shippable_' . $type->type);
+  }
+  $config->save();
+}
+
+/**
+ * Associate the 'uc_products' view with this module.
+ */
+function uc_product_update_1002() {
+  $config = config('views.view.uc_products');
+  $config->set('module', 'uc_product');
+  $config->save();
+}
+
+/**
+ * Set default 'uc_image_product' field value.
+ */
+function uc_product_update_1003() {
+  $config = config('uc_product.settings');
+  if (!$config->get('uc_image_product')) {
+    $config->set('uc_image_product', 'uc_product_image');
+    $config->save();
+  }
+}
+
+/**
+ * Convert product image styles to CMI.
+ */
+function uc_product_update_1004() {
+  // Check thumbnail image style.
+  $config = config('image.style.uc_thumbnail');
+  if (!empty($config->get('name')) && empty($config->get('module'))) {
+    $config->set('module', 'uc_product');
+  }
+  else {
+    $data = array(
+      "label" => "Product thumbnail image",
+      "name" => "uc_thumbnail",
+      "storage" => 4,
+      "module" => "uc_product",
+      "effects" => array(
+        array(
+          "name" => "image_scale",
+          "data" => array(
+            "width" => "35",
+            "height" => "35",
+            "upscale" => 0,
+          ),
+          "weight" => 1,
+        ),
+      ),
+    );
+    $config->setData($data);
+    $config->save();
+  }
+  // Check product list image style.
+  $config = config('image.style.uc_product_list');
+  if (!empty($config->get('name')) && empty($config->get('module'))) {
+    $config->set('module', 'uc_product');
+  }
+  else {
+    $data = array(
+      "label" => "Product list image",
+      "name" => "uc_product_list",
+      "storage" => 4,
+      "module" => "uc_product",
+      "effects" => array(
+        array(
+          "name" => "image_scale",
+          "data" => array(
+            "width" => "100",
+            "height" => "100",
+            "upscale" => 0,
+          ),
+          "weight" => 1,
+        ),
+      ),
+    );
+    $config->setData($data);
+    $config->save();
+  }
+  // Check product full image style.
+  $config = config('image.style.uc_product_full');
+  if (!empty($config->get('name')) && empty($config->get('module'))) {
+    $config->set('module', 'uc_product');
+  }
+  else {
+    $data = array(
+      "label" => "Product full image",
+      "name" => "uc_product_full",
+      "storage" => 4,
+      "module" => "uc_product",
+      "effects" => array(
+        array(
+          "name" => "image_scale",
+          "data" => array(
+            "width" => "250",
+            "height" => "250",
+            "upscale" => 0,
+          ),
+          "weight" => 1,
+        ),
+      ),
+    );
+    $config->setData($data);
+    $config->save();
+  }
+  // Check product image style.
+  $config = config('image.style.uc_product');
+  if (!empty($config->get('name')) && empty($config->get('module'))) {
+    $config->set('module', 'uc_product');
+  }
+  else {
+    $data = array(
+      "label" => "Product image",
+      "name" => "uc_product",
+      "storage" => 4,
+      "module" => "uc_product",
+      "effects" => array(
+        array(
+          "name" => "image_scale",
+          "data" => array(
+            "width" => "",
+            "height" => "",
+            "upscale" => 0,
+          ),
+          "weight" => 1,
+        ),
+      ),
+    );
+    $config->setData($data);
+    $config->save();
+  }
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_product_install() {
+  _uc_product_type_create();
+}
+
+/**
+ * Creates the product type.
+ */
+function _uc_product_type_create() {
+  // Create an additional node type.
+  $product_node_type = array(
+    'type' => 'product',
+    'name' => t('Product'),
+    'base' => 'uc_product',
+    'description' => t('Use <em>products</em> to represent items for sale on the website, including all the unique information that can be attributed to a specific model number.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+    'is_new' => TRUE,
+    'settings' => array(
+      'promote_enabled' => FALSE,
+    ),
+  );
+
+  $product_node_type = node_type_set_defaults($product_node_type);
+  node_type_save($product_node_type);
+  node_add_body_field($product_node_type);
+}

@@ -1,0 +1,312 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the uc_store module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function uc_store_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    $severities = array(
+      'ok' => REQUIREMENT_OK,
+      'warning' => REQUIREMENT_WARNING,
+      'error' => REQUIREMENT_ERROR,
+    );
+
+    module_load_include('inc', 'uc_store', 'uc_store.admin');
+    $results = module_invoke_all('uc_store_status');
+    foreach ($results as $status) {
+      $requirements[] = array(
+        'severity' => isset($severities[$status['status']]) ? $severities[$status['status']] : REQUIREMENT_INFO,
+        'title' => $status['title'],
+        'value' => $status['desc'],
+      );
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_schema().
+ */
+function uc_store_schema() {
+  $schema = array();
+
+  $schema['uc_countries'] = array(
+    'description' => 'Stores country information.',
+    'fields' => array(
+      'country_id' => array(
+        'description' => 'Primary key: numeric ISO country code.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'country_name' => array(
+        'description' => 'The country name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'country_iso_code_2' => array(
+        'description' => 'The two-character ISO country code.',
+        'type' => 'char',
+        'length' => 2,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'country_iso_code_3' => array(
+        'description' => 'The three-character ISO country code.',
+        'type' => 'char',
+        'length' => 3,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'version' => array(
+        'description' => 'The version of the CIF that loaded the country information.',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'country_name' => array('country_name'),
+    ),
+    'primary key' => array('country_id'),
+  );
+
+  $schema['uc_zones'] = array(
+    'description' => 'Stores state/province information within a country.',
+    'fields' => array(
+      'zone_id' => array(
+        'description' => 'Primary key: the unique zone id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'zone_country_id' => array(
+        'description' => 'The {uc_countries}.country_id to which this zone belongs.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'zone_code' => array(
+        'description' => 'Standard abbreviation of the zone name.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'zone_name' => array(
+        'description' => 'The zone name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'indexes' => array(
+      'zone_code' => array('zone_code'),
+      'zone_country_id' => array('zone_country_id'),
+    ),
+    'primary key' => array('zone_id'),
+    'foreign keys' => array(
+      'uc_countries' => array(
+        'table' => 'uc_countries',
+        'columns' => array('zone_country_id' => 'country_id'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_store_install() {
+  // Set mail handler for all Ubercart modules
+  $config = config('system.mail');
+  $config->set('uc_cart', 'UbercartMailSystem');
+  $config->set('uc_order', 'UbercartMailSystem');
+  $config->set('uc_file', 'UbercartMailSystem');
+  $config->set('uc_roles', 'UbercartMailSystem');
+  $config->set('uc_stock', 'UbercartMailSystem');
+  $config->set('uc_store', 'UbercartMailSystem');
+  $config->save();
+
+  // Install United States and Canada by default.
+  $path = backdrop_get_path('module', 'uc_store');
+  require_once $path . '/countries/united_states_840_1.cif';
+  require_once $path . '/countries/canada_124_2.cif';
+  united_states_install();
+  canada_install();
+
+  config_set('uc_store.settings', 'uc_store_name', config_get('system.core', 'site_name'));
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_store_update_last_removed() {
+  return 7300;
+}
+
+/**
+ * Convert Ubercart Store settings to config.
+ */
+function uc_store_update_1000() {
+  $config = config('uc_store.settings');
+
+  //migrate variables
+  $config->set('date_format_uc_store', update_variable_get('date_format_uc_store', 'm/d/Y'));
+  $config->set('uc_store_country', update_variable_get('uc_store_country', '840'));
+  $config->set('uc_store_owner', update_variable_get('uc_store_owner', ''));
+  $config->set('uc_store_email_include_name', update_variable_get('uc_store_email_include_name', TRUE));
+  $config->set('uc_store_phone', update_variable_get('uc_store_phone', ''));
+  $config->set('uc_store_fax', update_variable_get('uc_store_fax', ''));
+  $config->set('uc_store_help_page', update_variable_get('uc_store_help_page', ''));
+  $config->set('uc_store_street1', update_variable_get('uc_store_street1', NULL));
+  $config->set('uc_store_street2', update_variable_get('uc_store_street2', NULL));
+  $config->set('uc_store_city', update_variable_get('uc_store_city', NULL));
+  $config->set('uc_store_zone', update_variable_get('uc_store_zone', NULL));
+  $config->set('uc_store_postal_code', update_variable_get('uc_store_postal_code', NULL));
+  $config->set('uc_store_email', update_variable_get('uc_store_email', ''));
+  $config->set('uc_store_name', update_variable_get('uc_store_name', ''));
+  $config->set('uc_address_fields', update_variable_get('uc_address_fields', array('first_name' => 1, 'last_name' => 1, 'phone' => 1, 'company' => 1, 'street1' => 1, 'street2' => 1, 'city' => 1, 'zone' => 1, 'postal_code' => 1, 'country' => 1)));
+  $config->set('uc_address_fields_required', update_variable_get('uc_address_fields_required', array('first_name' => 1, 'last_name' => 1, 'phone' => 0, 'company' => 0, 'street1' => 1, 'street2' => 0, 'city' => 1, 'zone' => 1, 'postal_code' => 1, 'country' => 1)));
+  $config->set('uc_address_fields_weight', update_variable_get('uc_address_fields_weight', array('first_name' => 0, 'last_name' => 1, 'company' => 2, 'street1' => 3, 'street2' => 4, 'city' => 5, 'zone' => 6, 'country' => 7, 'postal_code' => 8, 'phone' => 9)));
+  $config->set('uc_currency_code', update_variable_get('uc_currency_code', '$'));
+  $config->set('uc_currency_sign', update_variable_get('uc_currency_sign', '$'));
+  $config->set('uc_sign_after_amount', update_variable_get('uc_sign_after_amount', FALSE));
+  $config->set('uc_currency_thou', update_variable_get('uc_currency_thou', FALSE));
+  $config->set('uc_currency_dec', update_variable_get('uc_currency_dec', '.'));
+  $config->set('uc_currency_prec', update_variable_get('uc_currency_prec', '2'));
+  $config->set('uc_weight_unit', update_variable_get('uc_weight_unit', 'lb'));
+  $config->set('uc_weight_format_lb', update_variable_get('uc_weight_format_lb', '!value lb'));
+  $config->set('uc_weight_format_oz', update_variable_get('uc_weight_format_oz', '!value oz'));
+  $config->set('uc_weight_format_kg', update_variable_get('uc_weight_format_kg', '!value kg'));
+  $config->set('uc_weight_format_g', update_variable_get('uc_weight_format_g', '!value g'));
+  $config->set('uc_length_unit', update_variable_get('uc_length_unit', 'in'));
+  $config->set('uc_length_format_in', update_variable_get('uc_length_format_in', '!value in'));
+  $config->set('uc_length_format_ft', update_variable_get('uc_length_format_ft', '!value ft'));
+  $config->set('uc_length_format_cm', update_variable_get('uc_length_format_cm', '!value cm'));
+  $config->set('uc_length_format_mm', update_variable_get('uc_length_format_mm', '!value mm'));
+  $config->set('uc_customer_list_address', update_variable_get('uc_customer_list_address', 'billing'));
+  $config->set('uc_store_shipping_type', update_variable_get('uc_store_shipping_type', 'small_package'));
+  $config->set('uc_footer_message', update_variable_get('uc_footer_message', '0'));
+  $config->set('uc_field_first_name', update_variable_get('uc_field_first_name', 'First name'));
+  $config->set('uc_field_last_name', update_variable_get('uc_field_last_name', 'Last name'));
+  $config->set('uc_field_company', update_variable_get('uc_field_company', 'Company'));
+  $config->set('uc_field_street1', update_variable_get('uc_field_street1', 'Street address'));
+  $config->set('uc_field_street2', update_variable_get('uc_field_street2', ''));
+  $config->set('uc_field_city', update_variable_get('uc_field_city', 'City'));
+  $config->set('uc_field_zone', update_variable_get('uc_field_zone', 'State/Province'));
+  $config->set('uc_field_country', update_variable_get('uc_field_country', 'Country'));
+  $config->set('uc_field_postal_code', update_variable_get('uc_field_postal_code', 'Postal code'));
+  $config->set('uc_field_phone', update_variable_get('uc_field_phone', 'Phone number'));
+  $config->set('uc_field_email', update_variable_get('uc_field_email', 'E-mail'));
+  $quotes_defaults = backdrop_map_assoc(array('payment-pane', 'quotes-pane'));
+  $config->set('uc_ajax_checkout', update_variable_get('uc_ajax_checkout',
+      array(
+        'panes][delivery][address][delivery_country' => $quotes_defaults,
+        'panes][delivery][address][delivery_postal_code' => $quotes_defaults,
+        'panes][delivery][select_address' => $quotes_defaults,
+        'panes][billing][address][billing_country' => array('payment-pane' => 'payment-pane'),
+      )
+    )
+  );
+
+  $config->save();
+
+  //delete variables
+  update_variable_del('date_format_uc_store');
+  update_variable_del('uc_store_country');
+  update_variable_del('uc_store_owner');
+  update_variable_del('uc_store_email_include_name');
+  update_variable_del('uc_store_phone');
+  update_variable_del('uc_store_fax');
+  update_variable_del('uc_store_help_page');
+  update_variable_del('uc_store_street1');
+  update_variable_del('uc_store_street2');
+  update_variable_del('uc_store_city');
+  update_variable_del('uc_store_zone');
+  update_variable_del('uc_store_postal_code');
+  update_variable_del('uc_store_email');
+  update_variable_del('uc_store_name');
+  update_variable_del('uc_address_fields');
+  update_variable_del('uc_address_fields_required');
+  update_variable_del('uc_address_fields_weight');
+  update_variable_del('uc_currency_code');
+  update_variable_del('uc_currency_sign');
+  update_variable_del('uc_sign_after_amount');
+  update_variable_del('uc_currency_thou');
+  update_variable_del('uc_currency_dec');
+  update_variable_del('uc_currency_prec');
+  update_variable_del('uc_weight_unit');
+  update_variable_del('uc_weight_format_lb');
+  update_variable_del('uc_weight_format_oz');
+  update_variable_del('uc_weight_format_kg');
+  update_variable_del('uc_weight_format_g');
+  update_variable_del('uc_length_unit');
+  update_variable_del('uc_length_format_in');
+  update_variable_del('uc_length_format_ft');
+  update_variable_del('uc_length_format_cm');
+  update_variable_del('uc_length_format_mm');
+  update_variable_del('uc_customer_list_address');
+  update_variable_del('uc_store_shipping_type');
+  update_variable_del('uc_footer_message');
+  update_variable_del('uc_field_first_name');
+  update_variable_del('uc_field_last_name');
+  update_variable_del('uc_field_company');
+  update_variable_del('uc_field_street1');
+  update_variable_del('uc_field_street2');
+  update_variable_del('uc_field_city');
+  update_variable_del('uc_field_zone');
+  update_variable_del('uc_field_country');
+  update_variable_del('uc_field_postal_code');
+  update_variable_del('uc_field_phone');
+  update_variable_del('uc_field_email');
+  update_variable_del('uc_ajax_checkout');
+
+}
+
+/**
+ * Replace the settings previously added to core's system.mail with the correct values for UbercartMailSystem.
+ */
+function uc_store_update_1001() {
+  // Revise mail settings for all Ubercart modules.
+  $config = config('system.mail');
+  // Clear settings made in initial release.
+  $config->clear('mail_system');
+  // Add revised settings.
+  $config->set('uc_cart', 'UbercartMailSystem');
+  $config->set('uc_order', 'UbercartMailSystem');
+  $config->set('uc_file', 'UbercartMailSystem');
+  $config->set('uc_roles', 'UbercartMailSystem');
+  $config->set('uc_stock', 'UbercartMailSystem');
+  $config->set('uc_store', 'UbercartMailSystem');
+  $config->save();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function uc_store_uninstall() {
+  // Unset mail handler for all Ubercart modules.
+  $config = config('system.mail');
+  $config->clear('uc_cart');
+  $config->clear('uc_order');
+  $config->clear('uc_file');
+  $config->clear('uc_roles');
+  $config->clear('uc_stock');
+  $config->clear('uc_store');
+  $config->save();
+}

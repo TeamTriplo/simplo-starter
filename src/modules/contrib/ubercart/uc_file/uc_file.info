@@ -1,0 +1,14 @@
+name = File downloads
+description = Allows products to be associated with downloadable files.
+dependencies[] = ubercart
+package = Ubercart - core
+backdrop = 1.x
+type = module
+
+stylesheets[all][] = uc_file.css
+scripts[] = uc_file.js
+
+; Added by Backdrop CMS packaging script on 2021-06-19
+project = ubercart
+version = 1.x-3.13.0
+timestamp = 1624117064
