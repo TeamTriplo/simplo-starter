@@ -5,7 +5,3 @@ dependencies[] = uc_product
 dependencies[] = feeds
 backdrop = 1.x
 type = module
-; Added by Backdrop CMS packaging script on 2021-11-14
-project = uc_feeds
-version = 1.x-1.0.1
-timestamp = 1636880061
