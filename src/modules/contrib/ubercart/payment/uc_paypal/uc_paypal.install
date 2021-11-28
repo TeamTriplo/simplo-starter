@@ -1,0 +1,223 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_paypal module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function uc_paypal_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  $has_curl = function_exists('curl_init');
+
+  // PayPal WPP requires cURL.
+  if (config_get('uc_payment.settings', 'uc_pg_paypal_wpp_enabled')) {
+    $requirements['uc_paypal_curl'] = array(
+      'title' => $t('cURL'),
+      'value' => $has_curl ? $t('Enabled') : $t('Not found'),
+    );
+    if (!$has_curl) {
+      $requirements['uc_paypal_curl']['severity'] = REQUIREMENT_ERROR;
+      $requirements['uc_paypal_curl']['description'] = $t("PayPal WPP requires the PHP <a href='!curl_url'>cURL</a> library.", array('!curl_url' => 'http://php.net/manual/en/curl.setup.php'));
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_schema().
+ */
+function uc_paypal_schema() {
+  $schema = array();
+
+  $schema['uc_payment_paypal_ipn'] = array(
+    'description' => 'Logs PayPal Instant Payment Notifications.',
+    'fields' => array(
+      'order_id' => array(
+        'description' => 'The order ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'txn_id' => array(
+        'description' => 'The transaction ID from PayPal.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'txn_type' => array(
+        'description' => 'The transaction type from PayPal.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'mc_gross' => array(
+        'description' => 'The payment amount from PayPal.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'status' => array(
+        'description' => 'The IPN status from PayPal.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'receiver_email' => array(
+        'description' => 'The e-mail address of the PayPal account.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'payer_email' => array(
+        'description' => 'The e-mail address of the buyer.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'received' => array(
+        'description' => 'The IPN receipt timestamp.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'order_id' => array('order_id'),
+    ),
+    'foreign keys' => array(
+      'uc_orders' => array(
+        'table' => 'uc_orders',
+        'columns' => array('order_id' => 'order_id'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_paypal_install() {
+  $t = get_t();
+
+  db_merge('uc_order_statuses')
+    ->key(array('order_status_id' => 'paypal_pending'))
+    ->insertFields(array(
+      'order_status_id' => 'paypal_pending',
+      'title' => $t('PayPal pending'),
+      'state' => 'post_checkout',
+      'weight' => 7,
+      'locked' => 1,
+    ))
+    ->updateFields(array(
+      'state' => 'post_checkout',
+      'locked' => 1,
+    ))
+    ->execute();
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_paypal_update_last_removed() {
+  return 7301;
+}
+
+/**
+ * Convert Ubercart PayPal settings to config.
+ */
+function uc_paypal_update_1000() {
+  $config = config('uc_paypal.settings');
+  $config->set('uc_paypal_wpp_currency', update_variable_get('uc_paypal_wpp_currency', 'USD'));
+  $config->set('uc_paypal_wpp_server', update_variable_get('uc_paypal_wpp_server', 'https://api-3t.sandbox.paypal.com/nvp'));
+  $config->set('uc_paypal_wps_email', update_variable_get('uc_paypal_wps_email', ''));
+  $config->set('uc_paypal_wps_currency', update_variable_get('uc_paypal_wps_currency', 'USD'));
+  $config->set('uc_paypal_wps_language', update_variable_get('uc_paypal_wps_language', 'US'));
+  $config->set('uc_paypal_wps_server', update_variable_get('uc_paypal_wps_server', 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr'));
+  $config->set('uc_paypal_wps_payment_action', update_variable_get('uc_paypal_wps_payment_action', 'Sale'));
+  $config->set('uc_paypal_wps_cancel_return_url', update_variable_get('uc_paypal_wps_cancel_return_url', 'cart'));
+  $config->set('uc_paypal_wps_submit_method', update_variable_get('uc_paypal_wps_submit_method', 'single'));
+  $config->set('uc_paypal_wps_no_shipping', update_variable_get('uc_paypal_wps_no_shipping', '1'));
+  $config->set('uc_paypal_wps_address_override', update_variable_get('uc_paypal_wps_address_override', TRUE));
+  $config->set('uc_paypal_wps_address_selection', update_variable_get('uc_paypal_wps_address_selection', 'billing'));
+  $config->set('uc_paypal_wps_debug_ipn', update_variable_get('uc_paypal_wps_debug_ipn', FALSE));
+  $config->set('uc_paypal_api_username', update_variable_get('uc_paypal_api_username', ''));
+  $config->set('uc_paypal_api_password', update_variable_get('uc_paypal_api_password', ''));
+  $config->set('uc_paypal_api_signature', update_variable_get('uc_paypal_api_signature', ''));
+  $config->set('uc_paypal_ec_landingpage_style', update_variable_get('uc_paypal_ec_landingpage_style', 'Billing'));
+  $config->set('uc_paypal_ec_rqconfirmed_addr', update_variable_get('uc_paypal_ec_rqconfirmed_addr', ''));
+  $config->set('uc_paypal_ec_review_shipping', update_variable_get('uc_paypal_ec_review_shipping', TRUE));
+  $config->set('uc_paypal_ec_review_company', update_variable_get('uc_paypal_ec_review_company', TRUE));
+  $config->set('uc_paypal_ec_review_phone', update_variable_get('uc_paypal_ec_review_phone', TRUE));
+  $config->set('uc_paypal_ec_review_comment', update_variable_get('uc_paypal_ec_review_comment', TRUE));
+  $config->save();
+
+  update_variable_del('uc_paypal_wpp_currency');
+  update_variable_del('uc_paypal_wpp_server');
+  update_variable_del('uc_paypal_wps_email');
+  update_variable_del('uc_paypal_wps_currency');
+  update_variable_del('uc_paypal_wps_language');
+  update_variable_del('uc_paypal_wps_server');
+  update_variable_del('uc_paypal_wps_payment_action');
+  update_variable_del('uc_paypal_wps_cancel_return_url');
+  update_variable_del('uc_paypal_wps_submit_method');
+  update_variable_del('uc_paypal_wps_no_shipping');
+  update_variable_del('uc_paypal_wps_address_override');
+  update_variable_del('uc_paypal_wps_address_selection');
+  update_variable_del('uc_paypal_wps_debug_ipn');
+  update_variable_del('uc_paypal_api_username');
+  update_variable_del('uc_paypal_api_password');
+  update_variable_del('uc_paypal_api_signature');
+  update_variable_del('uc_paypal_ec_landingpage_style');
+  update_variable_del('uc_paypal_ec_rqconfirmed_addr');
+  update_variable_del('uc_paypal_ec_review_shipping');
+  update_variable_del('uc_paypal_ec_review_company');
+  update_variable_del('uc_paypal_ec_review_phone');
+  update_variable_del('uc_paypal_ec_review_comment');
+}
+
+/**
+ * Adjust 'uc_paypal_wps_server' config setting to new default value per
+ * https://www.drupal.org/project/ubercart/issues/2800003.
+ */
+function uc_paypal_update_1001() {
+  // Reverted.
+}
+
+/**
+ * Revert adjustment of 'uc_paypal_wps_server' config setting to new default value per
+ * https://www.drupal.org/project/ubercart/issues/2800003.
+ */
+function uc_paypal_update_1002() {
+  $config = config('uc_paypal.settings');
+  if ($config->get('uc_paypal_wps_server') == 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr') {
+    $config->set('uc_paypal_wps_server', 'https://www.sandbox.paypal.com/cgi-bin/webscr');
+    $config->save();
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function uc_paypal_uninstall() {
+  db_update('uc_order_statuses')
+    ->fields(array(
+      'locked' => 0,
+    ))
+    ->condition('order_status_id', 'paypal_pending')
+    ->execute();
+}

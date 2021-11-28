@@ -1,0 +1,38 @@
+
+/* ---------- Color Module Styles ----------- */
+
+.l-container {
+  background: #ffffff;
+}
+body {
+  color: #3b3b3b;
+}
+.l-header {
+  color: #fffeff;
+  background-color: #0779bf;
+}
+h2, .view-mode-teaser h2 a, h1#page-title {
+  color: #0779bf;
+}
+a {
+  color: #0071b3;
+}
+a:hover,
+a:focus {
+  color: #0779bf;
+}
+a:active {
+  color: #0779bf;
+}
+.l-main-wrapper {
+  background-color: #f2f2f2;
+}
+.l-footer-wrapper,
+.l-footer {
+  background: #292929;
+}
+.l-header a,
+.l-footer-wrapper,
+.l-footer {
+  color: #fffeff;
+}

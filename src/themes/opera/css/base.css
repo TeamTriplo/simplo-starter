@@ -84,7 +84,7 @@ code p {
 }
 
 p {
-  margin: 0 0 1.2em;
+  margin: 0 0 .7rem;
 }
 
 h1,
@@ -265,7 +265,7 @@ label {
 
 .l-page-title,
 .block:first-of-type {
-  padding-top: 20px;
+  padding-top: 1rem;
 }
 
 footer .block:first-of-type,
@@ -306,4 +306,12 @@ h2.block-title {
   padding-bottom: 15px;
   display: block;
   font-weight: bold;
+}
+
+div .button a {
+  color: white;
+}
+
+div .button:hover a {
+  color: black;
 }

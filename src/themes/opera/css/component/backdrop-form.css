@@ -150,10 +150,10 @@ button.form-submit,
   display: inline-block;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
-  line-height: 2.875;
+  letter-spacing: 0.025rem;
+  line-height: 1.5rem;
   border: 0;
-  padding: 0 1.5625em;
+  padding: 0.8rem 1.5625rem;
   margin-bottom: 0;
   margin-right: 0; /* LTR */
   -webkit-transition:
@@ -166,19 +166,19 @@ button.form-submit,
 
 [dir="rtl"] input.form-submit,
 [dir="rtl"] .button {
-  margin-left: 1em;
+  margin-left: 1rem;
   margin-right: 0;
 }
 
 .form-managed-file input.form-submit {
-  margin-left: 0.5em; /* LTR */
+  margin-left: 0.5rem; /* LTR */
   position: relative;
   top: 0.0625em;
 }
 
 [dir="rtl"] .form-managed-file input.form-submit {
   margin-left: 0;
-  margin-right: 0.5em;
+  margin-right: 0.5rem;
 }
 
 input.form-autocomplete,
@@ -215,7 +215,7 @@ textarea.form-textarea {
 
 select.form-select {
   box-sizing: border-box;
-  padding: 0.625em;
+  padding: 0.625rem;
   border: 0.125rem solid #d0d0d0;
   font-weight: 400;
   will-change: border-color;
@@ -223,8 +223,8 @@ select.form-select {
 
 /* De-emphasize the text format */
 select.filter-list {
-  padding: 0.125em 0.5em;
-  margin-left: 0.3125em; /* LTR */
+  padding: 0.125rem 0.5rem;
+  margin-left: 0.3125rem; /* LTR */
 }
 
 [dir="rtl"] select.filter-list {

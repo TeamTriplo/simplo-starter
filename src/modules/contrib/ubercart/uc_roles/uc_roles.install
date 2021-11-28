@@ -1,0 +1,241 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_roles module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function uc_roles_schema() {
+  $schema['uc_roles_products'] = array(
+    'description' => 'Maps purchasable roles to Ubercart products.',
+    'fields' => array(
+      'rpid' => array(
+        'description' => 'Primary key: the role-product id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'pfid' => array(
+        'description' => 'The {uc_product_features}.pfid of the product feature this is attached to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'description' => 'The {node}.nid of the node this role feature is attached to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'model' => array(
+        'description' => 'The product model.',
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+      'role' => array(
+        'description' => 'The role that is purchased with the attached product.',
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => 'anonymous',
+      ),
+      // Start of expiration period
+      // Not actually implemented yet, this is a placeholder.
+      'start_override' => array(
+        'description' => 'Override the store default start time? 1 => Yes. 0 => No.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'start_time' => array(
+        'description' => 'Role expiration start time. 0 signifies to start at product purchase.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+
+      // End of expiration period.
+      'end_override' => array(
+        'description' => 'Override the default end time? 1 => Yes. 0 => No.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'end_time' => array(
+        'description' => 'Role expiration end time. 0 signifies to use a relative expiration.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'duration' => array(
+        'description' => 'The duration of the granted role, using the value of granualarity.',
+        'type' => 'int',
+        'size' => 'small',
+      ),
+      'granularity' => array(
+        'description' => 'The units of time of duration.',
+        'type' => 'varchar',
+        'length' => 32,
+      ),
+      'shippable' => array(
+        'description' => 'Is this role feature shippable? 1 => Yes. 0 => No.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'by_quantity' => array(
+        'description' => 'Multiply any relative expiration by the quantity purchased? 1 => Yes. 0 => No.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+      'model' => array('model'),
+      'role' => array('role'),
+    ),
+    'primary key' => array('rpid'),
+    'foreign keys' => array(
+      'uc_product_features' => array(
+        'table' => 'uc_product_features',
+        'columns' => array('pfid' => 'pfid'),
+      ),
+      'uc_products' => array(
+        'table' => 'uc_products',
+        'columns' => array('nid' => 'nid'),
+      ),
+    ),
+  );
+
+  $schema['uc_roles_expirations'] = array(
+    'description' => 'Store expiration dates of purchased roles.',
+    'fields' => array(
+      'reid' => array(
+        'description' => 'Primary key: the unique expiration id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid owning the role.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'role' => array(
+        'description' => 'The machine name of the purchased role.',
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => 'anonymous',
+      ),
+      'expiration' => array(
+        'description' => 'The Unix timestamp indicating when the role will be removed from the user account.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'notified' => array(
+        'description' => 'A flag indicating that the user was warned that the role will be removed soon.',
+        'type' => 'int',
+        'size' => 'tiny',
+      ),
+    ),
+    'indexes' => array(
+      'uid' => array('uid'),
+      'role' => array('role'),
+    ),
+    'primary key' => array('reid'),
+    'foreign keys' => array(
+      'users' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_roles_update_last_removed() {
+  return 7300;
+}
+
+/**
+ * Convert Ubercart Roles settings to config.
+ */
+function uc_roles_update_1000() {
+  $config = config('uc_roles.settings');
+  $config->set('uc_roles_reminder_granularity', update_variable_get('uc_roles_reminder_granularity', 'never'));
+  $config->set('uc_roles_reminder_length', update_variable_get('uc_roles_reminder_length', NULL));
+  $config->set('uc_roles_default_role', update_variable_get('uc_roles_default_role', NULL));
+  $config->set('uc_roles_default_granularity', update_variable_get('uc_roles_default_granularity', 'never'));
+  $config->set('uc_roles_default_length', update_variable_get('uc_roles_default_length', NULL));
+  $config->set('uc_roles_default_show_expiration', update_variable_get('uc_roles_default_show_expiration', TRUE));
+  $config->set('uc_roles_default_by_quantity', update_variable_get('uc_roles_default_by_quantity', FALSE));
+  $config->set('uc_roles_default_end_time', update_variable_get('uc_roles_default_end_time', NULL));
+  $config->set('uc_roles_default_end_expiration', update_variable_get('uc_roles_default_end_expiration', 'rel'));
+  $config->set('uc_roles_default_role_choices', update_variable_get('uc_roles_default_role_choices', array()));
+  $config->save();
+
+  update_variable_del('uc_roles_reminder_granularity');
+  update_variable_del('uc_roles_reminder_length');
+  update_variable_del('uc_roles_default_role');
+  update_variable_del('uc_roles_default_granularity');
+  update_variable_del('uc_roles_default_length');
+  update_variable_del('uc_roles_default_show_expiration');
+  update_variable_del('uc_roles_default_by_quantity');
+  update_variable_del('uc_roles_default_end_time');
+  update_variable_del('uc_roles_default_end_expiration');
+  update_variable_del('uc_roles_default_role_choices');
+}
+
+/**
+ * Change column rid (int) to role (varchar) in uc_roles tables.
+ */
+function uc_roles_update_1001() {
+  foreach (array('uc_roles_products', 'uc_roles_expirations') as $table) {
+    if (db_field_exists($table, 'rid')) {
+      db_drop_index($table, 'rid');
+      $role_column = array(
+        'type' => 'varchar',
+        'length' => 64,
+        'description' => 'The machine name of the purchased role.',
+        'not null' => TRUE,
+        'default' => 'anonymous',
+      );
+      if ($table == 'uc_roles_products') {
+        $role_column['description'] = 'The role that is purchased with the attached product.';
+      }
+      $indexes = array(
+        'indexes' => array(
+          'role' => array('role'),
+        ),
+      );
+      db_change_field($table, 'rid', 'role', $role_column, $indexes);
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function uc_roles_uninstall() {
+  db_delete('uc_product_features')
+    ->condition('fid', 'role')
+    ->execute();
+}
