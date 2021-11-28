@@ -249,6 +249,8 @@
 
 .header-site-name-wrapper img {
   padding: 20px 20px 20px 0;
+  max-height: 120px;
+  width: auto;
 }
 
 .header-site-name-link {

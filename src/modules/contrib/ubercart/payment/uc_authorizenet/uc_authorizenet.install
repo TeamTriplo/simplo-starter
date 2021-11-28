@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_authorizenet module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function uc_authorizenet_requirements($phase) {
+  $t = get_t();
+
+  $has_curl = function_exists('curl_init');
+
+  $requirements['uc_authorizenet_curl'] = array(
+    'title' => $t('cURL'),
+    'value' => $has_curl ? $t('Enabled') : $t('Not found'),
+  );
+  if (!$has_curl) {
+    $requirements['uc_authorizenet_curl']['severity'] = REQUIREMENT_ERROR;
+    $requirements['uc_authorizenet_curl']['description'] = $t("Authorize.net requires the PHP <a href='!curl_url'>cURL</a> library.", array('!curl_url' => 'http://php.net/manual/en/curl.setup.php'));
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_authorizenet_update_last_removed() {
+  return 3;
+}
+
+/**
+ * Convert Ubercart Authorize.net settings to config.
+ */
+function uc_authorizenet_update_1000() {
+  $config = config('uc_authorizenet.settings');
+  $config->set('uc_authnet_duplicate_window', update_variable_get('uc_authnet_duplicate_window', '120'));
+  $config->set('uc_authnet_api_login_id', update_variable_get('uc_authnet_api_login_id', ''));
+  $config->set('uc_authnet_api_transaction_key', update_variable_get('uc_authnet_api_transaction_key', ''));
+  $config->set('uc_authnet_api_test_gateway_url', update_variable_get('uc_authnet_api_test_gateway_url', 'https://test.authorize.net/gateway/transact.dll'));
+  $config->set('uc_authnet_api_live_gateway_url', update_variable_get('uc_authnet_api_live_gateway_url', 'https://secure.authorize.net/gateway/transact.dll'));
+  $config->set('uc_authnet_aim_txn_mode', update_variable_get('uc_authnet_aim_txn_mode', 'live_test'));
+  $config->set('uc_authnet_aim_email_customer', update_variable_get('uc_authnet_aim_email_customer', FALSE));
+  $config->set('uc_authnet_response_debug', update_variable_get('uc_authnet_response_debug', FALSE));
+  $config->set('uc_authnet_arb_mode', update_variable_get('uc_authnet_arb_mode', 'disabled'));
+  $config->set('uc_authnet_report_arb_post', update_variable_get('uc_authnet_report_arb_post', FALSE));
+  $config->set('uc_authnet_cim_profile', update_variable_get('uc_authnet_cim_profile', FALSE));
+  $config->set('uc_authnet_cim_mode', update_variable_get('uc_authorizenet.settings', 'uc_authnet_cim_mode'));
+  $config->save();
+
+  update_variable_del('uc_authnet_duplicate_window');
+  update_variable_del('uc_authnet_api_login_id');
+  update_variable_del('uc_authnet_api_transaction_key');
+  update_variable_del('uc_authnet_api_test_gateway_url');
+  update_variable_del('uc_authnet_api_live_gateway_url');
+  update_variable_del('uc_authnet_aim_txn_mode');
+  update_variable_del('uc_authnet_aim_email_customer');
+  update_variable_del('uc_authnet_response_debug');
+  update_variable_del('uc_authnet_arb_mode');
+  update_variable_del('uc_authnet_report_arb_post');
+  update_variable_del('uc_authnet_cim_profile');
+  update_variable_del('uc_authnet_cim_mode');
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_authorizenet_install() {
+}

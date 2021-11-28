@@ -1,0 +1,25 @@
+[UbercartAddressTestCase]
+name = Address functionality
+description = Create and compare addresses.
+group = Ubercart
+file = uc_address.test
+type = module
+
+[UbercartAjaxTestCase]
+name = Ajax functionality
+description = Ajax update of checkout and order pages.
+group = Ubercart
+file = uc_ajax.test
+type = module
+
+[UbercartCountryTestCase]
+name = Country functionality
+description = Import, edit, and remove countries and their settings.
+group = Ubercart
+file = uc_store.test
+type = module
+
+; Added by Backdrop CMS packaging script on 2021-06-19
+project = ubercart
+version = 1.x-3.13.0
+timestamp = 1624117064

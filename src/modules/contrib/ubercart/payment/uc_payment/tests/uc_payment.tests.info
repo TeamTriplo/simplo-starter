@@ -1,0 +1,11 @@
+[UbercartPaymentPaneTestCase]
+name = Payment checkout pane
+description = Ensures that the payment pane functions properly during checkout.
+group = Ubercart
+file = uc_payment.test
+type = module
+
+; Added by Backdrop CMS packaging script on 2021-06-19
+project = ubercart
+version = 1.x-3.13.0
+timestamp = 1624117064

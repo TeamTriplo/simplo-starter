@@ -1,0 +1,180 @@
+<?php
+
+/**
+ * @file
+ * Displays reports on sales, customers, and products to store admin.
+ *
+ * The reports module creates a few table-based reports for an Ubercart store.
+ * Store admins can view reports for sales between different dates, customers
+ * by the products purchased and money spent, and products by their views,
+ * number sold, and revenue produced.
+ */
+
+/**
+ * The maximum number of records.
+ */
+define('UC_REPORTS_MAX_RECORDS', PHP_INT_MAX);
+
+/**
+ * Implements hook_menu().
+ */
+function uc_reports_menu() {
+  global $user;
+  $items = array();
+
+  $items['admin/store/reports/customers'] = array(
+    'title' => 'Customer reports',
+    'description' => 'View reports for store customers.',
+    'page callback' => 'uc_reports_customers',
+    'access arguments' => array('view reports'),
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/products'] = array(
+    'title' => 'Product reports',
+    'description' => 'View reports for store products.',
+    'page callback' => 'uc_reports_products',
+    'access arguments' => array('view reports'),
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/products/summary'] = array(
+    'title' => 'Product report',
+    'access arguments' => array('view reports'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/products/custom'] = array(
+    'title' => 'Custom product report',
+    'description' => 'View a customized product report',
+    'page callback' => 'uc_reports_products_custom',
+    'access arguments' => array('view reports'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/sales'] = array(
+    'title' => 'Sales reports',
+    'description' => 'View reports for store sales.',
+    'page callback' => 'uc_reports_sales_summary',
+    'access arguments' => array('view reports'),
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/sales/summary'] = array(
+    'title' => 'Sales summary',
+    'description' => 'View summary of all store sales',
+    'access arguments' => array('view reports'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/sales/year'] = array(
+    'title' => 'Sales per year',
+    'description' => 'View store sales for a particular year',
+    'page callback' => 'uc_reports_sales_year',
+    'access arguments' => array('view reports'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -7,
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/sales/custom'] = array(
+    'title' => 'Custom sales summary',
+    'description' => 'View a customized sales summary',
+    'page callback' => 'uc_reports_sales_custom',
+    'access arguments' => array('view reports'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -1,
+    'file' => 'uc_reports.admin.inc',
+  );
+  $items['admin/store/reports/getcsv/%/%'] = array(
+    'page callback' => 'uc_reports_get_csv',
+    'page arguments' => array(4, 5),
+    'access arguments' => array('view reports'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_reports.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function uc_reports_theme() {
+  return array(
+    'uc_reports_product_table' => array(
+      'variables' => array(
+        'header' => NULL,
+        'rows' => NULL,
+        'attributes' => array(),
+        'caption' => NULL,
+        'colgroups' => array(),
+        'sticky' => TRUE,
+        'empty' => '',
+      ),
+      'file' => 'uc_reports.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_init().
+ */
+function uc_reports_init() {
+  if (arg(0) == 'admin' && arg(1) == 'store' && arg(2) == 'reports') {
+    backdrop_add_css(backdrop_get_path('module', 'uc_reports') . '/uc_reports.css');
+  }
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function uc_reports_config_info() {
+  $prefixes['uc_reports.settings'] = array(
+    'label' => t('Ubercart reports settings'),
+    'group' => t('Configuration'),
+  );
+
+  return $prefixes;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for uc_store_settings_form().
+ */
+function uc_reports_form_uc_store_settings_form_alter(&$form, &$form_state) {
+  $config = config('uc_reports.settings');
+  $form['reports'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Report settings'),
+    '#group' => 'store',
+  );
+  $form['reports']['uc_reports_table_size'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number of rows to show in reports'),
+    '#description' => t('The maximum number of rows displayed on one page for a report table.'),
+    '#default_value' => $config->get('uc_reports_table_size'),
+    '#size' => 5,
+  );
+
+  $options = array();
+  foreach (uc_order_status_list() as $status) {
+    $options[$status['id']] = $status['title'];
+  }
+
+  $form['reports']['uc_reports_reported_statuses'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Reported statuses'),
+    '#description' => t('Only orders with selected statuses will be included in reports.'),
+    '#options' => $options,
+    '#default_value' => $config->get('uc_reports_reported_statuses'),
+    '#multiple' => TRUE,
+  );
+}
+
+/**
+ * Returns a SQL friendly array of order statuses for orders used in reports.
+ */
+function uc_reports_order_statuses() {
+  $statuses = config_get('uc_reports.settings', 'uc_reports_reported_statuses');
+
+  return $statuses;
+}
