@@ -20,11 +20,7 @@ ul.primary li a {
 }
 ul.primary li a.active,
 ul.primary li a:hover {
-<<<<<<< HEAD
-  background: #fafafa;
-=======
   background-color: #fafafa;
->>>>>>> main
   border: 1px solid #bbbbbb;
   border-bottom-color: transparent;
 }
@@ -60,11 +56,7 @@ h3 a,
   color: #5588a5;
 }
 .field-type-taxonomy-term-reference .field-item a {
-<<<<<<< HEAD
-  background: #fffffd;
-=======
   background-color: #fffffd;
->>>>>>> main
 }
 .progress .filled {
   background-color: #5588a5;
@@ -119,15 +111,9 @@ td.active {
 .l-header ul.menu li a.active-trail {
   color: #000000;
 }
-<<<<<<< HEAD
-.l-header ul.menu li a.active::after,
-.l-header ul.menu li a.active-trail::after {
-  color: #fffeff;
-=======
 .l-header ul.menu li a.active,
 .l-header ul.menu li a.active-trail {
   background-image: linear-gradient(#fffeff, #fffeff);
->>>>>>> main
 }
 /* @todo can this work with menu breakpoint settings? */
 @media (min-width: 48em) {
@@ -419,12 +405,9 @@ fieldset {
 .vertical-tabs-pane > .vertical-tab-link {
   background: #f2f2f2;
 }
-<<<<<<< HEAD
-=======
 .maintenance-page {
   background-color: #bbbbbc;
 }
 .maintenance-page .l-container {
   background-color: #f2f2f2;
 }
->>>>>>> main
