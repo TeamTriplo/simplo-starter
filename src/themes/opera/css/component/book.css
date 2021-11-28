@@ -1,0 +1,34 @@
+.book-navigation {
+	background: #dee2ea;
+	margin-bottom:  60px;
+}
+
+.book-navigation .menu {
+	padding: 10px 45px;
+	border-bottom:  2px solid white;
+	margin-bottom:  0px;
+}
+
+.book-navigation .book-pager {
+	padding: 15px 25px 15px;
+	display:  flex;
+	align-items:  center;
+}
+
+.book-pager .previous {
+	width: 40%;
+}
+
+
+.book-pager .up {
+	width: 18%;
+}
+
+.book-pager .next {
+	width: 40%;
+	margin-left: auto;
+}
+
+li.book-add-child {
+    top: -55px;
+}

@@ -1,0 +1,11 @@
+name = CyberSource
+description = Processes payments using the CyberSource Silent Order POST and Hosted Order Page services.
+dependencies[] = uc_payment
+package = Ubercart - payment
+backdrop = 1.x
+type = module
+
+; Added by Backdrop CMS packaging script on 2021-06-19
+project = ubercart
+version = 1.x-3.13.0
+timestamp = 1624117064

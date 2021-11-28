@@ -1,0 +1,135 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_taxes module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function uc_taxes_schema() {
+  $schema = array();
+
+  $schema['uc_taxes'] = array(
+    'description' => 'Stores tax information.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary key: Unique tax rate id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'The tax rate name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'rate' => array(
+        'description' => 'The tax rate multiplier.',
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'shippable' => array(
+        'description' => 'Flag that describes how this rate applies to shippable and non-shippable products. 0 => Disregard shipability. 1 => Apply tax to shippable products only.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'taxed_product_types' => array(
+        'description' => 'Serialized array of node types to be taxed.',
+        'type' => 'text',
+        'serialize' => TRUE,
+      ),
+      'taxed_line_items' => array(
+        'description' => 'Serialized array of line item types to be taxed.',
+        'type' => 'text',
+        'serialize' => TRUE,
+      ),
+      'weight' => array(
+        'description' => 'The weight of this tax rate in relation to other rates.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'display_include' => array(
+        'description' => 'Boolean flag indicating that product prices should be displayed including the tax.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'inclusion_text' => array(
+        'description' => 'Text to be shown near a product price that includes tax.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+
+  $schema['uc_taxed_product_types'] = array(
+    'fields' => array(
+      'tax_id' => array(
+        'description' => 'Tax rate id',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'type' => array(
+        'description' => 'Node type',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('tax_id', 'type'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['uc_taxed_line_items'] = $schema['uc_taxed_product_types'];
+  $schema['uc_taxed_line_items']['fields']['type']['description'] = 'Line item type';
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_taxes_update_last_removed() {
+  return 7003;
+}
+
+/**
+ * Convert Ubercart Taxes settings to config.
+ */
+function uc_taxes_update_1000() {
+  $config = config('uc_taxes.settings');
+  //migrate variables
+  $config->set('uc_li_tax_weight', update_variable_get('uc_li_tax_weight', 9));
+  $config->set('uc_li_tax_subtotal_weight', update_variable_get('uc_li_tax_subtotal_weight', 7));
+  $config->save();
+
+  //delete variables
+  update_variable_del('uc_li_tax_weight');
+  update_variable_del('uc_li_tax_subtotal_weight');
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_taxes_install() {
+  // Dynamically generated variable data was detected.
+}

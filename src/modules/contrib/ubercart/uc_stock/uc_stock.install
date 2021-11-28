@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_stock module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function uc_stock_schema() {
+  $schema = array();
+
+  $schema['uc_product_stock'] = array(
+    'description' => 'Stock levels for Ubercart products.',
+    'fields' => array(
+      'sku' => array(
+        'description' => 'SKU (Stock Keeping Unit) of a product.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'nid' => array(
+        'description' => 'Node ID of a product.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'active' => array(
+        'description' => 'Boolean flag indicating whether stock is being tracked for this product. 1 => Yes. 0 => No.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'stock' => array(
+        'description' => 'Quantity in stock.',
+        'type' => 'int',
+        'size' => 'medium',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'threshold' => array(
+        'description' => 'Minimum quantity threshold level.',
+        'type' => 'int',
+        'size' => 'medium',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+    'primary key' => array('sku'),
+    'foreign keys' => array(
+      'uc_products' => array(
+        'table' => 'uc_products',
+        'columns' => array('nid' => 'nid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_stock_update_last_removed() {
+  return 7001;
+}
+
+/**
+ * Convert Ubercart Reports settings to config.
+ */
+function uc_stock_update_1000() {
+  $config = config('uc_stock.settings');
+  $config->set('uc_stock_threshold_notification', update_variable_get('uc_stock_threshold_notification', FALSE));
+  $config->set('uc_stock_threshold_notification_recipients', update_variable_get('uc_stock_threshold_notification_recipients', uc_store_email()));
+  $config->set('uc_stock_threshold_notification_subject', update_variable_get('uc_stock_threshold_notification_subject', uc_get_message('uc_stock_threshold_notification_subject')));
+  $config->set('uc_stock_threshold_notification_message', update_variable_get('uc_stock_threshold_notification_message', uc_get_message('uc_stock_threshold_notification_message')));
+  $config->save();
+
+  update_variable_del('uc_stock_threshold_notification');
+  update_variable_del('uc_stock_threshold_notification_recipients');
+  update_variable_del('uc_stock_threshold_notification_subject');
+  update_variable_del('uc_stock_threshold_notification_message');
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_stock_install() {
+  // Dynamically generated variable data was detected.
+  // /ubercart/uc_stock/uc_stock.module line 223
+  // /ubercart/uc_stock/uc_stock.module line 228
+  // /ubercart/uc_stock/uc_stock.module line 231
+  config_set('uc_stock.settings', 'uc_stock_threshold_notification_recipients', uc_store_email());
+  config_set('uc_stock.settings', 'uc_stock_threshold_notification_subject', uc_get_message('uc_stock_threshold_notification_subject'));
+  config_set('uc_stock.settings', 'uc_stock_threshold_notification_message', uc_get_message('uc_stock_threshold_notification_message'));
+}

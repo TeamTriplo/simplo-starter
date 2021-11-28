@@ -232,3 +232,28 @@
   }
 
 }
+
+/* Making drop down menu spread out */
+
+@media (max-width: 42em) {
+  .l-header-inner.container {
+    padding: 0;
+    margin: 0;
+  }
+
+  .l-header-inner.container .menu-dropdown li {
+    background-color: var(--menu-one);
+  }
+
+  .header-site-name-wrapper,
+  .header-menu {
+    padding:  0 20px;
+  }
+
+  .l-wrapper .block--inner-wrapper.container {
+    margin-left: 15px;
+    margin-right: 15px;
+  }
+}
+
+
