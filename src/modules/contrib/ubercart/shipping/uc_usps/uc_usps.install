@@ -1,0 +1,109 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_usps module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function uc_usps_schema() {
+  $schema = array();
+
+  $schema['uc_usps_products'] = array(
+    'description' => 'Stores product information for USPS shipping quotes.',
+    'fields' => array(
+      'vid' => array(
+        'description' => 'The {uc_products}.vid.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'description' => 'The {uc_products}.nid.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'container' => array(
+        'description' => 'The package type in which the product will be shipped.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('vid'),
+    'foreign keys' => array(
+      'uc_products' => array(
+        'table' => 'uc_products',
+        'columns' => array(
+          'nid' => 'nid',
+          'vid' => 'vid',
+        ),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_usps_update_last_removed() {
+  return 7300;
+}
+
+/**
+ * Convert Ubercart USPS settings to config.
+ */
+function uc_usps_update_1000() {
+  $config = config('uc_usps.settings');
+  $config->set('uc_usps_user_id', update_variable_get('uc_usps_user_id', ''));
+  $config->set('uc_usps_online_rates', update_variable_get('uc_usps_online_rates', 0));
+  $config->set('uc_usps_env_services', update_variable_get('uc_usps_env_services', array_keys(_uc_usps_env_services())));
+  $config->set('uc_usps_services', update_variable_get('uc_usps_services', array_keys(_uc_usps_services())));
+  $config->set('uc_usps_intl_env_services', update_variable_get('uc_usps_intl_env_services', array_keys(_uc_usps_intl_env_services())));
+  $config->set('uc_usps_intl_services', update_variable_get('uc_usps_intl_services', array_keys(_uc_usps_intl_services())));
+  $config->set('uc_usps_all_in_one', update_variable_get('uc_usps_all_in_one', 1));
+  $config->set('uc_usps_insurance', update_variable_get('uc_usps_insurance', 0));
+  $config->set('uc_usps_delivery_confirmation', update_variable_get('uc_usps_delivery_confirmation', 0));
+  $config->set('uc_usps_signature_confirmation', update_variable_get('uc_usps_signature_confirmation', 0));
+  $config->set('uc_usps_rate_markup_type', update_variable_get('uc_usps_rate_markup_type', 'percentage'));
+  $config->set('uc_usps_rate_markup', update_variable_get('uc_usps_rate_markup', 0));
+  $config->set('uc_usps_weight_markup_type', update_variable_get('uc_usps_weight_markup_type', 'percentage'));
+  $config->set('uc_usps_weight_markup', update_variable_get('uc_usps_weight_markup', 0));
+  $config->set('uc_usps_markup', update_variable_get('uc_usps_markup', ''));
+  $config->set('uc_usps_markup_type', update_variable_get('uc_usps_markup_type', ''));
+  $config->save();
+  update_variable_del('uc_usps_user_id');
+  update_variable_del('uc_usps_online_rates');
+  update_variable_del('uc_usps_env_services');
+  update_variable_del('uc_usps_services');
+  update_variable_del('uc_usps_intl_env_services');
+  update_variable_del('uc_usps_intl_services');
+  update_variable_del('uc_usps_all_in_one');
+  update_variable_del('uc_usps_insurance');
+  update_variable_del('uc_usps_delivery_confirmation');
+  update_variable_del('uc_usps_signature_confirmation');
+  update_variable_del('uc_usps_rate_markup_type');
+  update_variable_del('uc_usps_rate_markup');
+  update_variable_del('uc_usps_weight_markup_type');
+  update_variable_del('uc_usps_weight_markup');
+  update_variable_del('uc_usps_markup');
+  update_variable_del('uc_usps_markup_type');
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_usps_install() {
+  config_set('uc_usps.settings', 'uc_usps_env_services', array_keys(_uc_usps_env_services()));
+  config_set('uc_usps.settings', 'uc_usps_services', array_keys(_uc_usps_services()));
+  config_set('uc_usps.settings', 'uc_usps_intl_env_services', array_keys(_uc_usps_intl_env_services()));
+  config_set('uc_usps.settings', 'uc_usps_intl_services', array_keys(_uc_usps_intl_services()));
+}

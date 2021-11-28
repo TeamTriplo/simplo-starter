@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * @file
+ * Role assignment product feature tests.
+ */
+
+/**
+ * Tests the role purchase functionality.
+ */
+class UbercartRolesTestCase extends UbercartTestHelper {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Roles',
+      'description' => 'Ensures that the purchase of roles functions correctly.',
+      'group' => 'Ubercart',
+    );
+  }
+
+  /**
+   * Overrides BackdropWebTestCase::setUp().
+   */
+  protected function setUp($modules = array(), $permissions = array()) {
+    $modules = array('uc_payment', 'uc_payment_pack', 'uc_roles');
+    // Needed to see/modify roles on the /user/%/edit page.
+    $permissions = array('administer permissions', 'administer users', 'view all role expirations', 'assign roles');
+    parent::setUp($modules, $permissions);
+  }
+
+  public function testRolePurchaseCheckout() {
+    // Add role assignment to the test product.
+    $role = $this->backdropCreateRole(array('access content'));
+    $this->backdropLogin($this->adminUser);
+    $this->backdropPost('node/' . $this->product->nid . '/edit/features', array('feature' => 'role'), t('Add'));
+    $edit = array(
+      'uc_roles_role' => $role,
+      'end_override' => TRUE,
+      'uc_roles_expire_relative_duration' => 1,
+      'uc_roles_expire_relative_granularity' => 'day',
+    );
+    $this->backdropPost(NULL, $edit, t('Save feature'));
+
+    // Check out with the test product.
+    $this->backdropPost('node/' . $this->product->nid, array(), t('Add to cart'));
+    $order = $this->checkout();
+    uc_payment_enter($order->order_id, 'other', $order->order_total);
+
+    // Test that the role was granted.
+    $account = user_load($order->uid);
+    $this->assertTrue(in_array($role, $account->roles), 'Existing user was granted role.');
+
+    // Test that the email is correct.
+    $roles = user_roles(TRUE);
+    $label = $roles[$role];
+    $store_name = uc_store_name();
+    $mail = $this->findMail('/' . $store_name . ': ' . preg_quote($label) . ' role granted/');
+
+    // Delete the user.
+    user_delete($order->uid);
+
+    // Run cron to ensure deleted users are handled correctly.
+    $this->backdropLogout();
+    $this->cronRun();
+  }
+
+  public function testRoleAdminDelete() {
+    // Add role assignment to the test product.
+    $role = $this->backdropCreateRole(array('access content'));
+    $this->backdropLogin($this->adminUser);
+    $this->backdropPost('node/' . $this->product->nid . '/edit/features', array('feature' => 'role'), t('Add'));
+    $edit = array(
+      'uc_roles_role' => $role,
+      'end_override' => TRUE,
+      'uc_roles_expire_relative_duration' => 1,
+      'uc_roles_expire_relative_granularity' => 'day',
+    );
+    $this->backdropPost(NULL, $edit, t('Save feature'));
+
+    // Check out with the test product.
+    $this->backdropPost('node/' . $this->product->nid, array(), t('Add to cart'));
+    $order = $this->checkout();
+    uc_payment_enter($order->order_id, 'other', $order->order_total);
+
+    // Test that the role was granted.
+    $account = user_load($order->uid);
+    $this->assertTrue(in_array($role, $account->roles), 'Existing user was granted role.');
+
+    // Test that the role appears on the user edit page.
+    $this->backdropGet('user/' . $order->uid . '/edit');
+    $this->assertText('Ubercart roles', 'Ubercart roles fieldset found.');
+    $this->assertNoText('There are no pending expirations for roles this user.', 'User has a role expiration.');
+
+    // Delete the role using the Backdrop user edit page
+    // by unchecking the role and submitting the form.
+    $this->backdropPost(
+      'user/' . $order->uid . '/edit',
+      array('roles[' . $role . ']' => FALSE),
+      t('Save')
+    );
+
+    // Test that the role was removed.
+    $account = user_load($order->uid, TRUE);
+    $this->assertFalse(in_array($role, $account->roles), 'Role was removed from user.');
+
+    // Test that the role expiration data was removed.
+    $this->backdropGet('user/' . $order->uid . '/edit');
+    $this->assertText('There are no pending expirations for roles this user.', 'User has no role expirations.');
+
+  }
+
+}

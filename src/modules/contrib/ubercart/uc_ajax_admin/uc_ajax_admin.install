@@ -1,0 +1,28 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_ajax_admin module.
+ *
+ */
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_ajax_admin_update_last_removed() {
+  return;
+}
+
+/**
+ * Convert Ubercart Ajax Admin settings to config.
+ */
+function uc_ajax_admin_update_1000() {
+  $config = config('uc_ajax_admin.settings');
+}
+
+/**
+ * Implements hook_install().
+ */
+function uc_ajax_admin_install() {
+  module_load_include('inc', 'uc_store', 'includes/uc_ajax_attach');
+  config_set('uc_ajax_admin.settings', 'uc_ajax_checkout', _uc_ajax_defaults('checkout'));
+}
