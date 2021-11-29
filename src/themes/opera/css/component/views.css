@@ -1,3 +1,11 @@
 .views-field {
 	margin-bottom:  20px;
 }
+
+.views-exposed-widget .form-item {
+	margin-bottom:  .5rem;
+}
+
+.views-exposed-form .views-exposed-widget.views-reset-button {
+	display: block;
+}

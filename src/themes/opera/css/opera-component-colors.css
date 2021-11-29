@@ -3,6 +3,10 @@
  * module. 
  */
 
+a {
+  color: var(--menu-one);
+}
+
 .l-header,
 .l-footer {
   background-color: var(--color-one);

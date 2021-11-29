@@ -32,6 +32,7 @@ stylesheets[all][] = css/component/caption.css
 stylesheets[all][] = css/component/opera-views.css
 stylesheets[all][] = css/component/book.css
 stylesheets[all][] = css/component/recipes.css
+stylesheets[all][] = css/component/views.css
 stylesheets[all][] = css/opera-component-colors.css
 
 ; Custom for this theme

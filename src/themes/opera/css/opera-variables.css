@@ -6,19 +6,24 @@
  /* Setting CSS Variables - Default */
  
 :root {
-  --color-one: #6e0e0a;
+  --menu-one: #b2bc20;
+
+  --color-one: #793939;
   --text-one: #fff6ff;
   --link-one: #b2bc21;
-  --menu-one: #983734;
+
   --color-two: #f0f0c9;
   --text-two: #fff7ff;
   --link-two: #b2bc22;
+
   --color-three: #f2bb05;
   --text-three: #002002; 
-  --link-three: #b2bc23;
+  --link-three: #54a503;
+
   --color-four: #124e78;
-  --text-four: #FFF4FF;  
+  --text-four: #fff4ff;  
   --link-four: #b2bc24;
+
   --color-five: #d74e09;
   --text-five: #fffff5;
   --link-five: #b2bc25;

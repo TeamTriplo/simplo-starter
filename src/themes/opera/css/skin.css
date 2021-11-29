@@ -16,10 +16,6 @@ body {
   background: #ffffff;
 }
 
-a {
-  color: #0073bd;
-}
-
 a:focus,
 a:hover {
   text-decoration: underline;
@@ -548,9 +544,6 @@ button.form-submit,
 .button:focus,
 input.form-submit:hover,
 input.form-submit:focus {
-    a {
-    color: green;
-  }
   color: #333333;
   background: white;
   border: 2px solid grey;
@@ -574,15 +567,19 @@ button.button-primary,
   border: none;
 }
 
+body.page .layout div.l-wrapper a.button {
+  color: var(--text-one);
+}
+body.page .layout div.l-wrapper a.button:hover {
+  color: var(--color-one);
+}
+
 input.button-primary:hover,
 input.button-primary:focus,
 button.button-primary:hover,
 button.button-primary:focus {
   color: green;
   background-color: #114a75;
-  a {
-    color:  green;
-  }
 }
 
 input.button-primary:active,
@@ -1263,11 +1260,6 @@ div.error:before {
 #admin-bar .dropdown li > span {
   margin-bottom: 0;
 }
-
-.field-name-body{
-  padding: 0 0 15px;
-}
-
 
 /* Promobox view on default home page */
 
