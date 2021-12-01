@@ -38,6 +38,7 @@
   -ms-flex: 1 0 auto;
   flex: 1 0 auto;
   min-height: 70vh;
+  padding-bottom: 2rem;
 }
 .l-header,
 .l-footer {

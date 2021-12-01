@@ -44,24 +44,46 @@ $info = array(
     ),
 
 
-    // 
+    // https://www.schemecolor.com/vintage-venice-color-scheme.php
     'venice' => array(
       'title' => t('Venice'),
       'colors' => array(
         'set1menu' => '#094eac',
-        'set1bg' => '#793939',
+        'set1bg' => '#473f35',
         'set1text' => '#fffeff',
         'set1links' => '#ffda8f',
         'set2bg' => '#89b594',
         'set2text' => '#001010',
         'set2links' => '#b2bc22',
-        'set3bg' => '#fb421d',
+        'set3bg' => '#eac2aa',
         'set3text' => '#010010',
         'set3links' => '#094eac',
         'set4bg' => '#fffffe',
         'set4text' => '#000010',
         'set4links' => '#094eac',
-        'set5bg' => '#ffda8f',
+        'set5bg' => '#788580',
+        'set5text' => '#000100',
+        'set5links' => '#094eac',
+
+      ),
+    ),
+    'cream' => array(
+      'title' => t('Cream'),
+      'colors' => array(
+        'set1menu' => '#094eac',
+        'set1bg' => '#f9db79',
+        'set1text' => '#242323',
+        'set1links' => '#37342f',
+        'set2bg' => '#89b594',
+        'set2text' => '#001010',
+        'set2links' => '#b2bc22',
+        'set3bg' => '#b5e8d5',
+        'set3text' => '#010010',
+        'set3links' => '#094eac',
+        'set4bg' => '#fffffe',
+        'set4text' => '#000010',
+        'set4links' => '#094eac',
+        'set5bg' => '#ffbfb3',
         'set5text' => '#000100',
         'set5links' => '#094eac',
 

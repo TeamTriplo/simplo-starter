@@ -263,10 +263,10 @@ label {
   padding-left: 0;
 }
 
-.l-page-title,
+/*.l-page-title,
 .block:first-of-type {
   padding-top: 1rem;
-}
+}*/
 
 footer .block:first-of-type,
 header .block:first-of-type {
