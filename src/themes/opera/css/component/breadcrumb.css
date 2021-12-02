@@ -4,7 +4,7 @@
  */
 .breadcrumb {
   overflow: hidden;
-  margin:0 0 1em;
+  margin:2rem 0 1rem;
 }
 
 .breadcrumb ol,
@@ -16,7 +16,7 @@
 
 .breadcrumb li {
   position: relative;
-  padding: 0 1em;
+  padding: 0 1rem;
   float: left; /* LTR */
 }
 
@@ -29,8 +29,8 @@
   position: relative;
   z-index: 1;
   display: block;
-  margin: 0 -1em;
-  padding: 0.5em 1.4em;
+  margin: 0 -1rem;
+  padding: 0.5rem 1.4rem;
   text-decoration: none;
 }
 
@@ -39,8 +39,8 @@
   position: absolute;
   top: 50%;
   right: 0px; /* LTR */
-  width: 2em;
-  height: 2em;
+  width: 2rem;
+  height: 2rem;
   border: 0.0625rem solid white;
   border-width: 0.125rem 0.125rem 0 0;
   -webkit-transform:

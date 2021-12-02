@@ -1,0 +1,12 @@
+name = Publish Content Test Module
+description = "Provides a callback which lists all nodes with publish unpublish links for testing callbacks"
+backdrop = 1.x
+type = module
+package = Testing
+version = VERSION
+hidden = TRUE
+
+; Added by Backdrop CMS packaging script on 2020-12-20
+project = publishcontent
+version = 1.x-1.4-alpha1
+timestamp = 1608492019

@@ -1,0 +1,23 @@
+[PublishContentTabTests]
+name = Publish Content: Tab Tests
+description = Executes test suite for Publish Content module with the tab method.
+group = Publish Content
+file = publishcontent.test
+
+[PublishContentButtonTests]
+name = Publish Content: Button Tests
+description = Executes test suite for Publish Content module with the button method.
+group = Publish Content
+file = publishcontent.test
+
+[PublishContentNoMethodTests]
+name = Publish Content: No Method Tests
+description = Executes test suite for Publish Content module with the "None" method selected.
+group = Publish Content
+file = publishcontent.test
+
+
+; Added by Backdrop CMS packaging script on 2020-12-20
+project = publishcontent
+version = 1.x-1.4-alpha1
+timestamp = 1608492019

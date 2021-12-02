@@ -1,13 +1,10 @@
 type = theme
 name = Opera
-description = Opera theme
+description = Opera theme special for sites with stacked panels on front page. 
 backdrop = 1.x
 version = 1.x
 
-; Add theme Bootstrap CSS files
-stylesheets[all][] = css/bootstrap/bootstrap.min.css
-
-; Add theme CSS files - from Tatsu
+; Add theme CSS files - from Tatsu (with edits)
 stylesheets[all][] = css/base.css
 stylesheets[all][] = css/layout.css
 stylesheets[all][] = css/skin.css
@@ -32,6 +29,7 @@ stylesheets[all][] = css/component/caption.css
 stylesheets[all][] = css/component/opera-views.css
 stylesheets[all][] = css/component/book.css
 stylesheets[all][] = css/component/recipes.css
+stylesheets[all][] = css/component/views.css
 stylesheets[all][] = css/opera-component-colors.css
 
 ; Custom for this theme
@@ -39,6 +37,7 @@ stylesheets[all][] = css/opera-component-colors.css
 stylesheets[all][] = css/block.css
 stylesheets[all][] = css/front.css
 stylesheets[all][] = css/opera-variables.css
+stylesheets[all][] = css/utility.css
 
 
 ; Add theme JS files
@@ -51,3 +50,43 @@ utility_css[recipes][] = 'info-block'
 ; We need at least one setting for the theme settings page to appear in the
 ; menu. Color module provides our defaults, so we just register a dummy setting.
 settings[color] = true
+
+; Configuration specifically for Utility CSS module. Classes added to this list
+; will be available as autocomplete in the block UI where users are allowed to add classes.
+utility_css[font][] = 'color-inverse'
+utility_css[font][] = 'font-size-xxxxlarge'
+utility_css[font][] = 'font-size-xxxlarge'
+utility_css[font][] = 'font-size-xxlarge'
+utility_css[font][] = 'font-size-xlarge'
+utility_css[font][] = 'font-size-large'
+utility_css[font][] = 'font-size-medium'
+utility_css[font][] = 'font-size-normal'
+utility_css[font][] = 'font-size-small'
+utility_css[font][] = 'font-size-xsmall'
+utility_css[font][] = 'font-weight-bold'
+utility_css[font][] = 'font-weight-normal'
+utility_css[font][] = 'font-weight-light'
+utility_css[font][] = 'font-style-italic'
+utility_css[font][] = 'font-style-normal'
+
+utility_css[color][] = 'opera-bg1-black'
+utility_css[color][] = 'opera-bg1-blue'
+utility_css[color][] = 'opera-bg1-brown'
+utility_css[color][] = 'opera-bg1-firebrick'
+utility_css[color][] = 'opera-bg1-green'
+utility_css[color][] = 'opera-bg1-indigo'
+utility_css[color][] = 'opera-bg1-khaki'
+utility_css[color][] = 'opera-bg2-lemonchiffon'
+utility_css[color][] = 'opera-bg2-olive'
+utility_css[color][] = 'opera-bg2-orange'
+utility_css[color][] = 'opera-bg2-pink'
+utility_css[color][] = 'opera-bg2-red'
+utility_css[color][] = 'opera-bg2-sienna'
+utility_css[color][] = 'opera-bg3-silver'
+utility_css[color][] = 'opera-bg3-tan'
+utility_css[color][] = 'opera-bg3-teal'
+utility_css[color][] = 'opera-bg3-violet'
+utility_css[color][] = 'opera-bg3-white'
+utility_css[color][] = 'opera-bg3-yellow'
+
+
