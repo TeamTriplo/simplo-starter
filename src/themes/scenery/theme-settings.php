@@ -35,6 +35,26 @@ function scenery_form_system_theme_settings_alter(&$form, &$form_state) {
     '#default_value' => theme_get_setting('scenery', $theme_name),
     '#description' => t('Additionally to the header image, this also changes some text and background colors.'),
   );
+  $form['settings']['max_row_width'] = array(
+    '#type' => 'number',
+    '#title' => t('Max row content width'),
+    '#min' => 980,
+    '#max' => 2000,
+    '#size' => 5,
+    '#field_suffix' => 'px',
+    '#default_value' => theme_get_setting('max_row_width', $theme_name),
+    '#description' => t('How wide layout container (row) content can get. Note: only the content, the header and footer backgrounds are not affected.'),
+  );
+  $form['settings']['max_article_width'] = array(
+    '#type' => 'number',
+    '#title' => t('Max article width'),
+    '#min' => 800,
+    '#max' => 1200,
+    '#size' => 5,
+    '#field_suffix' => 'px',
+    '#default_value' => theme_get_setting('max_article_width', $theme_name),
+    '#description' => t('How wide article or comment content can get. This limit improves text readability on single-column layouts.'),
+  );
 
   $form['customize'] = array(
     '#type' => 'checkbox',
@@ -51,12 +71,17 @@ function scenery_form_system_theme_settings_alter(&$form, &$form_state) {
       ),
     ),
   );
-  // Add an image field.
-  // @todo webp
+  // Add an image upload.
   $upload_validators = array(
     'file_validate_extensions' => array('jpg jpeg png gif'),
     'file_validate_image_resolution' => array('3200x1600', '960x300'),
   );
+  if (config_get('system.core', 'image_toolkit') == 'gd' && defined('IMAGETYPE_WEBP')) {
+    $gd_info = gd_info();
+    if (isset($gd_info['WebP Support']) && $gd_info['WebP Support'] == TRUE) {
+      $upload_validators['file_validate_extensions'] = array('jpg jpeg png gif webp');
+    }
+  }
   $upload_description = theme('file_upload_help', array(
     'upload_validators' => $upload_validators,
   ));
@@ -74,6 +99,11 @@ function scenery_form_system_theme_settings_alter(&$form, &$form_state) {
     '#default_value' => theme_get_setting('css', $theme_name),
     '#rows' => 12,
   );
+  $preprocess_css = config_get('system.core', 'preprocess_css');
+  if ($preprocess_css) {
+    $text = t('Note: Aggregation and compression of CSS files is currently turned on. This makes inspection of existing CSS harder for you.');
+    $form['custom']['css']['#description'] = $text;
+  }
   // Strange... why do I have to set the system function?
   $form['#submit'] = array('_scenery_css_file', 'system_theme_settings_submit');
 }

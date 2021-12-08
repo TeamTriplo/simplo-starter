@@ -15,6 +15,13 @@ ckeditor_stylesheets[] = css/style.css
 scripts[] = js/scenery.js
 
 settings[scenery] = '1'
+settings[max_row_width] = 1200
+settings[max_article_width] = 900
 settings[customize] = FALSE
 settings[image] = 0
 settings[css] = ''
+
+; Added by Backdrop CMS packaging script on 2021-12-04
+project = scenery
+version = 1.x-1.0.0
+timestamp = 1638627346

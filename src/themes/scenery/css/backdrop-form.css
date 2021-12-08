@@ -5,6 +5,9 @@
 .form-required {
   color: #f00;
 }
+label {
+  font-weight: bold;
+}
 .form-item,
 .ui-widget,
 .ui-dialog *,
@@ -25,7 +28,7 @@
   margin: 0 0 1.5em;
 }
 td .form-item {
-  margin: 0;
+  margin: 5px 0;
 }
 .form-type-email label,
 .form-type-file label,
@@ -42,9 +45,6 @@ abbr.ajax-changed {
   text-decoration: none;
   padding: 0 4px;
 }
-tr.selected td {
-  background-color: #ffff0026;/* No color module switch. */
-}
 .form-item-radios label,
 .form-item-checkboxes label {
   display: block;
@@ -55,7 +55,6 @@ tr.selected td {
 .form-item-checkbox label,
 .form-checkboxes label {
   display: inline-block;
-  font-weight: 400;
   margin: 0;
 }
 .form-radios .form-item:last-child,
@@ -121,7 +120,6 @@ td.checkbox .form-item input {
   margin-top: 0.875em;
 }
 .field-suffix {
-  display: block;
   padding: 0.5em 0 0;
 }
 .field-suffix .machine-name-value {
@@ -237,20 +235,13 @@ textarea.form-textarea:focus {
   margin: 0;
 }
 ul.action-links {
-  margin: 1em 0;
-  padding: 0 1.25em 0; /* LTR */
+  margin-bottom: 1rem;
+  padding: 0;
   list-style-type: none;
-  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
-ul.action-links li {
-  float: left; /* LTR */
-  margin: 0 1em 0 0; /* LTR */
-}
-[dir="rtl"] ul.action-links li {
-  float: right;
-  margin: 0 0 0 1em;
-}
-
 .button,
 input.form-submit,
 input.button-primary,
@@ -294,7 +285,7 @@ input.button-danger:focus,
 button.button-danger:hover,
 button.button-danger:focus {
   color: #fff;
-  box-shadow: 0 0 0 3px #d66c6c;
+  box-shadow: 0 0 0 3px #d66c6c !important;
 }
 a.form-delete:hover,
 a.form-delete:focus,
@@ -322,7 +313,7 @@ button.button-danger:focus {
 .draggable abbr.warning::before {
   content: "";
   display: block;
-  background-color: #fce400;/* Same as core, no color module switch. */
+  background-color: #fce400;
   position: absolute;
   left: 0;
   top: 0;
@@ -330,26 +321,13 @@ button.button-danger:focus {
   width: 6px;
 }
 tr.drag-previous td {
-  background-color: #ffff0026;/* No color module switch. */
+  background-color: #ffff0026;
 }
 .draggable a.tabledrag-handle {
   margin-left: -0.4em;
 }
 a.tabledrag-handle .handle {
   margin: -0.2em 0.5em;
-}
-.admin-dblog .dblog-error.even:not(:hover) .active,
-.admin-dblog .dblog-error.odd:not(:hover) .active {
-  background-color: inherit;
-}
-.admin-dblog .dblog-error.even td,
-.admin-dblog .dblog-error.odd td,
-.admin-dblog .dblog-error.even:hover td,
-.admin-dblog .dblog-error.odd:hover td {
-  background-color: #ff000021 !important;/* No color module switch. */
-}
-.admin-path tr:hover td {
-  background-color: #ffff003b;
 }
 .js .dropbutton-widget {
   border-color: #bbb;
@@ -395,6 +373,7 @@ a.tabledrag-handle .handle {
   }
   .node-preview-container form {
     max-width: 1200px;
+    max-width: var(--max-row-width, 1200px);
     margin: 0 auto;
   }
   [dir=rtl] .node-preview-container {
@@ -423,5 +402,12 @@ fieldset input.form-autocomplete {
   }
 }
 a.tabledrag-handle .handle {
-  background: url(../img/icons/grippie.svg) no-repeat 6px 7px;
+  background: url("../img/icons/grippie.svg") no-repeat 6px 7px;
+}
+.action-links .add a::before,
+.comment-add a::before {
+  content: "+";
+  font-weight: bold;
+  display: inline-block;
+  margin-right: 4px;
 }
