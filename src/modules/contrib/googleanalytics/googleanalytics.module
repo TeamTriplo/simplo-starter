@@ -107,7 +107,7 @@ function googleanalytics_preprocess_layout() {
   // 2. Track page views based on visibility value.
   // 3. Check if we should track the currently active user's role.
   // 4. Ignore pages visibility filter for 404 or 403 status codes.
-  if (preg_match('/^UA-\d+-\d+$/', $id) && (_googleanalytics_visibility_pages() || in_array($status, $trackable_status_codes)) && _googleanalytics_visibility_user($user)) {
+  if (preg_match('/^(?:UA-\d+-\d+|G-\w+)$/', $id) && (_googleanalytics_visibility_pages() || in_array($status, $trackable_status_codes)) && _googleanalytics_visibility_user($user)) {
     $debug = $config->get('debug');
     $url_custom = '';
 

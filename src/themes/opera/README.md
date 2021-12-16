@@ -7,13 +7,13 @@ background colors.
 
 ## Status
 
-We are almost ready to release a beta version for testing. We would love for folks to test this 
-theme and report any bugs or issues that need attention. In the beta stage we may still make 
-change that could effect end users. If you use a beta version on a production site, you may not 
+We just released an alpha version of this theme. We would love for some folks to test it out
+and provide feedback and file bug reports. In the alpha stage we may still make 
+changes that could effect end users. If you use a alpha version on a production site, you may not 
 be able to upgrade without noticing some small changes on your site. 
 
 Once we issue a stabile release, we will avoid any breaking changes within minor releases. At that
-stage all changes in minor releases will be backward compatible.  
+stage, all changes in minor releases will be backward compatible.  
 
 ## Who is this theme for?
 
@@ -75,6 +75,54 @@ Please, feel free to provide feedback on these features and/or the implementatio
 
 Here is a 30 minute video discussion of several members of the Backdrop CMS community talking about how to build a contrib theme like this one. https://youtu.be/BeEzXuwLxo8 
 
+<<<<<<< HEAD
+=======
+## Utility CSS Classes
+
+Font Styles
+- color-inverse
+- font-size-xxxxlarge
+- font-size-xxxlarge
+- font-size-xxlarge
+- font-size-xlarge
+- font-size-large
+- font-size-medium
+- font-size-normal
+- font-size-small
+- font-size-xsmall
+- font-weight-bold
+- font-weight-normal
+- font-weight-light
+- font-style-italic
+- font-style-normal
+
+Background Colors
+- opera-bg1-black
+- opera-bg1-blue
+- opera-bg1-brown
+- opera-bg1-firebrick
+- opera-bg1-green
+- opera-bg1-indigo
+- opera-bg1-khaki
+- opera-bg2-lemonchiffon
+- opera-bg2-olive
+- opera-bg2-orange
+- opera-bg2-pink
+- opera-bg2-red
+- opera-bg2-sienna
+- opera-bg3-silver
+- opera-bg3-tan
+- opera-bg3-teal
+- opera-bg3-violet
+- opera-bg3-white
+- opera-bg3-yellow
+
+Text alignment
+- text-align-center
+- text-align-right
+- text-align-left
+
+>>>>>>> main
 ## Installation
 
 - Install this module using the official Backdrop CMS instructions at
