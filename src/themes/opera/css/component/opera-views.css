@@ -1,20 +1,24 @@
 .view-content caption {
-    caption-side: top;
-    padding-left: 0;
+  caption-side: top;
+  padding-left: 0;
 }
 
 .view-blog-post .views-field-name {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .views-view-grid .views-row, 
 .views-view-grid .views-grid-box {
-    padding: 1rem;
-    border: none;
+  padding: 1rem;
+  border: none;
+}
+
+.block-content .view-header {
+  padding: 1rem;
 }
 
 .views-field {
-    margin-bottom:  .5rem;
+  margin-bottom:  .5rem;
 }
 
 

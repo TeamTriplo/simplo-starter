@@ -89,4 +89,6 @@ utility_css[color][] = 'opera-bg3-violet'
 utility_css[color][] = 'opera-bg3-white'
 utility_css[color][] = 'opera-bg3-yellow'
 
-
+utility_css[alignment][] = 'text-align-center'
+utility_css[alignment][] = 'text-align-right'
+utility_css[alignment][] = 'text-align-left'

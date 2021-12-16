@@ -2,8 +2,11 @@
 	margin: 0;
 }
 
-
 .front div.flexible-row div.block,
 .front .l-wrapper .block {
   padding: clamp(10px, 5vw, 70px) 0;
+}
+
+.l-sidebar .block {
+	margin-bottom: 1rem;
 }

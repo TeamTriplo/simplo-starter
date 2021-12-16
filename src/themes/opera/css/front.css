@@ -6,7 +6,6 @@
 .front div.flexible-row .no-container div.block,
 .front .l-content div.block {
   min-height: 250px;
-  display: flex;
   align-items: center;
 }
 
