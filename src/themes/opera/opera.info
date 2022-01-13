@@ -4,6 +4,9 @@ description = Opera theme special for sites with stacked panels on front page.
 backdrop = 1.x
 version = 1.x
 
+
+settings[use_bootstrap] = 0
+
 ; Add theme CSS files - from Tatsu (with edits)
 stylesheets[all][] = css/base.css
 stylesheets[all][] = css/layout.css
@@ -29,7 +32,6 @@ stylesheets[all][] = css/component/caption.css
 stylesheets[all][] = css/component/opera-views.css
 stylesheets[all][] = css/component/book.css
 stylesheets[all][] = css/component/recipes.css
-stylesheets[all][] = css/component/views.css
 stylesheets[all][] = css/opera-component-colors.css
 
 ; Custom for this theme
@@ -65,11 +67,9 @@ utility_css[font][] = 'font-size-small'
 utility_css[font][] = 'font-size-xsmall'
 utility_css[font][] = 'font-weight-bold'
 utility_css[font][] = 'font-weight-normal'
-utility_css[font][] = 'font-weight-normal'
+utility_css[font][] = 'font-weight-light'
 utility_css[font][] = 'font-style-italic'
 utility_css[font][] = 'font-style-normal'
-<<<<<<< HEAD
-=======
 
 utility_css[color][] = 'opera-bg1-black'
 utility_css[color][] = 'opera-bg1-blue'
@@ -94,4 +94,8 @@ utility_css[color][] = 'opera-bg3-yellow'
 utility_css[alignment][] = 'text-align-center'
 utility_css[alignment][] = 'text-align-right'
 utility_css[alignment][] = 'text-align-left'
->>>>>>> main
+
+; Added by Backdrop CMS packaging script on 2022-01-09
+project = opera
+version = 1.x-1.0.0-alpha6
+timestamp = 1641798839

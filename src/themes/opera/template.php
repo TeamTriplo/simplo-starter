@@ -36,3 +36,35 @@ function opera_breadcrumb($variables) {
   }
   return $output;
 }
+
+/**
+ * Implements hook_css_alter().
+ */
+function opera_css_alter(&$css) {
+  $theme_path = backdrop_get_path('theme', 'opera');
+
+  if ($opera_cdn = theme_get_setting('opera_cdn')) {
+    $use_bootstrap = theme_get_setting('use_bootstrap');
+    if ($use_bootstrap == 1) {
+      $cdn = 'https://cdn.jsdelivr.net/npm/bootstrap@' . $opera_cdn  . '/dist/css/bootstrap.min.css';
+      $css[$cdn] = array(
+        'data' => $cdn,
+        'type' => 'external',
+        'every_page' => TRUE,
+        'every_page_weight' => -1,
+        'media' => 'all',
+        'preprocess' => FALSE,
+        'group' => CSS_THEME,
+        'browsers' => array('IE' => TRUE, '!IE' => TRUE),
+        'weight' => -2,
+        'attributes' => array(),
+      );
+    }
+  }
+}
+
+function opera_preprocess_block(&$variables) {
+  $uuid = $variables['block']->uuid;
+  $variables['region'] = $variables['layout']->getBlockPosition($uuid);
+  // backdrop_set_message($variables['region']);
+}

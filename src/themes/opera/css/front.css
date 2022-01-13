@@ -5,7 +5,7 @@
 
 .front div.flexible-row .no-container div.block,
 .front .l-content div.block {
-  min-height: 250px;
+  min-height: 350px;
   align-items: center;
 }
 
@@ -85,15 +85,19 @@
 
 .front div.flexible-row div.block-hero-image,
 .front .layout-front  .block-hero-image {
-  min-height: 400px;
+  min-height: 600px;
 }
 
 .front div.flexible-row div.block-hero-no-image,
 .front .layout-front .block-hero-no-image {
-  min-height: 400px;
+  min-height: 600px;
 }
 
 .front div.flexible-row div.block .l-page-title,
 .front .layout-front .l-page-title {
   padding: 0;
+}
+
+.front .block-title {
+  text-align: center;
 }
