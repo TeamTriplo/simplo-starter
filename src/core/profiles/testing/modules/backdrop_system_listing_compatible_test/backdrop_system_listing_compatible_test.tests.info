@@ -4,7 +4,7 @@ description = Verifies that tests in installation profile modules are found and 
 group = Installation profiles
 file = backdrop_system_listing_compatible_test.test
 
-; Added by Backdrop CMS packaging script on 2021-11-18
+; Added by Backdrop CMS packaging script on 2022-01-04
 project = backdrop
-version = 1.20.2
-timestamp = 1637287574
+version = 1.21.0-preview
+timestamp = 1641352584
