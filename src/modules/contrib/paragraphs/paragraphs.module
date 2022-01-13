@@ -101,7 +101,7 @@ function paragraphs_entity_info() {
     'label callback' => 'entity_class_label',
     'uri callback' => 'entity_class_uri',
     'entity class' => 'ParagraphsItemEntity',
-    'controller class' => 'EntityPlusController',
+    'controller class' => 'ParagraphsItemEntityController',
     'base table' => 'paragraphs_item',
     'revision table' => 'paragraphs_item_revision',
     'fieldable' => TRUE,
@@ -1744,7 +1744,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
         ),
       );
     }
-    if ($field_info['cardinality'] != '1' && count($host_entity->{$field_info['field_name']}[$host_entity->langcode]) > 1) {
+    if ($field_info['cardinality'] != '1' && count($host_entity->{$field_info['field_name']}[$langcode]) > 1) {
       $admin_links['#links']['paragraphs_admin_sort'] = array(
         'title' => t('Sort'),
         'href' => 'paragraphs/' . $paragraph_id . '/sort',
@@ -1843,29 +1843,6 @@ function paragraphs_modal_admin_links($paragraphs_item) {
     $admin_links['#attached']['library'][] = array('system', 'backdrop.ajax');
   }
   return $admin_links;
-}
-
-/**
- * Implements hook_preprocess().
- */
-function paragraphs_preprocess(&$variables, $hook) {
-  if ($hook == 'paragraphs_item') {
-    $paragraph_ids = element_children($variables['elements']['entity']['paragraphs_item']);
-    $paragraph_id = $paragraph_ids[0];
-    $paragraph = paragraphs_item_load($paragraph_id);
-    // Nothing to do here if the user does not have admin access to this item or
-    // separate editing is not activated on this item.
-    if (!paragraphs_item_access('delete', $paragraph)
-      || !paragraphs_item_access('create', $paragraph)
-      || !paragraphs_item_access('update', $paragraph)
-      || empty($variables['content']['#modal_admin'])) {
-      return;
-    }
-    $variables['classes'][] = backdrop_html_class('paragraphs-item-modal-admin');
-    if (paragraphs_item_access('delete', $paragraph)) {
-      $variables['admin_links'][$paragraph_id] = paragraphs_modal_admin_links($paragraph);
-    }
-  }
 }
 
 /**
@@ -1970,6 +1947,7 @@ function paragraphs_autoload_info() {
   return array(
     'ParagraphsItemEntity' => 'ParagraphsItemEntity.inc',
     'ParagraphsItemMetadataController' => 'ParagraphsItemMetadataController.inc',
+    'ParagraphsItemEntityController' => 'ParagraphsItemEntityController.inc',
     'MigrateDestinationParagraphsItem' => 'migrate/destinations/MigrateDestinationParagraphsItem.inc',
     'ParagraphsMigrateParagraphsFieldHandler' => 'migrate/fields/ParagraphsMigrateParagraphsFieldHandler.inc',
     'paragraphs_handler_relationship' => 'views/paragraphs_handler_relationship.inc',
