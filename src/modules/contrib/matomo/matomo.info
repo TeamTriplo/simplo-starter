@@ -1,0 +1,11 @@
+name = "Matomo Analytics"
+description = Adds Matomo javascript tracking code to all your site's pages.
+backdrop = 1.x
+type = module
+package = Statistics
+configure = admin/config/system/matomo
+
+; Added by Backdrop CMS packaging script on 2022-01-12
+project = matomo
+version = 1.x-2.11.4
+timestamp = 1641976316

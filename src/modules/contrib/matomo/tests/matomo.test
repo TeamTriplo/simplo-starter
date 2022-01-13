@@ -1,0 +1,620 @@
+<?php
+
+/**
+ * @file
+ * Test file for Matomo module.
+ */
+class MatomoBasicTest extends BackdropWebTestCase {
+
+  /**
+   * User without permissions to edit snippets.
+   *
+   * @var \StdClass
+   */
+  protected $noSnippetUser;
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Matomo basic tests'),
+      'description' => t('Test basic functionality of Matomo module.'),
+      'group' => 'Matomo',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('matomo');
+
+    $permissions = array(
+      'access administration pages',
+      'administer matomo',
+    );
+
+    // User to set up matomo.
+    $this->noSnippetUser = $this->backdropCreateUser($permissions);
+    $permissions[] = 'add js snippets for matomo';
+    $this->admin_user = $this->backdropCreateUser($permissions);
+    $this->backdropLogin($this->admin_user);
+  }
+
+  function testMatomoConfiguration() {
+    // Check for setting page's presence.
+    $this->backdropGet('admin/config/system/matomo');
+    $this->assertRaw(t('Matomo site ID'), '[testMatomoConfiguration]: Settings page displayed.');
+
+    // Check for account code validation.
+    $edit['site_id'] = $this->randomName(2);
+    $this->backdropPost('admin/config/system/matomo', $edit, 'Save configuration');
+    $this->assertRaw(t('A valid Matomo site ID is an integer only.'), '[testMatomoConfiguration]: Invalid Matomo site ID number validated.');
+
+    // User should have access to code snippets.
+    $this->assertFieldByName('codesnippet_before');
+    $this->assertFieldByName('codesnippet_after');
+    $this->assertNoFieldByXPath("//textarea[@name='codesnippet_before' and @disabled='disabled']", NULL, '"Code snippet (before)" is enabled.');
+    $this->assertNoFieldByXPath("//textarea[@name='codesnippet_after' and @disabled='disabled']", NULL, '"Code snippet (after)" is enabled.');
+
+    // Login as user without JS permissions.
+    $this->backdropLogin($this->noSnippetUser);
+    $this->backdropGet('admin/config/system/matomo');
+
+    // User should *not* have access to snippets, but create fields.
+    $this->assertFieldByName('codesnippet_before');
+    $this->assertFieldByName('codesnippet_after');
+    $this->assertFieldByXPath("//textarea[@name='codesnippet_before' and @disabled='disabled']", NULL, '"Code snippet (before)" is disabled.');
+    $this->assertFieldByXPath("//textarea[@name='codesnippet_after' and @disabled='disabled']", NULL, '"Code snippet (after)" is disabled.');
+  }
+
+  function testMatomoPageVisibility() {
+    $ua_code = '1';
+    $config = config('matomo.settings');
+
+    $config->set('site_id', $ua_code);
+    $config->set('url_http', 'http://example.com/matomo/');
+    $config->set('url_https', 'https://example.com/matomo/');
+
+    // Show tracking on "every page except the listed pages".
+    $config->set('visibility_pages', 0);
+    // Disable tracking one "admin*" pages only.
+    $config->set('pages', "admin\nadmin/*");
+    // Enable tracking only for authenticated users only.
+    $config->set('roles', array(BACKDROP_AUTHENTICATED_ROLE => BACKDROP_AUTHENTICATED_ROLE));
+    $config->save();
+
+    config_set('system.core', 'preprocess_js', 0);
+
+    // Check tracking code visibility.
+    $this->backdropGet('');
+    $this->assertRaw('/matomo/matomo.js', '[testMatomoPageVisibility]: Custom tracking script is displayed for authenticated users.');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoPageVisibility]: Tracking code is displayed for authenticated users.');
+
+    // Test whether tracking code is not included on pages to omit.
+    $this->backdropGet('admin');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoPageVisibility]: Tracking code is not displayed on admin page.');
+    $this->backdropGet('admin/config/system/matomo');
+    // Checking for tracking code URI here, as $ua_code is displayed in the form.
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoPageVisibility]: Tracking code is not displayed on admin subpage.');
+
+    // Test whether tracking code display is properly flipped.
+    $config->set('visibility_pages', 1);
+    $config->save();
+    $this->backdropGet('admin');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoPageVisibility]: Tracking code is displayed on admin page.');
+    $this->backdropGet('admin/config/system/matomo');
+    // Checking for tracking code URI here, as $ua_code is displayed in the form.
+    $this->assertRaw('u+"matomo.php"', '[testMatomoPageVisibility]: Tracking code is displayed on admin subpage.');
+    $this->backdropGet('');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoPageVisibility]: Tracking code is NOT displayed on front page.');
+
+    // Test whether tracking code is not display for anonymous.
+    $this->backdropLogout();
+    $this->backdropGet('');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoPageVisibility]: Tracking code is NOT displayed for anonymous.');
+
+    // Switch back to every page except the listed pages.
+    $config->set('visibility_pages', 0);
+    // Enable tracking code for all user roles.
+    $config->set('roles', array());
+    $config->save();
+
+    // Test whether 403 forbidden tracking code is shown if user has no access.
+    $this->backdropGet('admin');
+    $this->assertRaw('403/URL = "', '[testMatomoPageVisibility]: 403 Forbidden tracking code shown if user has no access.');
+
+    // Test whether 404 not found tracking code is shown on non-existent pages.
+    $this->backdropGet($this->randomName(64));
+    $this->assertRaw('404/URL = "', '[testMatomoPageVisibility]: 404 Not Found tracking code shown on non-existent page.');
+  }
+
+  function testMatomoTrackingCode() {
+    $ua_code = '2';
+    $config = config('matomo.settings');
+    $config->set('site_id', $ua_code);
+    $config->get('url_http', 'http://example.com/matomo/');
+    $config->get('url_https', 'https://example.com/matomo/');
+
+    // Show tracking code on every page except the listed pages.
+    $config->set('visibility_pages', 0);
+    // Enable tracking code for all user roles.
+    $config->set('roles', array());
+
+    /* Sample JS code as added to page:
+    <script type="text/javascript">
+    var _paq = _paq || [];
+    (function(){
+        var u=(("https:" == document.location.protocol) ? "https://{$MATOMO_URL}" : "http://{$MATOMO_URL}");
+        _paq.push(['setSiteId', {$IDSITE}]);
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['trackPageView']);
+        var d=document,
+            g=d.createElement('script'),
+            s=d.getElementsByTagName('script')[0];
+            g.type='text/javascript';
+            g.defer=true;
+            g.async=true;
+            g.src=u+'matomo.js';
+            s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    */
+
+    // Test whether tracking code uses latest JS.
+    $config->set('cache', 0);
+    $config->save();
+    $this->backdropGet('');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoTrackingCode]: Latest tracking code used.');
+
+    // Test if tracking of User ID is enabled.
+    $config->set('trackuserid', 1);
+    $config->save();
+    $this->backdropGet('');
+    $this->assertRaw('_paq.push(["setUserId", ', '[testMatomoTrackingCode]: Tracking code for User ID is enabled.');
+
+    // Test if tracking of User ID is disabled.
+    $config->set('trackuserid', 0);
+    $config->save();
+    $this->backdropGet('');
+    $this->assertNoRaw('_paq.push(["setUserId", ', '[testMatomoTrackingCode]: Tracking code for User ID is disabled.');
+
+    // Test whether single domain tracking is active.
+    $this->backdropGet('');
+    $this->assertNoRaw('_paq.push(["setCookieDomain"', '[testMatomoTrackingCode]: Single domain tracking is active.');
+
+    // Enable "One domain with multiple subdomains".
+    $config->set('domain_mode', 1);
+    $config->save();
+    $this->backdropGet('');
+
+    // Test may run on localhost, an ipaddress or real domain name.
+    // TODO: Workaround to run tests successfully. This feature cannot tested reliable.
+    global $cookie_domain;
+    if (count(explode('.', $cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
+      $this->assertRaw('_paq.push(["setCookieDomain"', '[testMatomoTrackingCode]: One domain with multiple subdomains is active on real host.');
+    }
+    else {
+      // Special cases, Localhost and IP addresses don't show 'setCookieDomain'.
+      $this->assertNoRaw('_paq.push(["setCookieDomain"', '[testMatomoTrackingCode]: One domain with multiple subdomains may be active on localhost (test result is not reliable).');
+    }
+
+    // Test whether the BEFORE and AFTER code is added to the tracker.
+    $config->set('codesnippet_before', '_paq.push(["setLinkTrackingTimer", 250]);');
+    $config->set('codesnippet_after', '_paq.push(["t2.setSiteId", 2]);_gaq.push(["t2.trackPageView"]);');
+    $config->save();
+    $this->backdropGet('');
+    $this->assertRaw('setLinkTrackingTimer', '[testMatomoTrackingCode]: Before codesnippet has been found with "setLinkTrackingTimer" set.');
+    $this->assertRaw('t2.trackPageView', '[testMatomoTrackingCode]: After codesnippet with "t2" tracker has been found.');
+  }
+
+}
+
+class MatomoCustomVariablesTest extends BackdropWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Matomo Custom Variables tests'),
+      'description' => t('Test custom variables functionality of Matomo module.'),
+      'group' => 'Matomo',
+      //'dependencies' => array('token'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('matomo');
+
+    $permissions = array(
+      'access administration pages',
+      'administer matomo',
+    );
+
+    // User to set up matomo.
+    $this->admin_user = $this->backdropCreateUser($permissions);
+  }
+
+  function testMatomoCustomVariables() {
+    $ua_code = '3';
+    $config = config('matomo.settings');
+    $config->set('site_id', $ua_code);
+
+    // Basic test if the feature works.
+    $custom_vars = array(
+      'slots' => array(
+        1 => array(
+          'slot' => 1,
+          'name' => 'Foo 1',
+          'value' => 'Bar 1',
+          'scope' => 3,
+        ),
+        2 => array(
+          'slot' => 2,
+          'name' => 'Foo 2',
+          'value' => 'Bar 2',
+          'scope' => 2,
+        ),
+        3 => array(
+          'slot' => 3,
+          'name' => 'Foo 3',
+          'value' => 'Bar 3',
+          'scope' => 3,
+        ),
+        4 => array(
+          'slot' => 4,
+          'name' => 'Foo 4',
+          'value' => 'Bar 4',
+          'scope' => 2,
+        ),
+        5 => array(
+          'slot' => 5,
+          'name' => 'Foo 5',
+          'value' => 'Bar 5',
+          'scope' => 1,
+        ),
+      )
+    );
+    $config->set('custom_var', $custom_vars);
+    $config->save();
+    $this->backdropGet('');
+
+    foreach ($custom_vars['slots'] as $slot) {
+      $this->assertRaw("_paq.push(['setCustomVariable', " . $slot['slot'] . ", \"" . $slot['name'] . "\", \"" . $slot['value'] . "\", " . $slot['scope'] . "]);", '[testMatomoCustomVariables]: setCustomVariable ' . $slot['slot'] . ' is shown.');
+    }
+
+    // Test whether tokens are replaced in custom variable names.
+    $site_slogan = $this->randomName(16);
+    config_set('system.core', 'site_slogan', $site_slogan);
+
+    $custom_vars = array(
+      'slots' => array(
+        1 => array(
+          'slot' => 1,
+          'name' => 'Name: [site:slogan]',
+          'value' => 'Value: [site:slogan]',
+          'scope' => 3,
+        ),
+        2 => array(
+          'slot' => 2,
+          'name' => '',
+          'value' => $this->randomName(16),
+          'scope' => 1,
+        ),
+        3 => array(
+          'slot' => 3,
+          'name' => $this->randomName(16),
+          'value' => '',
+          'scope' => 2,
+        ),
+        4 => array(
+          'slot' => 4,
+          'name' => '',
+          'value' => '',
+          'scope' => 3,
+        ),
+        5 => array(
+          'slot' => 5,
+          'name' => '',
+          'value' => '',
+          'scope' => 3,
+        ),
+      )
+    );
+    $config->set('custom_var', $custom_vars);
+    $config->save();
+    cache_flush('page');
+    $this->verbose('<pre>' . print_r($custom_vars, TRUE) . '</pre>');
+
+    $this->backdropGet('');
+    $this->assertRaw("_paq.push(['setCustomVariable', 1, \"Name: $site_slogan\", \"Value: $site_slogan\", 3]", '[testMatomoCustomVariables]: Tokens have been replaced in custom variable.');
+    $this->assertNoRaw("_paq.push(['setCustomVariable', 2,", '[testMatomoCustomVariables]: Value with empty name is not shown.');
+    $this->assertNoRaw("_paq.push(['setCustomVariable', 3,", '[testMatomoCustomVariables]: Name with empty value is not shown.');
+    $this->assertNoRaw("_paq.push(['setCustomVariable', 4,", '[testMatomoCustomVariables]: Empty name and value is not shown.');
+    $this->assertNoRaw("_paq.push(['setCustomVariable', 5,", '[testMatomoCustomVariables]: Empty name and value is not shown.');
+  }
+}
+
+/**
+ * Test custom url functionality of Matomo module.
+ */
+class MatomoCustomUrls extends BackdropWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Matomo custom url tests',
+      'description' => 'Test custom url functionality of Matomo module.',
+      'group' => 'Matomo',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('matomo');
+
+    $permissions = array(
+      'access administration pages',
+      'administer matomo',
+    );
+
+    // User to set up matomo.
+    $this->admin_user = $this->backdropCreateUser($permissions);
+  }
+
+  /**
+   * Tests if user password page urls are overridden.
+   */
+  public function testMatomoUserPasswordPage() {
+    $base_path = base_path();
+    $ua_code = '1';
+
+    $config = config('matomo.settings');
+    $config->set('site_id', $ua_code);
+    $config->set('url_http', 'http://example.com/matomo/');
+    $config->set('url_https', 'https://example.com/matomo/');
+    $config->save();
+
+    $this->backdropGet('user/password', array('query' => array('name' => 'foo')));
+    $this->assertRaw('_paq.push(["setCustomUrl", ' . backdrop_json_encode(url('user/password')) . ']);');
+
+    $this->backdropGet('user/password', array('query' => array('name' => 'foo@example.com')));
+    $this->assertRaw('_paq.push(["setCustomUrl", ' . backdrop_json_encode(url('user/password')) . ']);');
+
+    $this->backdropGet('user/password');
+    $this->assertNoRaw('_paq.push(["setCustomUrl", "', '[testMatomoCustomUrls]: Custom url not set.');
+  }
+
+}
+
+class MatomoStatusMessagesTest extends BackdropWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Matomo status messages tests',
+      'description' => 'Test status messages functionality of Matomo module.',
+      'group' => 'Matomo',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('matomo');
+
+    $permissions = array(
+      'access administration pages',
+      'administer matomo',
+    );
+
+    // User to set up matomo.
+    $this->admin_user = $this->backdropCreateUser($permissions);
+  }
+
+  function testMatomoStatusMessages() {
+    $ua_code = '1';
+    $config = config('matomo.settings');
+    $config->set('site_id', $ua_code);
+    // Enable logging of errors only.
+    $config->set('trackmessages', array('error' => 'error'));
+    $config->save();
+
+    $this->backdropPost('user/login', array(), t('Log in'));
+    $this->assertRaw('_paq.push(["trackEvent", "Messages", "Error message", "Username or email field is required."]);', '[testMatomoStatusMessages]: trackEvent "Username field is required." is shown.');
+    $this->assertRaw('_paq.push(["trackEvent", "Messages", "Error message", "Password field is required."]);', '[testMatomoStatusMessages]: trackEvent "Password field is required." is shown.');
+
+    // @todo: investigate why backdrop_set_message() fails.
+    //backdrop_set_message('Example status message.', 'status');
+    //backdrop_set_message('Example warning message.', 'warning');
+    //backdrop_set_message('Example error message.', 'error');
+    //backdrop_set_message('Example error <em>message</em> with html tags and <a href="https://example.com/">link</a>.', 'error');
+    //$this->backdropGet('');
+    //$this->assertNoRaw('_paq.push(["trackEvent", "Messages", "Status message", "Example status message."]);', '[testMatomoStatusMessages]: Example status message is not enabled for tracking.');
+    //$this->assertNoRaw('_paq.push(["trackEvent", "Messages", "Warning message", "Example warning message."]);', '[testMatomoStatusMessages]: Example warning message is not enabled for tracking.');
+    //$this->assertRaw('_paq.push(["trackEvent", "Messages", "Error message", "Example error message."]);', '[testMatomoStatusMessages]: Example error message is shown.');
+    //$this->assertRaw('_paq.push(["trackEvent", "Messages", "Error message", "Example error message with html tags and link."]);', '[testMatomoStatusMessages]: HTML has been stripped successful from Example error message with html tags and link.');
+  }
+}
+
+class MatomoRolesTest extends BackdropWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Matomo role tests'),
+      'description' => t('Test roles functionality of Matomo module.'),
+      'group' => 'Matomo',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('matomo');
+
+    $permissions = array(
+      'access administration pages',
+      'administer matomo',
+    );
+
+    // User to set up matomo.
+    $this->admin_user = $this->backdropCreateUser($permissions);
+  }
+
+  function testMatomoRolesTracking() {
+    $ua_code = '1';
+    $config = config('matomo.settings');
+    $config->set('site_id', $ua_code);
+    $config->set('url_http', 'http://example.com/matomo/');
+    $config->set('url_https', 'https://example.com/matomo/');
+
+    // Test if the default settings are working as expected.
+
+    // Add to the selected roles only.
+    $config->set('visibility_roles', 0);
+    // Enable tracking for all users.
+    $config->set('roles', array());
+    $config->save();
+
+    // Check tracking code visibility.
+    $this->backdropGet('');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is displayed for anonymous users on frontpage with default settings.');
+    $this->backdropGet('admin');
+    $this->assertRaw('"403/URL = "', '[testMatomoRoleVisibility]: 403 Forbidden tracking code is displayed for anonymous users in admin section with default settings.');
+
+    $this->backdropLogin($this->admin_user);
+
+    $this->backdropGet('');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is displayed for authenticated users on frontpage with default settings.');
+    $this->backdropGet('admin');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is NOT displayed for authenticated users in admin section with default settings.');
+
+    // Test if the non-default settings are working as expected.
+
+    // Enable tracking only for authenticated users.
+    $config->set('roles', array(BACKDROP_AUTHENTICATED_ROLE => BACKDROP_AUTHENTICATED_ROLE));
+    $config->save();
+    cache_flush('page');
+
+    $this->backdropGet('');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is displayed for authenticated users only on frontpage.');
+
+    $this->backdropLogout();
+    $this->backdropGet('');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is NOT displayed for anonymous users on frontpage.');
+
+    // Add to every role except the selected ones.
+    $config->set('visibility_roles', 1);
+    // Enable tracking for all users.
+    $config->set('roles', array());
+    $config->save();
+    cache_flush('page');
+
+    // Check tracking code visibility.
+    $this->backdropGet('');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is added to every role and displayed for anonymous users.');
+    $this->backdropGet('admin');
+    $this->assertRaw('"403/URL = "', '[testMatomoRoleVisibility]: 403 Forbidden tracking code is shown for anonymous users if every role except the selected ones is selected.');
+
+    $this->backdropLogin($this->admin_user);
+
+    $this->backdropGet('');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is added to every role and displayed on frontpage for authenticated users.');
+    $this->backdropGet('admin');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is added to every role and NOT displayed in admin section for authenticated users.');
+
+    // Disable tracking for authenticated users.
+    $config->set('roles', array(BACKDROP_AUTHENTICATED_ROLE => BACKDROP_AUTHENTICATED_ROLE));
+    $config->save();
+    cache_flush('page');
+
+    $this->backdropGet('');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is NOT displayed on frontpage for excluded authenticated users.');
+    $this->backdropGet('admin');
+    $this->assertNoRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is NOT displayed in admin section for excluded authenticated users.');
+
+    $this->backdropLogout();
+    $this->backdropGet('');
+    $this->assertRaw('u+"matomo.php"', '[testMatomoRoleVisibility]: Tracking code is displayed on frontpage for included anonymous users.');
+  }
+
+}
+/*
+// class MatomoPhpFilterTest extends BackdropWebTestCase {
+// 
+//   public static function getInfo() {
+//     return array(
+//       'name' => 'Matomo php filter tests',
+//       'description' => 'Test php filter functionality of Matomo module.',
+//       'group' => 'Matomo',
+//     );
+//   }
+// 
+//   function setUp() {
+//     parent::setUp('matomo', 'php');
+// 
+//     // Administrator with all permissions.
+//     $permissions_admin_user = array(
+//       'access administration pages',
+//       'administer matomo',
+//       'use php for matomo tracking visibility',
+//     );
+//     $this->admin_user = $this->backdropCreateUser($permissions_admin_user);
+// 
+//     // Administrator who cannot configure tracking visibility with PHP.
+//     $permissions_delegated_admin_user = array(
+//       'access administration pages',
+//       'administer matomo',
+//     );
+//     $this->delegated_admin_user = $this->backdropCreateUser($permissions_delegated_admin_user);
+//   }
+// 
+//   function testMatomoPhpFilter() {
+//     $ua_code = '1';
+//     $this->backdropLogin($this->admin_user);
+// 
+//     $edit = array();
+//     $edit['site_id'] = $ua_code;
+//     $edit['url_http'] = 'http://example.com/matomo/';
+//     $edit['url_https'] = 'https://example.com/matomo/';
+//     $edit['url_skiperror'] = TRUE; // Required for testing only.
+//     $edit['visibility_pages'] = 2;
+//     $edit['pages'] = '<?php return 0; ?>';
+//     $this->backdropPost('admin/config/system/matomo', $edit, t('Save configuration'));
+// 
+//     // Compare saved setting with posted setting.
+//     $matomo_pages = $config->get('pages', $this->randomName(8));
+//     $this->assertEqual('<?php return 0; ?>', $matomo_pages, '[testMatomoPhpFilter]: PHP code snippet is intact.');
+// 
+//     // Check tracking code visibility.
+//     $config->set('pages', '<?php return TRUE; ?>');
+//     $config->save();
+//     $this->backdropGet('');
+//     $this->assertRaw('u+"matomo.php"', '[testMatomoPhpFilter]: Tracking is displayed on frontpage page.');
+//     $this->backdropGet('admin');
+//     $this->assertRaw('u+"matomo.php"', '[testMatomoPhpFilter]: Tracking is displayed on admin page.');
+// 
+//     $config->set('pages', '<?php return FALSE; ?>');
+//     $config->save();
+//     $this->backdropGet('');
+//     $this->assertNoRaw('u+"matomo.php"', '[testMatomoPhpFilter]: Tracking is not displayed on frontpage page.');
+// 
+//     // Test administration form.
+//     $config->set('pages', '<?php return TRUE; ?>');
+//     $config->save();
+//     $this->backdropGet('admin/config/system/matomo');
+//     $this->assertRaw(t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testMatomoPhpFilter]: Permission to administer PHP for tracking visibility.');
+//     $this->assertRaw(check_plain('<?php return TRUE; ?>'), '[testMatomoPhpFilter]: PHP code snippted is displayed.');
+// 
+//     // Login the delegated user and check if fields are visible.
+//     $this->backdropLogin($this->delegated_admin_user);
+//     $this->backdropGet('admin/config/system/matomo');
+//     $this->assertNoRaw(t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testMatomoPhpFilter]: No permission to administer PHP for tracking visibility.');
+//     $this->assertNoRaw(check_plain('<?php return TRUE; ?>'), '[testMatomoPhpFilter]: No permission to view PHP code snippted.');
+// 
+//     // Set a different value and verify that this is still the same after the post.
+//     $config->set('pages', '<?php return 0; ?>');
+//     $config->save();
+// 
+//     $edit = array();
+//     $edit['site_id'] = $ua_code;
+//     $edit['url_http'] = 'http://example.com/matomo/';
+//     $edit['url_https'] = 'https://example.com/matomo/';
+//     $edit['url_skiperror'] = TRUE; // Required for testing only.
+//     $this->backdropPost('admin/config/system/matomo', $edit, t('Save configuration'));
+// 
+//     // Compare saved setting with posted setting.
+//     $matomo_visibility_pages = $config->get('visibility_pages', 0);
+//     $matomo_pages = $config->get('pages', $this->randomName(8));
+//     $this->assertEqual(2, $matomo_visibility_pages, '[testMatomoPhpFilter]: Pages on which this PHP code returns TRUE is selected.');
+//     $this->assertEqual('<?php return 0; ?>', $matomo_pages, '[testMatomoPhpFilter]: PHP code snippet is intact.');
+//   }
+// 
+// }
+*/
