@@ -14,7 +14,7 @@
 ?>
 <div class="<?php print implode(' ', $classes); ?>"<?php print backdrop_attributes($attributes); ?>>
   <?php print render($title_prefix); ?>
-  <?php if ($variables['is_front']): ?>
+  <?php if ($variables['is_front'] || ($region == 'header')): ?>
     <div class="block--inner-wrapper container">
   <?php else: ?>
     <div class="block--inner-wrapper">

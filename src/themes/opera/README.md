@@ -69,9 +69,10 @@ If you use the Boxton layout for your front page. The following will be true:
 
 Please, feel free to provide feedback on these features and/or the implementation.
 
-1) This theme has a the following template to override Boxton when it is on the front page. The layout--boxton--front.tpl.php removes the container class from the content region allowing blocks to spread out the full width of the screen. An override of block.tpl.php puts the container class into the title and content of any block found on the front page. 
+1) This theme has a the following template to override Boxton when it is on the front page. The layout--boxton--front.tpl.php removes the container class from the content region and header allowing blocks to spread out the full width of the screen. An override of block.tpl.php puts the container class into the title and content of any block found on the front page. 
 2) We have provided template files for all of the core templates that move the top region above the default locaton for title and tabs. This puts the default position for breadcrumbs above the page title and tabs. We now have the possibility to make other adjustments in all core layouts. 
-3) So far, this theme inherits a lot of it's default styling from Basis and Tatsu, but with improvements. That may change over time.  
+3) So far, this theme inherits a lot of it's default styling from Basis and Tatsu, but with improvements. That may change over time.
+4) We have added a setting to load Bootstrap CSS from CDN. 
 
 Here is a 30 minute video discussion of several members of the Backdrop CMS community talking about how to build a contrib theme like this one. https://youtu.be/BeEzXuwLxo8 
 
