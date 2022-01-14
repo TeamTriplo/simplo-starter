@@ -6,7 +6,7 @@
  * Although Basis itself does not provide any settings, we use this file to
  * inform the user that the module supports color schemes if the Color module
  * is enabled.
- */
+ */  
 
 if (module_exists('color')) {
 
@@ -23,6 +23,20 @@ if (module_exists('color')) {
   );
   foreach ($fields as $field) {
     $form['set_one'][$field] = color_get_color_element($form['theme']['#value'], $field, $form);
+  }
+
+  // Color Primary Navigation
+  $form['set_navbar'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Navbar'),
+    '#collapsible' => TRUE,
+  );
+  $fields = array(
+    'navbarbg',
+    'navbarlinks',
+  );
+  foreach ($fields as $field) {
+    $form['set_navbar'][$field] = color_get_color_element($form['theme']['#value'], $field, $form);
   }
 
   // Color Set Two
@@ -90,5 +104,37 @@ if (module_exists('color')) {
 else {
   $form['color'] = array(
     '#markup' => '<p>' . t('This theme supports custom color palettes if the Color module is enabled on the <a href="!url">modules page</a>. Enable the Color module to customize this theme.', array('!url' => url('admin/modules'))) . '</p>',
+  );
+}
+
+
+function opera_form_system_theme_settings_alter(&$form, &$form_state, $form_id = NULL) {
+  $form['bootstrap'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Bootstrap Settings'),
+    '#collapsible' => TRUE,
+  );
+  $form['bootstrap']['use_bootstrap'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Use Bootstrap'),
+    '#default_value' => theme_get_setting('use_bootstrap', 'opera'),
+  );
+  $form['bootstrap']['opera_cdn'] = array(
+    '#type' => 'select',
+    '#title' => t('BootstrapCDN version'),
+    '#options' => backdrop_map_assoc(array(
+      '5.0.1',
+      '3.3.5',
+      '3.3.6',
+      '3.3.7',
+      '3.4.0',
+      '3.4.1',
+    )),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="use_bootstrap"]' => array('checked' => TRUE),
+      ),
+    ),
+    '#default_value' => theme_get_setting('opera_cdn', 'opera'),
   );
 }

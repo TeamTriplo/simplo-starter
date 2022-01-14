@@ -26,10 +26,9 @@
   <div id="skip-link">
     <a href="#main-content" class="element-invisible element-focusable"><?php print t('Skip to main content'); ?></a>
   </div>
-
   <?php if ($content['header']): ?>
     <header class="l-header tim" role="banner" aria-label="<?php print t('Site header'); ?>">
-      <div class="l-header-inner container container-fluid">
+      <div class="l-header-inner">
         <?php print $content['header']; ?>
       </div>
     </header>

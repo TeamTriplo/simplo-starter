@@ -1,0 +1,32 @@
+<?php
+/**
+ * @file
+ * Install file for the publish content module.
+ */
+
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function publishcontent_update_last_removed() {
+  return 7001;
+}
+
+
+/**
+ * Convert Publish Content variables to config settings.
+ */
+function publishcontent_update_1000() {
+  $config = config('publishcontent.settings');
+
+  $config->set('publishcontent_method',
+    update_variable_get('publishcontent_method', 3));
+
+  $types = node_type_get_names();
+  foreach ($types as $type => $name) {
+    $var = 'publishcontent_' . $type;
+    $config->set($var, update_variable_get($var, 0));
+    update_variable_del($var);
+  }
+  $config->save();
+}

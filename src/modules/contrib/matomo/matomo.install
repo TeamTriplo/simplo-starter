@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * @file
+ * Installation file for Matomo Analytics module.
+ */
+
+function matomo_install() {
+  // Make the default install more user and GDPR friendly.
+  user_role_grant_permissions(BACKDROP_AUTHENTICATED_ROLE, array('opt-in or out of matomo tracking'));
+  backdrop_set_message(t('Module %module granted %permission permission to authenticated users.', array('%module' => 'Matomo Analytics', '%permission' => t('Opt-in or out of tracking'))), 'status');
+}
+
+function matomo_uninstall() {
+  $config = config('matomo.settings');
+  $config->delete();
+}
+
+/**
+ * Remove cache directory if module is disabled (or uninstalled).
+ */
+function matomo_disable() {
+  matomo_clear_js_cache();
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function matomo_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  switch ($phase) {
+    case 'runtime':
+      // Module cannot validate matomo URL without external HTTP requests.
+      if (!_matomo_check_http_request()) {
+        $requirements['matomo_http_requests'] = array(
+          'title' => $t('HTTP request status'),
+          'value' => $t('Fails'),
+          'severity' => REQUIREMENT_ERROR,
+          'description' => $t('Your system or network configuration does not allow Backdrop to access web pages, resulting in reduced functionality. This could be due to your webserver configuration or PHP.'),
+        );
+      }
+
+      // Raise warning if Matomo user account has not been set yet.
+      if (!preg_match('/^\d{1,}$/', config_get('matomo.settings', 'site_id'))) {
+        $requirements['matomo'] = array(
+          'title' => $t('Matomo module'),
+          'description' => $t('Matomo module has not been configured yet. Please configure its settings from the <a href="@url">Matomo settings page</a>.', array('@url' => url('admin/config/system/matomo'))),
+          'severity' => REQUIREMENT_WARNING,
+          'value' => $t('Not configured'),
+        );
+      }
+      break;
+  }
+  return $requirements;
+}
+
+/**
+ * Move Matomo settings from variables to config.
+ */
+function matomo_update_1000() {
+  $config = config('matomo.settings');
+
+  $settings = array(
+    'site_id',
+    'url_http',
+    'url_https',
+    'domain_mode',
+    'visibility_pages',
+    'visibility_roles',
+    'roles',
+    'custom',
+    'trackuserid',
+    'trackmailto',
+    'track',
+    'trackfiles_extensions',
+    'trackcolorbox',
+    'trackmessages',
+    'site_search',
+    'privacy_donottrack',
+    'page_title_hierarchy',
+    'page_title_hierarchy_exclude_home',
+    'custom_var',
+    'cache',
+    'last_cache',
+    'translation_set',
+    'codesnippet_before',
+    'codesnippet_after',
+    'js_scope',
+    'pages',
+  );
+
+  foreach ($settings as $setting_name) {
+    $config->set($setting_name, update_variable_get('matomo_' . $setting_name));
+    update_variable_del('matomo_' . $setting_name);
+  }
+
+  $config->save();
+}

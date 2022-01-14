@@ -18,10 +18,11 @@ function googleanalytics_admin_settings_form($form_state) {
     '#title' => t('Web Property ID'),
     '#type' => 'textfield',
     '#default_value' => $config->get('account'),
+    '#attributes' => array('placeholder' => 'UA- or G-'),
     '#size' => 20,
     '#maxlength' => 20,
     '#required' => TRUE,
-    '#description' => t('This ID is unique to each site you want to track separately, and is in the form of UA-xxxxxxx-yy. To get a Web Property ID, <a href="@analytics">register your site with Google Analytics</a>, or if you already have registered your site, go to your Google Analytics Settings page to see the ID next to every site profile. <a href="@webpropertyid">Find more information in the documentation</a>.', array('@analytics' => 'https://marketingplatform.google.com/about/analytics/', '@webpropertyid' => url('https://developers.google.com/analytics/resources/concepts/gaConceptsAccounts', array('fragment' => 'webProperty')))),
+    '#description' => t('This ID is unique to each site you want to track separately, and is in the form of UA-xxxxxxx-yy or G-xxxxxxxxxx. To get a Web Property ID, <a href="@analytics">register your site with Google Analytics</a>, or if you already have registered your site, go to your Google Analytics Settings page to see the ID next to every site profile. <a href="@webpropertyid">Find more information in the documentation</a>.', array('@analytics' => 'https://marketingplatform.google.com/about/analytics/', '@webpropertyid' => url('https://developers.google.com/analytics/resources/concepts/gaConceptsAccounts', array('fragment' => 'webProperty')))),
   );
 
   $form['account']['googleanalytics_premium'] = array(
@@ -528,8 +529,8 @@ function googleanalytics_admin_settings_form_validate($form, &$form_state) {
   // Replace all type of dashes (n-dash, m-dash, minus) with the normal dashes.
   $form_state['values']['googleanalytics_account'] = str_replace(array('–', '—', '−'), '-', $form_state['values']['googleanalytics_account']);
 
-  if (!preg_match('/^UA-\d+-\d+$/', $form_state['values']['googleanalytics_account'])) {
-    form_set_error('googleanalytics_account', t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'));
+  if (!preg_match('/^(?:UA-\d+-\d+|G-\w+)$/', $form_state['values']['googleanalytics_account'])) {
+    form_set_error('googleanalytics_account', t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy or G-xxxxxxxxxx.'));
   }
 
   // If multiple top-level domains has been selected, a domain names list is required.

@@ -1,6 +1,6 @@
 type = theme
 name = Axioma
-version = 1.0.0
+version = 1.0.4
 description = Minimalistic elegant theme for Backdrop CMS with Color module support.
 backdrop = 1.x
 
@@ -17,7 +17,7 @@ stylesheets[all][] = css/components/menu-toggle.theme.css
 stylesheets[all][] = css/components/menu-top-only.css
 stylesheets[all][] = css/components/menu-tree.css
 
-; Added by Backdrop CMS packaging script on 2021-11-06
+; Added by Backdrop CMS packaging script on 2021-11-09
 project = axioma
-version = 1.x-1.0.0
-timestamp = 1636214799
+version = 1.x-1.0.4
+timestamp = 1636480515

@@ -1,0 +1,11 @@
+name = Publish Content
+description = "Adds a 'Publish' or 'Unpublish' link on the node edit/view pages, and a 'Publish Link' field if the Views module is enabled."
+backdrop = 1.x
+type = module
+configure = admin/config/content/publishcontent
+
+
+; Added by Backdrop CMS packaging script on 2020-12-20
+project = publishcontent
+version = 1.x-1.4-alpha1
+timestamp = 1608492019
