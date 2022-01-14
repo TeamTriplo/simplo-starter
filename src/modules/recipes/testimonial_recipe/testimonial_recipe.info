@@ -1,0 +1,14 @@
+type = module
+name = Testimonial Recipe
+description = A simple config recipe for testimonials
+package = Recipes
+backdrop = 1.x
+
+dependencies[] = system (>=1.20.0)
+
+stylesheets[all][] = css/testimonial_recipe.css
+
+; Added by Backdrop CMS packaging script on 2021-10-30
+project = testimonial_recipe
+version = 1.x-1.0.3
+timestamp = 1635662792

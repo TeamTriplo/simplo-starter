@@ -1,0 +1,137 @@
+/**
+ * Font related override utility classes
+ */
+.color-inverse {
+  color: #ffffff;
+}
+
+.font-size-xxxxlarge {
+  font-size: 2.625rem;
+}
+
+.font-size-xxxlarge {
+  font-size: 2.25rem;
+}
+
+.font-size-xxlarge {
+  font-size: 1.8125rem;
+}
+
+.font-size-xlarge {
+  font-size: 1.625rem;
+  font-weight: 400;
+}
+
+.font-size-large {
+  font-size: 1.4375rem;
+}
+
+.font-size-medium {
+  font-size: 1.25rem;
+}
+
+.font-size-normal {
+  font-size: 1rem;
+}
+
+.font-size-small {
+  font-size: 0.875rem;
+}
+
+.font-size-xsmall {
+  font-size: 0.75rem;
+}
+
+.font-weight-bold {
+  font-weight: 600;
+}
+
+.font-weight-normal {
+  font-weight: 400;
+}
+
+.font-weight-light {
+  font-weight: 200;
+}
+
+.font-style-italic {
+  font-style: italic;
+}
+
+.font-style-normal {
+  font-style: normal;
+}
+
+
+\\ Numbers provided for groupings in UI
+.opera-bg1-black {
+  background-color: black !important;
+}
+.opera-bg1-blue {
+  background-color: blue !important;
+}
+.opera-bg1-brown {
+  background-color: brown !important;
+}
+.opera-bg1-firebrick {
+  background-color: firebrick !important;
+}
+.opera-bg1-green {
+  background-color: green !important;
+}
+.opera-bg1-indigo {
+  background-color: indigo !important;
+}
+.opera-bg1-khaki {
+  background-color: khaki !important;
+}
+.opera-bg2-lemonchiffon {
+  background-color: lemonchiffon !important;
+}
+.opera-bg2-olive {
+  background-color: olive !important;
+}
+.opera-bg2-orange {
+  background-color: orange !important;
+}
+.opera-bg2-pink {
+  background-color: pink !important;
+}
+.opera-bg2-red {
+  background-color: red !important;
+}
+.opera-bg2-sienna {
+  background-color: sienna !important;
+}
+.opera-bg3-silver {
+  background-color: silver !important;
+}
+.opera-bg3-tan {
+  background-color: tan !important;
+}
+.opera-bg3-teal {
+  background-color: teal !important;
+}
+.opera-bg3-violet {
+  background-color: violet !important;
+}
+.opera-bg3-white {
+  background-color: white !important;
+}
+.opera-bg3-yellow {
+  background-color: yellow !important;
+}
+
+/* text alignment */
+
+.text-align-center {
+  text-align: center;
+}
+.text-align-right {
+  text-align: right;
+}
+.text-align-left {
+  text-align: left;
+}
+
+

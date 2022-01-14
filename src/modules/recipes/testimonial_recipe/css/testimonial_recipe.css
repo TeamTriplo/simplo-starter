@@ -1,7 +1,7 @@
 .view-testimonials .view-content {
   display:  grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 30px;
+  column-gap: 50px;
   overflow: hidden;
 }
 

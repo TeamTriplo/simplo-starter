@@ -14,6 +14,9 @@ It also comes with
 - a view page and view block that display a 3 column grid of testimonials
 - a CSS file with stying for testimonials
 
+This recipe now comes with 3 sample testimonials to help you immediately
+see how it works. Please, delete this sample content and add your own.
+
 
 Requirements
 ------------
@@ -39,11 +42,19 @@ Installation
 Instructions
 ------------
 
-After enabling the module, just create a couple of 
+After enabling the module and experimenting with it a bit. Delete
+the sample content and create your own testimonials.
 
 - Go to `Content > Add Content > Testimonial` or `/node/add/testimonial`
 - Create several testimonials with or without images
 - View results at `/testimonials`
+
+Uninstall or Upgrate Options
+----------------------------
+
+It is not currently possible to uninstall or upgrade this recipe.
+If you no longer wish to keep this functionality, you will need 
+to remove the items added by the recipe manually.
 
 Issues
 ------

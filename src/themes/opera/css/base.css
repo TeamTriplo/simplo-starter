@@ -111,8 +111,8 @@ h2 {
 }
 
 h3 {
-  font-size: 1.625rem;
-  font-weight: 400;
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 h4 {
@@ -263,10 +263,10 @@ label {
   padding-left: 0;
 }
 
-.l-page-title,
+/*.l-page-title,
 .block:first-of-type {
   padding-top: 1rem;
-}
+}*/
 
 footer .block:first-of-type,
 header .block:first-of-type {
