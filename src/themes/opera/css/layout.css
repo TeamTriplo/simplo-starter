@@ -46,9 +46,6 @@
   -ms-flex: 0 0 auto;
   flex: 0 0 auto;
 }
-.l-content{
-  padding: 0px;
-}
 .l-footer {
   flex-shrink: 0;
 }
