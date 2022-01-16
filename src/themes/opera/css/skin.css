@@ -567,9 +567,11 @@ button.button-primary,
 body.page .layout div.l-wrapper a.button {
   color: var(--link-button);
   background-color: var(--bg-button);
+  border: 2px solid var(--bg-button);
 }
 body.page .layout div.l-wrapper a.button:hover {
-  color: var(--color-one);
+  color: var(--bg-button);
+  background-color: var(--link-button);
 }
 
 input.button-primary:hover,
