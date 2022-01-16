@@ -10,6 +10,20 @@
 
 if (module_exists('color')) {
 
+  // Buttons
+  $form['set_buttons'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Buttons'),
+    '#collapsible' => TRUE,
+  );
+  $fields = array(
+    'buttonbg',
+    'buttonlinks',
+  );
+  foreach ($fields as $field) {
+    $form['set_buttons'][$field] = color_get_color_element($form['theme']['#value'], $field, $form);
+  }
+
   // Color Set One
   $form['set_one'] = array(
     '#type' => 'fieldset',
