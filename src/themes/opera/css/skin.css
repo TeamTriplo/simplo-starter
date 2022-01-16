@@ -553,7 +553,6 @@ input.form-submit:active {
   background: #d5d5d5;
 }
 
-.button,
 input.form-submit,
 input.button-primary,
 button.button-primary,
@@ -566,7 +565,8 @@ button.button-primary,
 }
 
 body.page .layout div.l-wrapper a.button {
-  color: var(--text-one);
+  color: var(--link-button);
+  background-color: var(--bg-button);
 }
 body.page .layout div.l-wrapper a.button:hover {
   color: var(--color-one);
