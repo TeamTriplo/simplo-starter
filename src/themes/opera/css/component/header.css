@@ -308,8 +308,13 @@
     text-align: left;
   }
 }
+
 @media (max-width: 550px) {
   .header-identity-wrapper strong{
     font-size: 26px;
   }
+}
+
+.not-front .l-header {
+  margin-bottom: 2rem;
 }

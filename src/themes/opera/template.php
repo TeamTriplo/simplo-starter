@@ -13,6 +13,8 @@ function opera_preprocess_layout(&$variables) {
     $original = $variables['theme_hook_original'];
     $variables['theme_hook_suggestions'][] = $original . '__front';
     $variables['theme_hook_suggestion'] = $original . '__front';
+  } else {
+    $variables['classes'][] = 'not-front';
   }
 }
 
