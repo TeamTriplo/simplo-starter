@@ -248,13 +248,8 @@ label {
   display: block;
 }
 
-.row {
-  margin-right: 0;
-  margin-left: 0;
-}
-
 .page-title {
-  margin-bottom: 30px;
+  margin-bottom: 1rem;
   line-height: 125%;
 }
 

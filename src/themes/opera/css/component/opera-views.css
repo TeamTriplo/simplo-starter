@@ -12,6 +12,14 @@
   padding: 1rem;
   border: none;
 }
+ 
+.views-view-grid .views-grid-box.row-first {
+  padding: 1rem 1rem 1rem 0;
+}
+
+.views-view-grid .views-grid-box.row-last {
+  padding: 1rem 0 1rem 1rem;
+}
 
 .block-content .view-header {
   padding: 1rem;
@@ -28,6 +36,12 @@
 .views-exposed-form .views-exposed-widget.views-reset-button {
   display: block;
 }
+
+.views-exposed-form .views-exposed-widget {
+  padding: 0;
+}
+
+
 
 
 
