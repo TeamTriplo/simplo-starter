@@ -248,8 +248,7 @@
 }
 
 .header-site-name-wrapper img {
-  padding: 20px 20px 20px 0;
-  max-height: 120px;
+  padding: 0;
   width: auto;
 }
 
@@ -309,8 +308,13 @@
     text-align: left;
   }
 }
+
 @media (max-width: 550px) {
   .header-identity-wrapper strong{
     font-size: 26px;
   }
+}
+
+.not-front .l-header {
+  margin-bottom: 2rem;
 }

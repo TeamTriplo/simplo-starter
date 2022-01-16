@@ -94,8 +94,3 @@ utility_css[color][] = 'opera-bg3-yellow'
 utility_css[alignment][] = 'text-align-center'
 utility_css[alignment][] = 'text-align-right'
 utility_css[alignment][] = 'text-align-left'
-
-; Added by Backdrop CMS packaging script on 2022-01-09
-project = opera
-version = 1.x-1.0.0-alpha6
-timestamp = 1641798839
