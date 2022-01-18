@@ -11,7 +11,7 @@ body {
    * This is better for some accessibility technologies. Although it's not true
    * under all circumstances, think of 1rem as being equal to 16px.
    */
-  font-size: 1rem;
+  font-size: 1.25rem;
   line-height: 1.6;
   background: #ffffff;
 }
