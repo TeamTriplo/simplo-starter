@@ -335,12 +335,8 @@ fieldset .fieldset-legend {
   }
 
   .js .menu-dropdown > li:hover {
-    background-color: var(--color-one);
+    background-color: var(--color-navbar);
     filter: brightness(80%);
-    color: white;
-  }
-  .js .menu-dropdown > li:hover a {
-    color: var(--link-one);
   }
 
   .js .block-system-main-menu .menu-dropdown > li.has-children > a:hover,
@@ -353,22 +349,26 @@ fieldset .fieldset-legend {
   }
 
   .menu-dropdown ul {
-    background: #20252e;
+    background-color: var(--color-navbar);
+    border:  none;
   }
 
+  .menu-dropdown a,
   .menu-dropdown ul a,
   .menu-dropdown ul a:hover,
   .menu-dropdown ul a:focus,
   .menu-dropdown ul a:active,
+  .menu-dropdown a.highlighted,
   .menu-dropdown ul a.highlighted {
-    color: #fffffe;
+    color: var(--link-navbar);
+    background-color: var(--color-navbar);
   }
 
+  .menu-dropdown a:hover,
   .menu-dropdown ul a:hover,
-  .menu-dropdown ul a:focus,
-  .menu-dropdown ul a:active,
   .menu-dropdown ul a.highlighted {
-    background: #114a75;
+    color: var(--link-navbar);
+    filter: brightness(80%);
   }
 
   .menu-dropdown ul a.disabled {
