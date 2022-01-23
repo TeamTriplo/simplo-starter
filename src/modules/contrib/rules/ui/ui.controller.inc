@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file Contains the UI controller for Rules.
+ * @file
+ * Contains the UI controller for Rules.
  */
 
 /**
@@ -16,7 +17,7 @@ class RulesUIController {
   /**
    * Generates menu items to manipulate rules configurations.
    *
-   * @param $base_path
+   * @param string $base_path
    *   The path to the overview page from where the configurations are edited.
    */
   public function config_menu($base_path) {
@@ -35,8 +36,8 @@ class RulesUIController {
     );
     $items[$base_path . '/manage/%rules_config/add/%rules_element'] = array(
       // Adding another part to the path would hit the menu path-part-limit
-      // for base paths like admin/config/workflow/rules. Therefor we have to
-      // use this fugly way for setting the title.
+      // for base paths like admin/config/workflow/rules. Therefore we have to
+      // use this ugly way for setting the title.
       'title callback' => 'rules_menu_add_element_title',
       // Wrap the integer in an array, so it is passed as is.
       'title arguments' => array(array($base_count + 4)),
@@ -60,7 +61,7 @@ class RulesUIController {
       'file path' => backdrop_get_path('module', 'rules'),
     );
     $items[$base_path . '/manage/%rules_config/delete/event'] = array(
-      //@todo: improve title.
+      // @todo Improve title.
       'title' => 'Remove event',
       'page callback' => 'backdrop_get_form',
       'page arguments' => array('rules_ui_remove_event', $base_count + 1, $base_count + 4, $base_path),
@@ -157,17 +158,19 @@ class RulesUIController {
   }
 
   /**
-   * Generates the render array for a overview configuration table for arbitrary
-   * rule configs that match the given conditions.
+   * Generates the render array for an overview configuration table.
+   *
+   * Generates the render array for an overview configuration table for
+   * arbitrary rule configs that match the given conditions.
    *
    * Note: The generated overview table contains multiple links for editing the
    * rule configurations. For the links to properly work use
    * RulesUIController::config_menu($base_path) to generate appropriate menu
    * items for the path at which the overview table is displayed.
    *
-   * @param $conditions
+   * @param array $conditions
    *   An array of conditions as needed by rules_config_load_multiple().
-   * @param $options
+   * @param array $options
    *   An array with optional options. Known keys are:
    *   - 'hide status op': If set to TRUE, enable/disable links are not added.
    *     Defaults to FALSE.
@@ -182,7 +185,7 @@ class RulesUIController {
    *     currently set RulesPluginUI::$basePath. If no base path has been set
    *     yet, the current path is used by default.
    *
-   * @return Array
+   * @return array
    *   A renderable array.
    */
   public function overviewTable($conditions = array(), $options = array()) {
@@ -199,12 +202,12 @@ class RulesUIController {
     if (!empty($options['base path'])) {
       RulesPluginUI::$basePath = $options['base path'];
     }
-    else if (!isset(RulesPluginUI::$basePath)) {
+    elseif (!isset(RulesPluginUI::$basePath)) {
       // Default to the current path, only if no path has been set yet.
       RulesPluginUI::$basePath = current_path();
     }
 
-    $entities = entity_load('rules_config', FALSE, $conditions);
+    $entities = entity_load_multiple('rules_config', FALSE, $conditions);
     ksort($entities);
 
     // Prepare some variables used by overviewTableRow().
@@ -218,18 +221,19 @@ class RulesUIController {
       }
     }
     // Assemble the right table header.
-    $header = array(t('Name'), t('Event'), t('Plugin'), t('Status'), array('data' => t('Operations')));
+    $header = array(
+      t('Name'),
+      t('Event'),
+      t('Plugin'),
+      t('Status'),
+      t('Operations'),
+    );
     if (!$options['show events']) {
       // Remove the event heading as there is no such column.
       unset($header[1]);
     }
     if (!$options['show plugin']) {
       unset($header[2]);
-    }
-    // Fix the header operation column colspan.
-    $num_cols = isset($rows[0]) ? count($rows[0]) : 0;
-    if (($addition = $num_cols - count($header)) > 0) {
-      $header[4]['colspan'] = $addition + 1;
     }
 
     $table = array(
@@ -241,15 +245,29 @@ class RulesUIController {
     $table['#attributes']['class'][] = 'rules-overview-table';
     $table['#attached']['css'][] = backdrop_get_path('module', 'rules') . '/ui/rules.ui.css';
 
-    // TODO: hide configs where access() is FALSE.
+    // @todo Hide configs where access() is FALSE.
     return $table;
   }
 
   /**
    * Generates the row for a single rules config.
    *
-   * @param $additional_cols
-   *   Additional columns to be added after the entity label column.
+   * @param array $conditions
+   *   An array of conditions as needed by rules_config_load_multiple().
+   * @param array $options
+   *   An array with optional options. Known keys are:
+   *   - 'hide status op': If set to TRUE, enable/disable links are not added.
+   *     Defaults to FALSE.
+   *   - 'show plugin': If set to FALSE, the plugin is not shown. Defaults to
+   *     TRUE.
+   *   - 'show events': If set to TRUE, the event column is shown. Defaults to
+   *     TRUE if only reaction rules are listed.
+   *   - 'show execution op': If set to TRUE an operation for execution a
+   *     component is shown for components, as well as a link to schedule a
+   *     component if the rules scheduler module is enabled.
+   *   - 'base path': Optionally, a different base path to use instead of the
+   *     currently set RulesPluginUI::$basePath. If no base path has been set
+   *     yet, the current path is used by default.
    */
   protected function overviewTableRow($conditions, $name, $config, $options) {
     // Build content includes the label, as well as a short overview including
@@ -278,47 +296,134 @@ class RulesUIController {
     ));
 
     // Add operations depending on the options and the exportable status.
+    $operations = array();
     if (!$config->hasStatus(ENTITY_FIXED)) {
-      $row[] =  l(t('edit'), RulesPluginUI::path($name), array('attributes' => array('class' => array('edit', 'action'))));
+      $operations['edit'] = array(
+        'title' => t('Edit'),
+        'href' => RulesPluginUI::path($name),
+        'attributes' => array(
+          'class' => array(
+              'edit',
+              'action',
+          ),
+        ),
+      );
       if (module_exists('rules_i18n')) {
-        $row[] =  l(t('translate'), RulesPluginUI::path($name, 'translate'), array('attributes' => array('class' => array('translate', 'action'))));
-      }
-    }
-    else {
-      $row[] = '';
-      if (module_exists('rules_i18n')) {
-        $row[] = '';
+        $operations['translate'] = array(
+          'title' => t('Translate'),
+          'href' => RulesPluginUI::path($name, 'translate'),
+          'attributes' => array(
+            'class' => array(
+                'translate',
+                'action',
+            ),
+          ),
+        );
       }
     }
 
     if (!$options['hide status op']) {
       // Add either an enable or disable link.
       $text = $config->active ? t('disable') : t('enable');
-      $active_class = $config->active ? 'disable' : 'enable';
-      $link_path = RulesPluginUI::path($name, $active_class);
-      $row[] = $config->hasStatus(ENTITY_FIXED) ? '' : l($text, $link_path, array('attributes' => array('class' => array($active_class, 'action')), 'query' => backdrop_get_destination()));
+      $label = $config->active ? 'Disable' : 'Enable';
+      $link_path = RulesPluginUI::path($name, $text);
+      if (!$config->hasStatus(ENTITY_FIXED)) {
+        $operations[$text] = array(
+          'title' => t($label),
+          'href' => $link_path,
+          'attributes' => array(
+            'class' => array(
+                $text,
+                'action',
+            ),
+          ),
+          'query' => backdrop_get_destination(),
+        );
+      }
+      $operations['clone'] = array(
+        'title' => t('Clone'),
+        'href' => RulesPluginUI::path($name, 'clone'),
+        'attributes' => array(
+          'class' => array(
+              'clone',
+              'action',
+          ),
+        ),
+      );
     }
-    $row[] = l(t('clone'), RulesPluginUI::path($name, 'clone'), array('attributes' => array('class' => array('clone', 'action'))));
 
     // Add execute link for for components.
     if ($options['show execution op']) {
-      $row[] = ($config instanceof RulesTriggerableInterface) ? '' : l(t('execute'), RulesPluginUI::path($name, 'execute'), array('attributes' => array('class' => array('execute', 'action')), 'query' => backdrop_get_destination()));
+      if (!($config instanceof RulesTriggerableInterface)) {
+        $operations['execute'] = array(
+          'title' => t('Execute'),
+          'href' => RulesPluginUI::path($name, 'execute'),
+          'attributes' => array(
+            'class' => array(
+                'execute',
+                'action',
+            ),
+          ),
+          'query' => backdrop_get_destination(),
+        );
+      }
       if (module_exists('rules_scheduler')) {
-        // Add schedule link for action components only.
-        $row[] = $config instanceof RulesActionInterface ? l(t('schedule'), RulesPluginUI::path($name, 'schedule'), array('attributes' => array('class' => array('schedule', 'action')), 'query' => backdrop_get_destination())) : '';
+        $operations['schedule'] = array(
+          'title' => t('Schedule'),
+          'href' => RulesPluginUI::path($name, 'schedule'),
+          'attributes' => array(
+            'class' => array(
+                'schedule',
+                'action',
+            ),
+          ),
+          'query' => backdrop_get_destination(),
+        );
       }
     }
-
     if (!$config->hasStatus(ENTITY_IN_CODE) && !$config->hasStatus(ENTITY_FIXED)) {
-      $row[] = l(t('delete'), RulesPluginUI::path($name, 'delete'), array('attributes' => array('class' => array('delete', 'action')), 'query' => backdrop_get_destination()));
+      $operations['delete'] = array(
+        'title' => t('Delete'),
+        'href' => RulesPluginUI::path($name, 'delete'),
+        'attributes' => array(
+          'class' => array(
+              'delete',
+              'action',
+          ),
+        ),
+        'query' => backdrop_get_destination(),
+      );
     }
     elseif ($config->hasStatus(ENTITY_OVERRIDDEN) && !$config->hasStatus(ENTITY_FIXED)) {
-      $row[] = l(t('revert'), RulesPluginUI::path($name, 'revert'), array('attributes' => array('class' => array('revert', 'action')), 'query' => backdrop_get_destination()));
+      $operations['revert'] = array(
+        'title' => t('Revert'),
+        'href' => RulesPluginUI::path($name, 'revert'),
+        'attributes' => array(
+          'class' => array(
+              'revert',
+              'action',
+          ),
+        ),
+        'query' => backdrop_get_destination(),
+      );
     }
-    else {
-      $row[] = '';
-    }
-    $row[] = l(t('export'), RulesPluginUI::path($name, 'export'), array('attributes' => array('class' => array('export', 'action'))));
+    $operations['export'] = array(
+      'title' => t('Export'),
+      'href' => RulesPluginUI::path($name, 'export'),
+      'attributes' => array(
+        'class' => array(
+            'export',
+            'action',
+        ),
+      ),
+    );
+    $row['operations'] = array(
+      'data' => array(
+        '#type' => 'dropbutton',
+        '#links' => $operations,
+      ),
+    );
     return $row;
   }
+
 }
