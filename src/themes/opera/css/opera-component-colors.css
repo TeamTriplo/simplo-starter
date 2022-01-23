@@ -218,11 +218,6 @@ ul.action-links a:after {
 
 /*  components/menu-dropdown.css  */
 
-.js .menu-dropdown li,
-.js .menu-dropdown a.has-submenu.highlighted {
-  border-bottom: 1px solid #bbbbbb;
-}
-
 .menu-dropdown a span.sub-arrow {
   border: 1px solid #bbbbbb;
 }
