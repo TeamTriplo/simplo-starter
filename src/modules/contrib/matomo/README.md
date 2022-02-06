@@ -30,6 +30,21 @@ All pages will then have the required JavaScript added to the
 HTML footer can confirm this by viewing the page source from
 your browser.
 
+### HTTP URL vs. HTTPS URL
+
+If your website has https turned on, it is necessary that the Matomo install
+ *also has https turned on*. This prevents "mixed content" warnings in browsers.
+
+It's absolutely OK and actually recommended that both url settings use https -
+ if your Matomo install has it.
+Browsers load content via https from within a http page, but refuse to load http
+ content from within a https page.
+
+Example:
+
+- Matomo HTTP URL: `https://matomo.example.com/`
+- Matomo HTTPS URL: `https://matomo.example.com/`
+
 ## Custom variables
 
 One example for custom variables tracking is the "User roles" tracking. Enter
@@ -56,8 +71,9 @@ You can include additional JavaScript snippets in the advanced
 textarea. These can be found on various blog posts, or on the
 official Matomo pages.
 
-An example: `_paq.push(['disableCookies']);` to disable all tracking cookies
-for Matomo (GDPR, to avoid the necessity of a cookie consent banner).
+An example for "Code snippet (before)": `_paq.push(['disableCookies']);`
+This disables all tracking cookies for Matomo (GDPR, to avoid the necessity of a
+ cookie consent banner).
 
 To speed up page loading you may also cache the matomo.js
 file locally. You need to make sure the site file system is in public
