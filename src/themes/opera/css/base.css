@@ -86,6 +86,8 @@ code p {
 img {
   max-width: 100%;
   height: auto;
+  border:  1px solid grey;
+  margin-bottom: 2rem;
 }
 
 iframe {
