@@ -3,8 +3,9 @@
   padding-left: 0;
 }
 
-.views-content img {
-  filter: drop-shadow(3px 1px 4px gray);
+.view-content img {
+  filter: drop-shadow(3px 2px 5px gray);
+  margin-bottom: 1.3rem;
 }
 
 .view-blog-post .views-field-name {

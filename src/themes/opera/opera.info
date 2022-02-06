@@ -9,6 +9,7 @@ settings[use_bootstrap] = 0
 
 ; Add theme CSS files - from Tatsu (with edits)
 stylesheets[all][] = css/base.css
+stylesheets[all][] = css/typography.css
 stylesheets[all][] = css/layout.css
 stylesheets[all][] = css/skin.css
 stylesheets[all][] = css/component/small-text-components.css
