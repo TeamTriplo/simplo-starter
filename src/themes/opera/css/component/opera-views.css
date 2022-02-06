@@ -3,6 +3,10 @@
   padding-left: 0;
 }
 
+.views-content img {
+  filter: drop-shadow(3px 1px 4px gray);
+}
+
 .view-blog-post .views-field-name {
   margin-bottom: 20px;
 }
@@ -40,13 +44,3 @@
 .views-exposed-form .views-exposed-widget {
   padding: 0;
 }
-
-
-
-
-
-
-
-
-
-
