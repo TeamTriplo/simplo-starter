@@ -4,7 +4,9 @@ package = Testing
 backdrop = 1.x
 hidden = TRUE
 
-; Added by Backdrop CMS packaging script on 2020-03-13
+dependencies[] = rules
+
+; Added by Backdrop CMS packaging script on 2022-01-15
 project = rules
-version = 1.x-2.1.5
-timestamp = 1584095243
+version = 1.x-2.2.0
+timestamp = 1642305013

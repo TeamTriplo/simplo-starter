@@ -5,6 +5,7 @@
  * Contains rules integration for the path module needed during evaluation.
  *
  * @addtogroup rules
+ *
  * @{
  */
 
@@ -74,26 +75,33 @@ function rules_condition_path_alias_exists($alias, $langcode = LANGUAGE_NONE) {
 }
 
 /**
- * Cleans the given path by replacing non ASCII characters with the replacment character.
+ * Cleans the given path.
  *
- * Path cleaning may be adapted by overriding the configuration variables
+ * A path is cleaned by replacing non ASCII characters in the path with the
+ * replacement character.
+ *
+ * Path cleaning may be customized by overriding the configuration variables:
  * @code rules_clean_path @endcode,
  * @code rules_path_replacement_char @endcode and
  * @code rules_path_transliteration @endcode
  * in the site's settings.php file.
+ * @deprecated Path module is now built into Backdrop and so
+ * rules_path_clean_path() is the preferred path-cleaning method.
  */
 function rules_path_default_cleaning_method($path) {
+  watchdog_deprecated_function('rules', __FUNCTION__);
   $replace = config_get('rules.settings','rules_path_replacement_char');
   if ($replace) {
-    // If the transliteration module is enabled, transliterate the alias first.
-    if (module_exists('transliteration') && config_get('rules.settings','rules_path_transliteration')) {
+    // If transliteration is enabled, transliterate the alias first.
+    if (config_get('rules.settings','rules_path_transliteration')) {
       $path = transliteration_get($path);
     }
-
-    $array = config_get('rules.settings','rules_clean_path');
-    $array[2] = $path;
+    $preg_args = array(
+      config_get('rules.settings','rules_path_regex'),
+      $replace,
+    );
     // Replace it and remove trailing and leading replacement characters.
-    $output = trim(call_user_func_array('preg_replace', $array), $replace);
+    $output = trim(call_user_func_array('preg_replace', $preg_args), $replace);
 
     if (config_get('rules.settings','rules_path_lower_case')) {
       $output = backdrop_strtolower($output);
@@ -118,22 +126,6 @@ function rules_clean_path($path) {
 }
 
 /**
- * CTools path cleaning callback.
- *
- * @see rules_admin_settings()
- */
-function rules_path_clean_ctools($path) {
-  // Make use of the CTools cleanstring implementation.
-  ctools_include('cleanstring');
-  $settings = array(
-    'separator' => config_get('rules.settings','rules_path_replacement_char'),
-    'transliterate' => module_exists('transliteration') && config_get('rules.settings','rules_path_transliteration'),
-    'lower case' => config_get('rules.settings','rules_path_lower_case'),
-  );
-  return ctools_cleanstring($path, $settings);
-}
-
-/**
  * Path cleaning callback.
  *
  * @see rules_admin_settings()
@@ -144,5 +136,5 @@ function rules_path_clean_path($path) {
 }
 
 /**
- * @}
+ * @} End of "addtogroup rules"
  */
