@@ -4,16 +4,24 @@
  *
  * Component styles in this file are simple overrides for easy updating.
  */
+
+@import url(http://fonts.googleapis.com/css?family=Merriweather:300,400,700,900);
+@import url(http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900);
+
 body {
-  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Merriweather', Helvetica, Arial, sans-serif;
   /**
    * Default font size for site should be set on body element in rem units.
    * This is better for some accessibility technologies. Although it's not true
    * under all circumstances, think of 1rem as being equal to 16px.
    */
-  font-size: 1.25rem;
-  line-height: 1.6;
+  font-size: 1.15rem;
+  line-height: 1.9;
   background: #ffffff;
+}
+
+.menu, .menu-dropdown {
+  font-family: Lato, 'Lucida Console', 'Courier New', monospace;
 }
 
 a:focus,
