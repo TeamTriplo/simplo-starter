@@ -1,0 +1,12 @@
+name = Registration API Test
+description = Support module for Registration API (Hooks)
+package = Registration
+backdrop = 1.x
+type = module
+
+dependencies[] = registration
+hidden = TRUE
+; Added by Backdrop CMS packaging script on 2022-01-20
+project = registration
+version = 1.x-1.2.0
+timestamp = 1642704851
