@@ -9,7 +9,6 @@ settings[use_bootstrap] = 0
 
 ; Add theme CSS files - from Tatsu (with edits)
 stylesheets[all][] = css/base.css
-stylesheets[all][] = css/typography.css
 stylesheets[all][] = css/layout.css
 stylesheets[all][] = css/skin.css
 stylesheets[all][] = css/component/small-text-components.css
@@ -95,3 +94,8 @@ utility_css[color][] = 'opera-bg3-yellow'
 utility_css[alignment][] = 'text-align-center'
 utility_css[alignment][] = 'text-align-right'
 utility_css[alignment][] = 'text-align-left'
+
+; Added by Backdrop CMS packaging script on 2022-02-07
+project = opera
+version = 1.x-1.0.0-alpha9
+timestamp = 1644224891

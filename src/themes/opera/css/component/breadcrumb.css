@@ -3,65 +3,33 @@
  * Breadcrumb styles.
  */
 .breadcrumb {
-  overflow: hidden;
+  background: transparent;
+  line-height: 16px;
   margin: 0 0 3rem;
-}
-
-.breadcrumb ol,
-.breadcrumb li {
-  list-style: none;
-  margin: 0;
   padding: 0;
 }
 
 .breadcrumb li {
-  position: relative;
-  padding: 0 1rem;
-  float: left; /* LTR */
+  border-right: 1px solid #707070;
+  display: inline-block;
+  padding: 0 10px;
 }
 
-[dir="rtl"] .breadcrumb li {
-  float: right;
+.breadcrumb li:first-child {
+  padding-left: 0;
+}
+
+.breadcrumb li:last-child {
+  border: 0;
 }
 
 .breadcrumb li a,
 .breadcrumb li span {
-  position: relative;
-  z-index: 1;
-  display: block;
-  margin: 0 -1rem;
-  padding: 0.5rem 1.4rem;
+  color: #707070;
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 0;
   text-decoration: none;
-}
-
-.breadcrumb li:after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 0px; /* LTR */
-  width: 2rem;
-  height: 2rem;
-  border: 0.0625rem solid white;
-  border-width: 0.125rem 0.125rem 0 0;
-  -webkit-transform:
-    translate(0, -50%)
-    rotate(45deg); /* LTR */
-  transform:
-    translate(0, -50%)
-    rotate(45deg); /* LTR */
-}
-
-[dir="rtl"] .breadcrumb li:after {
-  left: 0;
-  right: auto;
-  -webkit-transform:
-    translate(0, -50%)
-    rotate(225deg);
-  transform:
-    translate(0, -50%)
-    rotate(225deg);
-}
-
-.breadcrumb li:last-child:after {
-  display: none;
+  text-transform: uppercase;
 }
