@@ -3,14 +3,16 @@ description = Built to use Bootstrap; a sleek, intuitive, and powerful front-end
 backdrop = 1.x
 type = theme
 
-settings[bootstrap_lite_cdn] = 3.3.7
-settings[bootstrap_lite_font_awesome] = 4.4.0
+tags[] = Bootstrap
+
+settings[bootstrap_lite_cdn] = 3.4.1
+settings[bootstrap_lite_font_awesome] = 4.7.0
 settings[bootstrap_lite_container] = container
 settings[bootstrap_lite_navbar_position] = static-top
 
 stylesheets[all][] = css/style.css
 
-; Added by Backdrop CMS packaging script on 2021-12-17
+; Added by Backdrop CMS packaging script on 2022-01-17
 project = bootstrap_lite
-version = 1.x-1.4.1
-timestamp = 1639795235
+version = 1.x-1.4.2
+timestamp = 1642448756
