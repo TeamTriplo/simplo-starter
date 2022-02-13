@@ -241,10 +241,6 @@ header .block:first-of-type {
   padding: 0.5em 1.7em .5em 0em;
 }
 
-h2.block-title {
-  margin-bottom: 2.5rem;
-}
-
 .form-text {
   display: initial;
 }

@@ -10,3 +10,21 @@
 .l-sidebar .block {
 	margin-bottom: 2.5rem;
 }
+
+.l-sidebar h2.block-title {
+  margin-bottom: 1.8rem;
+}
+
+.l-sidebar .block-title {
+	padding: .5rem 1rem;
+	font-size: 1.6rem;
+	line-height: 1.5rem;
+}
+
+h2.block-title {
+  margin-bottom: 2.5rem;
+}
+
+.l-sidebar .block-content {
+	padding: 0 1rem;
+}

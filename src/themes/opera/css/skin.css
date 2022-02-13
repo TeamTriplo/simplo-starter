@@ -543,15 +543,16 @@ button.form-submit,
 .button:focus,
 input.form-submit:hover,
 input.form-submit:focus {
-  color: #333333;
-  background: white;
-  border: 2px solid grey;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 .button:active,
 input.form-submit:active {
-  color: #333333;
-  background: #d5d5d5;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.form-submit,
@@ -560,9 +561,9 @@ button.button-primary,
 .ui-state-default,
 .ui-widget-content .ui-state-default,
 .ui-widget-header .ui-state-default {
-  color: white;
-  background: var(--color-one);
-  border: none;
+  color: var(--link-button);
+  background: var(--bg-button);
+  border: 2px solid var(--bg-button);
 }
 
 body.page .layout div.l-wrapper a.button {
@@ -573,21 +574,23 @@ body.page .layout div.l-wrapper a.button {
 body.page .layout div.l-wrapper a.button:hover {
   color: var(--bg-button);
   background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.button-primary:hover,
 input.button-primary:focus,
 button.button-primary:hover,
 button.button-primary:focus {
-  color: green;
-  background-color: #114a75;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.button-primary:active,
 button.button-primary:active {
-  box-shadow: inset 0 0 0 0.125em #114a75;
-  background-color: #0074bd;
-  color: white;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.button-secondary,
