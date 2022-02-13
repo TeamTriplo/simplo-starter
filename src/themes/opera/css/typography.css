@@ -5,15 +5,20 @@
 @import url(https://fonts.googleapis.com/css?family=Merriweather:300,400,700,900);
 @import url(https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900);
 
+:root {
+  --opera-san-font: Lato, 'Lucida Console', 'Courier New', monospace;
+  --opera-font: 'Merriweather', Helvetica, Arial, sans-serif;
+}
+
 body {
-  font-family: 'Merriweather', Helvetica, Arial, sans-serif;
+  font-family: var(--opera-san-font);
     /**
    * Default font size for site should be set on body element in rem units.
    * This is better for some accessibility technologies. Although it's not true
    * under all circumstances, think of 1rem as being equal to 16px.
    */
-  font-size: 1.15rem;
-  line-height: 1.8;
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 p {
@@ -22,7 +27,7 @@ p {
 
 .l-header-inner,
 .button {
-  font-family: Lato, 'Lucida Console', 'Courier New', monospace;
+  font-family: var(--opera-font);
 }
 
 h1,
@@ -31,7 +36,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: Lato, 'Lucida Console', 'Courier New', monospace;
+  font-family: var(--opera-font);
   line-height: 1.4;
   font-weight: 700;
 }

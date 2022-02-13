@@ -148,12 +148,13 @@ input.form-submit,
 button.form-submit,
 .button {
   display: inline-block;
+  border-radius: 10px;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.025rem;
   line-height: 1.5rem;
-  border: 0;
-  padding: 0.8rem 1.5625rem;
+  border: 2px solid var(--bg-button);
+  padding: 0.5rem 1.2625rem;
   margin-bottom: 0;
   margin-right: .7rem; /* LTR */
   -webkit-transition:
@@ -162,6 +163,14 @@ button.form-submit,
   transition:
     background-color 0.6s ease 0s,
     color 0.6s ease 0s;
+}
+
+#edit-cancel {
+  font-size:  1rem;
+}
+
+.l-sidebar #edit-cancel {
+  margin-left: 1.5rem;
 }
 
 .button {
