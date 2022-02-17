@@ -96,7 +96,7 @@ function ckeditor_blocks_blocks_ajax() {
   $options['All'] = 'Select a block';
   $module_blocks = layout_get_block_info();
   // Allow the block list to be altered.
-  $included_modules = array('views','block','node','webform');
+  $included_modules = array('views','block','webform');
   $excluded_deltas = array('content');
   backdrop_alter('ckeditor_blocks_list', $module_blocks);
   foreach ($module_blocks as $module => $blocks) {
