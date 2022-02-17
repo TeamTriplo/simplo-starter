@@ -14,11 +14,15 @@
 ?>
 <div class="<?php print implode(' ', $classes); ?>"<?php print backdrop_attributes($attributes); ?>>
   <?php print render($title_prefix); ?>
+  <?php if(!isset($region)){ ?>
+    <?php $region == ''; ?>
+  <?php endif; ?>
   <?php if ($variables['is_front'] || ($region == 'header')): ?>
     <div class="block--inner-wrapper container">
   <?php else: ?>
     <div class="block--inner-wrapper">
   <?php endif; ?>
+
     <?php if ($title): ?>
       <h2 class="block-title"><?php print $title; ?></h2>
     <?php endif; ?>
