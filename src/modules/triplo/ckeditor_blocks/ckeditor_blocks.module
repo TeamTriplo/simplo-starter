@@ -1,0 +1,250 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function ckeditor_blocks_menu() {
+  $items = array();
+
+  $items['ckeditor/blocks'] = array(
+    'page callback' => 'ckeditor_blocks_blocks_ajax',
+    'access arguments' => array('administer blocks'),
+  );
+  $items['ckeditor/block/%/%'] = array(
+    'page callback' => 'ckeditor_blocks_block_ajax',
+    'page arguments' => array(2, 3),
+    'access arguments' => array('administer blocks'),
+  );
+
+  return $items;
+}
+
+/**
+ * Render a specific block
+ */
+function ckeditor_blocks_get_block($module, $delta, $check_roles = FALSE) {
+  global $language;
+  $block = block_custom_block_load($delta, $language->langcode);
+  // Check user roles if required.
+  // if ($check_roles) {
+  //   global $user;
+  //   $block_roles = _ckeditor_blocks_roles();
+  //   if (isset($block_roles[$module][$delta]) && !array_intersect($block_roles[$module][$delta], array_keys($user->roles))) {
+  //     return '';
+  //   }
+  // }
+  $views_name = '';
+  if($module == 'views'){
+    // Get the view name from views block name 
+    $views_delta_arr = explode('-block',$delta);
+    if(!empty($views_delta_arr)){
+      $views_name = $views_delta_arr[0];
+    }
+    $block_content = views_embed_view($views_name);
+  }else{
+    $block_content = module_invoke($module, 'block_view', $delta);
+  }
+
+  // @TODO feedback
+  $block = (object)$block;
+  $block->module = $module;
+  $block->plugin = $module.':'.$delta;
+  $block->delta = $delta;
+  $block->style = "";
+
+  // Allow modules to modify the block before it is viewed, via either
+  // hook_block_view_alter() or hook_block_view_MODULE_DELTA_alter().
+  $block->subject = (empty($block_content['subject'])) ? '' : $block_content['subject'];
+  backdrop_alter(array('block_view', "block_view_{$module}_" . str_replace('-', '_', $delta)), $block_content, $block);
+  
+  if (isset($block_content['content'])) {
+     // Assemble a structured content array.
+    $content = (object) array(
+      'title' => $block->subject,
+      'content' => $block_content['content'],
+    );
+  $output = theme('block', array('content' => $content, 'block' => $block));
+  }
+  elseif (isset($block_content)){
+    $content = (object) array(
+      'title' => $block->subject,
+      'content' => $block_content,
+    );
+    $output = theme('block', array('content' => $content, 'block' => $block));
+  }else{
+    $output = '';
+  }
+  return $output;
+}
+
+/**
+ * Page callback for getting a list of blocks.
+ */
+function ckeditor_blocks_blocks_ajax() {
+  // Disable client-side caching.
+  header('Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0');
+  header('Pragma: no-cache');
+  // Disable server-side caching.
+  backdrop_page_is_cacheable(FALSE);
+
+  global $theme_key;
+  $options = array();
+  $options['All'] = 'Select a block';
+  $module_blocks = layout_get_block_info();
+  // Allow the block list to be altered.
+  $excluded_modules = array('system','devel', 'rules','layout','dashboard','dashboard_plus');
+  $excluded_deltas = array('content');
+  backdrop_alter('ckeditor_blocks_list', $module_blocks);
+  foreach ($module_blocks as $module => $blocks) {
+    if(!in_array($module, $excluded_modules)){    
+      if (!empty($blocks)) {
+        foreach ($blocks as $delta => $block) {
+          if(!in_array($delta, $excluded_deltas)){
+            $options['[block:' . $module. '=' . $delta . ']'] = $block['info'];
+          }        
+        }
+      }
+    }
+  }
+  backdrop_json_output($options);
+}
+
+/**
+ * Page callback for rendering a block
+ */
+function ckeditor_blocks_block_ajax($module, $delta) {
+  // Disable client-side caching.
+  header('Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0');
+  header('Pragma: no-cache');
+  // Disable server-side caching.
+  backdrop_page_is_cacheable(FALSE);
+  $block = ckeditor_blocks_get_block($module, $delta);
+  backdrop_json_output(array('html' => ($block ? $block : '(Empty Block)')));
+}
+
+/**
+ * Implements hook_ckeditor_plugin().
+ *
+ * @return type
+ */
+function ckeditor_blocks_ckeditor_plugins() {
+  $plugins = array();
+  $plugins['blocks'] = array(
+      'path' => backdrop_get_path('module', 'ckeditor_blocks') . '/plugins/blocks',
+      'file' => 'plugin.js',
+      'internal' => FALSE,
+      'buttons' => array(
+          'Blocks' => array(
+              'label' => t('Blocks'),
+              'image' => base_path() . backdrop_get_path('module', 'ckeditor_blocks') . '/plugins/blocks/icons/blocks.png',
+              'image_alternative' =>'{insert block}',
+          ),
+      ),
+  );
+
+    return $plugins;
+}
+
+/**
+ * Implements hook_filter_info().
+ */
+function ckeditor_blocks_filter_info() {
+  $filters['ckeditor_blocks'] = array(
+    'title' => t('Backdrop blocks'),
+    'description' => t('Inserts the contents of a block into a textarea using [block:module=delta] tags.'),
+    'process callback' => '_ckeditor_blocks',
+    'settings callback' => '_ckeditor_blocks_settings',
+    'tips callback' => '_ckeditor_blocks_tips',
+    'default settings' => array(
+      'check_roles' => 0,
+    ),
+    'cache' => FALSE,
+  );
+  return $filters;
+}
+
+/**
+ * Filter replacement callback.
+ *
+ * @param type $text
+ * @param type $filter
+ * @param type $format
+ * @return type
+ */
+function _ckeditor_blocks($text, $filter, $format) {
+  if (preg_match_all("/\[block:([^=\\]]+)=?([^\\]]*)?\]/i", $text, $match)) {
+    foreach ($match[2] as $key => $value) {
+      $raw_tags[] = $match[0][$key];
+      $module = $match[1][$key];
+      $delta = $match[2][$key];
+
+      $check_roles = !empty($filter->settings['check_roles']);
+      $repl[] =  ckeditor_blocks_get_block($module, $delta, $check_roles);
+    }
+    return str_replace($raw_tags, $repl, $text);
+  }
+  return $text;
+}
+
+/**
+ * Settings callback for the backdrop block filter.
+ */
+function _ckeditor_blocks_settings($form, &$form_state, $filter, $format, $defaults=null) {
+  $settings['check_roles'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Check the roles assigned by the Block module'),
+    '#default_value' => $filter->settings['check_roles'],
+    '#description' => t('Without this checked, anyone can see backdrop blocks.'),
+  );
+  return $settings;
+}
+
+function _ckeditor_blocks_tips($filter, $format, $long = FALSE) {
+  if ($long) {
+    return t('<a name="filter-ckeditor_blocks"></a>You may use [block:<em>module</em>=<em>delta</em>] tags to display the contents of block <em>delta</em> for module <em>module</em>. To discover module names and deltas, visit admin/build/block and hover over a block\'s configure link and look in your browser\'s status bar. The last "word" you see is the name of the module and the number following that is the delta. If you leave off the delta in an Insert Block tag, the default delta will be used.');
+  }
+  else {
+    return t('You may use <a href="@ckeditor_blocks_help">[block:<em>module</em>=<em>delta</em>] tags</a> to display the contents of block <em>delta</em> for module <em>module</em>.',
+    array("@ckeditor_blocks_help" => url("filter/tips/$format->format", array('fragment' => 'filter-ckeditor_blocks'))));
+  }
+}
+
+/**
+ * Helper function to load and cache the block roles.
+ */
+function _ckeditor_blocks_roles() {
+  // Build an array of roles for each block.
+  $block_roles = &backdrop_static(__FUNCTION__, NULL);
+  if (!isset($block_roles)) {
+    $block_roles = array();
+    $result = db_query('SELECT module, delta, rid FROM {block_role}');
+    foreach ($result as $record) {
+      $block_roles[$record->module][$record->delta][] = $record->rid;
+    }
+  }
+  return $block_roles;
+}
+
+/**
+ * Loads a block object from the database.
+ *
+ * This function returns the first block matching the module and delta
+ * parameters, so it should not be used for theme-specific functionality.
+ *
+ * @param $module
+ *   Name of the module that implements the block to load.
+ * @param $delta
+ *   Unique ID of the block within the context of $module. Pass NULL to return
+ *   an empty block object for $module.
+ *
+ * @return
+ *   A block object.
+ */
+function block_load($module, $delta) {
+    $options = array();
+    $blocks = layout_get_block_info()['block'];
+    foreach ($blocks as $key => $block) {
+        $options['block' . '|' . $key] = $block['info'];
+    }
+    asort($options);
+}
