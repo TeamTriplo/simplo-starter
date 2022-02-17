@@ -67,8 +67,9 @@ function opera_css_alter(&$css) {
 
 function opera_preprocess_block(&$variables) {
   $uuid = $variables['block']->uuid;
-  $variables['region'] = $variables['layout']->getBlockPosition($uuid);
-  // backdrop_set_message($variables['region']);
+  if(isset($variables['layout'])){
+    $variables['region'] = $variables['layout']->getBlockPosition($uuid);
+  }
 }
 
 /**
