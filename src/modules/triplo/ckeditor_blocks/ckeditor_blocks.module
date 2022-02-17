@@ -52,6 +52,10 @@ function ckeditor_blocks_get_block($module, $delta, $check_roles = FALSE) {
   $block->delta = $delta;
   $block->style = "";
 
+  $uuid = new Uuid();
+  $block->uuid = $uuid->generate();
+
+
   // Allow modules to modify the block before it is viewed, via either
   // hook_block_view_alter() or hook_block_view_MODULE_DELTA_alter().
   $block->subject = (empty($block_content['subject'])) ? '' : $block_content['subject'];
@@ -92,11 +96,11 @@ function ckeditor_blocks_blocks_ajax() {
   $options['All'] = 'Select a block';
   $module_blocks = layout_get_block_info();
   // Allow the block list to be altered.
-  $excluded_modules = array('system','devel', 'rules','layout','dashboard','dashboard_plus');
+  $included_modules = array('views','block','node','webform');
   $excluded_deltas = array('content');
   backdrop_alter('ckeditor_blocks_list', $module_blocks);
   foreach ($module_blocks as $module => $blocks) {
-    if(!in_array($module, $excluded_modules)){    
+    if(in_array($module, $included_modules)){    
       if (!empty($blocks)) {
         foreach ($blocks as $delta => $block) {
           if(!in_array($delta, $excluded_deltas)){
