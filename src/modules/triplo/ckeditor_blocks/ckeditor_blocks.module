@@ -36,11 +36,15 @@ function ckeditor_blocks_get_block($module, $delta, $check_roles = FALSE) {
   $views_name = '';
   if($module == 'views'){
     // Get the view name from views block name 
-    $views_delta_arr = explode('-block',$delta);
+    $views_delta_arr = explode('-',$delta);
     if(!empty($views_delta_arr)){
       $views_name = $views_delta_arr[0];
+      $display_id = $views_delta_arr[1];
+      if($display_id == 'block'){
+        $display_id = 'default';
+      }
     }
-    $block_content = views_embed_view($views_name);
+    $block_content = views_embed_view($views_name, $display_id);
   }else{
     $block_content = module_invoke($module, 'block_view', $delta);
   }
