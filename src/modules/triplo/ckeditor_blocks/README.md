@@ -24,7 +24,7 @@ backdropcms.org/guide/modules.
 ## Credits
 
 - Originally created for Drupal by: [tomdude48](https://www.drupal.org/u/tomdude48)
-- Ported to Backdrop by: [mhasan3](https://github.com/mhasan3) with financial support from (sponsor to be named soon)
+- Ported to Backdrop by: [mhasan3](https://github.com/mhasan3) and [rajpaul](https://github.com/rajpaul) with financial support from (sponsor to be named soon)
 
 ## License
 
