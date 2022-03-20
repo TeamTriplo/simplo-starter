@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Rules base classes and interfaces needed for any rule evaluation.
@@ -779,7 +778,9 @@ abstract class RulesPlugin extends RulesExtendable {
         $state->addVariable($name, $args[$name], $info);
       }
       elseif (empty($info['optional']) && $info['type'] != 'hidden') {
-        throw new RulesEvaluationException('Argument %name is missing.', array('%name' => $name), $this, RulesLog::ERROR);
+        throw new RulesEvaluationException('Argument %name is missing.', array(
+          '%name' => $name,
+        ), $this, RulesLog::ERROR);
       }
     }
     return $state;
@@ -1016,7 +1017,9 @@ abstract class RulesPlugin extends RulesExtendable {
       $arg = $state->get($name);
     }
     elseif (empty($info['optional']) && $info['type'] != 'hidden') {
-      throw new RulesEvaluationException('Required parameter %name is missing.', array('%name' => $name), $this, RulesLog::ERROR);
+      throw new RulesEvaluationException('Required parameter %name is missing.', array(
+        '%name' => $name,
+      ), $this, RulesLog::ERROR);
     }
     else {
       $arg = isset($info['default value']) ? $info['default value'] : NULL;
@@ -1025,7 +1028,9 @@ abstract class RulesPlugin extends RulesExtendable {
     }
     // Make sure the given value is set if required (default).
     if (!isset($arg) && empty($info['allow null'])) {
-      throw new RulesEvaluationException('The provided argument for parameter %name is empty.', array('%name' => $name), $this);
+      throw new RulesEvaluationException('The provided argument for parameter %name is empty.', array(
+        '%name' => $name,
+      ), $this);
     }
 
     // Support passing already sanitized values.
@@ -1087,6 +1092,10 @@ abstract class RulesPlugin extends RulesExtendable {
    *   be applied.
    */
   public function applyDataSelector($selector) {
+    // Prevent PHP errors when $selector parameter is not a string.
+    if (!is_string($selector)) {
+      return FALSE;
+    }
     $parts = explode(':', str_replace('-', '_', $selector), 2);
     if (($vars = $this->availableVariables()) && isset($vars[$parts[0]]['type'])) {
       $wrapper = rules_wrap_data(NULL, $vars[$parts[0]], TRUE);
@@ -1589,7 +1598,7 @@ abstract class RulesAbstractPlugin extends RulesPlugin {
         }
       }
     }
-    elseif (!empty($this->itemInfo['faces_cache']) && function_exists($this->elementName)) {
+    elseif (!empty($this->itemInfo['faces_cache']) && isset($this->elementName) && function_exists($this->elementName)) {
       // We don't have any info, so just add the name as execution callback.
       $this->override(array('execute' => $this->elementName));
     }
@@ -1806,7 +1815,6 @@ abstract class RulesAbstractPlugin extends RulesPlugin {
       foreach ($this->faces as $interface) {
         $methods = $file_names = array();
         $includes = self::getIncludeFiles($info['module']);
-
         foreach (get_class_methods($interface) as $method) {
           if (isset($info['callbacks'][$method]) && ($function = $info['callbacks'][$method])) {
             $methods[$method][0] = $function;
@@ -1839,7 +1847,7 @@ abstract class RulesAbstractPlugin extends RulesPlugin {
    * callbacks may reside in that file.
    */
   protected function loadBasicInclude() {
-    static $included = array();
+    $included = &backdrop_static(__METHOD__, array());
 
     if (isset($this->info['module']) && !isset($included[$this->info['module']])) {
       $module = $this->info['module'];
@@ -1852,7 +1860,7 @@ abstract class RulesAbstractPlugin extends RulesPlugin {
    * Makes sure all supported destinations are included.
    */
   public static function includeFiles() {
-    static $included;
+    $included = &backdrop_static(__METHOD__);
 
     if (!isset($included)) {
       foreach (module_implements('rules_file_info') as $module) {
@@ -1904,9 +1912,8 @@ abstract class RulesAbstractPlugin extends RulesPlugin {
   }
 
   protected function getFileName($function, $includes) {
-    static $filenames;
+    $filenames = &backdrop_static(__METHOD__);
     if (!isset($filenames) || !array_key_exists($function, $filenames)) {
-      module_load_include('inc','rules','tests/rules_test.test');
       $filenames[$function] = NULL;
       $reflector = new ReflectionFunction($function);
       // On windows the path contains backslashes instead of slashes, fix that.
@@ -2203,7 +2210,9 @@ abstract class RulesActionHandlerBase extends RulesPluginHandlerBase implements 
 class RulesAbstractPluginDefaults extends RulesPluginHandlerBase implements RulesPluginImplInterface {
 
   public function execute() {
-    throw new RulesEvaluationException($this->object->getPluginName() . ": Execution implementation is missing.", array(), $this->object, RulesLog::ERROR);
+    throw new RulesEvaluationException("@plugin_name: Execution implementation is missing.", array(
+      '@plugin_name' => $this->object->getPluginName(),
+    ), $this->object, RulesLog::ERROR);
   }
 
 }
@@ -2213,10 +2222,12 @@ class RulesAbstractPluginDefaults extends RulesPluginHandlerBase implements Rule
  */
 class RulesRecursiveElementIterator extends ArrayIterator implements RecursiveIterator {
 
+  #[\ReturnTypeWillChange]
   public function getChildren() {
     return $this->current()->getIterator();
   }
 
+  #[\ReturnTypeWillChange]
   public function hasChildren() {
     return $this->current() instanceof IteratorAggregate;
   }
@@ -2255,6 +2266,7 @@ abstract class RulesContainerPlugin extends RulesPlugin implements IteratorAggre
    *
    * @return RulesRecursiveElementIterator
    */
+  #[\ReturnTypeWillChange]
   public function getIterator() {
     return new RulesRecursiveElementIterator($this->children);
   }
