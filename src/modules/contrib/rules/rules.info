@@ -4,12 +4,14 @@ package = Rules
 backdrop = 1.x
 type = module
 
-dependencies[] = entity_plus
+dependencies[] = system (>= 1.21.0)
+dependencies[] = entity_plus (>= 1.0.14)
 dependencies[] = entity_ui
+dependencies[] = entity_token (>= 2.0.0)
 
 stylesheets[all][] = rules.css
 
-; Added by Backdrop CMS packaging script on 2022-01-15
+; Added by Backdrop CMS packaging script on 2022-03-07
 project = rules
-version = 1.x-2.2.0
-timestamp = 1642305013
+version = 1.x-2.3.1
+timestamp = 1646685470
