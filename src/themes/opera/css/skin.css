@@ -4,15 +4,8 @@
  *
  * Component styles in this file are simple overrides for easy updating.
  */
+
 body {
-  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-  /**
-   * Default font size for site should be set on body element in rem units.
-   * This is better for some accessibility technologies. Although it's not true
-   * under all circumstances, think of 1rem as being equal to 16px.
-   */
-  font-size: 1.25rem;
-  line-height: 1.6;
   background: #ffffff;
 }
 
@@ -77,7 +70,15 @@ table [aria-sort="ascending"] a:after {
 }
 
 /**
- * Fieldsets.
+ * Fields
+ */
+
+.field {
+  margin-bottom: 1rem;
+}
+
+/**
+ * Fieldsets
  */
 fieldset {
   background-color: #ffffff;
@@ -85,7 +86,7 @@ fieldset {
 }
 
 legend {
-  font-size: 1.1875em;
+  font-size: 1.1875rem;
   font-weight: normal;
 }
 
@@ -154,9 +155,9 @@ fieldset .fieldset-legend {
   text-decoration: none;
 }
 
-@media (min-width: 34em) {
+@media (min-width: 34rem) {
   .l-header-inner {
-    min-height: 4rem;
+    min-height: 4rrem;
   }
 }
 
@@ -181,14 +182,14 @@ fieldset .fieldset-legend {
   /* BG color for slogan, and logo/site name if they don't have a bg */
 }
 
-@media (min-width: 34em) {
+@media (min-width: 34rem) {
   .header-identity-wrapper {
     /* Helps center .header-identity-wrapper on smaller screens */
     display: inline-block;
   }
 }
 
-@media (min-width: 48em) {
+@media (min-width: 48rem) {
   .header-identity-wrapper {
     text-align: left;
   }
@@ -198,15 +199,15 @@ fieldset .fieldset-legend {
   font-size: 1.25rem;
 }
 
-@media (min-width: 34em) {
+@media (min-width: 34rem) {
   .header-site-name-wrapper {
-    font-size: 1.5em;
+    font-size: 1.5rem;
   }
 }
 
-@media (min-width: 62em) {
+@media (min-width: 62rem) {
   .header-site-name-wrapper {
-    font-size: 1.75em;
+    font-size: 1.75rem;
   }
 }
 
@@ -231,7 +232,7 @@ fieldset .fieldset-legend {
   text-align: center;
 }
 
-@media (min-width: 34em) {
+@media (min-width: 34rem) {
   .header-site-name-link {
     display: inline-block;
   }
@@ -250,7 +251,7 @@ fieldset .fieldset-legend {
   text-align: center;
 }
 
-@media (min-width: 34em) {
+@media (min-width: 34rem) {
   .header-site-slogan {
     height: 3.5rem;
     float: left;
@@ -288,15 +289,15 @@ fieldset .fieldset-legend {
   font-size: 1em;
 }
 
-@media (min-width: 34em) {
+@media (min-width: 34rem) {
   .l-header .menu > li {
     font-size: 1.125em;
   }
 }
 
-@media (min-width: 62em) {
+@media (min-width: 62rem) {
   .l-header .menu > li {
-    font-size: 1.375em;
+    font-size: 1.375rem;
   }
   .header-menu a {
     padding: 2.43rem 1.5rem;
@@ -325,7 +326,7 @@ fieldset .fieldset-legend {
   color: #bbbbbb;
 }
 
-@media (min-width: 48em) {
+@media (min-width: 48rem) {
   .menu-dropdown a.disabled {
     color: #bbbbbb;
   }
@@ -412,8 +413,8 @@ fieldset .fieldset-legend {
   border-top: 0.25rem solid #bbbbbc;
   /* If footer text wraps, remove line-height & add padding styles to blocks */
   line-height: 3;
-  padding: 0.5em 0 1em;
-  margin: 5em 0 0;
+  padding: 0.5rem 0 1rem;
+  margin: 5rem 0 0;
   background-color: #fffeff;
   color: #000100;
 }
@@ -542,15 +543,16 @@ button.form-submit,
 .button:focus,
 input.form-submit:hover,
 input.form-submit:focus {
-  color: #333333;
-  background: white;
-  border: 2px solid grey;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 .button:active,
 input.form-submit:active {
-  color: #333333;
-  background: #d5d5d5;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.form-submit,
@@ -559,9 +561,9 @@ button.button-primary,
 .ui-state-default,
 .ui-widget-content .ui-state-default,
 .ui-widget-header .ui-state-default {
-  color: white;
-  background: var(--color-one);
-  border: none;
+  color: var(--link-button);
+  background: var(--bg-button);
+  border: 2px solid var(--bg-button);
 }
 
 body.page .layout div.l-wrapper a.button {
@@ -572,21 +574,23 @@ body.page .layout div.l-wrapper a.button {
 body.page .layout div.l-wrapper a.button:hover {
   color: var(--bg-button);
   background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.button-primary:hover,
 input.button-primary:focus,
 button.button-primary:hover,
 button.button-primary:focus {
-  color: green;
-  background-color: #114a75;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.button-primary:active,
 button.button-primary:active {
-  box-shadow: inset 0 0 0 0.125em #114a75;
-  background-color: #0074bd;
-  color: white;
+  color: var(--bg-button);
+  background-color: var(--link-button);
+  border: 2px solid var(--bg-button);
 }
 
 input.button-secondary,

@@ -119,10 +119,6 @@
   position: relative;
 }
 
-.block-hero-image .container {
-  position: absolute;
-  bottom: 0px;
-}
 .block-hero-image .block-title {
   font-weight: 600;
   font-size: 50px;

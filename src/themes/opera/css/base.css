@@ -83,62 +83,14 @@ code p {
   padding: 0;
 }
 
-p {
-  margin: 0 0 .7rem;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  line-height: 1.4;
-  margin: 0 0 0.5rem;
-}
-
-h1,
-h2 {
-  font-weight: 200;
-}
-
-h1 {
-  font-size: 2.25rem;
-}
-
-h2 {
-  font-size: 1.8125rem;
-}
-
-h3 {
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-h4 {
-  font-size: 1.4375rem;
-}
-
-h5 {
-  font-size: 1.25rem;
-}
-
-h6 {
-  font-size: 1rem;
-}
-
-h1 a,
-h2 a,
-h3 a,
-h4 a,
-h5 a,
-h6 a {
-  text-decoration: none;
-}
-
 img {
   max-width: 100%;
   height: auto;
+  margin-bottom: 2rem;
+}
+
+.l-wrapper img {
+  border: 1px solid grey;
 }
 
 iframe {
@@ -287,10 +239,6 @@ header .block:first-of-type {
 
 .breadcrumb li a, .breadcrumb li span {
   padding: 0.5em 1.7em .5em 0em;
-}
-
-h2.block-title {
-  margin-bottom: 2.5rem;
 }
 
 .form-text {
