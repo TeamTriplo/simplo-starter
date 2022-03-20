@@ -240,26 +240,9 @@ function _ckeditor_blocks_roles() {
   return $block_roles;
 }
 
-/**
- * Loads a block object from the database.
- *
- * This function returns the first block matching the module and delta
- * parameters, so it should not be used for theme-specific functionality.
- *
- * @param $module
- *   Name of the module that implements the block to load.
- * @param $delta
- *   Unique ID of the block within the context of $module. Pass NULL to return
- *   an empty block object for $module.
- *
- * @return
- *   A block object.
- */
-function block_load($module, $delta) {
-    $options = array();
-    $blocks = layout_get_block_info()['block'];
-    foreach ($blocks as $key => $block) {
-        $options['block' . '|' . $key] = $block['info'];
-    }
-    asort($options);
+// Disabling entity caching for all nodes.
+// @TODO Still looking for better solution.
+
+function ckeditor_blocks_entity_info_alter(&$info) {
+  $info['node']['entity cache'] = FALSE;
 }
