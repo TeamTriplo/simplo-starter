@@ -1,0 +1,198 @@
+<?php
+/**
+ * @file
+ * A short description of your module.
+ */
+
+
+
+/**
+ * Implements hook_config_info().
+ */
+function project_feed_config_info() {
+  $prefixes['project_feed.settings'] = array(
+    'label' => t('github API settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_menu().
+ */
+
+function project_feed_menu() {
+  $items = array();
+
+  $items['admin/config/services/projects/settings'] = array(
+    'title' => 'Backdrop Projects',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('project_feed_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Project Feed Configuration.',
+    'file' => 'project_feed.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/devel/project_feed'] = array(
+    'title' => 'Project Feed',
+    'description' => 'Create reusable blocks that can be placed in layouts.',
+    'page callback' => 'project_feed_stuff',
+    'access arguments' => array('administer blocks'),
+  );
+  return $items;
+}
+
+/**
+ * Custom Code
+ */
+function project_feed_stuff() {
+  $config = config('project_feed.settings');
+
+  $projects_available = TRUE;
+  $query_counter = 1;
+  $page_counter = 0;
+  $data = array();
+  $pf_user_agent = $config->get('username');
+  $pf_github_token = $config->get('github_auth_token');
+
+  while($projects_available == TRUE) {
+    dpm('Projects = ' . $projects_available);
+
+    $page_counter++;
+
+    dpm("Page Counter = " . $page_counter . " Query Counter " . $query_counter);
+
+    // Get information about Backdrop Contrib repos (in this case, the first 3 results).
+    $ch = curl_init('https://api.github.com/orgs/backdrop-contrib/repos?per_page=3&page=' . $page_counter);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+      'Accept: application/vnd.github.VERSION.raw',
+      'User-Agent: ' . $pf_user_agent,
+      'Authorization: ' . $pf_github_token,
+    ));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    $response = curl_exec($ch);
+
+    curl_close($ch);
+    $repos = json_decode($response, TRUE);
+
+    dpm($repos);
+
+    $query_counter++;
+    dpm('query' . $query_counter);
+
+    if (!$repos || $query_counter > 5) {
+      dpm('Projects no longer available');
+      $projects_available = FALSE;
+    } 
+
+    if (!$repos || $query_counter > 5) {
+      dpm('Projects no longer available');
+      break;
+    } 
+
+    foreach ($repos as $repo) {
+      if (!project_feed_project_check($repo['name'])) {
+        // Store some data from GitHub.
+        $data[$repo['name']] = array(
+          'name' => $repo['name'],
+          'description' => $repo['description'],
+          'stars' => $repo['stargazers_count'],
+          'forks' => $repo['forks_count'],
+          'default_branch' => $repo['default_branch'],
+          'open_issues_count' => $repo['open_issues_count'],
+          'updated' => $repo['updated_at'],
+          'created' => $repo['pushed_at'],
+        );
+        dpm('Added to data   ' . $repo['name']);
+
+        // Get information about each project/repo from its .info file.
+        $ch = curl_init('https://api.github.com/repos/backdrop-contrib/' . $repo['name'] .'/contents/' . $repo['name'] . '.info');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+          'Accept: application/vnd.github.VERSION.raw',
+          'User-Agent: ' . $pf_user_agent,
+          'Authorization: ' . $pf_github_token,
+        ));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        $info = backdrop_parse_info_format($response);
+        $query_counter++;
+
+        dpm(" Request Sent for   " . $repo['name'] . " Query = " . $query_counter);
+
+        // Store some data from the .info file.
+        $data[$repo['name']]['package'] = $info['package'];
+        $data[$repo['name']]['configure'] = $info['configure'];
+      }
+    }
+
+    // Display collected data.
+    // dpm($data);
+
+    foreach ($data as $value) { 
+      $page = new Node(
+        array(
+          'title' => $value['name'],
+          'body' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'value' => $value['description'],
+                'format' => 'filtered_html',
+              ),
+            ),
+          ),
+          'field_open_issues' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'value' => $value['open_issues_count'],
+              ),
+            ),
+          ),
+          'field_package' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'value' => $value['package'],
+              ),
+            ),
+          ),
+          'field_updated' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'value' => strtotime($value['updated']),
+              ),
+            ),
+          ),
+          'field_created' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'value' => strtotime($value['created']),
+              ),
+            ),
+          ),
+          'uid' => 1,
+          'status' => 1,
+          'type' => 'project',
+        )
+      );
+      // dpm($value);
+      $page->save();
+    }
+  }
+}
+
+function project_feed_project_check($var) {
+  // Checking to see if "About" node still exists
+  dpm("checking for    " . $var);
+  $query = new EntityFieldQuery();
+  $entities = $query->entityCondition('entity_type', 'node')
+    ->propertyCondition('type', 'project')
+    ->propertyCondition('title', $var)
+    ->propertyCondition('status', 1)
+    ->range(0,1)
+    ->execute();
+  return($entities);
+}
+
+
