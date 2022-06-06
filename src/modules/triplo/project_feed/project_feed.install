@@ -11,3 +11,19 @@
 //   // Do update-y things here.
 //   // See: https://docs.backdropcms.org/api/backdrop/core%21modules%21system%21system.api.php/function/hook_update_N/1
 // }
+
+  function project_feed_install() {
+
+    $new_terms = array('module', 'theme', 'layout');
+
+    // Adds all new terms to 'tags' vocabulary
+    foreach ($new_terms as $new_term) {
+      $term = entity_create('taxonomy_term', array(
+        'name' => $new_term,
+        'description' => '',
+        'format' => 1,
+        'vocabulary' => 'project_type',
+      ));
+      taxonomy_term_save($term);
+    }
+  }

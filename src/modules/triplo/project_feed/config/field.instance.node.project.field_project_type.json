@@ -1,0 +1,31 @@
+{
+    "_config_name": "field.instance.node.project.field_project_type",
+    "field_name": "field_project_type",
+    "entity_type": "node",
+    "bundle": "project",
+    "label": "Project Type",
+    "widget": {
+        "weight": "1",
+        "type": "options_select",
+        "module": "options",
+        "active": 1,
+        "settings": []
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "taxonomy_term_reference_link",
+            "settings": [],
+            "module": "taxonomy",
+            "weight": 5
+        }
+    }
+}

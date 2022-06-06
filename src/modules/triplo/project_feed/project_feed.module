@@ -9,6 +9,8 @@
 /**
  * Implements hook_config_info().
  */
+
+// @TODO - What does this do?
 function project_feed_config_info() {
   $prefixes['project_feed.settings'] = array(
     'label' => t('github API settings'),
@@ -35,66 +37,68 @@ function project_feed_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['admin/devel/project_feed'] = array(
-    'title' => 'Project Feed',
+  $items['admin/config/services/projects/settings/pull_projects'] = array(
+    'title' => 'Pull more projects',
     'description' => 'Create reusable blocks that can be placed in layouts.',
-    'page callback' => 'project_feed_stuff',
+    'page callback' => 'project_feed_code',
     'access arguments' => array('administer blocks'),
   );
   return $items;
 }
 
 /**
- * Custom Code
+ * This is the custom code that does the main work of this module.
+ * This is triggeed by "pull more projects" menu link (admin)
  */
-function project_feed_stuff() {
+function project_feed_code() {
   $config = config('project_feed.settings');
 
-  $projects_available = TRUE;
-  $query_counter = 1;
-  $page_counter = 0;
-  $data = array();
+  // Putting config settings into variables.
   $pf_user_agent = $config->get('username');
   $pf_github_token = $config->get('github_auth_token');
+  $pf_queries_per_pull = $config->get('queries_per_pull');
 
+  // Setting some variables 
+  $projects_available = TRUE; // Turns false when all projects have been checked
+  $query_counter = 1;         // Counter to limit number of Github requests
+  $page_counter = 0;          // Use to keep track of current page of projects
+  $projects_added = 0;        // Keeps track of new project nodes
+  $debug = 0;                 // Used for debugging
+
+  // This while loop is grabbing batches of project data and checking to see if 
+  // nodes already exist
   while($projects_available == TRUE) {
-    dpm('Projects = ' . $projects_available);
-
     $page_counter++;
 
-    dpm("Page Counter = " . $page_counter . " Query Counter " . $query_counter);
-
-    // Get information about Backdrop Contrib repos (in this case, the first 3 results).
-    $ch = curl_init('https://api.github.com/orgs/backdrop-contrib/repos?per_page=3&page=' . $page_counter);
+    // Get information about Backdrop Contrib repos 
+    // @TODO "queries per pull" should be "projects per query"
+    $ch = curl_init('https://api.github.com/orgs/backdrop-contrib/repos?per_page=' . $pf_queries_per_pull . '&page=' . $page_counter);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
       'Accept: application/vnd.github.VERSION.raw',
       'User-Agent: ' . $pf_user_agent,
-      'Authorization: ' . $pf_github_token,
+      'Authorization: token ' . $pf_github_token,
     ));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     $response = curl_exec($ch);
-
     curl_close($ch);
     $repos = json_decode($response, TRUE);
 
-    dpm($repos);
-
+    // Originally used to limit the number of queries during testing
+    // May not be necessary in future.
     $query_counter++;
-    dpm('query' . $query_counter);
 
-    if (!$repos || $query_counter > 5) {
-      dpm('Projects no longer available');
+    if (!$repos || $query_counter > 35) {
       $projects_available = FALSE;
     } 
 
-    if (!$repos || $query_counter > 5) {
-      dpm('Projects no longer available');
-      break;
-    } 
+    // Resets the $data array to empty
+    // Beginning to build an array of new nodes
+    $data = array();
 
     foreach ($repos as $repo) {
+      // Checks to see if node already exists on site
       if (!project_feed_project_check($repo['name'])) {
-        // Store some data from GitHub.
+        // Grabs the Gibhub data that want to keep for new node
         $data[$repo['name']] = array(
           'name' => $repo['name'],
           'description' => $repo['description'],
@@ -104,33 +108,55 @@ function project_feed_stuff() {
           'open_issues_count' => $repo['open_issues_count'],
           'updated' => $repo['updated_at'],
           'created' => $repo['pushed_at'],
+          'field_home' => $repo['homepage'],
+          'field_github' => $repo['svn_url'],
+          'releases_url' => $repo['releases_url'],
         );
-        dpm('Added to data   ' . $repo['name']);
+
+
 
         // Get information about each project/repo from its .info file.
         $ch = curl_init('https://api.github.com/repos/backdrop-contrib/' . $repo['name'] .'/contents/' . $repo['name'] . '.info');
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
           'Accept: application/vnd.github.VERSION.raw',
           'User-Agent: ' . $pf_user_agent,
-          'Authorization: ' . $pf_github_token,
+          'Authorization: token ' . $pf_github_token,
         ));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         $response = curl_exec($ch);
         curl_close($ch);
         $info = backdrop_parse_info_format($response);
+
+        if (isset($repo['releases_url'])) {
+          $var = $repo['name'];
+          $releases = project_feed_check_releases($var);
+          $data[$repo['name']]['releases'] = $releases;
+        } 
+
         $query_counter++;
 
-        dpm(" Request Sent for   " . $repo['name'] . " Query = " . $query_counter);
-
-        // Store some data from the .info file.
-        $data[$repo['name']]['package'] = $info['package'];
-        $data[$repo['name']]['configure'] = $info['configure'];
+        // Pulls data from .info file into array for new node.
+        if (isset($info['package'])) {
+          $data[$repo['name']]['package'] = $info['package'];
+        } else {
+          $data[$repo['name']]['package'] = '';
+        }
+        if (isset($info['configure'])) {
+          $data[$repo['name']]['configure'] = $info['configure'];
+        } else {
+          $data[$repo['name']]['configure'] = '';
+        }
+        if (isset($info['type'])) {
+          $data[$repo['name']]['type_tid'] = $info['type'];
+        } else {
+          $data[$repo['name']]['type_tid'] = '';
+        }
       }
     }
 
-    // Display collected data.
-    // dpm($data);
+    dpm($data);
 
+    // Creates nodes for projects that don't have one already
     foreach ($data as $value) { 
       $page = new Node(
         array(
@@ -171,20 +197,49 @@ function project_feed_stuff() {
               ),
             ),
           ),
+          'field_github' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'url' => $value['field_github'],
+              ),
+            ),
+          ),
+          'field_releases' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'value' => $value['releases'],
+              ),
+            ),
+          ),
+          'field_home_page' => array(
+            LANGUAGE_NONE => array(
+              array(
+                'url' => $value['field_home'],
+              ),
+            ),
+          ),
           'uid' => 1,
           'status' => 1,
           'type' => 'project',
         )
       );
-      // dpm($value);
+
+      // Find tid for each term and add term to node
+      $temp_tag = taxonomy_term_load_multiple_by_name($value['type_tid'], 'project_type');
+      $term_tid = array_keys($temp_tag);
+      if (isset($term_tid[0])) {
+        $page->field_project_type['und'][0]['tid'] = $term_tid[0];
+      }
       $page->save();
+      $projects_added++;
     }
   }
+  //Reports back on the number of new nodes created.
+  backdrop_set_message($projects_added . ' projects have been added.', 'info');
 }
 
+// Checks to see if nod ealready exists
 function project_feed_project_check($var) {
-  // Checking to see if "About" node still exists
-  dpm("checking for    " . $var);
   $query = new EntityFieldQuery();
   $entities = $query->entityCondition('entity_type', 'node')
     ->propertyCondition('type', 'project')
@@ -193,6 +248,30 @@ function project_feed_project_check($var) {
     ->range(0,1)
     ->execute();
   return($entities);
+}
+
+// Check for releases
+function project_feed_check_releases($var) {
+  $config = config('project_feed.settings');
+
+  // Putting config settings into variables.
+  $pf_user_agent = $config->get('username');
+  $pf_github_token = $config->get('github_auth_token');
+  $pf_queries_per_pull = $config->get('queries_per_pull');
+
+  $ch = curl_init('https://api.github.com/repos/backdrop-contrib/' . $var .'/releases');
+  curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Accept: application/vnd.github.VERSION.raw',
+    'User-Agent: ' . $pf_user_agent,
+    'Authorization: token ' . $pf_github_token,
+  ));
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+  $response = curl_exec($ch);
+  curl_close($ch);
+  $release_info = json_decode($response, TRUE);
+
+  $var = count($release_info);
+  return($var);
 }
 
 

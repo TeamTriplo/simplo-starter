@@ -4,16 +4,14 @@ description = Pulls in a feed of modules from BackdropCMS.org
 backdrop = 1.x
 
 ; Link to your module's configuration page.
-configure = admin/config/system/my-module
+configure = admin/config/services/projects/settings
 
 ; Add custom CSS & JS files.
 stylesheets[all][] = css/project_feed.css
 scripts[] = js/project_feed.js
 
 ; List any dependencies here.
-dependencies[] = contact
 
 ; Find suggested packages and tags at: https://docs.backdropcms.org/documentation/module-packages-and-tags
 package = User interface
 tags[] = Administration
-tags[] = Images
