@@ -118,7 +118,7 @@ function project_feed_code() {
     // May not be necessary in future.
     $query_counter++;
 
-    if (!$repos || $query_counter > 105) {
+    if (!$repos || $query_counter > 1000) {
       $projects_available = FALSE;
     } 
 
