@@ -12,6 +12,12 @@ scripts[] = js/project_feed.js
 
 ; List any dependencies here.
 
+dependencies[] = feeds
+dependencies[] = feeds_ui
+dependencies[] = feeds_import
+dependencies[] = job_scheduler
+dependencies[] = feeds_tamper
+
 ; Find suggested packages and tags at: https://docs.backdropcms.org/documentation/module-packages-and-tags
 package = User interface
 tags[] = Administration

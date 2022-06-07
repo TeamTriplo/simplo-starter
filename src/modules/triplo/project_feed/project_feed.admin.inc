@@ -26,11 +26,11 @@ function project_feed_settings() {
     '#disabled' => !empty($client_id) ? TRUE : FALSE,
   );
 
-  $form['queries_per_pull'] = array(
+  $form['projects_per_query'] = array(
     '#type' => 'textfield',
-    '#title' => t('Queries per pull'),
-    '#description' => t('How many requests to make per pull. This will include queries for content that already exists and does not create new nodes.'),
-    '#default_value' => $config->get('queries_per_pull'),
+    '#title' => t('Projects per query'),
+    '#description' => t('How may projects to request per query.'),
+    '#default_value' => $config->get('projects_per_query'),
     '#disabled' => !empty($client_id) ? TRUE : FALSE,
   );
 
@@ -51,7 +51,7 @@ function project_feed_settings_submit($form, &$form_state) {
   // Store only if value not stored in settings.php.
   $config->set('username', $form_state['values']['username']);
   $config->set('github_auth_token', $form_state['values']['github_auth_token']);
-  $config->set('queries_per_pull', $form_state['values']['queries_per_pull']);
+  $config->set('projects_per_query', $form_state['values']['projects_per_query']);
 
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));

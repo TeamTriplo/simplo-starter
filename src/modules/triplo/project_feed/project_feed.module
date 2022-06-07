@@ -2,6 +2,10 @@
 /**
  * @file
  * A short description of your module.
+ * 
+ * Used to pull data from Github about Backdrop CMS contrib 
+ * projects.
+ * 
  */
 
 
@@ -56,7 +60,7 @@ function project_feed_code() {
   // Putting config settings into variables.
   $pf_user_agent = $config->get('username');
   $pf_github_token = $config->get('github_auth_token');
-  $pf_queries_per_pull = $config->get('queries_per_pull');
+  $pf_projects_per_query = $config->get('projects_per_query');
 
   // Setting some variables 
   $projects_available = TRUE; // Turns false when all projects have been checked
@@ -65,6 +69,33 @@ function project_feed_code() {
   $projects_added = 0;        // Keeps track of new project nodes
   $debug = 0;                 // Used for debugging
 
+
+  $project_name = 'project_list.csv';               
+  $txt = '';
+  $file = file_save_data($txt,'public://' . "project-list.csv", FILE_EXISTS_REPLACE);
+  $txt = fopen('public://project-list.csv', 'w');
+  $headers = array(
+    'title',
+    'github_name',
+    'project_type',
+    'body',
+    'text_format',
+    'backdrop',
+    'screenshot',
+    'package',
+    'dependencies',
+    'recommends',
+    'updated',
+    'created',
+    'github',
+    'tags',
+    'home',
+    'releases',
+    'open_issues',
+    'forks',
+  );
+  fputcsv($txt, $headers);
+
   // This while loop is grabbing batches of project data and checking to see if 
   // nodes already exist
   while($projects_available == TRUE) {
@@ -72,7 +103,7 @@ function project_feed_code() {
 
     // Get information about Backdrop Contrib repos 
     // @TODO "queries per pull" should be "projects per query"
-    $ch = curl_init('https://api.github.com/orgs/backdrop-contrib/repos?per_page=' . $pf_queries_per_pull . '&page=' . $page_counter);
+    $ch = curl_init('https://api.github.com/orgs/backdrop-contrib/repos?per_page=' . $pf_projects_per_query . '&page=' . $page_counter);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
       'Accept: application/vnd.github.VERSION.raw',
       'User-Agent: ' . $pf_user_agent,
@@ -87,7 +118,7 @@ function project_feed_code() {
     // May not be necessary in future.
     $query_counter++;
 
-    if (!$repos || $query_counter > 35) {
+    if (!$repos || $query_counter > 105) {
       $projects_available = FALSE;
     } 
 
@@ -96,158 +127,129 @@ function project_feed_code() {
     $data = array();
 
     foreach ($repos as $repo) {
-      // Checks to see if node already exists on site
-      if (!project_feed_project_check($repo['name'])) {
-        // Grabs the Gibhub data that want to keep for new node
-        $data[$repo['name']] = array(
-          'name' => $repo['name'],
-          'description' => $repo['description'],
-          'stars' => $repo['stargazers_count'],
-          'forks' => $repo['forks_count'],
-          'default_branch' => $repo['default_branch'],
-          'open_issues_count' => $repo['open_issues_count'],
-          'updated' => $repo['updated_at'],
-          'created' => $repo['pushed_at'],
-          'field_home' => $repo['homepage'],
-          'field_github' => $repo['svn_url'],
-          'releases_url' => $repo['releases_url'],
-        );
+      // Grabs the Gibhub data that want to keep for new node
+      $data[$repo['name']] = array(
+        'name' => $repo['name'],
+        'description' => $repo['description'],
+        'stars' => $repo['stargazers_count'],
+        'forks' => $repo['forks_count'],
+        'default_branch' => $repo['default_branch'],
+        'open_issues_count' => $repo['open_issues_count'],
+        'updated' => $repo['updated_at'],
+        'created' => $repo['pushed_at'],
+        'field_home' => $repo['homepage'],
+        'field_github' => $repo['svn_url'],
+        'releases_url' => $repo['releases_url'],
+      );
 
+      // Get information about each project/repo from its .info file.
+      $ch = curl_init('https://api.github.com/repos/backdrop-contrib/' . $repo['name'] .'/contents/' . $repo['name'] . '.info');
+      curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Accept: application/vnd.github.VERSION.raw',
+        'User-Agent: ' . $pf_user_agent,
+        'Authorization: token ' . $pf_github_token,
+      ));
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+      $response = curl_exec($ch);
+      curl_close($ch);
+      $info = backdrop_parse_info_format($response);
 
+      if (isset($repo['releases_url'])) {
+        $var = $repo['name'];
+        $releases = project_feed_check_releases($var);
+        $data[$repo['name']]['releases'] = $releases;
+      } 
 
-        // Get information about each project/repo from its .info file.
-        $ch = curl_init('https://api.github.com/repos/backdrop-contrib/' . $repo['name'] .'/contents/' . $repo['name'] . '.info');
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-          'Accept: application/vnd.github.VERSION.raw',
-          'User-Agent: ' . $pf_user_agent,
-          'Authorization: token ' . $pf_github_token,
-        ));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        $response = curl_exec($ch);
-        curl_close($ch);
-        $info = backdrop_parse_info_format($response);
+      $query_counter++;
 
-        if (isset($repo['releases_url'])) {
-          $var = $repo['name'];
-          $releases = project_feed_check_releases($var);
-          $data[$repo['name']]['releases'] = $releases;
-        } 
-
-        $query_counter++;
-
-        // Pulls data from .info file into array for new node.
-        if (isset($info['package'])) {
-          $data[$repo['name']]['package'] = $info['package'];
-        } else {
-          $data[$repo['name']]['package'] = '';
-        }
-        if (isset($info['configure'])) {
-          $data[$repo['name']]['configure'] = $info['configure'];
-        } else {
-          $data[$repo['name']]['configure'] = '';
-        }
-        if (isset($info['type'])) {
-          $data[$repo['name']]['type_tid'] = $info['type'];
-        } else {
-          $data[$repo['name']]['type_tid'] = '';
-        }
+      // Pulls data from .info file into array for new node.
+      if (isset($info['name'])) {
+        $data[$repo['name']]['title'] = $info['name'];
+      } else {
+        $data[$repo['name']]['title'] = '';
+      }
+      if (isset($info['backdrop'])) {
+        $data[$repo['name']]['backdrop'] = $info['backdrop'];
+      } else {
+        $data[$repo['name']]['backdrop'] = '';
+      }
+      if (isset($info['tags'])) {
+        $data[$repo['name']]['tags'] = $info['tags'];
+      } else {
+        $data[$repo['name']]['tags'] = '';
+      }
+      if (isset($info['recommends'])) {
+        $data[$repo['name']]['recommends'] = $info['recommends'];
+      } else {
+        $data[$repo['name']]['recommends'] = '';
+      }
+      if (isset($info['screenshot'])) {
+        $data[$repo['name']]['screenshot'] = $info['screenshot'];
+      } else {
+        $data[$repo['name']]['screenshot'] = '';
+      }
+      if (isset($info['dependencies'])) {
+        $data[$repo['name']]['dependencies'] = $info['dependencies'];
+      } else {
+        $data[$repo['name']]['dependencies'] = '';
+      }
+      if (isset($info['package'])) {
+        $data[$repo['name']]['package'] = $info['package'];
+      } else {
+        $data[$repo['name']]['package'] = '';
+      }
+      if (isset($info['configure'])) {
+        $data[$repo['name']]['configure'] = $info['configure'];
+      } else {
+        $data[$repo['name']]['configure'] = '';
+      }
+      if (isset($info['type'])) {
+        $data[$repo['name']]['type_tid'] = $info['type'];
+      } else {
+        $data[$repo['name']]['type_tid'] = '';
       }
     }
-
-    dpm($data);
 
     // Creates nodes for projects that don't have one already
     foreach ($data as $value) { 
-      $page = new Node(
-        array(
-          'title' => $value['name'],
-          'body' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'value' => $value['description'],
-                'format' => 'filtered_html',
-              ),
-            ),
-          ),
-          'field_open_issues' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'value' => $value['open_issues_count'],
-              ),
-            ),
-          ),
-          'field_package' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'value' => $value['package'],
-              ),
-            ),
-          ),
-          'field_updated' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'value' => strtotime($value['updated']),
-              ),
-            ),
-          ),
-          'field_created' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'value' => strtotime($value['created']),
-              ),
-            ),
-          ),
-          'field_github' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'url' => $value['field_github'],
-              ),
-            ),
-          ),
-          'field_releases' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'value' => $value['releases'],
-              ),
-            ),
-          ),
-          'field_home_page' => array(
-            LANGUAGE_NONE => array(
-              array(
-                'url' => $value['field_home'],
-              ),
-            ),
-          ),
-          'uid' => 1,
-          'status' => 1,
-          'type' => 'project',
-        )
-      );
-
-      // Find tid for each term and add term to node
       $temp_tag = taxonomy_term_load_multiple_by_name($value['type_tid'], 'project_type');
       $term_tid = array_keys($temp_tag);
       if (isset($term_tid[0])) {
-        $page->field_project_type['und'][0]['tid'] = $term_tid[0];
+        $field_project_type = $term_tid[0];
       }
-      $page->save();
-      $projects_added++;
+
+      $tag_list = implode(', ' ,$value['tags']);
+
+
+      $project = array(
+        'title' => $value['title'],
+        'github_name' => $value['name'],
+        'field_project_type' => $field_project_type,
+        'body' => $value['description'],
+        'text_format' => 'filtered_html',
+        'backdrop' => $value['backdrop'],
+        'screenshot' => $value['screenshot'],
+        'field_package' => $value['package'],
+        'dependencies' => $value['dependencies'],
+        'recommends' => $value['recommends'],
+        'field_updated' => strtotime($value['updated']),
+        'field_created' => strtotime($value['created']),
+        'field_github' => $value['field_github'],
+        'tags' => $tag_list,
+        'field_home' => $value['field_home'],
+        'field_releases' => $value['releases'],
+        'open_issues' => $value['open_issues_count'],
+        'forks' => $value['forks'],
+      );
+
+      dpm($project['tags']);
+
+      fputcsv($txt, $project);
     }
   }
-  //Reports back on the number of new nodes created.
-  backdrop_set_message($projects_added . ' projects have been added.', 'info');
-}
+  fclose($txt);
 
-// Checks to see if nod ealready exists
-function project_feed_project_check($var) {
-  $query = new EntityFieldQuery();
-  $entities = $query->entityCondition('entity_type', 'node')
-    ->propertyCondition('type', 'project')
-    ->propertyCondition('title', $var)
-    ->propertyCondition('status', 1)
-    ->range(0,1)
-    ->execute();
-  return($entities);
+  backdrop_set_message('Projects data from Github has been written to CSV file. Import coming soon.', 'info');
 }
 
 // Check for releases
@@ -273,5 +275,3 @@ function project_feed_check_releases($var) {
   $var = count($release_info);
   return($var);
 }
-
-

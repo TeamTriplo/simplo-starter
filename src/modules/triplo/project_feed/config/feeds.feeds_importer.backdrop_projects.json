@@ -1,0 +1,157 @@
+{
+    "_config_name": "feeds.feeds_importer.backdrop_projects",
+    "id": "backdrop_projects",
+    "disabled": false,
+    "config": {
+        "name": "Backdrop Projects",
+        "description": "Import Github data about Backdrop CMS contrib projects",
+        "fetcher": {
+            "plugin_key": "FeedsFileFetcher",
+            "config": {
+                "allowed_extensions": "csv",
+                "delete_uploaded_file": 0,
+                "direct": 1,
+                "directory": "public://",
+                "allowed_schemes": {
+                    "public": "public"
+                }
+            }
+        },
+        "parser": {
+            "plugin_key": "FeedsCSVParser",
+            "config": {
+                "delimiter": ",",
+                "encoding": "UTF-8",
+                "no_headers": 0
+            }
+        },
+        "processor": {
+            "plugin_key": "FeedsNodeProcessor",
+            "config": {
+                "expire": "-1",
+                "author": 0,
+                "authorize": 1,
+                "mappings": [
+                    {
+                        "source": "title",
+                        "target": "field_name",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "github_name",
+                        "target": "title",
+                        "unique": 1,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "body",
+                        "target": "body",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "package",
+                        "target": "field_package",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "updated",
+                        "target": "changed",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "created",
+                        "target": "field_created:start",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "github",
+                        "target": "field_github:url",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "home",
+                        "target": "field_home_page:url",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "releases",
+                        "target": "field_releases",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "open_issues",
+                        "target": "field_open_issues",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "project_type",
+                        "target": "field_project_type",
+                        "term_search": "1",
+                        "autocreate": 0,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "forks",
+                        "target": "field_forks",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "tags",
+                        "target": "field_tags_maintainer",
+                        "term_search": "0",
+                        "autocreate": 1,
+                        "tampers": {
+                            "explode": {
+                                "plugin_id": "explode",
+                                "settings": {
+                                    "separator": ",",
+                                    "limit": 10,
+                                    "real_separator": ","
+                                },
+                                "description": "Explode",
+                                "id": "explode",
+                                "weight": 0,
+                                "disabled": false
+                            }
+                        }
+                    }
+                ],
+                "insert_new": "1",
+                "update_existing": "2",
+                "update_non_existent": "unpublish",
+                "input_format": "filtered_html",
+                "skip_hash_check": 0,
+                "bundle": "project",
+                "language": "und"
+            }
+        },
+        "content_type": "",
+        "update": 0,
+        "import_period": 1800,
+        "expire_period": 3600,
+        "import_on_create": true,
+        "process_in_background": false
+    }
+}
