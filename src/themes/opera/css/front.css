@@ -18,17 +18,33 @@
   color: black;
 }
 
+/* 
+ * Background and text color in blocks 
+ * Soprano, Tenor, and Baritone classes require Utility CSS module
+ * @TODO - Some of this is not front page specific and needs to be moved
+ *
+ */
+
+.opera-block-soprano,
+.front div.l-content div.block.opera-block-soprano,
 .front .flexible-row .no-container div.block:nth-of-type(3n+2),
+.front div.flexible-row .no-container div.block.opera-block-soprano,
 .front .l-content div.block:nth-of-type(3n+2) {
   background-color: var(--color-three);
   color: var(--text-three);
 }
+.opera-block-tenor,
+.front div.l-content div.block.opera-block-tenor,
 .front .flexible-row .no-container div.block:nth-of-type(3n+3),
+.front div.flexible-row .no-container div.block.opera-block-tenor,
 .front .l-content div.block:nth-of-type(3n+3) {
   background-color: var(--color-four);
   color: var(--text-four);
 }
+.opera-block-baritone,
+.front div.l-content div.block.opera-block-baritone,
 .front .flexible-row .no-container div.block:nth-of-type(3n+4),
+.front div.flexible-row .no-container div.block.opera-block-baritone,
 .front .l-content div.block:nth-of-type(3n+4) {
   background-color: var(--color-five);
   color: var(--text-five);
@@ -98,6 +114,14 @@
   padding: 0;
 }
 
-.front .block-title {
+.front .l-wrapper .block-title {
   text-align: center;
+}
+
+.l-top .view {
+  padding-top: 2rem;
+}
+
+.block-views-promoted-block {
+  margin-top:  -2rem;
 }

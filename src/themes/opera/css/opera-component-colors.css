@@ -223,8 +223,14 @@ ul.action-links a:after {
 
 /*  components/menu-dropdown.css  */
 
-.menu-dropdown a span.sub-arrow {
+/*.menu-dropdown a span.sub-arrow {
   border: 1px solid #bbbbbb;
+}*/
+
+
+
+.menu-dropdown a span.sub-arrow {
+  border-color:  #b2bc20 transparent transparent transparent;
 }
 
 /*  components/menu-toggle.css  */
@@ -282,9 +288,11 @@ abbr.tabledrag-changed {
 
 /*  components/teasers.css  */
 
+
 .view-mode-teaser + .view-mode-teaser,
+.view .view-mode-teaser,
 .view-promoted .views-row {
-  border-top: 0.25rem solid #bbbbbb;
+  border-top: 1px solid #bbbbbb;
 }
 
 /*  components/vertical-tabs.css  */

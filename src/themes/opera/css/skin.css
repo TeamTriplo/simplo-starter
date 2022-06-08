@@ -345,10 +345,6 @@ fieldset .fieldset-legend {
     background-color: #114a75;
   }
 
-  .menu-dropdown a span.sub-arrow {
-    border-top-color: #fffffe;
-  }
-
   .menu-dropdown ul {
     background-color: var(--color-navbar);
     border:  none;
@@ -909,10 +905,6 @@ ul.action-links a {
 /**
  * Primary admin tabs
  */
-nav.tabs:before {
-  /* Background behind primary tabs */
-  background-color: #586172;
-}
 
 ul.primary {
   font-size: 0.9375em;

@@ -1,12 +1,15 @@
 <?php
 /**
  * @file
- * Theme settings file for Basis.
+ * Theme settings file for Opera.
  *
- * Although Basis itself does not provide any settings, we use this file to
- * inform the user that the module supports color schemes if the Color module
- * is enabled.
  */  
+
+  // Theme Info
+$form['markup'] = array(
+  '#type' => 'markup',
+  '#markup' => t('<em>Select color choices for various elements on page.</em>'),
+);
 
 if (module_exists('color')) {
 
@@ -15,6 +18,7 @@ if (module_exists('color')) {
     '#type' => 'fieldset',
     '#title' => t('Buttons'),
     '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $fields = array(
     'buttonbg',
@@ -29,6 +33,7 @@ if (module_exists('color')) {
     '#type' => 'fieldset',
     '#title' => t('Header and Footer'),
     '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $fields = array(
     'set1bg',
@@ -44,6 +49,7 @@ if (module_exists('color')) {
     '#type' => 'fieldset',
     '#title' => t('Navbar'),
     '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $fields = array(
     'navbarbg',
@@ -58,6 +64,7 @@ if (module_exists('color')) {
     '#type' => 'fieldset',
     '#title' => t('Hero Blocks without Images'),
     '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $fields = array(
     'set2bg',
@@ -68,12 +75,18 @@ if (module_exists('color')) {
     $form['set_two'][$field] = color_get_color_element($form['theme']['#value'], $field, $form);
   }
 
+  $form['utilitycss'] = array(
+    '#type' => 'markup',
+    '#markup' => t('<em>If Utility CSS module is enabled, you may apply Soprano, Tenor, and Baritone classes to blocks through Style Settings. See "additional CSS classes".</em>'),
+  );
+
   // Color Set Three
   $form['set_three'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Blocks - Set 1'),
+    '#title' => t('Soprano (Block Set 1)'),
     '#collapsible' => TRUE,
-    '#description' => 'Blocks 2,5,8,... of content region.',
+    '#collapsed' => TRUE,
+    '#description' => 'Blocks 2,5,8,... of content region by default.',
   );
   $fields = array(
     'set3bg',
@@ -87,9 +100,10 @@ if (module_exists('color')) {
   // Color Set Four
   $form['set_four'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Blocks - Set 2'),
+    '#title' => t('Tenor (Block Set 2)'),
     '#collapsible' => TRUE,
-    '#description' => 'Blocks 3,6,9,... of content region.',
+    '#collapsed' => TRUE,
+    '#description' => 'Blocks 3,6,9,... of content region by default.',
   );
   $fields = array(
     'set4bg',
@@ -102,9 +116,10 @@ if (module_exists('color')) {
    // Color Set Five
   $form['set_five'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Blocks - Set 3'),
+    '#title' => t('Baritone (Block Set 3)'),
     '#collapsible' => TRUE,
-    '#description' => 'Blocks 4,7,10,... of content region.',
+    '#collapsed' => TRUE,
+    '#description' => 'Blocks 4,7,10,... of content region by default.',
   );
   $fields = array(
     'set5bg',
@@ -126,7 +141,9 @@ function opera_form_system_theme_settings_alter(&$form, &$form_state, $form_id =
   $form['bootstrap'] = array(
     '#type' => 'fieldset',
     '#title' => t('Bootstrap Settings'),
+    '#description' => t('Optionally load Bootstrap CSS via CDN.'),
     '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $form['bootstrap']['use_bootstrap'] = array(
     '#type'          => 'checkbox',
