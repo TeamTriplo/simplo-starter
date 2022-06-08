@@ -120,22 +120,7 @@
                         "source": "tags",
                         "target": "field_tags_maintainer",
                         "term_search": "0",
-                        "autocreate": 1,
-                        "tampers": {
-                            "explode": {
-                                "plugin_id": "explode",
-                                "settings": {
-                                    "separator": ",",
-                                    "limit": 10,
-                                    "real_separator": ","
-                                },
-                                "description": "Explode",
-                                "id": "explode",
-                                "weight": 0,
-                                "disabled": false
-                            }
-                        },
-                        "language": "und"
+                        "autocreate": 1
                     }
                 ],
                 "insert_new": "1",
