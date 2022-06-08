@@ -5,7 +5,7 @@
     "bundle": "project",
     "label": "Created",
     "widget": {
-        "weight": "-1",
+        "weight": "5",
         "type": "date_text",
         "module": "date",
         "active": 1,

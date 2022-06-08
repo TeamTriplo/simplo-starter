@@ -5,7 +5,7 @@
     "bundle": "project",
     "label": "Releases",
     "widget": {
-        "weight": "5",
+        "weight": "10",
         "type": "number",
         "module": "number",
         "active": 0,

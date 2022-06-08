@@ -1,11 +1,11 @@
 {
-    "_config_name": "field.instance.node.project.field_package",
-    "field_name": "field_package",
+    "_config_name": "field.instance.node.project.field_name",
+    "field_name": "field_name",
     "entity_type": "node",
     "bundle": "project",
-    "label": "Package",
+    "label": "Name",
     "widget": {
-        "weight": "4",
+        "weight": "13",
         "type": "text_textfield",
         "module": "text",
         "active": 1,
@@ -28,7 +28,7 @@
             "type": "text_default",
             "settings": [],
             "module": "text",
-            "weight": 2
+            "weight": 12
         }
     }
 }

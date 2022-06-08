@@ -5,7 +5,7 @@
     "bundle": "project",
     "label": "Open Issues",
     "widget": {
-        "weight": "-3",
+        "weight": "3",
         "type": "number",
         "module": "number",
         "active": 0,

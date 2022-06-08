@@ -5,7 +5,7 @@
     "bundle": "project",
     "label": "Github",
     "widget": {
-        "weight": "3",
+        "weight": "9",
         "type": "link_field",
         "module": "link",
         "active": 0,

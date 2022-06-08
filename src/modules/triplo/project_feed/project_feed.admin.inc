@@ -26,14 +26,6 @@ function project_feed_settings() {
     '#disabled' => !empty($client_id) ? TRUE : FALSE,
   );
 
-  $form['projects_per_query'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Projects per query'),
-    '#description' => t('How may projects to request per query.'),
-    '#default_value' => $config->get('projects_per_query'),
-    '#disabled' => !empty($client_id) ? TRUE : FALSE,
-  );
-
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save configuration'),
@@ -51,7 +43,6 @@ function project_feed_settings_submit($form, &$form_state) {
   // Store only if value not stored in settings.php.
   $config->set('username', $form_state['values']['username']);
   $config->set('github_auth_token', $form_state['values']['github_auth_token']);
-  $config->set('projects_per_query', $form_state['values']['projects_per_query']);
 
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));

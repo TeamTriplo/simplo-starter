@@ -5,7 +5,7 @@
     "bundle": "project",
     "label": "Forks",
     "widget": {
-        "weight": "6",
+        "weight": "11",
         "type": "number",
         "module": "number",
         "active": 0,

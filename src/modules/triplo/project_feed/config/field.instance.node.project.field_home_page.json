@@ -5,7 +5,7 @@
     "bundle": "project",
     "label": "Home page",
     "widget": {
-        "weight": "2",
+        "weight": "8",
         "type": "link_field",
         "module": "link",
         "active": 0,

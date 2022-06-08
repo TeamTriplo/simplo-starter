@@ -41,20 +41,46 @@ function project_feed_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['admin/config/services/projects/settings/pull_projects'] = array(
-    'title' => 'Pull more projects',
+  $items['admin/config/services/projects/settings/pull_projects_1'] = array(
+    'title' => 'Pull batch 1',
     'description' => 'Create reusable blocks that can be placed in layouts.',
-    'page callback' => 'project_feed_code',
+    'page callback' => 'project_feed_batch_1',
+    'access arguments' => array('administer blocks'),
+  );
+
+  $items['admin/config/services/projects/settings/pull_project_2'] = array(
+    'title' => 'Pull batch 2',
+    'description' => 'Create reusable blocks that can be placed in layouts.',
+    'page callback' => 'project_feed_batch_2',
+    'access arguments' => array('administer blocks'),
+  );
+
+  $items['admin/config/services/projects/settings/pull_projects_3'] = array(
+    'title' => 'Pull batch 3',
+    'description' => 'Create reusable blocks that can be placed in layouts.',
+    'page callback' => 'project_feed_batch_3',
     'access arguments' => array('administer blocks'),
   );
   return $items;
+}
+
+function project_feed_batch_1() {
+  project_feed_code('1');
+}
+
+function project_feed_batch_2() {
+  project_feed_code('5');
+}
+
+function project_feed_batch_3() {
+  project_feed_code('9');
 }
 
 /**
  * This is the custom code that does the main work of this module.
  * This is triggeed by "pull more projects" menu link (admin)
  */
-function project_feed_code() {
+function project_feed_code($var) {
   $config = config('project_feed.settings');
 
   // Putting config settings into variables.
@@ -64,8 +90,8 @@ function project_feed_code() {
 
   // Setting some variables 
   $projects_available = TRUE; // Turns false when all projects have been checked
-  $query_counter = 1;         // Counter to limit number of Github requests
-  $page_counter = 0;          // Use to keep track of current page of projects
+  $query_counter = 0;         // Counter to limit number of Github requests
+  $page_counter = $var;          // Use to keep track of current page of projects
   $projects_added = 0;        // Keeps track of new project nodes
   $debug = 0;                 // Used for debugging
 
@@ -99,11 +125,11 @@ function project_feed_code() {
   // This while loop is grabbing batches of project data and checking to see if 
   // nodes already exist
   while($projects_available == TRUE) {
-    $page_counter++;
+    $query_counter++;
 
     // Get information about Backdrop Contrib repos 
     // @TODO "queries per pull" should be "projects per query"
-    $ch = curl_init('https://api.github.com/orgs/backdrop-contrib/repos?per_page=' . $pf_projects_per_query . '&page=' . $page_counter);
+    $ch = curl_init('https://api.github.com/orgs/backdrop-contrib/repos?per_page=100&page=' . $page_counter);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
       'Accept: application/vnd.github.VERSION.raw',
       'User-Agent: ' . $pf_user_agent,
@@ -116,9 +142,8 @@ function project_feed_code() {
 
     // Originally used to limit the number of queries during testing
     // May not be necessary in future.
-    $query_counter++;
 
-    if (!$repos || $query_counter > 1000) {
+    if (!$repos || $query_counter > 3) {
       $projects_available = FALSE;
     } 
 
@@ -159,8 +184,6 @@ function project_feed_code() {
         $releases = project_feed_check_releases($var);
         $data[$repo['name']]['releases'] = $releases;
       } 
-
-      $query_counter++;
 
       // Pulls data from .info file into array for new node.
       if (isset($info['name'])) {
@@ -220,7 +243,6 @@ function project_feed_code() {
 
       $tag_list = implode(', ' ,$value['tags']);
 
-
       $project = array(
         'title' => $value['title'],
         'github_name' => $value['name'],
@@ -241,15 +263,14 @@ function project_feed_code() {
         'open_issues' => $value['open_issues_count'],
         'forks' => $value['forks'],
       );
-
-      dpm($project['tags']);
-
       fputcsv($txt, $project);
+      $projects_added++;
     }
+    backdrop_set_message('Batch ' . $page_counter . ' complete. ' . $projects_added . ' projects added.', 'info');
+    $page_counter++;
   }
   fclose($txt);
-
-  backdrop_set_message('Projects data from Github has been written to CSV file. Import coming soon.', 'info');
+  backdrop_set_message('Projects data from Github has been written to CSV file. Use the Backdrop Project importer "feeds" to pull date into site.', 'info');
 }
 
 // Check for releases
