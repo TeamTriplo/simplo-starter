@@ -56,6 +56,11 @@ settings[color] = true
 
 ; Configuration specifically for Utility CSS module. Classes added to this list
 ; will be available as autocomplete in the block UI where users are allowed to add classes.
+
+utility_css[block][] = 'opera-block-soprano'
+utility_css[block][] = 'opera-block-tenor'
+utility_css[block][] = 'opera-block-baritone'
+
 utility_css[font][] = 'color-inverse'
 utility_css[font][] = 'font-size-xxxxlarge'
 utility_css[font][] = 'font-size-xxxlarge'

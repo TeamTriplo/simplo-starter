@@ -2,7 +2,7 @@
  * @file
  * Component Layout CSS and some Page layout overrides
  */
-.layout-flexible-content,
+
 .layout--moscone-flipped {
   min-height: 100vh;
   position: relative;
@@ -48,4 +48,11 @@
 }
 .l-footer {
   flex-shrink: 0;
+}
+.container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+.flexible-row {
+  margin-bottom: 2rem;
 }

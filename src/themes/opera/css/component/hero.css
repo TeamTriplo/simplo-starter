@@ -112,7 +112,7 @@
 }
 
 .block-hero {
-  margin: 0;
+  margin: 0 0 2rem;
 }
 
 .block-hero-image {
@@ -142,16 +142,6 @@
 // .block-hero-image {
 //   background-position: center center;
 // }
-
-.views-row {
-  margin-bottom: 3rem;
-}
-
-/*.header-menu ul.links {
-  position: absolute;
-  right: 0px;
-  top: 0;
-}*/
 
 div.block-layout-custom-block[style] {
   padding-top: 10px;
