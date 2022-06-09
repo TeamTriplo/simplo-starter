@@ -1,0 +1,11 @@
+name = Select 2
+description = Adds integration with the Select2 Javascript plugin.
+backdrop = 1.x
+type = module
+package = User interface
+configure = admin/config/user-interface/select2
+
+; Added by Backdrop CMS packaging script on 2021-04-23
+project = select2
+version = 1.x-1.0.2
+timestamp = 1619198458

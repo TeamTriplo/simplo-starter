@@ -1,0 +1,13 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the Select2 module.
+ */
+
+
+/**
+ * Implements hook_install().
+ */
+function select2_install() {
+  config_set('select2.settings', 'plugin_path', backdrop_get_path('module', 'select2') . '/lib');
+}
