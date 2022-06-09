@@ -1,0 +1,1830 @@
+<?php
+
+/**
+ * @file
+ * Base functions and tests for Display Suite.
+ */
+
+class dsBaseTest extends BackdropWebTestCase {
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp('ds', 'ds_extras', 'search', 'ds_search', 'ds_format', 'ds_forms', 'ds_ui', 'ds_test', 'views');
+
+    variable_set('search_active_modules', array('node' => '', 'user' => 'user', 'ds_search' => 'ds_search'));
+    menu_rebuild();
+
+    $this->admin_user = $this->backdropCreateUser(array('admin_classes', 'admin_view_modes', 'admin_fields', 'admin_display_suite', 'ds_switch article', 'use text format ds_code', 'access administration pages', 'administer content types', 'administer fields', 'administer users', 'administer comments', 'administer nodes', 'bypass node access', 'administer blocks', 'search content', 'use advanced search', 'administer search', 'access user profiles', 'administer permissions'));
+    $this->backdropLogin($this->admin_user);
+  }
+
+  /**
+   * Select a layout.
+   */
+  function dsSelectLayout($edit = array(), $assert = array(), $url = 'admin/structure/types/manage/article/display', $options = array()) {
+
+    $edit += array(
+      'additional_settings[layout]' => 'ds_2col_stacked',
+    );
+
+    $this->backdropPost($url, $edit, t('Save'), $options);
+
+    $assert += array(
+      'regions' => array(
+        'header' => '<td colspan="8">' . t('Header') . '</td>',
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+        'footer' => '<td colspan="8">' . t('Footer') . '</td>',
+      ),
+    );
+
+    foreach ($assert['regions'] as $region => $raw) {
+      $this->assertRaw($region, t('Region !region found', array('!region' => $region)));
+    }
+  }
+
+  /**
+   * Configure classes
+   */
+  function dsConfigureClasses($edit = array()) {
+
+    $edit += array(
+      'ds_classes_regions' => "class_name_1\nclass_name_2|Friendly name"
+    );
+
+    $this->backdropPost('admin/structure/ds/classes', $edit, t('Save configuration'));
+    $this->assertText(t('The configuration options have been saved.'), t('CSS classes configuration saved'));
+    $this->assertRaw('class_name_1', 'Class name 1 found');
+    $this->assertRaw('class_name_2', 'Class name 1 found');
+  }
+
+  /**
+   * Configure classes on a layout.
+   */
+  function dsSelectClasses($edit = array(), $url = 'admin/structure/types/manage/article/display') {
+
+    $edit += array(
+      "additional_settings[header][]" => 'class_name_1',
+      "additional_settings[footer][]" => 'class_name_2',
+    );
+
+    $this->backdropPost($url, $edit, t('Save'));
+  }
+
+  /**
+   * Configure Field UI.
+   */
+  function dsConfigureUI($edit, $url = 'admin/structure/types/manage/article/display') {
+    $this->backdropPost($url, $edit, t('Save'));
+  }
+
+  /**
+   * Edit field formatter settings
+   */
+  function dsEditFormatterSettings($edit, $url = 'admin/structure/types/manage/article/display', $element_value = 'edit body') {
+    $this->backdropPost($url, array(), $element_value);
+    $this->backdropPost(NULL, $edit, t('Update'));
+    $this->backdropPost(NULL, array(), t('Save'));
+  }
+
+  /**
+   * Create a view mode.
+   *
+   * @param $edit
+   *   An optional array of view mode properties.
+   */
+  function dsCreateViewMode($edit = array()) {
+
+    $edit += array(
+      'name' => 'Testing',
+      'view_mode' => 'testing',
+      'entities[node]' => '1'
+    );
+
+    $this->backdropPost('admin/structure/ds/view_modes/manage', $edit, t('Save'));
+    $this->assertText(t('The view mode ' . $edit['name'] . ' has been saved'), t('!name view mode has been saved', array('!name' => $edit['name'])));
+  }
+
+  /**
+   * Create a code field.
+   *
+   * @param $edit
+   *   An optional array of field properties.
+   */
+  function dsCreateCodeField($edit = array(), $url = 'admin/structure/ds/fields/manage_custom') {
+
+    $edit += array(
+      'name' => 'Test field',
+      'field' => 'test_field',
+      'entities[node]' => '1',
+      'code[value]' => 'Test field',
+      'use_token' => '0',
+    );
+
+    $this->backdropPost($url, $edit, t('Save'));
+    $this->assertText(t('The field ' . $edit['name'] . ' has been saved'), t('!name field has been saved', array('!name' => $edit['name'])));
+  }
+
+  /**
+   * Create a block field.
+   *
+   * @param $edit
+   *   An optional array of field properties.
+   */
+  function dsCreateBlockField($edit = array(), $url = 'admin/structure/ds/fields/manage_block', $first = TRUE) {
+
+    $edit += array(
+      'name' => 'Test block field',
+      'entities[node]' => '1',
+      'block' => 'node|recent',
+      'block_render' => DS_BLOCK_TEMPLATE,
+    );
+
+    if ($first) {
+      $edit += array('field' => 'test_block_field');
+    }
+
+    $this->backdropPost($url, $edit, t('Save'));
+    $this->assertText(t('The field ' . $edit['name'] . ' has been saved'), t('!name field has been saved', array('!name' => $edit['name'])));
+  }
+
+  /**
+   * Create a block field.
+   *
+   * @param $edit
+   *   An optional array of field properties.
+   */
+  function dsCreatePreprocessField($edit = array(), $url = 'admin/structure/ds/fields/manage_preprocess', $first = TRUE) {
+
+    $edit += array(
+      'name' => 'Submitted',
+      'entities[node]' => '1',
+    );
+
+    if ($first) {
+      $edit += array('field' => 'submitted');
+    }
+
+    $this->backdropPost($url, $edit, t('Save'));
+    $this->assertText(t('The field ' . $edit['name'] . ' has been saved'), t('!name field has been saved', array('!name' => $edit['name'])));
+  }
+
+  /**
+   * Create a dynamic field.
+   *
+   * @param $edit
+   *   An optional array of field properties.
+   */
+  function dsCreateDynamicField($edit = array(), $url = 'admin/structure/ds/fields/manage_ctools', $first = TRUE) {
+
+    $edit += array(
+      'name' => 'Dynamic',
+      'entities[node]' => '1',
+    );
+
+    if ($first) {
+      $edit += array('field' => 'dynamic');
+    }
+
+    $this->backdropPost($url, $edit, t('Save'));
+    $this->assertText(t('The field ' . $edit['name'] . ' has been saved'), t('!name field has been saved', array('!name' => $edit['name'])));
+  }
+}
+
+/**
+ * Test managing of custom fields.
+ */
+class dsFieldsTests extends dsBaseTest {
+
+  /**
+   * Test Display fields.
+   */
+  function testDSFields() {
+
+    $edit = array(
+      'name' => 'Test field',
+      'field' => 'test_field',
+      'entities[node]' => '1',
+      'code[value]' => 'Test field',
+      'use_token' => '0',
+    );
+
+    $this->dsCreateCodeField($edit);
+
+    // Create the same and assert it already exists.
+    $this->backdropPost('admin/structure/ds/fields/manage_custom', $edit, t('Save'));
+    $this->assertText(t('The machine-readable name is already in use. It must be unique.'), t('Field testing already exists.'));
+
+    $this->dsSelectLayout();
+
+    // Assert it's found on the Field UI for article.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('fields[test_field][weight]', t('Test field found on node article.'));
+
+    // Assert it's not found on the Field UI for users.
+    $this->backdropGet('admin/config/people/accounts/display');
+    $this->assertNoRaw('fields[test_field][weight]', t('Test field not found on user.'));
+
+    // Update testing label
+    $edit = array(
+      'name' => 'Test field 2',
+    );
+    $this->backdropPost('admin/structure/ds/fields/manage_custom/test_field', $edit, t('Save'));
+    $this->assertText(t('The field Test field 2 has been saved'), t('Test field label updated'));
+
+    // Use the Field UI limit option.
+    $this->dsSelectLayout(array(), array(), 'admin/structure/types/manage/page/display');
+    $this->dsSelectLayout(array(), array(), 'admin/structure/types/manage/article/display/teaser');
+    $edit = array(
+      'ui_limit' => 'article|default',
+    );
+    $this->backdropPost('admin/structure/ds/fields/manage_custom/test_field', $edit, t('Save'));
+
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('fields[test_field][weight]', t('Test field field found on node article, default.'));
+    $this->backdropGet('admin/structure/types/manage/article/display/teaser');
+    $this->assertNoRaw('fields[test_field][weight]', t('Test field field not found on node article, teaser.'));
+    $this->backdropGet('admin/structure/types/manage/page/display');
+    $this->assertNoRaw('fields[test_field][weight]', t('Test field field not found on node page, default.'));
+    $edit = array(
+      'ui_limit' => 'article|*',
+    );
+    $this->backdropPost('admin/structure/ds/fields/manage_custom/test_field', $edit, t('Save'));
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('fields[test_field][weight]', t('Test field field found on node article, default.'));
+    $this->backdropGet('admin/structure/types/manage/article/display/teaser');
+    $this->assertRaw('fields[test_field][weight]', t('Test field field found on node article, teaser.'));
+
+
+
+    // Remove the field.
+    $this->backdropPost('admin/structure/ds/fields/delete/test_field', array(), t('Delete'));
+    $this->assertText(t('The field Test field 2 has been deleted'), t('Test field removed'));
+
+    // Assert the field is gone at the manage display screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoRaw('fields[test_field][weight]', t('Test field field not found on node article.'));
+
+    // Block fields.
+    $edit = array(
+      'name' => 'Test block field',
+      'field' => 'test_block_field',
+      'entities[node]' => '1',
+      'block' => 'node|recent',
+      'block_render' => DS_BLOCK_TEMPLATE,
+    );
+
+    $this->dsCreateBlockField($edit);
+
+    // Create the same and assert it already exists.
+    $this->backdropPost('admin/structure/ds/fields/manage_block', $edit, t('Save'));
+    $this->assertText(t('The machine-readable name is already in use. It must be unique.'), t('Block test field already exists.'));
+
+    $this->dsSelectLayout();
+
+    // Assert it's found on the Field UI for article.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('fields[test_block_field][weight]', t('Test block field found on node article.'));
+
+    // Assert it's not found on the Field UI for users.
+    $this->backdropGet('admin/config/people/accounts/display');
+    $this->assertNoRaw('fields[test_block_field][weight]', t('Test block field not found on user.'));
+
+    // Update testing label
+    $edit = array(
+      'name' => 'Test block field 2',
+    );
+    $this->backdropPost('admin/structure/ds/fields/manage_block/test_block_field', $edit, t('Save'));
+    $this->assertText(t('The field Test block field 2 has been saved'), t('Test field label updated'));
+
+    // Remove the block field.
+    $this->backdropPost('admin/structure/ds/fields/delete/test_block_field', array(), t('Delete'));
+    $this->assertText(t('The field Test block field 2 has been deleted'), t('Test field removed'));
+
+    // Assert the block field is gone at the manage display screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoRaw('fields[test_block_field][weight]', t('Test block field not found on node article.'));
+
+    // Preprocess fields.
+    $edit = array(
+      'name' => 'Submitted',
+      'field' => 'submitted',
+      'entities[node]' => '1',
+    );
+
+    $this->dsCreatePreprocessField($edit);
+
+    // Create the same and assert it already exists.
+    $this->backdropPost('admin/structure/ds/fields/manage_custom', $edit, t('Save'));
+    $this->assertText(t('The machine-readable name is already in use. It must be unique.'), t('Submitted already exists.'));
+
+    $this->dsSelectLayout();
+
+    // Assert it's found on the Field UI for article.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('fields[submitted][weight]', t('Submitted found on node article.'));
+
+    // Assert it's not found on the Field UI for users.
+    $this->backdropGet('admin/config/people/accounts/display');
+    $this->assertNoRaw('fields[submitted][weight]', t('Submitted not found on user.'));
+
+    // Update testing label
+    $edit = array(
+      'name' => 'Submitted by',
+    );
+    $this->backdropPost('admin/structure/ds/fields/manage_preprocess/submitted', $edit, t('Save'));
+    $this->assertText(t('The field Submitted by has been saved'), t('Submitted label updated'));
+
+    // Remove a field.
+    $this->backdropPost('admin/structure/ds/fields/delete/submitted', array(), t('Delete'));
+    $this->assertText(t('The field Submitted by has been deleted'), t('Submitted removed'));
+
+    // Assert the field is gone at the manage display screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoRaw('fields[submitted][weight]', t('Submitted field not found on node article.'));
+
+    // Dynamic fields.
+    $edit = array(
+      'name' => 'Dynamic',
+      'field' => 'dynamic',
+      'entities[node]' => '1',
+    );
+
+    $this->dsCreateDynamicField($edit);
+
+    // Create the same and assert it already exists.
+    $this->backdropPost('admin/structure/ds/fields/manage_ctools', $edit, t('Save'));
+    $this->assertText(t('The machine-readable name is already in use. It must be unique.'), t('Dynamic already exists.'));
+
+    $this->dsSelectLayout();
+
+    // Assert it's found on the Field UI for article.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('fields[dynamic][weight]', t('Dynamic found on node article.'));
+
+    // Assert it's not found on the Field UI for users.
+    $this->backdropGet('admin/config/people/accounts/display');
+    $this->assertNoRaw('fields[dynamic][weight]', t('Dynamic not found on user.'));
+
+    // Update testing label
+    $edit = array(
+      'name' => 'Uber dynamic',
+    );
+    $this->backdropPost('admin/structure/ds/fields/manage_ctools/dynamic', $edit, t('Save'));
+    $this->assertText(t('The field Uber dynamic has been saved'), t('Dynamic label updated'));
+
+    // Remove a field.
+    $this->backdropPost('admin/structure/ds/fields/delete/dynamic', array(), t('Delete'));
+    $this->assertText(t('The field Uber dynamic has been deleted'), t('Dynamic removed'));
+
+    // Assert the field is gone at the manage display screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoRaw('fields[dynamic][weight]', t('Dynamic field not found on node article.'));
+  }
+}
+
+/**
+ * Test managing of view modes.
+ */
+class dsViewModesTests extends dsBaseTest {
+
+  /**
+   * Test managing view modes.
+   */
+  function testDSManageViewModes() {
+
+    $edit = array(
+      'name' => 'Testing',
+      'view_mode' => 'testing',
+      'entities[node]' => '1'
+    );
+
+    $this->dsCreateViewMode($edit);
+
+    // Create the same and assert it already exists.
+    $this->backdropPost('admin/structure/ds/view_modes/manage', $edit, t('Save'));
+    $this->assertText(t('The machine-readable name is already in use. It must be unique.'), t('View mode testing already exists.'));
+
+    // Assert it's found on the Field UI for article.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('additional_settings[modes][view_modes_custom][testing]', t('Testing view mode found on node article.'));
+
+    // Assert it's not found on the Field UI for article.
+    $this->backdropGet('admin/config/people/accounts/display');
+    $this->assertNoRaw('additional_settings[modes][view_modes_custom][testing]', t('Testing view mode not found on user.'));
+
+    // Update testing label
+    $edit = array(
+      'name' => 'Testing 2',
+    );
+    $this->backdropPost('admin/structure/ds/view_modes/manage/testing', $edit, t('Save'));
+    $this->assertText(t('The view mode Testing 2 has been saved'), t('Testing label updated'));
+
+    // Remove a view mode.
+    $this->backdropPost('admin/structure/ds/view_modes/delete/testing', array(), t('Delete'));
+    $this->assertText(t('The view mode Testing 2 has been deleted'), t('Testing view mode removed'));
+
+    // Assert the view mode is gone at the manage display screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoRaw('additional_settings[modes][view_modes_custom][testing]', t('Testing view mode found on node article.'));
+  }
+}
+
+/**
+ * Test managing of layouts and CSS classes
+ */
+class dsLayoutsClassesTests extends dsBaseTest {
+
+  /**
+   * Test selecting layouts, classes, region to block and fields.
+   */
+  function testDStestLayouts() {
+
+    // Check that the ds_3col_equal_width layout is not available (through the alter).
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoRaw('ds_3col_stacked_equal_width', 'ds_3col_stacked_equal_width not available');
+
+    // Create code, dynamic, preprocess block field.
+    $this->dsCreateCodeField();
+    $this->dsCreateBlockField();
+    $this->dsCreateDynamicField();
+    $this->dsCreatePreprocessField();
+
+    $layout = array(
+      'additional_settings[layout]' => 'ds_2col_stacked',
+    );
+
+    $assert = array(
+      'regions' => array(
+        'header' => '<td colspan="8">' . t('Header') . '</td>',
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+        'footer' => '<td colspan="8">' . t('Footer') . '</td>',
+      ),
+    );
+
+    $fields = array(
+      'fields[post_date][region]' => 'header',
+      'fields[author][region]' => 'left',
+      'fields[links][region]' => 'left',
+      'fields[body][region]' => 'right',
+      'fields[comments][region]' => 'footer',
+      'fields[test_field][region]' => 'left',
+      'fields[test_block_field][region]' => 'left',
+      'fields[submitted][region]' => 'left',
+      'fields[dynamic][region]' => 'left',
+      'fields[ds_extras_extra_test_field][region]' => 'header',
+    );
+
+    // Setup first layout.
+    $this->dsSelectLayout($layout, $assert);
+    $this->dsConfigureClasses();
+    $this->dsSelectClasses();
+    $this->dsConfigureUI($fields);
+
+    // Assert the two extra fields are found.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('ds_extras_extra_test_field');
+    $this->assertRaw('ds_extras_second_field');
+
+    // Assert we have some configuration in our database.
+    $count = db_query("SELECT COUNT(settings) FROM {ds_layout_settings} WHERE entity_type = 'node' AND bundle = 'article' AND view_mode = 'default'")->fetchField();
+    $this->assertEqual($count, 1, t('1 record found for layout serttings for node article'));
+
+    // Lookup settings and verify.
+    $data = unserialize(db_query("SELECT settings FROM {ds_layout_settings} WHERE entity_type = 'node' AND bundle = 'article' AND view_mode = 'default'")->fetchField());
+    $this->assertTrue(in_array('ds_extras_extra_test_field', $data['regions']['header']), t('Extra field is in header'));
+    $this->assertTrue(in_array('post_date', $data['regions']['header']), t('Post date is in header'));
+    $this->assertTrue(in_array('test_field', $data['regions']['left']), t('Test field is in left'));
+    $this->assertTrue(in_array('author', $data['regions']['left']), t('Author is in left'));
+    $this->assertTrue(in_array('links', $data['regions']['left']), t('Links is in left'));
+    $this->assertTrue(in_array('test_block_field', $data['regions']['left']), t('Test block field is in left'));
+    $this->assertTrue(in_array('submitted', $data['regions']['left']), t('Submitted field is in left'));
+    $this->assertTrue(in_array('dynamic', $data['regions']['left']), t('Dynamic field is in left'));
+    $this->assertTrue(in_array('body', $data['regions']['right']), t('Body is in right'));
+    $this->assertTrue(in_array('comments', $data['regions']['footer']), t('Comments is in footer'));
+    $this->assertTrue(in_array('class_name_1', $data['classes']['header']), t('Class name 1 is in header'));
+    $this->assertTrue(empty($data['classes']['left']), t('Left has no classes'));
+    $this->assertTrue(empty($data['classes']['right']), t('Right has classes'));
+    $this->assertTrue(in_array('class_name_2', $data['classes']['footer']), t('Class name 2 is in header'));
+
+    // Extra save for the dynamic field.
+    $field_settings = ds_get_field_settings('node', 'article', 'default');
+    $formatter_settings = array(
+      'show_title' => 0,
+      'title_wrapper' => '',
+      'ctools' => 'a:3:{s:4:"conf";a:3:{s:7:"context";s:25:"argument_entity_id:node_1";s:14:"override_title";i:0;s:19:"override_title_text";s:0:"";}s:4:"type";s:14:"node_type_desc";s:7:"subtype";s:14:"node_type_desc";}',
+    );
+    $field_settings['dynamic']['formatter_settings'] = $formatter_settings;
+    $record = new stdClass();
+    $record->id = 'node|article|default';
+    $record->entity_type = 'node';
+    $record->bundle = 'article';
+    $record->view_mode = 'default';
+    $record->settings = $field_settings;
+    backdrop_write_record('ds_field_settings', $record, array('id'));
+    cache_clear_all('ds_fields:', 'cache', TRUE);
+    cache_clear_all('ds_field_settings', 'cache');
+
+    // Create a article node and verify settings.
+    $settings = array(
+      'type' => 'article',
+    );
+    $node = $this->backdropCreateNode($settings);
+    $this->backdropGet('node/' . $node->nid);
+
+    // Assert regions.
+    $this->assertRaw('group-header', 'Template found (region header)');
+    $this->assertRaw('group-header class_name_1', 'Class found (class_name_1)');
+    $this->assertRaw('group-left', 'Template found (region left)');
+    $this->assertRaw('group-right', 'Template found (region right)');
+    $this->assertRaw('group-footer', 'Template found (region footer)');
+    $this->assertRaw('group-footer class_name_2', 'Class found (class_name_2)');
+
+    // Assert custom fields.
+    $this->assertRaw('field-name-test-field', t('Custom field found'));
+    $this->assertRaw('Test field', t('Custom field found'));
+    $this->assertRaw('field-name-test-block-field', t('Custom block field found'));
+    $this->assertRaw('<h2>Recent content</h2>', t('Custom block field found'));
+    $this->assertRaw('Submitted by', t('Submitted field found'));
+    $this->assertText('Use articles for time-sensitive content like news, press releases or blog posts.', t('Dynamic field found'));
+    $this->assertText('This is an extra field made available through "Extra fields" functionality.');
+
+    // Test disable sidebar regions.
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('sidebar-first', 'Left sidebar found.');
+    $hide = array(
+      'additional_settings[hide_sidebars]' => '1',
+    );
+    $this->dsConfigureUI($hide);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertNoRaw('sidebar-first', 'Left sidebar not found.');
+
+    // Test HTML5 wrappers
+    $this->assertNoRaw('<header', 'Header not found.');
+    $this->assertNoRaw('<footer', 'Footer not found.');
+    $this->assertNoRaw('<article', 'Article not found.');
+    $wrappers = array(
+      'additional_settings[region_wrapper][header]' => 'header',
+      'additional_settings[region_wrapper][right]' => 'footer',
+      'additional_settings[region_wrapper][layout_wrapper]' => 'article',
+    );
+    $this->dsConfigureUI($wrappers);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('<header', 'Header found.');
+    $this->assertRaw('<footer', 'Footer found.');
+    $this->assertRaw('<article', 'Article found.');
+
+    // Let's create a block field, enable the full mode first.
+    $edit = array('additional_settings[modes][view_modes_custom][full]' => '1');
+    $this->backdropPost('admin/structure/types/manage/article/display', $edit, t('Save'));
+
+    // Select layout.
+    $layout = array(
+      'additional_settings[layout]' => 'ds_2col',
+    );
+
+    $assert = array(
+      'regions' => array(
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+      ),
+    );
+    $this->dsSelectLayout($layout, $assert, 'admin/structure/types/manage/article/display/full');
+
+    // Create new block field.
+    $edit = array(
+      'additional_settings[region_to_block][new_block_region]' => 'Block region',
+      'additional_settings[region_to_block][new_block_region_key]' => 'block_region',
+    );
+    $this->backdropPost('admin/structure/types/manage/article/display/full', $edit, t('Save'));
+    $this->assertRaw('<td colspan="8">' . t('Block region') . '</td>', 'Block region found');
+
+    // Configure fields
+    $fields = array(
+      'fields[author][region]' => 'left',
+      'fields[links][region]' => 'left',
+      'fields[body][region]' => 'right',
+      'fields[ds_test_field][region]' => 'block_region',
+    );
+    $this->dsConfigureUI($fields, 'admin/structure/types/manage/article/display/full');
+
+    // Set block in sidebar
+    $edit = array(
+      'blocks[ds_extras_block_region][region]' => 'sidebar_first',
+    );
+    $this->backdropPost('admin/structure/block', $edit, t('Save blocks'));
+
+    // Assert the block is on the node page.
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('<h2>Block region</h2>', 'Block region found');
+    $this->assertText('Test code field on node ' . $node->nid, 'Post date in block');
+
+    // Change layout via admin/structure/ds/layout-change.
+    // First verify that header and footer are not here.
+    $this->backdropGet('admin/structure/types/manage/article/display/full');
+    $this->assertNoRaw('<td colspan="8">' . t('Header') . '</td>', 'Header region not found');
+    $this->assertNoRaw('<td colspan="8">' . t('Footer') . '</td>', 'Footer region not found');
+
+    // Remap the regions.
+    $edit = array(
+      'ds_left' => 'header',
+      'ds_right' => 'footer',
+      'ds_block_region' => 'footer',
+    );
+    $this->backdropPost('admin/structure/ds/change-layout/node/article/full/ds_2col_stacked', $edit, t('Save'), array('query' => array('destination' => 'admin/structure/types/manage/article/display/full')));
+
+    // Verify new regions.
+    $this->assertRaw('<td colspan="8">' . t('Header') . '</td>', 'Header region found');
+    $this->assertRaw('<td colspan="8">' . t('Footer') . '</td>', 'Footer region found');
+    $this->assertRaw('<td colspan="8">' . t('Block region') . '</td>', 'Block region found');
+
+    // Verify settings.
+    $data = unserialize(db_query("SELECT settings FROM {ds_layout_settings} WHERE entity_type = 'node' AND bundle = 'article' AND view_mode = 'full'")->fetchField());
+    $this->assertTrue(in_array('author', $data['regions']['header']), t('Author is in header'));
+    $this->assertTrue(in_array('links', $data['regions']['header']), t('Links field is in header'));
+    $this->assertTrue(in_array('body', $data['regions']['footer']), t('Body field is in footer'));
+    $this->assertTrue(in_array('ds_test_field', $data['regions']['footer']), t('Test field is in footer'));
+
+    // Test that a default view mode with no layout is not affected by a disabled view mode.
+    $edit = array(
+      'additional_settings[layout]' => '',
+      'additional_settings[modes][view_modes_custom][full]' => FALSE,
+    );
+    $this->backdropPost('admin/structure/types/manage/article/display', $edit, t('Save'));
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertNoText('Test code field on node 1', 'No ds field from full view mode layout');
+  }
+}
+
+/**
+ * Tests for Display Suite field permissions.
+ */
+class dsFieldPermissionTests extends dsBaseTest {
+
+  function testFieldPermissions() {
+
+    $fields = array(
+      'fields[body][region]' => 'right',
+      'fields[ds_test_field][region]' => 'left',
+    );
+
+    variable_set('ds_extras_field_permissions', TRUE);
+    $this->refreshVariables();
+    module_implements(FALSE, FALSE, TRUE);
+
+    $this->dsSelectLayout();
+    $this->dsConfigureUI($fields);
+
+    // Create a node.
+    $settings = array('type' => 'article');
+    $node = $this->backdropCreateNode($settings);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('group-right', 'Template found (region right)');
+    $this->assertNoText('Test code field on node ' . $node->nid, 'Test code field not found');
+
+    // Give permissions.
+    $edit = array(
+      '2[view author on node]' => 1,
+      '2[view ds_test_field on node]' => 1,
+    );
+    $this->backdropPost('admin/people/permissions', $edit, t('Save permissions'));
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('group-left', 'Template found (region left)');
+    $this->assertText('Test code field on node ' . $node->nid, 'Test code field found');
+  }
+}
+
+/**
+ * Tests for Display Suite hooks.
+ */
+class dsHooksTests extends dsBaseTest {
+
+  /**
+   * Test fields hooks.
+   */
+  function testDSFields() {
+
+    $this->dsSelectLayout();
+
+    // Find the two extra fields from the test module on the node type.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertText('Test code field from hook', 'Test field found on node.');
+    $this->assertText('Field altered', 'Test field altered found on node.');
+
+    $empty = array();
+    $edit = array('additional_settings[layout]' => 'ds_2col_stacked');
+    $this->dsSelectLayout($edit, $empty, 'admin/config/people/accounts/display');
+
+    // Fields can not be found on user.
+    $this->backdropGet('admin/config/people/accounts/display');
+    $this->assertNoText('Test code field from hook', 'Test field not found on user.');
+    $this->assertNoText('Field altered', 'Test field altered not found on user.');
+
+    // Select layout.
+    $this->dsSelectLayout();
+
+    $fields = array(
+      'fields[author][region]' => 'left',
+      'fields[links][region]' => 'left',
+      'fields[body][region]' => 'right',
+      'fields[ds_test_field][region]' => 'right',
+      'fields[ds_test_field_empty_string][region]' => 'right',
+      'fields[ds_test_field_empty_string][label]' => 'inline',
+      'fields[ds_test_field_false][region]' => 'right',
+      'fields[ds_test_field_false][label]' => 'inline',
+      'fields[ds_test_field_null][region]' => 'right',
+      'fields[ds_test_field_null][label]' => 'inline',
+      'fields[ds_test_field_nothing][region]' => 'right',
+      'fields[ds_test_field_nothing][label]' => 'inline',
+      'fields[ds_test_field_zero_int][region]' => 'right',
+      'fields[ds_test_field_zero_int][label]' => 'inline',
+      'fields[ds_test_field_zero_string][region]' => 'right',
+      'fields[ds_test_field_zero_string][label]' => 'inline',
+      'fields[ds_test_field_zero_float][region]' => 'right',
+      'fields[ds_test_field_zero_float][label]' => 'inline',
+    );
+
+    $this->dsSelectLayout();
+    $this->dsConfigureUI($fields);
+
+    // Create a node.
+    $settings = array('type' => 'article');
+    $node = $this->backdropCreateNode($settings);
+    $this->backdropGet('node/' . $node->nid);
+
+    $this->assertRaw('group-left', 'Template found (region left)');
+    $this->assertRaw('group-right', 'Template found (region right)');
+    $this->assertText('Test code field on node ' . $node->nid, 'Test code field found');
+    $this->assertNoText('Test code field that returns an empty string', 'Test code field that returns an empty string is not visible.');
+    $this->assertNoText('Test code field that returns FALSE', 'Test code field that returns FALSE is not visible.');
+    $this->assertNoText('Test code field that returns NULL', 'Test code field that returns NULL is not visible.');
+    $this->assertNoText('Test code field that returns nothing', 'Test code field that returns nothing is not visible.');
+    $this->assertNoText('Test code field that returns an empty array', 'Test code field that returns an empty array is not visible.');
+    $this->assertText('Test code field that returns zero as an integer', 'Test code field that returns zero as an integer is visible.');
+    $this->assertText('Test code field that returns zero as a string', 'Test code field that returns zero as a string is visible.');
+    $this->assertText('Test code field that returns zero as a floating point number', 'Test code field that returns zero as a floating point number is visible.');
+  }
+
+  /**
+   * Test layouts hook.
+   */
+  function testDSLayouts() {
+
+    // Assert our 2 tests layouts are found.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertRaw('Test One column', 'Test One column layout found');
+    $this->assertRaw('Test Two column', 'Test Two column layout found');
+
+    $layout = array(
+      'additional_settings[layout]' => 'dstest_2col',
+    );
+
+    $assert = array(
+      'regions' => array(
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+      ),
+    );
+
+    $fields = array(
+      'fields[author][region]' => 'left',
+      'fields[links][region]' => 'left',
+      'fields[body][region]' => 'right',
+    );
+
+    $this->dsSelectLayout($layout, $assert);
+    $this->dsConfigureUI($fields);
+
+    // Create a node.
+    $settings = array('type' => 'article');
+    $node = $this->backdropCreateNode($settings);
+
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('group-left', 'Template found (region left)');
+    $this->assertRaw('group-right', 'Template found (region right)');
+    $this->assertRaw('dstest_2col.css', 'Css file included');
+
+    // Alter a region
+    $settings = array(
+      'type' => 'article',
+      'title' => 'Alter me!',
+    );
+    $node = $this->backdropCreateNode($settings);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('cool!', 'Region altered');
+  }
+}
+
+class dsNodeTests extends dsBaseTest {
+
+  /**
+   * Utility function to setup for all kinds of tests.
+   *
+   * @param $label
+   *   How the body label must be set.
+   */
+  function entitiesTestSetup($label = 'above') {
+
+    // Create a node.
+    $settings = array('type' => 'article', 'promote' => 1);
+    $node = $this->backdropCreateNode($settings);
+
+    // Create field CSS classes.
+    $edit = array('ds_classes_fields' => "test_field_class\ntest_field_class_2|Field class 2");
+    $this->backdropPost('admin/structure/ds/classes', $edit, t('Save configuration'));
+
+    // Create a token and php field.
+    $token_field = array(
+      'name' => 'Token field',
+      'field' => 'token_field',
+      'entities[node]' => '1',
+      'code[value]' => '<div class="token-class">[node:title]</span>',
+      'use_token' => '1',
+    );
+    $php_field = array(
+      'name' => 'PHP field',
+      'field' => 'php_field',
+      'entities[node]' => '1',
+      'code[value]' => "<?php echo 'I am a PHP field'; ?>",
+      'use_token' => '0',
+    );
+    $this->dsCreateCodeField($token_field);
+    $this->dsCreateCodeField($php_field);
+
+    // Select layout.
+    $this->dsSelectLayout();
+
+    // Configure fields.
+    $fields = array(
+      'fields[token_field][region]' => 'header',
+      'fields[php_field][region]' => 'left',
+      'fields[body][region]' => 'right',
+      'fields[node_link][region]' => 'footer',
+      'fields[body][label]' => $label,
+      'fields[submitted_by][region]' => 'header',
+    );
+    $this->dsConfigureUI($fields);
+
+    return $node;
+  }
+
+  /**
+   * Utility function to clear field settings.
+   */
+  function entitiesClearFieldSettings() {
+    db_query('TRUNCATE {ds_field_settings}');
+    cache_clear_all('ds_fields:', 'cache', TRUE);
+    cache_clear_all('ds_field_settings', 'cache');
+  }
+
+  /**
+   * Set the label.
+   */
+  function entitiesSetLabelClass($label, $text = '', $class = '', $hide_colon = FALSE) {
+    $edit = array(
+      'fields[body][label]' => $label,
+    );
+    if (!empty($text)) {
+      $edit['fields[body][settings_edit_form][settings][ft][lb]'] = $text;
+    }
+    if (!empty($class)) {
+      $edit['fields[body][settings_edit_form][settings][ft][classes][]'] = $class;
+    }
+    if ($hide_colon) {
+      $edit['fields[body][settings_edit_form][settings][ft][lb-col]'] = '1';
+    }
+    $this->dsEditFormatterSettings($edit);
+  }
+
+  /**
+   * Test basic node display fields.
+   */
+  function testDSNodeEntity() {
+
+    $node = $this->entitiesTestSetup();
+    $node_author = user_load($node->uid);
+
+    // Test theme_hook_suggestions in ds_entity_variables().
+    $this->backdropGet('node/' . $node->nid, array('query' => array('store' => 1)));
+    $cache = cache_get('ds_test');
+    $this->assertTrue(!empty($cache));
+    $hook_suggestions = $cache->data['theme_hook_suggestions'];
+    $expected_hook_suggestions = array(
+      'node__article',
+      'node__1',
+      'ds_2col_stacked',
+      'ds_2col_stacked__node',
+      'ds_2col_stacked__node_full',
+      'ds_2col_stacked__node_article',
+      'ds_2col_stacked__node_article_full',
+      'ds_2col_stacked__node__1'
+    );
+    $this->assertEqual($hook_suggestions, $expected_hook_suggestions);
+
+    // Look at node and verify token and block field.
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('view-mode-full', 'Template file found (in full view mode)');
+    $this->assertRaw('<div class="token-class">' . $node->title . '</span>', t('Token field found'));
+    $this->assertRaw('I am a PHP field', t('PHP field found'));
+    $this->assertRaw('group-header', 'Template found (region header)');
+    $this->assertRaw('group-footer', 'Template found (region footer)');
+    $this->assertRaw('group-left', 'Template found (region left)');
+    $this->assertRaw('group-right', 'Template found (region right)');
+    $this->assertPattern('/<div[^>]*>Submitted[^<]*<a[^>]+href=".*' . 'user\/' . $node_author->uid . '"[^>]*>' . check_plain($node_author->name) . '<\/a>.<\/div>/', t('Submitted by line found'));
+
+    // Configure teaser layout.
+    $teaser = array(
+      'additional_settings[layout]' => 'ds_2col',
+    );
+    $teaser_assert = array(
+      'regions' => array(
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+      ),
+    );
+    $this->dsSelectLayout($teaser, $teaser_assert, 'admin/structure/types/manage/article/display/teaser');
+
+    $fields = array(
+      'fields[token_field][region]' => 'left',
+      'fields[php_field][region]' => 'left',
+      'fields[body][region]' => 'right',
+      'fields[links][region]' => 'right',
+    );
+    $this->dsConfigureUI($fields, 'admin/structure/types/manage/article/display/teaser');
+
+    // Switch view mode on full node page.
+    $edit = array('ds_switch' => 'teaser');
+    $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
+    $this->assertRaw('view-mode-teaser', 'Switched to teaser mode');
+    $this->assertRaw('group-left', 'Template found (region left)');
+    $this->assertRaw('group-right', 'Template found (region right)');
+    $this->assertNoRaw('group-header', 'Template found (no region header)');
+    $this->assertNoRaw('group-footer', 'Template found (no region footer)');
+
+    $edit = array('ds_switch' => 'default');
+    $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
+    $this->assertRaw('view-mode-full', 'Switched to full mode again');
+
+    // Test all options of a block field.
+    $block = array(
+      'name' => 'Test block field',
+      'field' => 'test_block_field',
+      'entities[node]' => '1',
+      'block' => 'node|recent',
+      'block_render' => DS_BLOCK_TEMPLATE,
+    );
+    $this->dsCreateBlockField($block);
+    $fields = array(
+      'fields[test_block_field][region]' => 'left',
+      'fields[token_field][region]' => 'hidden',
+      'fields[php_field][region]' => 'hidden',
+      'fields[body][region]' => 'hidden',
+      'fields[links][region]' => 'hidden',
+    );
+    $this->dsConfigureUI($fields);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('<h2>Recent content</h2>');
+
+    $block = array(
+      'block_render' => DS_BLOCK_TITLE_CONTENT,
+    );
+    $this->dsCreateBlockField($block, 'admin/structure/ds/fields/manage_block/test_block_field', FALSE);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertNoRaw('<h2>Recent content</h2>');
+    $this->assertRaw('Recent content');
+
+    $block = array(
+      'block_render' => DS_BLOCK_CONTENT,
+    );
+    $this->dsCreateBlockField($block, 'admin/structure/ds/fields/manage_block/test_block_field', FALSE);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertNoRaw('<h2>Recent content</h2>');
+    $this->assertNoRaw('Recent content');
+
+    // Remove the page title (we'll use the switch view mode functionality too for this).
+    $edit = array('additional_settings[ds_page_title][ds_page_title_options][page_option_type]' => '1');
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display/teaser');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('<h1 class="title" id="page-title">
+          '. $node->title . '        </h1>');
+    $edit = array('ds_switch' => 'teaser');
+    $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertNoRaw('<h1 class="title" id="page-title">
+          '. $node->title . '        </h1>');
+
+    // Use page title substitutions.
+    $edit = array('additional_settings[ds_page_title][ds_page_title_options][page_option_type]' => '2', 'additional_settings[ds_page_title][ds_page_title_options][page_option_title]' => 'Change title: %node:type');
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display/teaser');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('<h1 class="title" id="page-title">
+          Change title: '. $node->type . '        </h1>');
+    $edit = array('additional_settings[ds_page_title][ds_page_title_options][page_option_type]' => '0');
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display/teaser');
+
+    // Go to home page, page title shouldn't bleed here
+    // see http://drupal.org/node/1446554.
+    $edit = array('ds_switch' => 'default');
+    $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
+    $edit = array('additional_settings[ds_page_title][ds_page_title_options][page_option_type]' => '2', 'additional_settings[ds_page_title][ds_page_title_options][page_option_title]' => 'Bleed title: %node:type');
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('<h1 class="title" id="page-title">
+          Bleed title: article        </h1>');
+    $this->backdropGet('node');
+    $this->assertNoText('Bleed title');
+
+    // Test revisions. Enable the revision view mode
+    $edit = array('additional_settings[modes][view_modes_custom][revision]' => '1');
+    $this->backdropPost('admin/structure/types/manage/article/display', $edit, t('Save'));
+
+    // Select layout and configure fields.
+    $edit = array(
+      'additional_settings[layout]' => 'ds_2col',
+    );
+    $assert = array(
+      'regions' => array(
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+      ),
+    );
+    $this->dsSelectLayout($edit, $assert, 'admin/structure/types/manage/article/display/revision');
+    $edit = array(
+      'fields[body][region]' => 'left',
+      'fields[links][region]' => 'right',
+      'fields[author][region]' => 'right',
+    );
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display/revision');
+
+    // Create revision of the node.
+    $edit = array(
+      'revision' => TRUE,
+      'log' => 'Test revision',
+    );
+    $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
+    $this->assertText('Revisions');
+
+    // Assert revision is using 2 col template.
+    $this->backdropGet('node/' . $node->nid . '/revisions/1/view');
+    $this->assertText('Body:', 'Body label');
+
+    // Change title of revision.
+    $edit = array('additional_settings[ds_page_title][ds_page_title_options][page_option_type]' => '2', 'additional_settings[ds_page_title][ds_page_title_options][page_option_title]' => 'Custom revision title');
+
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display/revision');
+    $this->backdropGet('node/' . $node->nid . '/revisions/1/view');
+    $this->assertText('Custom revision title', 'Custom title on revision view mode');
+
+    // Assert full view is using stacked template.
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertNoText('Body:', 'Body label');
+
+    // Test formatter limit on article with tags.
+    $edit = array(
+      'ds_switch' => 'default',
+      'field_tags[und]' => 'Tag 1, Tag 2'
+    );
+    $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
+    $edit = array(
+      'fields[field_tags][region]' => 'right',
+    );
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertText('Tag 1');
+    $this->assertText('Tag 2');
+    $edit = array(
+      'fields[field_tags][format][limit]' => '1',
+    );
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertText('Tag 1');
+    $this->assertNoText('Tag 2');
+
+    // Test check_plain() on ds_render_field() with the title field.
+    $edit = array(
+      'fields[title][region]' => 'right',
+    );
+    $this->dsConfigureUI($edit, 'admin/structure/types/manage/article/display');
+    $edit = array(
+      'title' => 'Hi, I am an article <script>alert(\'with a javascript tag in the title\');</script>',
+    );
+    $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('<h2>Hi, I am an article &lt;script&gt;alert(&#039;with a javascript tag in the title&#039;);&lt;/script&gt;</h2>');
+  }
+
+  /**
+   * Tests on field templates.
+   */
+  function testDSFieldTemplate() {
+
+    // Get a node.
+    $node = $this->entitiesTestSetup('hidden');
+    $body_field = $node->body[$node->language][0]['value'];
+
+    // -------------------------
+    // Default theming function.
+    // -------------------------
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"field field-name-body field-type-text-with-summary field-label-hidden\"><div class=\"field-items\"><div class=\"field-item even\" property=\"content:encoded\"><p>" . $body_field . "</p>
+</div></div></div>");
+
+    $this->entitiesSetLabelClass('above');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"field field-name-body field-type-text-with-summary field-label-above\"><div class=\"field-label\">Body:&nbsp;</div><div class=\"field-items\"><div class=\"field-item even\" property=\"content:encoded\"><p>" . $body_field . "</p>
+</div></div></div>");
+
+    $this->entitiesSetLabelClass('above', 'My body');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"field field-name-body field-type-text-with-summary field-label-above\"><div class=\"field-label\">My body:&nbsp;</div><div class=\"field-items\"><div class=\"field-item even\" property=\"content:encoded\"><p>" . $body_field . "</p>
+</div></div></div>");
+
+    $this->entitiesSetLabelClass('hidden', '', 'test_field_class');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"field field-name-body field-type-text-with-summary field-label-hidden test_field_class\"><div class=\"field-items\"><div class=\"field-item even\" property=\"content:encoded\"><p>" . $body_field . "</p>
+</div></div></div>");
+
+    $this->entitiesClearFieldSettings();
+
+    // -----------------------
+    // Reset theming function.
+    // -----------------------
+    $edit = array(
+      'additional_settings[fs1][ft-default]' => 'theme_ds_field_reset',
+    );
+    $this->backdropPost('admin/structure/ds/list/extras', $edit, t('Save configuration'));
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <p>" . $body_field . "</p>");
+
+    $this->entitiesSetLabelClass('above');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"label-above\">Body:&nbsp;</div><p>" . $body_field . "</p>");
+
+    $this->entitiesSetLabelClass('inline');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"label-inline\">Body:&nbsp;</div><p>" . $body_field . "</p>");
+
+    $this->entitiesSetLabelClass('above', 'My body');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"label-above\">My body:&nbsp;</div><p>" . $body_field . "</p>");
+
+    $this->entitiesSetLabelClass('inline', 'My body');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"label-inline\">My body:&nbsp;</div><p>" . $body_field . "</p>");
+
+    variable_set('ft-kill-colon', TRUE);
+    $this->refreshVariables();
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"label-inline\">My body</div><p>" . $body_field . "</p>");
+
+    $this->entitiesSetLabelClass('hidden');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <p>" . $body_field . "</p>");
+    $this->entitiesClearFieldSettings();
+
+    // ----------------------
+    // Custom field function.
+    // ----------------------
+
+    // With outer wrapper.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][func]' => 'theme_ds_field_expert',
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+    );
+    $this->dsEditFormatterSettings($edit);
+
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div><p>" . $body_field . "</p>
+</div>  </div>");
+
+    // With outer div wrapper and class.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class'
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><p>" . $body_field . "</p>
+</div>  </div>");
+
+    // With outer span wrapper and class.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class-2'
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <span class=\"ow-class-2\"><p>" . $body_field . "</p>
+</span>  </div>");
+
+    // Clear field settings.
+    $this->entitiesClearFieldSettings();
+
+    // With outer wrapper and field items wrapper.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][func]' => 'theme_ds_field_expert',
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'div'
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div><div><p>" . $body_field . "</p>
+</div></div>  </div>");
+
+    // With outer wrapper and field items div wrapper with class.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class'
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div><div class=\"fi-class\"><p>" . $body_field . "</p>
+</div></div>  </div>");
+
+    // With outer wrapper and field items span wrapper and class.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class'
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div><span class=\"fi-class\"><p>" . $body_field . "</p>
+</span></div>  </div>");
+
+    // With outer wrapper class and field items span wrapper and class.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class'
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><span class=\"fi-class\"><p>" . $body_field . "</p>
+</span></div>  </div>");
+
+    // With outer wrapper span class and field items span wrapper and class.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class-2'
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <span class=\"ow-class\"><span class=\"fi-class-2\"><p>" . $body_field . "</p>
+</span></span>  </div>");
+
+    // Clear field settings.
+    $this->entitiesClearFieldSettings();
+
+    // With field item div wrapper.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][func]' => 'theme_ds_field_expert',
+      'fields[body][settings_edit_form][settings][ft][fi]' => '1',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div><p>" . $body_field . "</p>
+</div>  </div>");
+
+    // With field item span wrapper.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][fi]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-el]' => 'span',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <span><p>" . $body_field . "</p>
+</span>  </div>");
+
+    // With field item span wrapper and class and odd even.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][fi]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][fi-cl]' => 'fi-class',
+      'fields[body][settings_edit_form][settings][ft][fi-odd-even]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-first-last]' => '1',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span>  </div>");
+
+    // With fis and fi.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class-2',
+      'fields[body][settings_edit_form][settings][ft][fi]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fi-cl]' => 'fi-class',
+      'fields[body][settings_edit_form][settings][ft][fi-odd-even]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-first-last]' => '1',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"fi-class-2\"><div class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</div></div>  </div>");
+    // With all wrappers.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class-2',
+      'fields[body][settings_edit_form][settings][ft][fi]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][fi-cl]' => 'fi-class',
+      'fields[body][settings_edit_form][settings][ft][fi-odd-even]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-first-last]' => '1',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    // With all wrappers and attributes.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class',
+      'fields[body][settings_edit_form][settings][ft][ow-at]' => 'name="ow-att"',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class-2',
+      'fields[body][settings_edit_form][settings][ft][fis-at]' => 'name="fis-att"',
+      'fields[body][settings_edit_form][settings][ft][fi]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][fi-cl]' => 'fi-class',
+      'fields[body][settings_edit_form][settings][ft][fi-at]' => 'name="fi-at"',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\" name=\"ow-att\"><div class=\"fi-class-2\" name=\"fis-att\"><span class=\"odd fi-class first last\" name=\"fi-at\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    // Remove attributes.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class',
+      'fields[body][settings_edit_form][settings][ft][ow-at]' => '',
+      'fields[body][settings_edit_form][settings][ft][fis]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fis-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][fis-cl]' => 'fi-class-2',
+      'fields[body][settings_edit_form][settings][ft][fis-at]' => '',
+      'fields[body][settings_edit_form][settings][ft][fi]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-el]' => 'span',
+      'fields[body][settings_edit_form][settings][ft][fi-cl]' => 'fi-class',
+      'fields[body][settings_edit_form][settings][ft][fi-at]' => '',
+    );
+    $this->dsEditFormatterSettings($edit);
+
+    // Label tests with custom function.
+    $this->entitiesSetLabelClass('above');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><div class=\"label-above\">Body:&nbsp;</div><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    $this->entitiesSetLabelClass('inline');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><div class=\"label-inline\">Body:&nbsp;</div><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    $this->entitiesSetLabelClass('above', 'My body');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><div class=\"label-above\">My body:&nbsp;</div><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    $this->entitiesSetLabelClass('inline', 'My body');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><div class=\"label-inline\">My body:&nbsp;</div><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    $this->entitiesSetLabelClass('inline', 'My body', '', TRUE);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><div class=\"label-inline\">My body</div><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    $this->entitiesSetLabelClass('hidden');
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class\"><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    // Test default classes on outer wrapper.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class',
+      'fields[body][settings_edit_form][settings][ft][ow-def-cl]' => '1',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class field field-name-body field-type-text-with-summary field-label-hidden\"><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    // Test default attributes on field item.
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][ow]' => '1',
+      'fields[body][settings_edit_form][settings][ft][ow-el]' => 'div',
+      'fields[body][settings_edit_form][settings][ft][ow-cl]' => 'ow-class',
+      'fields[body][settings_edit_form][settings][ft][ow-def-cl]' => '1',
+      'fields[body][settings_edit_form][settings][ft][fi-def-at]' => '1',
+    );
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    <div class=\"ow-class field field-name-body field-type-text-with-summary field-label-hidden\"><div class=\"fi-class-2\"><span class=\"odd fi-class first last\"  property=\"content:encoded\"><p>" . $body_field . "</p>
+</span></div></div>  </div>");
+
+    // Use the test field theming function to test that this function is
+    // registered in the theme registry through ds_extras_theme().
+    $edit = array(
+      'fields[body][settings_edit_form][settings][ft][func]' => 'ds_test_theming_function',
+    );
+
+    $this->dsEditFormatterSettings($edit);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw("<div class=\"group-right\">
+    Testing field output through custom function  </div>");
+  }
+}
+
+class dsExportablesTests extends dsBaseTest {
+
+  /**
+   * Enables the exportables module.
+   */
+  function dsExportablesSetup() {
+    module_enable(array('ds_exportables_test'));
+    backdrop_flush_all_caches();
+  }
+
+  // Test view modes.
+  function testDSExportablesViewmodes() {
+    $this->dsExportablesSetup();
+
+    // Find a default view mode on admin screen.
+    $this->backdropGet('admin/structure/ds/view_modes');
+    $this->assertText('Test exportables', t('Exportables view mode found on admin screen.'));
+
+    // Find default view mode on layout screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertText('Test exportables', t('Exportables view mode found on display screen.'));
+
+    // Override default view mode.
+    $edit = array(
+      'name' => 'Testing 2',
+    );
+    $this->backdropPost('admin/structure/ds/view_modes/manage/test_exportables', $edit, t('Save'));
+    $this->assertText(t('The view mode Testing 2 has been saved'), t('Exportables label updated'));
+    $this->assertText(t('Revert'), t('Revert button found.'));
+
+    // Find default view mode on layout screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertText('Testing 2', t('Updated exportables view mode found on display screen.'));
+
+    // Revert the view mode.
+    $this->backdropPost('admin/structure/ds/view_modes/revert/test_exportables', array(), t('Revert'));
+    $this->assertText(t('The view mode Testing 2 has been reverted'), t('Testing view mode reverted'));
+    $this->assertText('Test exportables', t('Exportables view mode found on admin screen.'));
+
+    // Assert the view mode is gone at the manage display screen.
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoText('Testing 2', t('Overrided exportables view mode not found on display screen.'));
+    $this->assertText('Test exportables', t('Default exportables view mode found on display screen.'));
+  }
+
+  // Test layout and field settings configuration.
+  function testDSExportablesLayoutFieldsettings() {
+    $this->dsExportablesSetup();
+
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoText(t('This layout is overridden. Click to revert to default settings.'));
+
+    $settings = array(
+      'type' => 'article',
+      'title' => 'Exportable'
+    );
+    $node = $this->backdropCreateNode($settings);
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('group-left', 'Left region found');
+    $this->assertRaw('group-right', 'Right region found');
+    $this->assertNoRaw('group-header', 'No header region found');
+    $this->assertNoRaw('group-footer', 'No footer region found');
+    $this->assertRaw('<h3><a href="'. url('node/1') . '" class="active">Exportable</a></h3>', t('Default title with h3 found'));
+    $this->assertRaw('<a href="' . url('node/1') . '" class=" active">Read more</a>', t('Default read more found'));
+
+    // Override default layout.
+    $layout = array(
+      'additional_settings[layout]' => 'ds_2col_stacked',
+    );
+
+    $assert = array(
+      'regions' => array(
+        'header' => '<td colspan="8">' . t('Header') . '</td>',
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+        'footer' => '<td colspan="8">' . t('Footer') . '</td>',
+      ),
+    );
+
+    $fields = array(
+      'fields[post_date][region]' => 'header',
+      'fields[author][region]' => 'left',
+      'fields[links][region]' => 'left',
+      'fields[body][region]' => 'right',
+      'fields[comments][region]' => 'footer',
+    );
+
+    $this->dsSelectLayout($layout, $assert);
+    $this->assertText(t('This layout is overridden. Click to revert to default settings.'));
+    $this->dsConfigureUI($fields);
+
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('group-left', 'Left region found');
+    $this->assertRaw('group-right', 'Left region found');
+    $this->assertRaw('group-header', 'Left region found');
+    $this->assertRaw('group-footer', 'Left region found');
+
+    // Revert.
+    $edit = array();
+    $this->backdropPost('admin/structure/ds/revert-layout/node|article|default', $edit, t('Revert'), array('query' => array('destination' => 'admin/structure/types/manage/article/display')));
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertRaw('group-left', 'Left region found');
+    $this->assertRaw('group-right', 'Left region found');
+    $this->assertNoRaw('group-header', 'Left region found');
+    $this->assertNoRaw('group-footer', 'Left region found');
+    $this->assertRaw('<h3><a href="'. url('node/1') . '" class="active">Exportable</a></h3>', t('Default title with h3 found'));
+    $this->assertRaw('<a href="' . url('node/1') . '" class=" active">Read more</a>', t('Default read more found'));
+  }
+
+  // Test custom field exportables.
+  function testDSExportablesCustomFields() {
+    $this->dsExportablesSetup();
+
+    // Look for default custom field.
+    $this->backdropGet('admin/structure/ds/fields');
+    $this->assertText('Exportable field');
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertText('Exportable field');
+
+    // Override custom field.
+    // Update testing label
+    $edit = array(
+      'name' => 'Overridden field',
+    );
+    $this->backdropPost('admin/structure/ds/fields/manage_custom/ds_exportable_field', $edit, t('Save'));
+    $this->assertText(t('The field Overridden field has been saved'), t('Default exportable field label updated'));
+    $this->assertText('Overridden field');
+    $this->assertNoText('Exportable field');
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertText('Overridden field');
+    $this->assertNoText('Exportable field');
+
+    // Revert.
+    $edit = array();
+    $this->backdropPost('admin/structure/ds/fields/revert/ds_exportable_field', $edit, t('Revert'));
+    $this->assertText('The field Overridden field has been reverted', t('Field reverted'));
+    $this->assertText('Exportable field');
+    $this->backdropGet('admin/structure/types/manage/article/display');
+    $this->assertNoText('Overridden field');
+    $this->assertText('Exportable field');
+  }
+}
+
+class dsFormTests extends dsBaseTest {
+
+  /**
+   * Forms tests.
+   */
+  function testDSForms() {
+
+    // Create a node.
+    $node = $this->backdropCreateNode(array('type' => 'article', 'promote' => FALSE));
+
+    // Configure teaser layout.
+    $form = array(
+      'additional_settings[layout]' => 'ds_2col_stacked',
+    );
+    $form_assert = array(
+      'regions' => array(
+        'header' => '<td colspan="8">' . t('Header') . '</td>',
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+        'footer' => '<td colspan="8">' . t('Footer') . '</td>',
+      ),
+    );
+    $this->dsSelectLayout($form, $form_assert, 'admin/structure/types/manage/article/fields');
+
+    $fields = array(
+      'fields[title][region]' => 'header',
+      'fields[body][region]' => 'left',
+      'fields[field_image][region]' => 'right',
+      'fields[field_tags][region]' => 'right',
+    );
+    $this->dsConfigureUI($fields, 'admin/structure/types/manage/article/fields');
+
+    // Inspect the node.
+    $this->backdropGet('node/' . $node->nid . '/edit');
+    $this->assertRaw('ds_2col_stacked', 'ds-form class added');
+    $this->assertRaw('group-header', 'Template found (region header)');
+    $this->assertRaw('group-left', 'Template found (region left)');
+    $this->assertRaw('group-right', 'Template found (region right)');
+    $this->assertRaw('group-footer', 'Template found (region footer)');
+    $this->assertRaw('edit-title', 'Title field found');
+    $this->assertRaw('edit-submit', 'Submit field found');
+    $this->assertRaw('edit-field-tags-und', 'Tags field found');
+    $this->assertRaw('edit-log', 'Revision log found');
+  }
+}
+
+class dsSearchTests extends dsBaseTest {
+
+  function testDSSearch() {
+
+    // Create nodes.
+    $i = 15;
+    while ($i > 0) {
+      $settings = array(
+        'title' => 'title' . $i,
+        'type' => 'article',
+        'promote' => 1,
+      );
+      $this->backdropCreateNode($settings);
+      $i--;
+    }
+
+    // Set default search.
+    $edit = array(
+      'search_default_module' => 'ds_search',
+    );
+    $this->backdropPost('admin/config/search/settings', $edit, t('Save configuration'));
+
+    // Run cron.
+    $this->cronRun();
+    $this->backdropGet('admin/config/search/settings');
+    $this->assertText(t('100% of the site has been indexed. There are 0 items left to index.'), 'Site has been indexed');
+
+    // Configure search result view mode.
+    $svm = array('additional_settings[modes][view_modes_custom][search_result]' => 'search_result');
+    $this->dsConfigureUI($svm);
+    $layout = array(
+      'additional_settings[layout]' => 'ds_2col_stacked',
+    );
+    $assert = array(
+      'regions' => array(
+        'header' => '<td colspan="8">' . t('Header') . '</td>',
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+        'footer' => '<td colspan="8">' . t('Footer') . '</td>',
+      ),
+    );
+    $this->dsSelectLayout($layout, $assert, 'admin/structure/types/manage/article/display/search_result');
+    $fields = array(
+      'fields[title][region]' => 'header',
+      'fields[post_date][region]' => 'header',
+      'fields[author][region]' => 'left',
+      'fields[body][region]' => 'right',
+      'fields[node_link][region]' => 'footer',
+    );
+    $this->dsConfigureUI($fields, 'admin/structure/types/manage/article/display/search_result');
+
+    // Configure ds search.
+    $edit = array('ds_user_override_search_page' => '1');
+    $this->backdropPost('admin/structure/ds/list/search', $edit, t('Save configuration'));
+
+    // Let's search.
+    $this->backdropGet('search/content/title1');
+    $this->assertNoRaw('/search/node/title1');
+    $this->assertRaw('view-mode-search_result', 'Search view mode found');
+    $this->assertRaw('group-left', 'Search template found');
+    $this->assertRaw('group-right', 'Search template found');
+    $this->assertNoText(t('Advanced search'), 'No advanced search found');
+
+
+    $edit = array('ds_search_node_form_alter' => '1');
+    $this->backdropPost('admin/structure/ds/list/search', $edit, t('Save configuration'));
+    $this->backdropGet('search/content/title1');
+    $this->assertText(t('Advanced search'), 'Advanced search found');
+
+    // Search on user.
+    // Configure user. We'll just do default.
+    $layout = array(
+      'additional_settings[layout]' => 'ds_2col_stacked',
+    );
+    $assert = array(
+      'regions' => array(
+        'header' => '<td colspan="8">' . t('Header') . '</td>',
+        'left' => '<td colspan="8">' . t('Left') . '</td>',
+        'right' => '<td colspan="8">' . t('Right') . '</td>',
+        'footer' => '<td colspan="8">' . t('Footer') . '</td>',
+      ),
+    );
+    $this->dsSelectLayout($layout, $assert, 'admin/config/people/accounts/display');
+    $fields = array(
+      'fields[name][region]' => 'left',
+      'fields[summary][region]' => 'right',
+    );
+    $this->dsConfigureUI($fields, 'admin/config/people/accounts/display');
+
+    $this->backdropGet('search/user/' . $this->admin_user->name);
+    $this->assertRaw('view-mode-search_result', 'Search view mode found');
+    $this->assertRaw('group-left', 'Search template found');
+    $this->assertRaw('group-right', 'Search template found');
+
+    // Test the group by settings.
+    $article = array(
+      'title' => 'group article 1',
+      'type' => 'article',
+      'promote' => 1,
+    );
+    $this->backdropCreateNode($article);
+
+    $page = array(
+      'title' => 'group page 1',
+      'type' => 'page',
+      'promote' => 1,
+    );
+    $this->backdropCreateNode($page);
+    $this->cronRun();
+
+    $edit = array(
+      'ds_search_group_by_type' => '1'
+    );
+    $this->backdropPost('admin/structure/ds/list/search', $edit, t('Save configuration'));
+
+    // Let's search.
+    $this->backdropGet('search/content/group');
+    $this->assertRaw('Results for article');
+    $this->assertRaw('Results for basic page');
+
+    $edit = array(
+      'ds_search_group_by_type_settings[article][label]' => 'Article results',
+    );
+    $this->backdropPost('admin/structure/ds/list/search', $edit, t('Save configuration'));
+    $this->backdropGet('search/content/group');
+    $this->assertNoRaw('Results for article');
+    $this->assertRaw('Article results');
+    $this->assertRaw('Results for basic page');
+
+    $edit = array(
+      'ds_search_group_by_type_settings[page][status]' => FALSE,
+      'ds_search_group_by_type_settings[article][label]' => '',
+    );
+    $this->backdropPost('admin/structure/ds/list/search', $edit, t('Save configuration'));
+    $this->backdropGet('search/content/group');
+    $this->assertNoRaw('Article results');
+    $this->assertNoRaw('Results for basic page');
+    $this->assertRaw('Other');
+  }
+}

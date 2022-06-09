@@ -1,0 +1,59 @@
+[dsFieldsTests]
+name = Fields
+description = Tests for managing custom code, dynamic, preprocess and block fields.
+group = Display Suite
+file = ds.test
+
+[dsViewModesTests]
+name = View modes
+description = Tests for managing custom view modes.
+group = Display Suite
+file = ds.test
+
+[dsLayoutsClassesTests]
+name = Layouts
+description = Tests for managing layouts and classes on Field UI screen.
+group = Display Suite
+file = ds.test
+
+[dsFieldPermissionTests]
+name = Field permissions
+description = Tests for testing field permissions.
+group = Display Suite
+file = ds.test
+
+[dsHooksTests]
+name = Hooks
+description = Tests for hooks: ds_fields, ds_fields_alter, ds_layouts.
+group = Display Suite
+file = ds.test
+
+[dsNodeTests]
+name = Node display
+description = Tests for display of nodes and fields.
+group = Display Suite
+file = ds.test
+
+[dsExportablesTests]
+name = Exportables
+description = Tests for exportables in Display Suite.
+group = Display Suite
+file = ds.test
+
+[dsFormTests]
+name = Forms
+description = Tests for managing layouts on forms.
+group = Display Suite
+file = ds.test
+
+[dsSearchTests]
+name = Search
+description = Tests for display of search results for nodes and users.
+group = Display Suite
+file = ds.test
+
+[dsViewsTests]
+name = Views
+description = Tests for Display Suite Views integration.
+group = Display Suite
+file = ds.test

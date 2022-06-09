@@ -1,0 +1,159 @@
+<?php
+
+/**
+ * @file
+ * Install file.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function ds_extras_install() {
+  db_update('system')
+    ->fields(array('weight' => 2))
+    ->condition('name', 'ds_extras')
+    ->execute();
+
+  $schema['node_revision'] = array();
+  ds_extras_schema_alter($schema);
+  foreach ($schema['node_revision']['fields'] as $name => $spec) {
+    db_add_field('node_revision', $name, $spec);
+  }
+  // Dynamically generated variable data was detected on the following lines.
+  // /ds/modules/ds_extras/includes/ds_extras.admin.inc line 598
+  // /ds/modules/ds_extras/ds_extras.module line 368
+  // /ds/modules/ds_extras/ds_extras.module line 385
+}
+
+/**
+ * Implements hook_schema().
+ */
+function ds_extras_schema() {
+
+  $schema['ds_vd'] = array(
+    'description' => 'The base table for views displays.',
+    // CTools export definitions.
+    'export' => array(
+      'key' => 'vd',
+      'identifier' => 'ds_vd',
+      'default hook' => 'ds_vd_info',
+      'can disable' => FALSE,
+      'api' => array(
+        'owner' => 'ds_extras',
+        'api' => 'ds_extras',
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
+    'fields' => array(
+      'vd' => array(
+        'description' => 'The primary identifier for the views display.',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'label' => array(
+        'description' => 'The label for the views display.',
+        'type' => 'varchar',
+        'length' => 132,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('vd'),
+  );
+
+  return $schema;
+}
+
+
+/**
+ * Implements hook_schema_alter().
+ */
+function ds_extras_schema_alter(&$schema) {
+
+  // Add a field ds_switch to the node_revision table in order
+  // to store the name of view mode to switch to.
+  if (isset($schema['node_revision'])) {
+    $schema['node_revision']['fields']['ds_switch'] = array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    );
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function ds_extras_uninstall() {
+  config_clear('ds_extras.settings', 'ds_extras_region_to_block');
+  config_clear('ds_extras.settings', 'ds_extras_region_blocks');
+  config_clear('ds_extras.settings', 'ds_extras_switch_view_mode');
+  config_clear('ds_extras.settings', 'ds_extras_vd');
+  config_clear('ds_extras.settings', 'ds_extras_hide_page_title');
+  config_clear('ds_extras.settings', 'ds_extras_field_template');
+  // TODO This variable was probably removed in Backdrop without replacement.
+  variable_del('ds_classes_fields');
+  config_clear('ds_extras.settings', 'ds_extras_fields_extra');
+  config_clear('ds_extras.settings', 'ds_extras_fields_extra_list');
+  config_clear('ds_extras.settings', 'ds_extras_switch_field');
+  config_clear('ds_extras.settings', 'ds_extras_editor_switch');
+  // TODO This variable was probably removed in Backdrop without replacement.
+  variable_del('ft-default');
+  // TODO This variable was probably removed in Backdrop without replacement.
+  variable_del('ft-kill-colon');
+  config_clear('ds_extras.settings', 'ds_extras_flag');
+  config_clear('ds_extras.settings', 'ds_extras_hidden_region');
+  config_clear('ds_extras.settings', 'ds_extras_hide_page_sidebars');
+  db_drop_field('node_revision', 'ds_switch');
+}
+
+// TODO The old hook_update_N functions cannot be applied to Backdrop.
+function ds_extras_update_7200() { }
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function ds_extras_update_last_removed() {
+  return 7200;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function ds_extras_update_1000() {
+  $config = config('ds_extras.settings');
+  $config->set('ds_extras_switch_field', update_variable_get('ds_extras_switch_field', ''));
+  $config->set('ds_extras_flag', update_variable_get('ds_extras_flag', 'FALSE'));
+  $config->set('ds_extras_vd', update_variable_get('ds_extras_vd', 'FALSE'));
+  $config->set('ds_extras_hidden_region', update_variable_get('ds_extras_hidden_region', 'FALSE'));
+  $config->set('ds_extras_switch_view_mode', update_variable_get('ds_extras_switch_view_mode', 'FALSE'));
+  $config->set('ds_extras_field_permissions', update_variable_get('ds_extras_field_permissions', 'FALSE'));
+  $config->set('ds_extras_region_blocks', update_variable_get('ds_extras_region_blocks', 'dynamic value in file /ds/modules/ds_extras/includes/ds_extras.admin.inc line 598'));
+  $config->set('ds_extras_view_modes_node_type', update_variable_get('ds_extras_view_modes_node_type', 'dynamic variable in file /ds/modules/ds_extras/ds_extras.module line 368'));
+  $config->set('ds_extras_view_modes_nodetype', update_variable_get('ds_extras_view_modes_nodetype', 'dynamic variable in file /ds/modules/ds_extras/ds_extras.module line 385'));
+  $config->set('ds_extras_fields_extra', update_variable_get('ds_extras_fields_extra', 'FALSE'));
+  $config->set('ds_extras_fields_extra_list', update_variable_get('ds_extras_fields_extra_list', 'FALSE'));
+  $config->set('ds_extras_hide_page_title', update_variable_get('ds_extras_hide_page_title', 'FALSE'));
+  $config->set('ds_extras_field_template', update_variable_get('ds_extras_field_template', 'FALSE'));
+  $config->set('ds_extras_hide_page_sidebars', update_variable_get('ds_extras_hide_page_sidebars', 'FALSE'));
+  $config->set('ds_extras_region_to_block', update_variable_get('ds_extras_region_to_block', 'FALSE'));
+  update_variable_del('ds_extras_switch_field');
+  update_variable_del('ds_extras_flag');
+  update_variable_del('ds_extras_vd');
+  update_variable_del('ds_extras_hidden_region');
+  update_variable_del('ds_extras_switch_view_mode');
+  update_variable_del('ds_extras_field_permissions');
+  update_variable_del('ds_extras_region_blocks');
+  update_variable_del('ds_extras_view_modes_node_type');
+  update_variable_del('ds_extras_view_modes_nodetype');
+  update_variable_del('ds_extras_fields_extra');
+  update_variable_del('ds_extras_fields_extra_list');
+  update_variable_del('ds_extras_hide_page_title');
+  update_variable_del('ds_extras_field_template');
+  update_variable_del('ds_extras_hide_page_sidebars');
+  update_variable_del('ds_extras_region_to_block');
+}

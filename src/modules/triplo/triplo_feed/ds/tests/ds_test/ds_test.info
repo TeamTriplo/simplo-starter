@@ -1,0 +1,7 @@
+name = "Display Suite Test"
+description = "Test module for Display Suite"
+backdrop = 1.x
+type = module
+package = "Display Suite"
+dependencies[] = ds_extras
+hidden = TRUE

@@ -1,0 +1,20 @@
+{
+    "_config_name": "ds_extras.settings",
+    "field_template": false,
+    "ft-default": "theme_field",
+    "ft-kill-colon" : false,
+    "fields_extra": false,
+    "fields_extra_list": false,
+    "switch_field": "",
+    "flag": false,
+    "vd": false,
+    "hidden_region": false,
+    "switch_view_mode": false,
+    "field_permissions": false,
+    "region_blocks": "dynamic value in file /ds/modules/ds_extras/includes/ds_extras.admin.inc line 598",
+    "view_modes_node_type": "dynamic variable in file /ds/modules/ds_extras/ds_extras.module line 368",
+    "view_modes_nodetype": "dynamic variable in file /ds/modules/ds_extras/ds_extras.module line 385",
+    "hide_page_title": false,
+    "hide_page_sidebars": false,
+    "region_to_block": false
+}

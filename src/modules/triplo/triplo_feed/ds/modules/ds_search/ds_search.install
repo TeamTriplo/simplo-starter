@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @file
+ * Display Suite search install file.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function ds_search_uninstall() {
+  config_clear('ds_search.settings', 'ds_search_type');
+  config_clear('ds_search.settings', 'ds_search_path');
+  config_clear('ds_search.settings', 'ds_search_view_mode');
+  config_clear('ds_search.settings', 'ds_search_file_render');
+  config_clear('ds_search.settings', 'ds_search_variables');
+  config_clear('ds_search.settings', 'ds_search_show_title');
+  config_clear('ds_search.settings', 'ds_search_language');
+  config_clear('ds_search.settings', 'ds_search_highlight');
+  config_clear('ds_search.settings', 'ds_search_highlight_selector');
+  config_clear('ds_search.settings', 'ds_search_group_by_type');
+  config_clear('ds_search.settings', 'ds_search_group_by_type_settings');
+  config_clear('ds_search.settings', 'ds_search_group_by_type_other');
+  config_clear('ds_search.settings', 'ds_search_group_by_type_other_wrapper');
+  config_clear('ds_search.settings', 'ds_search_node_form_alter');
+  config_clear('ds_search.settings', 'ds_search_apachesolr_hide_current_filters');
+  config_clear('ds_search.settings', 'ds_search_apachesolr_current_filters_default');
+  config_clear('ds_search.settings', 'ds_search_apachesolr_multisite');
+  config_clear('ds_search.settings', 'ds_search_apachesolr_multisite_sort');
+  config_clear('ds_search.settings', 'ds_search_apachesolr_multisite_group');
+  config_clear('ds_search.settings', 'ds_search_apachesolr_multisite_group_config');
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function ds_search_update_1000() {
+  $config = config('ds_search.settings');
+  $config->set('ds_search_view_mode', update_variable_get('ds_search_view_mode', 'search_result'));
+  $config->set('ds_search_path', update_variable_get('ds_search_path', 'content'));
+  $config->set('ds_search_type', update_variable_get('ds_search_type', 'node'));
+  $config->set('ds_search_apachesolr_multisite', update_variable_get('ds_search_apachesolr_multisite', ''));
+  $config->set('ds_search_file_render', update_variable_get('ds_search_file_render', 'FALSE'));
+  $config->set('ds_search_group_by_type', update_variable_get('ds_search_group_by_type', ''));
+  $config->set('ds_search_group_by_type_settings', update_variable_get('ds_search_group_by_type_settings', ''));
+  $config->set('ds_search_apachesolr_multisite_group', update_variable_get('ds_search_apachesolr_multisite_group', ''));
+  $config->set('ds_search_group_by_type_other', update_variable_get('ds_search_group_by_type_other', 'Other'));
+  $config->set('ds_search_group_by_type_other_wrapper', update_variable_get('ds_search_group_by_type_other_wrapper', 'fieldset'));
+  $config->set('ds_search_apachesolr_multisite_group_config', update_variable_get('ds_search_apachesolr_multisite_group_config', ''));
+  $config->set('ds_search_language', update_variable_get('ds_search_language', ''));
+  $config->set('ds_search_node_limit', update_variable_get('ds_search_node_limit', '10'));
+  $config->set('ds_search_show_title', update_variable_get('ds_search_show_title', ''));
+  $config->set('ds_search_variables', update_variable_get('ds_search_variables', 'none'));
+  $config->set('ds_search_highlight', update_variable_get('ds_search_highlight', ''));
+  $config->set('ds_search_highlight_selector', update_variable_get('ds_search_highlight_selector', 'dynamic value in file /ds/modules/ds_search/includes/ds_search.admin.inc line 99'));
+  $config->set('ds_search_node_form_alter', update_variable_get('ds_search_node_form_alter', ''));
+  $config->set('ds_search_apachesolr_hide_current_filters', update_variable_get('ds_search_apachesolr_hide_current_filters', ''));
+  $config->set('ds_search_apachesolr_current_filters_default', update_variable_get('ds_search_apachesolr_current_filters_default', ''));
+  $config->set('ds_search_apachesolr_multisite_boost', update_variable_get('ds_search_apachesolr_multisite_boost', ''));
+  $config->set('ds_search_apachesolr_multisite_boost_nr', update_variable_get('ds_search_apachesolr_multisite_boost_nr', '100'));
+  update_variable_del('ds_search_view_mode');
+  update_variable_del('ds_search_path');
+  update_variable_del('ds_search_type');
+  update_variable_del('ds_search_apachesolr_multisite');
+  update_variable_del('ds_search_file_render');
+  update_variable_del('ds_search_group_by_type');
+  update_variable_del('ds_search_group_by_type_settings');
+  update_variable_del('ds_search_apachesolr_multisite_group');
+  update_variable_del('ds_search_group_by_type_other');
+  update_variable_del('ds_search_group_by_type_other_wrapper');
+  update_variable_del('ds_search_apachesolr_multisite_group_config');
+  update_variable_del('ds_search_language');
+  update_variable_del('ds_search_node_limit');
+  update_variable_del('ds_search_show_title');
+  update_variable_del('ds_search_variables');
+  update_variable_del('ds_search_highlight');
+  update_variable_del('ds_search_highlight_selector');
+  update_variable_del('ds_search_node_form_alter');
+  update_variable_del('ds_search_apachesolr_hide_current_filters');
+  update_variable_del('ds_search_apachesolr_current_filters_default');
+  update_variable_del('ds_search_apachesolr_multisite_boost');
+  update_variable_del('ds_search_apachesolr_multisite_boost_nr');
+}
+
+/**
+ * Implements hook_install().
+ */
+function ds_search_install() {
+  // Dynamically generated variable data was detected.
+  // /ds/modules/ds_search/includes/ds_search.admin.inc line 99
+}
