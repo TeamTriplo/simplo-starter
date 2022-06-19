@@ -10,7 +10,7 @@ configure = admin/config/development/layout_contextual_links
 
 stylesheets[all][] = css/layout_contextual_links.css
 
-; Added by Backdrop CMS packaging script on 2021-12-20
+; Added by Backdrop CMS packaging script on 2022-04-03
 project = layout_contextual_links
-version = 1.x-1.0.2
-timestamp = 1640050671
+version = 1.x-1.1.0
+timestamp = 1649021180
