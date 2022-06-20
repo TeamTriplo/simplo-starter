@@ -103,10 +103,8 @@ function taxonomy_feeds_set_target(FeedsSource $source, $entity, $target, array 
   if (!isset($cache['allowed_vocabularies'][$target])) {
     foreach ($info['settings']['allowed_values'] as $tree) {
       if ($vocabulary = taxonomy_vocabulary_load($tree['vocabulary'])) {
-        $vocabulary = $vocabulary->vocabulary;
-
-        $cache['allowed_vocabularies'][$target][$vocabulary] = $vocabulary->machine_name;
-        $cache['vocabulary_targets'][$vocabulary][] = $target;
+        $cache['allowed_vocabularies'][$target][$vocabulary->machine_name] = $vocabulary->machine_name;
+        $cache['vocabulary_targets'][$vocabulary->machine_name][] = $target;
       }
     }
   }
@@ -182,7 +180,7 @@ function taxonomy_feeds_set_target(FeedsSource $source, $entity, $target, array 
             $cache['allowed_values'][$target][$tid] = $term->name;
 
             // Invalidate caches for other fields targeting the same vocabulary.
-            foreach ($cache['vocabulary_targets'][$term_vid] as $clear_target) {
+            foreach ($cache['vocabulary_targets'][$term->vocabulary_machine_name] as $clear_target) {
               if ($clear_target !== $target) {
                 unset($cache['allowed_values'][$clear_target]);
               }
