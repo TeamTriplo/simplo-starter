@@ -40,10 +40,12 @@ a:hover {
 .header-menu .links a:hover {
   outline: 1px solid;
 }
-.l-page-title .page-title {
+.l-page-title .page-title,
+.block-system-title-combo .page-title {
   color: #828b95;
 }
-.l-page-title {
+.l-page-title .page-title,
+.block-system-title-combo .page-title {
   border-bottom: 1px solid #828b95;
 }
 h1,

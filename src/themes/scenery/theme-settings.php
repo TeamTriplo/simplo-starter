@@ -8,12 +8,6 @@
  * Implements hook_form_system_theme_settings_alter().
  */
 function scenery_form_system_theme_settings_alter(&$form, &$form_state) {
-  if (module_exists('color')) {
-    // Until #4463 is addressed.
-    // @see https://github.com/backdrop/backdrop-issues/issues/4463
-    $form_state['build_info']['args'][0] = NULL;
-  }
-
   $theme_name = $form['theme']['#value'];
   $path = backdrop_get_path('theme', 'scenery');
   $form['#attached']['css'] = array($path . '/css/scenery-admin.css');
@@ -105,7 +99,7 @@ function scenery_form_system_theme_settings_alter(&$form, &$form_state) {
     $form['custom']['css']['#description'] = $text;
   }
   // Strange... why do I have to set the system function?
-  $form['#submit'] = array('_scenery_css_file', 'system_theme_settings_submit');
+  $form['#submit'] = array('_scenery_css_file', '_scenery_file_usage', 'system_theme_settings_submit');
 }
 
 /**
@@ -133,5 +127,41 @@ function _scenery_css_file($form, $form_state) {
   }
   elseif (file_exists($destination)) {
     file_unmanaged_delete($destination);
+  }
+  // Flush caches if necessary.
+  $core_config = config('system.core');
+  if ($core_config->get('preprocess_css')) {
+    _backdrop_flush_css_js();
+    backdrop_clear_css_cache();
+  }
+  if ($core_config->get('cache')) {
+    cache('page')->flush();
+  }
+}
+
+/**
+ * Custom callback to record file usage of header image.
+ */
+function _scenery_file_usage($form, $form_state) {
+  $current_image = $form_state['values']['image'];
+  $previous_image = $form['custom']['image']['#default_value'];
+
+  if ($current_image) {
+    $file = file_load($current_image);
+    if ($current_image != $previous_image) {
+      file_usage_add($file, 'scenery', 'theme', $file->fid);
+      if ($previous_image) {
+        $old_file = file_load($previous_image);
+        if ($old_file) {
+          file_usage_delete($old_file, 'scenery', 'theme');
+        }
+      }
+    }
+  }
+  elseif ($previous_image) {
+    $old_file = file_load($previous_image);
+    if ($old_file) {
+      file_usage_delete($old_file, 'scenery', 'theme');
+    }
   }
 }
