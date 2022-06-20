@@ -1,0 +1,44 @@
+<?php
+/**
+ * @file
+ * Helper module to test messages.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function matomo_testing_menu() {
+  $items = array();
+  $items['matomo-testing'] = array(
+    'page callback' => '_matomo_testing_page',
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+/**
+ * Page callback.
+ */
+function _matomo_testing_page() {
+  // Flush previous messages and set some.
+  backdrop_get_messages();
+  backdrop_set_message('Example error message.', 'error');
+  backdrop_set_message('Example warning message.', 'warning');
+  backdrop_set_message('Example status message.', 'status');
+  backdrop_set_message('Example error <em>message</em> with html tags and <a href="https://example.com/">link</a>.', 'error');
+
+  return '<p>Some content</p>';
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ *
+ * Workaround since core 1.21.0. to get message related tests passing again.
+ */
+function matomo_testing_preprocess_status_messages(&$variables) {
+  // Put existing messages in the $variables array, without resetting them.
+  // Apparently in Simpletest function theme_status_messages() runs before
+  // matomo_preprocess_layout(), so the messages array already got flushed.
+  // The order in regular page accesses is: preprocessor, then theme function.
+  $variables['messages'] = backdrop_get_messages(NULL, FALSE);
+}

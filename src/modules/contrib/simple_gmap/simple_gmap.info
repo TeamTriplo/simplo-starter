@@ -1,0 +1,10 @@
+name = Simple Google Maps
+description = Provides a Google Maps link/map formatter for simple Text fields
+backdrop = 1.x
+type = module
+project = Fields
+
+; Added by Backdrop CMS packaging script on 2015-10-01
+project = simple_gmap
+version = 1.x-1.2.0
+timestamp = 1443727473

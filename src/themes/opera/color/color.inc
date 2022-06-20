@@ -2,6 +2,8 @@
 $info = array(
   // Available colors and color labels used in theme.
   'fields' => array( 
+    'buttonbg' => t('Button Background'),
+    'buttonlinks' => t('Button Text'),
     'set1menu' => t('Default Links'),
     'set1bg' => t('Background'),
     'set1text' => t('Text'),
@@ -21,11 +23,18 @@ $info = array(
     'set5text' => t('Text'),
     'set5links' => t('Links'),
   ),
+
+      'buttonbg',
+    'buttonlinks',
+
+
   // Pre-defined color schemes.
   'schemes' => array(
     'default' => array(
       'title' => t('Opera (default)'),
       'colors' => array(
+        'buttonbg' => '#783949',
+        'buttonlinks' => '#b2cc22',
         'set1menu' => '#b2bc20',
         'set1bg' => '#793939',
         'set1text' => '#fff6ff',
@@ -52,6 +61,8 @@ $info = array(
     'venice' => array(
       'title' => t('Venice'),
       'colors' => array(
+        'buttonbg' => '#794939',
+        'buttonlinks' => '#b3bc21',
         'set1menu' => '#094eac',
         'set1bg' => '#473f35',
         'set1text' => '#fffeff',
@@ -76,6 +87,8 @@ $info = array(
     'cream' => array(
       'title' => t('Cream'),
       'colors' => array(
+        'buttonbg' => '#793939',
+        'buttonlinks' => '#b2bc21',
         'set1menu' => '#094eac',
         'set1bg' => '#f9db79',
         'set1text' => '#242323',
@@ -100,6 +113,8 @@ $info = array(
     'plume' => array(
       'title' => t('Plume'),
       'colors' => array(
+        'buttonbg' => '#793939',
+        'buttonlinks' => '#b2bc21',
         'set1menu' => '#3272ae',
         'set1bg' => '#1c2541',
         'set1text' => '#FEF3FF',
@@ -124,6 +139,8 @@ $info = array(
     'bright' => array(
       'title' => t('Bright'),
       'colors' => array(
+        'buttonbg' => '#793939',
+        'buttonlinks' => '#b2bc21',
         'set1menu' => '#981001',
         'set1bg' => '#6e0e0a',
         'set1text' => '#020000',
@@ -148,6 +165,8 @@ $info = array(
     'night' => array(
       'title' => t('Night'),
       'colors' => array(
+        'buttonbg' => '#793939',
+        'buttonlinks' => '#b2bc21',
         'set1menu' => '#b2bc21',
         'set1bg' => '#232020',
         'set1text' => '#f7f7f7',

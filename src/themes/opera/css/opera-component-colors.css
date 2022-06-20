@@ -31,6 +31,11 @@ a {
   color: var(--link-navbar);
 }
 
+.l-sidebar .block-title {
+  background-color: var(--color-one);
+  color: var(--link-one);
+}
+
 /**
  * @file
  * Style rules from Basis with colors that may get
@@ -218,13 +223,14 @@ ul.action-links a:after {
 
 /*  components/menu-dropdown.css  */
 
-.js .menu-dropdown li,
-.js .menu-dropdown a.has-submenu.highlighted {
-  border-bottom: 1px solid #bbbbbb;
-}
+/*.menu-dropdown a span.sub-arrow {
+  border: 1px solid #bbbbbb;
+}*/
+
+
 
 .menu-dropdown a span.sub-arrow {
-  border: 1px solid #bbbbbb;
+  border-color:  #b2bc20 transparent transparent transparent;
 }
 
 /*  components/menu-toggle.css  */
@@ -282,9 +288,11 @@ abbr.tabledrag-changed {
 
 /*  components/teasers.css  */
 
+
 .view-mode-teaser + .view-mode-teaser,
+.view .view-mode-teaser,
 .view-promoted .views-row {
-  border-top: 0.25rem solid #bbbbbb;
+  border-top: 1px solid #bbbbbb;
 }
 
 /*  components/vertical-tabs.css  */

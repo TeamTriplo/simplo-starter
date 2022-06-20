@@ -1,7 +1,7 @@
 <?php
-
 /**
- * @file Rules - Installation file.
+ * @file
+ * Rules - Installation file.
  */
 
 /**
@@ -18,7 +18,7 @@ function rules_enable() {
 function rules_install() {
   module_load_include('inc', 'rules', 'modules/events');
   // Set the modules' weight to 20, see
-  // http://drupal.org/node/445084#comment-1533280 for the reasoning.
+  // https://www.drupal.org/node/445084#comment-1533280 for the reasoning.
   db_query("UPDATE {system} SET weight = 20 WHERE name = 'rules'");
 }
 
@@ -46,7 +46,7 @@ function rules_schema() {
         'description' => 'The label of the configuration.',
         'default' => 'unlabeled',
       ),
-     'plugin' => array(
+      'plugin' => array(
         'type' => 'varchar',
         'length' => 127,
         'not null' => TRUE,
@@ -114,7 +114,7 @@ function rules_schema() {
       'name' => array('name'),
     ),
     'indexes' => array(
-      'plugin' => array('plugin'),
+      'plugin' => array('plugin', 'active'),
     ),
   );
   $schema['rules_trigger'] = array(
@@ -190,32 +190,27 @@ function rules_schema() {
 }
 
 /**
- * Remove settings that are now obtained from system.core
+ * Implements hook_update_last_removed().
  */
-function rules_update_1001() {
-  $config = config('rules.settings');
-  $config->clear('theme_default');
-  $config->clear('admin_theme');
-  $config->clear('site_mail');
-  $config->save();
+function rules_update_last_removed() {
+  return 7214;
 }
 
 /**
- * Move book settings from variables to config.
+ * Move Rules settings from variables to config.
  */
 function rules_update_1000() {
   // Migrate variables to config.
   $config = config('rules.settings');
-  $config->set('rules_log_errors', update_variable_get('rules_log_errors', 'RulesLog::WARN'));
-  $config->set('rules_log_level', update_variable_get('rules_log_level', 'self::INFO'));
-  $config->set('rules_debug_log', update_variable_get('rules_debug_log', '0'));
-  $config->set('rules_debug', update_variable_get('rules_log_debug', 'RulesLog::WARN'));
-  $config->set('language_content_type_page', update_variable_get('language_content_type_page', '1'));
+  $config->set('rules_log_errors', update_variable_get('rules_log_errors', RulesLog::WARN));
+  $config->set('rules_log_level', update_variable_get('rules_log_level', RulesLog::INFO));
+  $config->set('rules_debug_log', update_variable_get('rules_debug_log', 0));
+  $config->set('rules_debug', update_variable_get('rules_log_debug', RulesLog::WARN));
   $config->set('rules_path_cleaning_callback', update_variable_get('rules_path_cleaning_callback', 'rules_path_default_cleaning_method'));
   $config->set('rules_path_replacement_char', update_variable_get('rules_path_replacement_char', '-'));
-  $config->set('rules_path_lower_case', update_variable_get('rules_path_lower_case', 'TRUE'));
-  $config->set('rules_clean_path', update_variable_get('rules_clean_path', 'array("/[^a-zA-Z0-9\-_]+/", $replace)'));
-  $config->set('rules_path_transliteration', update_variable_get('rules_path_transliteration', 'TRUE'));
+  $config->set('rules_path_lower_case', update_variable_get('rules_path_lower_case', TRUE));
+  $config->set('rules_clean_path', update_variable_get('rules_clean_path', array('/[^a-zA-Z0-9\-_]+/', '-')));
+  $config->set('rules_path_transliteration', update_variable_get('rules_path_transliteration', TRUE));
   $config->save();
 
   // Delete variables.
@@ -226,7 +221,6 @@ function rules_update_1000() {
   update_variable_del('rules_debug_region');
   update_variable_del('theme_default');
   update_variable_del('admin_theme');
-  update_variable_del('language_content_type_page');
   update_variable_del('rules_path_cleaning_callback');
   update_variable_del('rules_path_replacement_char');
   update_variable_del('rules_path_lower_case');
@@ -236,8 +230,35 @@ function rules_update_1000() {
 }
 
 /**
- * Implements hook_update_last_removed().
+ * Remove settings that are now obtained from system.core.
  */
-function rules_update_last_removed() {
-  return 7214;
+function rules_update_1001() {
+  $config = config('rules.settings');
+  $config->clear('theme_default');
+  $config->clear('admin_theme');
+  $config->clear('site_mail');
+  $config->save();
+}
+
+/**
+ * Deprecate 'rules_clean_path' config variable in favor of 'rules_path_regex'.
+ */
+function rules_update_1002() {
+  $rules_clean_path = config_get('rules.settings', 'rules_clean_path');
+  if (is_array($rules_clean_path) && count($rules_clean_path) == 2) {
+    config_set('rules.settings', 'rules_path_regex', $rules_clean_path[0]);
+  }
+  else {
+    config_set('rules.settings', 'rules_path_regex', '/[^a-zA-Z0-9\-_]+/');
+  }
+  config_clear('rules.settings', 'rules_clean_path');
+}
+
+/**
+ * Remove superfluous config variable 'language_content_type_page'.
+ */
+function rules_update_1003() {
+  $config = config('rules.settings');
+  $config->clear('language_content_type_page');
+  $config->save();
 }

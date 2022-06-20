@@ -5,15 +5,28 @@ by John Seymour Anderson of Triangle Park Creative. Certain elements of that des
 over into this contrib theme. Most importantly, a stacked design of full width panels with 
 background colors.
 
+See Opera in action: https://themeswitcher.simplo.site/
+
+Here are some Simplo sites that are using Opera. None of these have been subthemed, but they are 
+using contributed modules and custom configuation to acheive some special effects.
+
+- https://simplo.site/
+- https://learn-backdrop.simplo.site/
+- http://simplo-market.simplo.site/
+
 ## Status
 
-We just released an alpha version of this theme. We would love for some folks to test it out
-and provide feedback and file bug reports. In the alpha stage we may still make 
-changes that could effect end users. If you use a alpha version on a production site, you may not 
-be able to upgrade without noticing some small changes on your site. 
+We just released an beta version of this theme as we are moving closer to a stable release in the
+near future. We still need more folks to test it out and provide feedback and file bug reports. In 
+the beta stage we may still make changes that could effect end users. If you use an alpha or beta version 
+on a production site, you may not be able to upgrade without noticing some small (or even large) 
+changes on your site. 
 
 Once we issue a stabile release, we will avoid any breaking changes within minor releases. At that
-stage, all changes in minor releases will be backward compatible.  
+stage, all changes in minor releases will be backward compatible.
+
+Most recent release includes fixes to make it work better with the new Cards content type in default
+Backdrop installations and the new [Welcome Recipe](https://backdropcms.org/project/welcome) released by Simplo. 
 
 ## Who is this theme for?
 

@@ -9,6 +9,7 @@ settings[use_bootstrap] = 0
 
 ; Add theme CSS files - from Tatsu (with edits)
 stylesheets[all][] = css/base.css
+stylesheets[all][] = css/typography.css
 stylesheets[all][] = css/layout.css
 stylesheets[all][] = css/skin.css
 stylesheets[all][] = css/component/small-text-components.css
@@ -55,6 +56,11 @@ settings[color] = true
 
 ; Configuration specifically for Utility CSS module. Classes added to this list
 ; will be available as autocomplete in the block UI where users are allowed to add classes.
+
+utility_css[block][] = 'opera-block-soprano'
+utility_css[block][] = 'opera-block-tenor'
+utility_css[block][] = 'opera-block-baritone'
+
 utility_css[font][] = 'color-inverse'
 utility_css[font][] = 'font-size-xxxxlarge'
 utility_css[font][] = 'font-size-xxxlarge'
@@ -94,8 +100,3 @@ utility_css[color][] = 'opera-bg3-yellow'
 utility_css[alignment][] = 'text-align-center'
 utility_css[alignment][] = 'text-align-right'
 utility_css[alignment][] = 'text-align-left'
-
-; Added by Backdrop CMS packaging script on 2022-01-09
-project = opera
-version = 1.x-1.0.0-alpha6
-timestamp = 1641798839

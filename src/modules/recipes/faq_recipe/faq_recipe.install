@@ -1,0 +1,106 @@
+<?php
+  function faq_recipe_install() {
+    // Make a faq node.
+    $node = new Node();
+
+    // Use the node type you need here, in this case 'faq'.
+    $node->type = 'faq';
+    $node->title = 'How does this recipe work?';
+    node_object_prepare($node);
+    $node->language = LANGUAGE_NONE;
+    $node->uid = 1;
+    $node->status = 1;
+    $node->promote = 0;
+    $node->comment = 0;
+
+    // Save your field data.
+    $module_path = backdrop_get_path('module', 'faq_recipe');
+
+    $faq_two = "This recipe basically creates and configures a FAQ content type for you and a corresponding view to display the results.";
+
+    $node->field_faq_answer['und'][] = array('value' => $faq_two, 'format' => 'filtered_html');
+
+    // Save submit and save the node.
+    $node = node_submit($node);
+    node_save($node);
+
+    // Make a faq node.
+    $node = new Node();
+
+    // Use the node type you need here, in this case 'faq'.
+    $node->type = 'faq';
+    $node->title = 'How do I delete this recipe from my site?';
+    node_object_prepare($node);
+    $node->language = LANGUAGE_NONE;
+    $node->uid = 1;
+    $node->status = 1;
+    $node->promote = 0;
+    $node->comment = 0;
+
+    // Save your field data.
+    $module_path = backdrop_get_path('module', 'faq_recipe');
+
+    $faq_three = "<p>You can uninstall this recipe as you would any module. However, the configuration and content will remain. To completely delete this recipe:</p>
+                  <ol><li>Delete the FAQ items in the content menu.</li>
+                  <li>Delete the FAQ fields.</li>
+                  <li>Delete the FAQ content type.</li>
+                  <li>Delete the FAQ view.</li></ol>";
+
+    $node->field_faq_answer['und'][] = array('value' => $faq_three, 'format' => 'filtered_html');
+
+    // Save submit and save the node.
+    $node = node_submit($node);
+    node_save($node);
+
+    // Make a faq node.
+    $node = new Node();
+
+    // Use the node type you need here, in this case 'faq'.
+    $node->type = 'faq';
+    $node->title = "How do I get the accordion effect on my FAQ page?";
+    node_object_prepare($node);
+    $node->language = LANGUAGE_NONE;
+    $node->uid = 1;
+    $node->status = 1;
+    $node->promote = 0;
+    $node->comment = 0;
+
+    // Save your field data.
+    $module_path = backdrop_get_path('module', 'faq_recipe');
+
+    $faq_four = '<p>The Views Bootstrap module is required for that effect. You will need to enable "Include Bootstrap CSS &amp; JS when used by Views" on the <a href="/admin/config/user-interface/views_bootstrap">Views Bootstrap config page</a>.</p>';
+
+    $node->field_faq_answer['und'][] = array('value' => $faq_four, 'format' => 'filtered_html');
+
+    // Save submit and save the node.
+    $node = node_submit($node);
+    node_save($node);
+
+    // Make a faq node.
+    $node = new Node();
+
+    // Use the node type you need here, in this case 'faq'.
+    $node->type = 'faq';
+    $node->title = 'How do I download more Backdrop recipes?';
+    node_object_prepare($node);
+    $node->language = LANGUAGE_NONE;
+    $node->uid = 1;
+    $node->status = 1;
+    $node->promote = 0;
+    $node->comment = 0;
+
+    // Save your field data.
+    $module_path = backdrop_get_path('module', 'faq_recipe');
+
+    $faq_one = '<p>Recipes can be downloaded from BackdropCMS.org. On the module page <a href="https://backdropcms.org/modules?s=recipes">search for recipes</a>.</p>';
+
+    $node->field_faq_answer['und'][] = array('value' => $faq_one, 'format' => 'filtered_html');
+
+    // Save submit and save the node.
+    $node = node_submit($node);
+    node_save($node);
+
+    config_set('views_bootstrap.settings', 'include_bootstrap_assets', '1');
+  }
+
+

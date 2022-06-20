@@ -1,13 +1,17 @@
 name = Rules
 description = React on events and conditionally evaluate actions.
-dependencies[] = entity_plus
-dependencies[] = entity_ui
 package = Rules
 backdrop = 1.x
 type = module
+
+dependencies[] = system (>= 1.21.0)
+dependencies[] = entity_plus (>= 1.0.14)
+dependencies[] = entity_ui
+dependencies[] = entity_token (>= 2.0.0)
+
 stylesheets[all][] = rules.css
 
-; Added by Backdrop CMS packaging script on 2020-03-13
+; Added by Backdrop CMS packaging script on 2022-05-28
 project = rules
-version = 1.x-2.1.5
-timestamp = 1584095243
+version = 1.x-2.3.2
+timestamp = 1653746673

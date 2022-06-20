@@ -87,10 +87,13 @@ function matomo_config_info() {
 }
 
 /**
- * Implements hook_page_alter() to insert JavaScript to the appropriate scope/region of the page.
+ * Implements hook_preprocess_page().
+ *
+ * Insert JavaScript to the appropriate scope/region of the page, insert the
+ * noscript fallback to page_bottom if enabled.
  */
-function matomo_preprocess_layout(&$variables) {
-  global $user;
+function matomo_preprocess_page(&$variables) {
+  global $user, $is_https;
   $config = config('matomo.settings');
 
   $id = $config->get('site_id');
@@ -361,6 +364,14 @@ function matomo_preprocess_layout(&$variables) {
 
     // Add tracker code to scope.
     backdrop_add_js($script, array('scope' => $scope, 'type' => 'inline'));
+
+    // Add the noscript fallback markup to the page_bottom string.
+    if ($config->get('noscript')) {
+      $src_url = ($is_https && !empty($url_https)) ? check_url($url_https) : check_url($url_http);
+      $src_url = rtrim($src_url, '/') . "/matomo.php?idsite=$id&amp;rec=1";
+      $img = '<img src="' . $src_url . '" style="border:0" alt="" />';
+      $variables['page_bottom'] .= "<!-- Matomo --><noscript><p>$img</p></noscript><!-- End Matomo -->";
+    }
   }
 }
 

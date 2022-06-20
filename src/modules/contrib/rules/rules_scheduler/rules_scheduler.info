@@ -1,19 +1,11 @@
 name = Rules Scheduler
 description = Schedule the execution of Rules components using actions.
-dependencies[] = rules
 package = Rules
 backdrop = 1.x
-files[] = rules_scheduler.admin.inc
-files[] = rules_scheduler.module
-files[] = rules_scheduler.install
-files[] = rules_scheduler.rules.inc
-files[] = rules_scheduler.test
-files[] = includes/rules_scheduler.handler.inc
-files[] = includes/rules_scheduler.views_default.inc
-files[] = includes/rules_scheduler.views.inc
-files[] = includes/rules_scheduler_views_filter.inc
 
-; Added by Backdrop CMS packaging script on 2020-03-13
+dependencies[] = rules
+
+; Added by Backdrop CMS packaging script on 2022-05-28
 project = rules
-version = 1.x-2.1.5
-timestamp = 1584095243
+version = 1.x-2.3.2
+timestamp = 1653746673

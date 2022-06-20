@@ -1,10 +1,12 @@
 <?php
-
 /**
- * @file Rules core integration providing data types and conditions and
- * actions to invoke configured components.
+ * @file
+ * Rules integration with Backdrop core.
+ *
+ * Provides data types, conditions, and actions to invoke configured components.
  *
  * @addtogroup rules
+ *
  * @{
  */
 
@@ -139,13 +141,16 @@ function rules_rules_core_data_info() {
       // If this entity type serves as bundle for another one, provide an
       // options list for selecting a bundle entity.
       if (!empty($info['bundle of'])) {
-        $return[$type]['ui class'] =  'RulesDataUIBundleEntity';
+        $return[$type]['ui class'] = 'RulesDataUIBundleEntity';
       }
     }
   }
 
   if (module_exists('taxonomy')) {
-    // For exportability identify vocabularies by name.
+    $return['taxonomy_vocabulary']['label'] = t('Taxonomy Vocabulary');
+    $return['taxonomy_vocabulary']['wrap'] = TRUE;
+    $return['taxonomy_vocabulary']['token type'] = 'vocabulary';
+    // As vocabularies are not entities, this wraps the vocabulary entity_plus wrapper.
     $return['taxonomy_vocabulary']['wrapper class'] = 'RulesTaxonomyVocabularyWrapper';
     $return['taxonomy_vocabulary']['ui class'] = 'RulesDataUITaxonomyVocabulary';
   }
@@ -193,13 +198,13 @@ function rules_rules_core_evaluator_info() {
       'class' => 'RulesDateInputEvaluator',
       'type' => 'date',
       'weight' => -10,
-     ),
+    ),
     // Post-process any input value to absolute URIs.
     'uri' => array(
       'class' => 'RulesURIInputEvaluator',
       'type' => 'uri',
       'weight' => 50,
-     ),
+    ),
   );
 }
 
@@ -215,12 +220,12 @@ function rules_rules_core_data_processor_info() {
       'class' => 'RulesDateOffsetProcessor',
       'type' => 'date',
       'weight' => -2,
-     ),
+    ),
     'num_offset' => array(
       'class' => 'RulesNumericOffsetProcessor',
       'type' => array('integer', 'decimal'),
       'weight' => -2,
-     ),
+    ),
   );
 }
 
@@ -327,5 +332,5 @@ function rules_element_invoke_component_access_callback($type, $name) {
 }
 
 /**
- * @}
+ * @} End of "addtogroup rules"
  */

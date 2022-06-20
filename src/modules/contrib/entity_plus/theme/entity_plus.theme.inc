@@ -17,11 +17,11 @@
  * - THEMENAME_entity_plus_property__title()
  * - THEMENAME_entity_plus_property()
  *
- *  Including  
+ *  Including
  *  'extra fields controller class' => 'EntityDefaultExtraFieldsController'
- *  within hook_entity_info for a given custom entity will call this theme to render all its properties.  
- * 
- * @param $variables
+ *  within hook_entity_info for a given custom entity will call this theme to render all its properties.
+ *
+ * @param array $variables
  *   An associative array containing:
  *   - label_hidden: A boolean indicating to show or hide the property label.
  *   - label: The label for the property
@@ -31,7 +31,7 @@
  *   - content_attributes_array: An array containing the attributes for the content's
  *     div.
  *   - attributes_array: A string containing the attributes for the top-level wrapping div.
- * 
+ *
  * @ingroup themeable
  */
 function theme_entity_plus_property($variables) {
@@ -48,7 +48,7 @@ function theme_entity_plus_property($variables) {
 
   // Render the content.
   $content_suffix = '';
-  if (!$variables['label_hidden'] || $content_attributes ) {
+  if (!$variables['label_hidden'] || $content_attributes) {
     $output .= '<div' . $content_attributes . '>';
     $content_suffix = '</div>';
   }
@@ -72,11 +72,15 @@ function template_preprocess_entity_plus_property(&$variables, $hook) {
     'attributes_array' => array(),
   );
   // Generate variables from element properties.
-  foreach (array('label', 'property_name') as $name) {
-    $variables[$name] = check_plain($element['#' . $name]);
+  foreach (array('label_hidden', 'label', 'property_name') as $name) {
+    if (isset($element['#' . $name])) {
+      $variables[$name] = check_plain($element['#' . $name]);
+    }
   }
 
-  $variables['label_hidden'] = ($element['#label_display'] == 'hidden');
+  if (isset($element['#label_display'])) {
+    $variables['label_hidden'] = ($element['#label_display'] == 'hidden');
+  }
 
   $variables['title_attributes_array']['class'][] = 'entity-property-label';
   $variables['content_attributes_array']['class'][] = 'entity-property-item';
@@ -84,9 +88,10 @@ function template_preprocess_entity_plus_property(&$variables, $hook) {
 
   $variables['property_name_css'] = strtr($element['#property_name'], '_', '-');
   $variables['attributes_array']['class'][] = 'entity-property';
-  $variables['attributes_array']['class'][] = 'entity-property-' . $element['#label_display'];
   $variables['attributes_array']['class'][] = 'entity-property-' . $variables['property_name_css'];
-  if ($element['#label_display'] == 'inline') {
+
+  if (isset($element['#label_display']) && $element['#label_display'] == 'inline') {
+    $variables['attributes_array']['class'][] = 'entity-property-' . $element['#label_display'];
     $variables['attributes_array']['class'][]  = 'clearfix';
   }
 
@@ -108,6 +113,7 @@ function template_preprocess_entity_plus_property(&$variables, $hook) {
  * Renders a property using simple defaults based upon the property type.
  *
  * @return string
+ *   The rendered property value.
  */
 function entity_plus_property_default_render_value_by_type(EntityMetadataWrapper $property) {
   // If there is an options list or entity label, render that by default.
@@ -122,6 +128,7 @@ function entity_plus_property_default_render_value_by_type(EntityMetadataWrapper
   switch ($property->type()) {
     case 'boolean':
       return $property->value() ? t('yes') : t('no');
+
     default:
       return check_plain($property->value());
   }
@@ -170,7 +177,7 @@ function template_preprocess_entity_plus(&$variables) {
 
   // Add RDF type and about URI.
   if (module_exists('rdf')) {
-    $variables['attributes_array']['about'] = empty($uri['path']) ? NULL: url($uri['path']);
+    $variables['attributes_array']['about'] = empty($uri['path']) ? NULL : url($uri['path']);
     $variables['attributes_array']['typeof'] = empty($entity->rdf_mapping['rdftype']) ? NULL : $entity->rdf_mapping['rdftype'];
   }
 
@@ -189,22 +196,22 @@ function template_preprocess_entity_plus(&$variables) {
 function theme_entity_plus_status($variables) {
   $status = $variables['status'];
   $html = $variables['html'];
-  if (($status & ENTITY_FIXED) == ENTITY_FIXED) {
+  if (($status & ENTITY_PLUS_FIXED) == ENTITY_PLUS_FIXED) {
     $label = t('Fixed');
     $help = t('The configuration is fixed and cannot be changed.');
     return $html ? "<span class='entity-status-fixed' title='$help'>" . $label . "</span>" : $label;
   }
-  elseif (($status & ENTITY_OVERRIDDEN) == ENTITY_OVERRIDDEN) {
+  elseif (($status & ENTITY_PLUS_OVERRIDDEN) == ENTITY_PLUS_OVERRIDDEN) {
     $label = t('Overridden');
     $help = t('This configuration is provided by a module, but has been changed.');
     return $html ? "<span class='entity-status-overridden' title='$help'>" . $label . "</span>" : $label;
   }
-  elseif ($status & ENTITY_IN_CODE) {
+  elseif ($status & ENTITY_PLUS_IN_CODE) {
     $label = t('Default');
     $help = t('A module provides this configuration.');
     return $html ? "<span class='entity-status-default' title='$help'>" . $label . "</span>" : $label;
   }
-  elseif ($status & ENTITY_CUSTOM) {
+  elseif ($status & ENTITY_PLUS_CUSTOM) {
     $label = t('Custom');
     $help = t('A custom configuration by a user.');
     return $html ? "<span class='entity-status-custom' title='$help'>" . $label . "</span>" : $label;
