@@ -43,9 +43,6 @@ stylesheets[all][] = css/utility.css
 
 ; Remove unwanted core CSS
 stylesheets[all][] = system.theme.css
-stylesheets[all][] = menu-dropdown.theme.css
-stylesheets[all][] = menu-dropdown.theme.breakpoint.css
-stylesheets[all][] = menu-dropdown.theme.breakpoint-queries.css
 
 ; Add theme JS files
 scripts[] = js/scripts.js
