@@ -4,7 +4,10 @@
  * Displays the Simple Google Maps formatter.
  *
  * Available variables:
- * - $include_map: TRUE if an embedded dynamic map should be displayed.
+ * - $include_map: TRUE if an embedded dynamic map should be displayed. Note
+ *   that the embedded map includes a div container and classes to allow
+ *   it to be responsive. As such, the width and the height have been removed
+ *   from this element.
  * - $include_static_map: TRUE if an embedded static map should be displayed.
  * - $width: Width of embedded map.
  * - $height: Height of embedded map.
@@ -27,7 +30,9 @@
  */
 if ($include_map) {
 ?>
-<iframe width="<?php print $width; ?>" height="<?php print $height; ?>" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?hl=<?php print $langcode; ?>&amp;q=<?php print $url_suffix; ?>&amp;iwloc=<?php print ($information_bubble ? 'A': 'near'); ?>&amp;z=<?php print $zoom; ?>&amp;t=<?php print $map_type; ?>&amp;output=embed"></iframe>
+<div class="simple-gmap-iframe-container">
+  <iframe class="simple-gmap-iframe" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?hl=<?php print $langcode; ?>&amp;q=<?php print $url_suffix; ?>&amp;iwloc=<?php print ($information_bubble ? 'A': 'near'); ?>&amp;z=<?php print $zoom; ?>&amp;t=<?php print $map_type; ?>&amp;output=embed"></iframe>
+</div>
 <?php
 }
 if ($include_static_map) {
