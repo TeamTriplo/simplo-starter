@@ -1,9 +1,39 @@
 <?php
-
 /**
  * @file
  * Reports administration menu items.
  */
+
+ /**
+ * Settings form for uc_reports.
+ */
+function uc_reports_settings_form($form, &$form_state) {
+  $config = config('uc_reports.settings');
+  $form['#config'] = 'uc_reports.settings';
+
+  $form['uc_reports_table_size'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number of rows to show in reports'),
+    '#description' => t('The maximum number of rows displayed on one page for a report table.'),
+    '#default_value' => $config->get('uc_reports_table_size'),
+    '#size' => 5,
+  );
+
+  $options = array();
+  foreach (uc_order_status_list() as $status) {
+    $options[$status['id']] = $status['title'];
+  }
+  $form['uc_reports_reported_statuses'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Reported statuses'),
+    '#description' => t('Only orders with selected statuses will be included in reports.'),
+    '#options' => $options,
+    '#default_value' => $config->get('uc_reports_reported_statuses'),
+    '#multiple' => TRUE,
+  );
+
+  return system_settings_form($form);
+}
 
 /**
  * Displays the customer report.
@@ -143,8 +173,7 @@ function uc_reports_customers() {
  */
 function uc_reports_products() {
   $config = config('uc_reports.settings');
-  // TODO This variable was removed in Backdrop without replacement.
-  $views_column = module_exists('statistics') && variable_get('statistics_count_content_views', FALSE);
+  $views_column = module_exists('statistics') && config_get('statistics.settings', 'count_content_views');
 
   $page = isset($_GET['page']) ? intval($_GET['page']) : 0;
   $page_size = isset($_GET['nopage']) ? UC_REPORTS_MAX_RECORDS : $config->get('uc_reports_table_size');
@@ -326,7 +355,14 @@ function uc_reports_products() {
       '#markup' => l(t('Show all records'), 'admin/store/reports/products', array('query' => array('nopage' => '1'))),
     );
   }
-  $build['instructions'] = array('#markup' => '<small>*' . t('Make sure %setting_name is set to %state in the <a href="!url">access log settings page</a> to enable views column.', array('%setting_name' => 'count content views', '%state' => 'enabled', '!url' => url('admin/config/system/statistics', array('query' => array('destination' => 'admin/store/reports/products'))))) . '</small>');
+  if (module_exists('statistics')) {
+    if (!config_get('statistics.settings', 'count_content_views')) {
+      $build['instructions'] = array('#markup' => '<small>*' . t('Set %setting_name to %state on the <a href="!url">access log settings page</a> to enable Views column.', array('%setting_name' => 'count content views', '%state' => 'enabled', '!url' => url('admin/config/system/statistics', array('query' => array('destination' => 'admin/store/reports/products'))))) . '</small>');
+    }
+  }
+  else {
+    $build['instructions'] = array('#markup' => '<small>*' . t('Install and enable the Statistics module to see page views for each product.') . '</small>');
+  }
 
   return $build;
 }
@@ -361,8 +397,7 @@ function uc_reports_product_get_skus($nid) {
  */
 function uc_reports_products_custom() {
   $config = config('uc_reports.settings');
-  // TODO This variable was removed in Backdrop without replacement.
-  $views_column = module_exists('statistics') && variable_get('statistics_count_content_views', FALSE);
+  $views_column = module_exists('statistics') && config_get('statistics.settings', 'count_content_views');
 
   $page = isset($_GET['page']) ? intval($_GET['page']) : 0;
   $page_size = isset($_GET['nopage']) ? UC_REPORTS_MAX_RECORDS : $config->get('uc_reports_table_size');
@@ -552,7 +587,14 @@ function uc_reports_products_custom() {
     );
   }
 
-  $build['instructions'] = array('#markup' => '<small>*' . t('Make sure %setting_name is set to %state in the <a href="!url">access log settings page</a> to enable views column.', array('%setting_name' => 'count content views', '%state' => 'enabled', '!url' => url('admin/config/system/statistics', array('query' => array('destination' => 'admin/store/reports/products/custom'))))) . '</small>');
+  if (module_exists('statistics')) {
+    if (!config_get('statistics.settings', 'count_content_views')) {
+      $build['instructions'] = array('#markup' => '<small>*' . t('Set %setting_name to %state on the <a href="!url">access log settings page</a> to enable Views column.', array('%setting_name' => 'count content views', '%state' => 'enabled', '!url' => url('admin/config/system/statistics', array('query' => array('destination' => 'admin/store/reports/products'))))) . '</small>');
+    }
+  }
+  else {
+    $build['instructions'] = array('#markup' => '<small>*' . t('Install and enable the Statistics module to see page views for each product.') . '</small>');
+  }
 
   return $build;
 }

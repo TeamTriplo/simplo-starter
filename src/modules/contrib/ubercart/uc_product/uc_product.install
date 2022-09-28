@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Install, update and uninstall functions for the uc_product module.
@@ -433,6 +432,13 @@ function uc_product_update_1004() {
     $config->setData($data);
     $config->save();
   }
+}
+
+/**
+ * Clean up extraneous variable that might be stored in uc_product config.
+ */
+function uc_product_update_1005() {
+  config_clear('uc_product.settings', 'product-settings__active_tab');
 }
 
 /**

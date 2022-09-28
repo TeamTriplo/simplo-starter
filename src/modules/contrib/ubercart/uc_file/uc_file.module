@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Allows products to be associated with downloadable files.
@@ -17,14 +16,6 @@
 define('UC_FILE_PAGER_SIZE', 50);
 
 define('UC_FILE_LIMIT_SENTINEL', -1);
-
-/**
- * Implements hook_form_FORM_ID_alter() for uc_product_feature_settings_form().
- */
-function uc_file_form_uc_product_feature_settings_form_alter(&$form, &$form_state) {
-  $form['#submit'][] = 'uc_file_feature_settings_submit';
-  $form['#validate'][] = 'uc_file_feature_settings_validate';
-}
 
 /**
  * Implements hook_menu().
@@ -137,10 +128,11 @@ function uc_file_user_form($form, &$form_state, $account) {
   // Drop out early if we don't even have any files uploaded.
   if (!db_query_range('SELECT 1 FROM {uc_files}', 0, 1)->fetchField()) {
     $form['file']['file_message'] = array(
-      '#markup' => '<p>' . t(
+      '#type' => 'help',
+      '#markup' => t(
         'You must add files at the <a href="!url">Ubercart file download administration page</a> in order to attach them to a user.',
         array('!url' => url('admin/store/products/files', array('query' => array('destination' => 'user/' . $account->uid . '/edit'))))
-      ) . '</p>',
+      ),
     );
 
     return $form;
@@ -391,9 +383,9 @@ function uc_file_user_view($account, $view_mode) {
   }
 
   $item = array(
-    '#type' => 'user_profile_item',
+    '#type' => 'item',
     '#title' => t('File downloads'),
-    '#markup' => l(t('Click here to view your file downloads.'), 'user/' . $account->uid . '/purchased-files'),
+    '#markup' => l(t('View your file downloads.'), 'user/' . $account->uid . '/purchased-files'),
   );
 
   $account->content['summary']['uc_file_download'] = $item;
@@ -852,6 +844,14 @@ function _uc_file_get_fpid($pfid) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter() for uc_product_feature_settings_form().
+ */
+function uc_file_form_uc_product_feature_settings_form_alter(&$form, &$form_state) {
+  $form['#submit'][] = 'uc_file_feature_settings_submit';
+  $form['#validate'][] = 'uc_file_feature_settings_validate';
+}
+
+/**
  * Form builder for file settings.
  *
  * @see uc_file_feature_settings_validate()
@@ -865,12 +865,17 @@ function uc_file_feature_settings($form, &$form_state) {
     $statuses[$status['id']] = $status['title'];
   }
 
-  $form['#config'] = 'uc_file.settings';
   $form['uc_file_base_dir'] = array(
     '#type' => 'textfield',
     '#title' => t('Files path'),
     '#description' => t('The absolute path (or relative to Backdrop root) where files used for file downloads are located. For security reasons, it is recommended to choose a path outside the web root.'),
     '#default_value' => $config->get('uc_file_base_dir'),
+  );
+  $form['uc_file_file_mask'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Files mask'),
+    '#description' => t('A regex that limits which files in the download directory can be set as a file download. Use "/.*/" to allow all files.'),
+    '#default_value' => $config->get('uc_file_file_mask'),
   );
   $form['uc_file_duplicate_warning'] = array(
     '#type' => 'checkbox',
@@ -975,6 +980,17 @@ function uc_file_feature_settings_submit($form, &$form_state) {
   else {
     uc_file_refresh();
   }
+
+  // Save submitted values.
+  $config = config('uc_file.settings');
+  $config->set('uc_file_base_dir', $form_state['values']['uc_file_base_dir']);
+  $config->set('uc_file_file_mask', $form_state['values']['uc_file_file_mask']);
+  $config->set('uc_file_duplicate_warning', $form_state['values']['uc_file_duplicate_warning']);
+  $config->set('uc_file_download_limit_number', $form_state['values']['uc_file_download_limit_number']);
+  $config->set('uc_file_download_limit_addresses', $form_state['values']['uc_file_download_limit_addresses']);
+  $config->set('uc_file_download_limit_duration_qty', $form_state['values']['uc_file_download_limit_duration_qty']);
+  $config->set('uc_file_download_limit_duration_granularity', $form_state['values']['uc_file_download_limit_duration_granularity']);
+  $config->save();
 }
 
 /**
@@ -1501,21 +1517,32 @@ function uc_file_remove_user_file_by_id($user, $fid) {
 }
 
 /**
- * Central cache for all file data.
+ * Central static cache for all file data.
  */
 function &_uc_file_get_cache() {
-  static $cache = array();
+  static $cache = array(
+    'key' => array(),
+    'fid' => array(),
+    'uid' => array(),
+    'filename' => array(),
+  );
 
   return $cache;
 }
 
 /**
- * Flush our cache.
+ * Flush our static cache. This isn't used within uc_file, but we provide it
+ * in case client modules might need it.
  */
 function _uc_file_flush_cache() {
   $cache = _uc_file_get_cache();
 
-  $cache = array();
+  $cache = array(
+    'key' => array(),
+    'fid' => array(),
+    'uid' => array(),
+    'filename' => array(),
+  );
 }
 
 /**
@@ -1530,11 +1557,11 @@ function _uc_file_flush_cache() {
 function &uc_file_get_by_name($filename) {
   $cache = _uc_file_get_cache();
 
-  if (!isset($cache[$filename])) {
-    $cache[$filename] = db_query("SELECT * FROM {uc_files} WHERE filename = :name", array(':name' => $filename))->fetchObject();
+  if (!isset($cache['filename'][$filename])) {
+    $cache['filename'][$filename] = db_query("SELECT * FROM {uc_files} WHERE filename = :name", array(':name' => $filename))->fetchObject();
   }
 
-  return $cache[$filename];
+  return $cache['filename'][$filename];
 }
 
 /**
@@ -1549,11 +1576,11 @@ function &uc_file_get_by_name($filename) {
 function &uc_file_get_by_id($fid) {
   $cache = _uc_file_get_cache();
 
-  if (!isset($cache[$fid])) {
-    $cache[$fid] = db_query("SELECT * FROM {uc_files} WHERE fid = :fid", array(':fid' => $fid))->fetchObject();
+  if (!isset($cache['fid'][$fid])) {
+    $cache['fid'][$fid] = db_query("SELECT * FROM {uc_files} WHERE fid = :fid", array(':fid' => $fid))->fetchObject();
   }
 
-  return $cache[$fid];
+  return $cache['fid'][$fid];
 }
 
 /**
@@ -1568,14 +1595,14 @@ function &uc_file_get_by_id($fid) {
 function &uc_file_get_by_key($key) {
   $cache = _uc_file_get_cache();
 
-  if (!isset($cache[$key])) {
-    $cache[$key] = db_query("SELECT * FROM {uc_file_users} ufu " .
+  if (!isset($cache['key'][$key])) {
+    $cache['key'][$key] = db_query("SELECT * FROM {uc_file_users} ufu " .
       "LEFT JOIN {uc_files} uf ON uf.fid = ufu.fid " .
       "WHERE ufu.file_key = :key", array(':key' => $key))->fetchObject();
-    $cache[$key]->addresses = unserialize($cache[$key]->addresses);
+    $cache['key'][$key]->addresses = unserialize($cache['key'][$key]->addresses);
   }
 
-  return $cache[$key];
+  return $cache['key'][$key];
 }
 
 /**
@@ -1592,16 +1619,16 @@ function &uc_file_get_by_key($key) {
 function &uc_file_get_by_uid($uid, $fid) {
   $cache = _uc_file_get_cache();
 
-  if (!isset($cache[$uid][$fid])) {
-    $cache[$uid][$fid] = db_query("SELECT * FROM {uc_file_users} ufu " .
+  if (!isset($cache['uid'][$uid][$fid])) {
+    $cache['uid'][$uid][$fid] = db_query("SELECT * FROM {uc_file_users} ufu " .
       "LEFT JOIN {uc_files} uf ON uf.fid = ufu.fid " .
       "WHERE ufu.fid = :fid AND ufu.uid = :uid", array(':uid' => $uid, ':fid' => $fid))->fetchObject();
-    if ($cache[$uid][$fid]) {
-      $cache[$uid][$fid]->addresses = unserialize($cache[$uid][$fid]->addresses);
+    if ($cache['uid'][$uid][$fid]) {
+      $cache['uid'][$uid][$fid]->addresses = unserialize($cache['uid'][$uid][$fid]->addresses);
     }
   }
 
-  return $cache[$uid][$fid];
+  return $cache['uid'][$uid][$fid];
 }
 
 /**

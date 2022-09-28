@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Contains controller classes for uc_order and uc_order_product entities.
@@ -68,7 +67,7 @@ class UcOrderProductController extends EntityPlusController {
   /**
    * Overrides EntityDatabaseStorageController::buildContent().
    */
-  public function buildContent($product, $view_mode = 'full', $langcode = NULL, $content = array()) {
+  public function buildContent(EntityInterface $product, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $content['qty'] = array(
       '#theme' => 'uc_qty',
       '#qty' => $product->qty,

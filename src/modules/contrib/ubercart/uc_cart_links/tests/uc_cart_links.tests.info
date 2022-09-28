@@ -1,11 +1,11 @@
 [UbercartCartLinksTestCase]
-name = Cart Links
-description = Test Cart Links.
+name = Cart links
+description = Test cart links.
 group = Ubercart
 file = uc_cart_links.test
 type = module
 
-; Added by Backdrop CMS packaging script on 2021-06-19
+; Added by Backdrop CMS packaging script on 2022-09-22
 project = ubercart
-version = 1.x-3.13.0
-timestamp = 1624117064
+version = 1.x-3.13.6
+timestamp = 1663856075

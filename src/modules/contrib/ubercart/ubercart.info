@@ -4,14 +4,12 @@ package = Ubercart - core
 backdrop = 1.x
 type = module
 
-dependencies[] = rules (>= 2.1.0)
+dependencies[] = system (>= 1.21.0)
+dependencies[] = rules (>= 2.2.0)
 dependencies[] = views
 dependencies[] = image
 
-configure = admin/store/settings/orders
-stylesheets[all][] = uc_order.css
-
-; Added by Backdrop CMS packaging script on 2021-06-19
+; Added by Backdrop CMS packaging script on 2022-09-22
 project = ubercart
-version = 1.x-3.13.0
-timestamp = 1624117064
+version = 1.x-3.13.6
+timestamp = 1663856075

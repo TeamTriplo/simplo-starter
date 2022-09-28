@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Handles all things concerning Ubercart orders.
@@ -530,9 +529,9 @@ function uc_order_user_view($account, $view_mode) {
 
   if ($user->uid && (($user->uid == $account->uid && user_access('view own orders')) || user_access('view all orders'))) {
     $account->content['summary']['orders'] = array(
-      '#type' => 'user_profile_item',
+      '#type' => 'item',
       '#title' => t('Orders'),
-      '#markup' => l(t('Click here to view your order history.'), 'user/' . $account->uid . '/orders'),
+      '#markup' => l(t('View your order history.'), 'user/' . $account->uid . '/orders'),
     );
   }
 }
@@ -1136,7 +1135,17 @@ function uc_order_product_load_multiple($opids = array(), $reset = FALSE) {
  *   there is no information on how to view an entity, FALSE is returned.
  */
 function uc_order_product_view_multiple($order_products, $view_mode = 'full', $langcode = NULL, $page = NULL) {
-  return entity_plus_view('uc_order_product', $order_products, $view_mode, $langcode, $page);
+  $order_product_entities = array();
+  // Ensure we pass entities of the correct type to entity_plus_view.
+  // @see https://github.com/backdrop-contrib/ubercart/issues/309
+  foreach ($order_products as $id => $item) {
+    if (!is_a($item, 'Entity') || $item->entityType() !== 'uc_order_product') {
+      $order_product_entities[$id] = entity_create('uc_order_product', (array) $item);
+    } else {
+      $order_product_entities[$id] = $item;
+    }
+  }
+  return entity_plus_view('uc_order_product', $order_product_entities, $view_mode, $langcode, $page);
 }
 
 /**
