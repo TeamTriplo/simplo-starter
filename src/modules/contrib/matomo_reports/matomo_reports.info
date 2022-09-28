@@ -1,11 +1,11 @@
 name = Matomo Reports
-description = Adds Matomo reports to Drupal reports section.
+description = Adds reports for a Matomo installation to the Reports section.
 backdrop = 1.x
 type = module
 package = Statistics
-configure = admin/config/system/matomo_reports
+configure = admin/config/system/matomo/reports
 
-; Added by Backdrop CMS packaging script on 2020-02-29
+; Added by Backdrop CMS packaging script on 2022-03-13
 project = matomo_reports
-version = 1.x-4.0.0
-timestamp = 1582986563
+version = 1.x-4.0.1
+timestamp = 1647180987
