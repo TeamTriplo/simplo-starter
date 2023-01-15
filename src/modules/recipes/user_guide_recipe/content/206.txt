@@ -1,0 +1,12 @@
+<p>Blocks are the boxes of content (such as "User Login" or "Main Menu") that are displayed in&nbsp;<em>Layout Regions</em>&nbsp;(such as footer or sidebar) on your page. Everything on a Backdrop web page (with rare exceptions) is&nbsp;a block and can be placed in any region in a layout.</p>
+
+<p>There are two main types of blocks:</p>
+
+<ul>
+	<li><strong>Standard blocks</strong>&nbsp;- are made available to your site most commonly by enabling modules.</li>
+	<li><strong>Custom blocks</strong>&nbsp;- are created by the site user and are essentially text (and image) blocks.</li>
+</ul>
+
+<p>Blocks are placed in regions via the Layout UI page at&nbsp;<em>Admin &gt; Structure &gt; Layouts . &nbsp;</em>Your layout's template defines the regions available. Any block can be placed in any region and can be placed multiple times.</p>
+
+<p>https://docs.backdropcms.org/documentation/blocks</p>

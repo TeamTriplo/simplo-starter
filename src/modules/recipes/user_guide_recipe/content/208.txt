@@ -1,0 +1,7 @@
+<p><strong>Modules can add new features to your Backdrop site, or extend and improve existing functionality.</strong></p>
+
+<p>https://docs.backdropcms.org/documentation/modules</p>
+
+<p><strong>Themes are skins for your site that allow you to change the look, feel, and general appearance.</strong></p>
+
+<p>https://docs.backdropcms.org/documentation/themes</p>

@@ -1,0 +1,12 @@
+<p>This User Guide is only visible to authenticated users on your site or users that are logged in.</p>
+
+<p>There are three sections to the User Guide</p>
+
+<ol>
+	<li>Guide to this site - Customize this and add your own content</li>
+	<li>Backdrop CMS - Some content pulled from the user guide available at docs.backdropcms.org to help you get started.</li>
+	<li>Glossary</li>
+</ol>
+
+<p>The User Guide is built with the Book module. The Book module is included in Backdrop core, but is turned off by default. We've automatically enabled it for this manual. If you decide you don't need your User Guide anymore, you may disable the book module and delete all the content.</p>
+
