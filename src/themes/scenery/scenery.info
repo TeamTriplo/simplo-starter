@@ -7,6 +7,7 @@ stylesheets[all][] = css/manuale-font.css
 stylesheets[all][] = css/style.css
 stylesheets[all][] = css/fieldset.css
 stylesheets[all][] = css/backdrop-form.css
+stylesheets[all][] = css/filter.css
 stylesheets[all][] = css/vertical-tabs.css
 stylesheets[all][] = css/comment.css
 stylesheets[all][] = css/cards.css
@@ -22,7 +23,7 @@ settings[customize] = FALSE
 settings[image] = 0
 settings[css] = ''
 
-; Added by Backdrop CMS packaging script on 2022-05-13
+; Added by Backdrop CMS packaging script on 2022-11-20
 project = scenery
-version = 1.x-1.0.5
-timestamp = 1652445436
+version = 1.x-1.0.7
+timestamp = 1668942686

@@ -33,6 +33,13 @@ dd {
 .admin-bar .layout-flexible-content {
   min-height: calc(100vh - 33px);
 }
+.layout .layout,
+.admin-bar .layout .layout
+.layout .layout .layout-flexible-content,
+.admin-bar .layout .layout .layout-flexible-content {
+  min-height: 0;
+  display: block;
+}
 .layout .l-wrapper,
 .layout-flexible-content .flexible-row:nth-last-child(2) {
   flex-grow: 1;
@@ -63,6 +70,9 @@ dd {
   .container {
     max-width: none;
     padding: 0 5vw;
+  }
+  .layout .layout .container {
+    padding: 0;
   }
   .container > *,
   .container .menu-dropdown,
@@ -299,7 +309,8 @@ ul.menu-dropdown {
 }
 .no-jscript .menu-dropdown ul {
   padding: 0;
-  display: none;
+  margin: 0;
+  clip-path: polygon(0 0, 0 0, 0 0);
 }
 .menu-dropdown a {
   display: block;
@@ -310,11 +321,13 @@ ul.menu-dropdown {
   display: block;
   font-size: 1rem;
 }
-.no-jscript .menu-dropdown li.expanded:hover ul {
-  display: block;
+.no-jscript .menu-dropdown li.expanded ul {
   position: absolute;
   top: 100%;
   min-width: 12em;
+}
+.no-jscript .menu-dropdown li.expanded:hover ul {
+  clip-path: none;
 }
 .no-jscript .menu-dropdown li.expanded:hover ul ul {
   top: 0;

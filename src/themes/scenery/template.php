@@ -58,6 +58,20 @@ function scenery_preprocess_page(&$variables) {
       ));
     }
   }
+
+  // Add some css classes to body for easier styling.
+  $args = arg();
+  if (count($args) == 2 && $args[0] == 'node' && is_numeric($args[1])) {
+    $variables['classes'][] = 'page-node-' . $args[1];
+  }
+  elseif (count($args) == 3 && $args[0] == 'taxonomy' && $args[1] == 'term' && is_numeric($args[2])) {
+    $terms = entity_load('taxonomy_term', array($args[2]));
+    $term = reset($terms);
+    if ($term) {
+      $variables['classes'][] = 'page-taxonomy-vocab-' . $term->vocabulary;
+      $variables['classes'][] = 'page-taxonomy-term-' . $term->tid;
+    }
+  }
 }
 
 /**
@@ -145,6 +159,29 @@ function scenery_comment_view_alter(&$build) {
     );
     unset($build['links']['comment']['#links']);
   }
+  // Get rid of the empty link.
+  // @see scenery_preprocess_comment where we add the id to the article tag.
+  // @see https://github.com/backdrop/backdrop-issues/issues/5640
+  $remove = '<a id="comment-' . $build['#comment']->cid . '"></a>';
+  $build['#prefix'] = str_replace($remove, '', $build['#prefix']);
+}
+
+/**
+ * Implements template_preprocess_comment().
+ */
+function scenery_preprocess_comment(&$variables) {
+  $variables['attributes']['id'] = 'comment-' . $variables['comment']->cid;
+  if (!empty($variables['comment']->pid)) {
+    // Mention the parent if this is a reply - when visual indent isn't useful.
+    $parent_comment = comment_load($variables['comment']->pid);
+    $variables['title_suffix']['comment_parent'] = array(
+      '#type' => 'markup',
+      '#markup' => '<span class="element-invisible">' . t('In reply to') . ': ' . $parent_comment->subject . '</span>',
+    );
+  }
+  // Wrap the date in time tag, add ISO format.
+  $timestamp = $variables['comment']->created;
+  $variables['created'] = '<time datetime="' . format_date($timestamp, 'custom', DATE_FORMAT_ISO) . '">' . $variables['created'] . '</time>';
 }
 
 /**
