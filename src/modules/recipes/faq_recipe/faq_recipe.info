@@ -8,7 +8,7 @@ dependencies[] = system (>=1.20.0)
 dependencies[] = views
 dependencies[] = views_bootstrap
 
-; Added by Backdrop CMS packaging script on 2021-10-30
+; Added by Backdrop CMS packaging script on 2022-08-27
 project = faq_recipe
-version = 1.x-1.0.5
-timestamp = 1635662750
+version = 1.x-1.0.6
+timestamp = 1661668756
