@@ -38,11 +38,11 @@ This will override the default settings for this video.
 Developers
 ----------
 
-This module calls hook_codec_info(), so you can add your own codecs.
+This module calls `hook_codec_info()`, so you can add your own codecs.
 
 Example:
 
-```
+```php
 function MODULE_codec_info() {
   $codecs = array();
   // You can offer multiple video formats in one module.
@@ -73,7 +73,7 @@ function MODULE_codec_info() {
 
 And this will be your callback function:
 
-```
+```php
 function MODULE_youtube($video) {
   // $video contains the video URL in source, the codec (as above) and also
   // [code][matches] with the result of the regexp and [codec][delta] with the
@@ -100,11 +100,12 @@ This project is GPL v2 software. See the LICENSE.txt file in this directory for 
 Current Maintainers
 -------------------
 
-This module is currently seeking maintainers.
+* [Herb v/d Dool](https://github.com/herbdool/)
+* Currently seeking maintainers.
 
 Credits
 -------
 
-Ported to Backdrop by Herb v/d Dool (https://github.com/herbdool/)
+Ported to Backdrop by [Herb v/d Dool](https://github.com/herbdool/).
 
 This module was originally written for Drupal (https://drupal.org/project/video_filter). Drupal maintainers are: [ultimateboy](https://www.drupal.org/u/ultimateboy), [TravisCarden](https://www.drupal.org/u/TravisCarden), [blackdog](https://www.drupal.org/u/blackdog). Originally created by [Fokke](http://drupal.org/user/46354).
