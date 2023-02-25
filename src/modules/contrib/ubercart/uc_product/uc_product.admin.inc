@@ -12,15 +12,25 @@ function uc_product_class_default() {
   $header = array(t('Class ID'), t('Name'), t('Description'), t('Operations'));
   $rows = array();
   foreach ($classes as $class) {
-    $ops = array(l(t('edit'), 'admin/store/products/classes/' . $class->pcid . '/edit'));
+    $links[] = array(
+      'title' => t('edit'),
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/edit',
+    );
     if (empty($class->locked)) {
-      $ops[] = l(t('delete'), 'admin/store/products/classes/' . $class->pcid . '/delete');
+      $links[] = array(
+        'title' => t('delete'),
+        'href' => 'admin/store/products/classes/' . $class->pcid . '/delete',
+      );
     }
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => $links,
+    );
     $rows[] = array(
       check_plain($class->pcid),
       check_plain($class->name),
       filter_xss_admin($class->description),
-      implode(' ', $ops),
+      backdrop_render($operations),
     );
   }
 
@@ -162,7 +172,7 @@ function uc_product_features($node, $fid = NULL, $pfid = NULL) {
 
   $features = uc_product_feature_load_multiple($node->nid);
   foreach ($features as $feature) {
-    $operations = array(
+    $links = array(
       'edit' => array(
         'title' => t('edit'),
         'href' => 'node/' . $node->nid . '/edit/features/' . $feature->fid . '/' . $feature->pfid,
@@ -172,13 +182,14 @@ function uc_product_features($node, $fid = NULL, $pfid = NULL) {
         'href' => 'node/' . $node->nid . '/edit/features/' . $feature->fid . '/' . $feature->pfid . '/delete',
       ),
     );
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => $links,
+    );
     $rows[] = array(
       array('data' => uc_product_feature_data($feature->fid, 'title')),
       array('data' => $feature->description),
-      theme('links', array(
-        'links' => $operations,
-        'attributes' => array('class' => array('links', 'inline')),
-      )),
+      backdrop_render($operations),
     );
   }
 
@@ -447,7 +458,7 @@ function uc_product_class_form_submit($form, &$form_state) {
     module_invoke_all('uc_product_class', $pcid, 'update');
   }
 
-  node_types_rebuild();
+  node_type_cache_reset();
   if ($is_new) {
     $type = node_type_get_type($pcid);
     node_add_body_field($type, t('Description'));
@@ -490,6 +501,7 @@ function uc_product_class_delete_confirm($form, &$form_state, $class) {
 function uc_product_class_delete_confirm_submit($form, &$form_state) {
   $type = node_type_get_type($form_state['values']['pcid']);
   $type->base = 'node_content';
+  $type->module = 'node';
   $type->custom = 1;
   node_type_save($type);
 
@@ -497,9 +509,9 @@ function uc_product_class_delete_confirm_submit($form, &$form_state) {
     ->condition('pcid', $form_state['values']['pcid'])
     ->execute();
   module_invoke_all('uc_product_class', $form_state['values']['pcid'], 'delete');
-  // TODO migrate This nedded?
+  // TODO migrate This needed?
   uc_product_node_info(TRUE);
-  node_types_rebuild();
+  node_type_cache_reset();
   menu_rebuild();
 
   backdrop_set_message(t('Product class %type deleted.', array('%type' => $form_state['values']['pcid'])));

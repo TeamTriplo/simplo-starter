@@ -110,12 +110,36 @@ class UcOrder extends Entity {
       'options' => array(),
     );
   }
+
+  /** 
+   * Adds products to the order. 
+   * 
+   * @param array $items
+   *   An array of products or cart items.
+   */
+  public function setProducts($items) {
+    // Assure all items are uc_order_product entities.
+    _uc_order_cart_items_to_products($items);
+    $this->products = $items;
+  }
+
 }
 
 /**
  * Defines an individual product object within an order.
  */
 class UcOrderProduct extends Entity {
+
+  /**
+   * Constructor.
+   */
+  public function __construct(array $values) {
+    parent::__construct($values);
+
+    // UcOrderProduct should not have a path set; if it does, pathauto tries to
+    // update an alias for the entity.
+    unset($this->path);
+  }
 
   /**
    * The node ID.
@@ -156,11 +180,7 @@ class UcOrderProduct extends Entity {
    * Implements EntityInterface::uri().
    */
   public function uri() {
-    // Since uc_order_product entities are derived from nodes, we return the uri
-    // of its "parent" node.
-    return array(
-      'path' => 'node/' . $this->nid,
-      'options' => array(),
-    );
+    // UcOrderProduct is only used internally, so doesn't have a URI.
+    return NULL;
   }
 }

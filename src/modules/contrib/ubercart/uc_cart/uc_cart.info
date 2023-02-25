@@ -10,7 +10,7 @@ dependencies[] = uc_store
 
 configure = admin/store/settings/cart
 
-; Added by Backdrop CMS packaging script on 2022-09-22
+; Added by Backdrop CMS packaging script on 2023-02-07
 project = ubercart
-version = 1.x-3.13.6
-timestamp = 1663856075
+version = 1.x-3.14.0
+timestamp = 1675809673

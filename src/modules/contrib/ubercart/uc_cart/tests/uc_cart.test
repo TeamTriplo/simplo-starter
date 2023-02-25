@@ -26,8 +26,8 @@ class UbercartCartCheckoutTestCase extends UbercartTestHelper {
    * Overrides BackdropWebTestCase::setUp().
    */
   protected function setUp($modules = array(), $permissions = array()) {
-    $modules = array('uc_payment', 'uc_payment_pack', 'uc_roles');
-    $permissions = array('administer permissions');
+    $modules = array_merge(array('uc_payment', 'uc_payment_pack', 'uc_roles'), $modules);
+    $permissions = array_merge(array('administer permissions'), $permissions);
     parent::setUp($modules, $permissions);
   }
 
@@ -49,8 +49,10 @@ class UbercartCartCheckoutTestCase extends UbercartTestHelper {
       $item->qty = 1;
       $item->price = $item->sell_price;
       $item->data = array();
-      $order->products = array($item);
+      $fields['products'] = array($item);
     }
+
+    $order->setProducts($fields['products']);
 
     $order->order_total = uc_order_get_total($order, TRUE);
     $order->line_items = uc_order_load_line_items($order, TRUE);

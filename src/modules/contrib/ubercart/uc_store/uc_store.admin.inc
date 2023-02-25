@@ -173,13 +173,6 @@ function uc_store_address_fields_form($form, &$form_state) {
   }
 
   $form['#submit'][] = 'uc_store_address_fields_form_submit';
-  if (function_exists('i18n_variable_form_alter_settings')) {
-    if ($i18n_variables = i18n_variable_form_alter_settings($form, i18n_variable_list())) {
-      $form['#submit'][] = 'i18n_variable_form_submit';
-      $form['#i18n_variables'] = $i18n_variables;
-      $form += i18n_variable_form_selector();
-    }
-  }
   $form = system_settings_form($form);
   unset($form['#theme']);
 
@@ -202,7 +195,7 @@ function theme_uc_store_address_fields_form($variables) {
   $header = array(t('Field'), t('Title'), t('Enabled'), t('Required'), t('List position'));
 
   // Sort fields by weight
-  uasort($form['fields'], 'element_sort');
+  backdrop_sort($form['fields'], array('#weight'));
 
   foreach (element_children($form['fields']) as $field) {
     $row = array(
@@ -393,7 +386,7 @@ function uc_store_settings_form($form, &$form_state) {
 
   $form['display'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Display settings'),
+    '#title' => t('Address display'),
     '#group' => 'store',
   );
   $form['display']['uc_customer_list_address'] = array(
@@ -406,15 +399,15 @@ function uc_store_settings_form($form, &$form_state) {
     ),
     '#default_value' => $config->get('uc_customer_list_address'),
   );
-  $form['display']['uc_footer_message'] = array(
-    '#type' => 'radios',
-    '#title' => t('Footer message for store pages'),
-    '#options' => array_merge(
-      array(0 => t('Randomly select a message from the list below.')),
-      _uc_store_footer_options(),
-      array('none' => t('(Do not display a message in the footer.)'))
-    ),
-    '#default_value' => $config->get('uc_footer_message'),
+
+  $form['footer'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Footer'),
+    '#group' => 'store',
+  );
+  $form['footer']['help'] = array(
+    '#type' => 'help',
+    '#markup' => t('Ubercart provides a footer block titled "Ubercart store footer" that is by default placed at the bottom of several layouts along with a visibility condition ("Ubercart page") that restricts it to site pages governed by Ubercart (product, cart, checkout, and administration pages). You can add, move, disable or remove this block from your layouts or change the displayed credit message in the <a href="!link">layout administration</a>.', array('!link' => url('admin/structure/layouts'))),
     '#weight' => 10,
   );
 

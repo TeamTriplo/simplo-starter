@@ -27,7 +27,6 @@ function uc_attribute_admin() {
     t('Display type'),
     array(
       'data' => t('Operations'),
-      'colspan' => 3,
     ),
   );
 
@@ -46,6 +45,23 @@ function uc_attribute_admin() {
     if (empty($attr->label)) {
       $attr->label = $attr->name;
     }
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => array(
+        array(
+          'title' => t('edit'),
+          'href' => 'admin/store/products/attributes/' . $attr->aid . '/edit',
+        ),
+        array(
+          'title' => t('options'),
+          'href' => 'admin/store/products/attributes/' . $attr->aid . '/options',
+        ),
+        array(
+          'title' => t('delete'),
+          'href' => 'admin/store/products/attributes/' . $attr->aid . '/delete',
+        ),
+      ),
+    );
     $rows[] = array(
       check_plain($attr->name),
       check_plain($attr->label),
@@ -53,9 +69,7 @@ function uc_attribute_admin() {
       $attr->ordering,
       $attr->options,
       $display_types[$attr->display],
-      l(t('edit'), 'admin/store/products/attributes/' . $attr->aid . '/edit'),
-      l(t('options'), 'admin/store/products/attributes/' . $attr->aid . '/options'),
-      l(t('delete'), 'admin/store/products/attributes/' . $attr->aid . '/delete'),
+      backdrop_render($operations),
     );
   }
 
@@ -342,16 +356,31 @@ function theme_uc_attribute_options_form($variables) {
   $form = $variables['form'];
 
   $header = array(t('Name'), t('Default cost'), t('Default price'), t('Default weight'), array(
-    'data' => t('List position'),
-    'sort' => 'asc',
-  ), array(
-    'data' => t('Operations'),
-    'colspan' => 2,
-  ),
+      'data' => t('List position'),
+      'sort' => 'asc',
+    ), array(
+      'data' => t('Operations'),
+    ),
   );
 
   $rows = array();
   foreach (element_children($form['options']) as $oid) {
+    // Replace edit/delete operation children of form with equivalent dropbutton.
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => array(
+        array(
+          'title' => t('edit'),
+          'href' => 'admin/store/products/attributes/' . $form['aid']['#value'] . '/options/' . $oid . '/edit',
+        ),
+        array(
+          'title' => t('delete'),
+          'href' => 'admin/store/products/attributes/' . $form['aid']['#value'] . '/options/' . $oid . '/delete',
+        ),
+      ),
+    );
+    unset($form['options'][$oid]['edit']);
+    unset($form['options'][$oid]['delete']);
     $rows[] = array(
       'data' => array(
         backdrop_render($form['options'][$oid]['name']),
@@ -359,8 +388,7 @@ function theme_uc_attribute_options_form($variables) {
         backdrop_render($form['options'][$oid]['price']),
         backdrop_render($form['options'][$oid]['weight']),
         backdrop_render($form['options'][$oid]['ordering']),
-        backdrop_render($form['options'][$oid]['edit']),
-        backdrop_render($form['options'][$oid]['delete']),
+        backdrop_render($operations),
       ),
       'class' => array('draggable'),
     );
@@ -1241,8 +1269,8 @@ function uc_object_options_form_submit($form, &$form_state) {
   backdrop_set_message(t('The @type options have been saved.', array('@type' => $form_state['values']['type'] == 'product' ? t('product') : t('product class'))));
 
   if ($form_state['values']['type'] == 'product') {
-    // Clear the page and block caches.
-    cache_clear_all();
+    // Clear the node cache.
+    cache_clear_all($form_state['values']['id'], 'cache_entity_node');
   }
 }
 

@@ -230,7 +230,6 @@ function uc_product_disable() {
 function uc_product_enable() {
   $body_label = t('Description');
 
-  node_types_rebuild();
   $types = node_type_get_types();
   foreach ($types as $type) {
     if ($type->module == 'uc_product') {
@@ -238,8 +237,8 @@ function uc_product_enable() {
       uc_product_set_teaser_display($type->type);
     }
   }
-
   uc_product_add_default_image_field();
+  node_type_cache_reset();
 
   // Make sure 'uc_products' view gets enabled.
   $config = config('views.view.uc_products');
@@ -439,6 +438,20 @@ function uc_product_update_1004() {
  */
 function uc_product_update_1005() {
   config_clear('uc_product.settings', 'product-settings__active_tab');
+}
+
+/**
+ * Remove any extraneous js file after moving js files into their own directory.
+ */
+function uc_product_update_1006() {
+  // Crufty file that may have been left behind after PR 423.
+  // @see https://github.com/backdrop-contrib/ubercart/issues/421.
+  $filename = BACKDROP_ROOT . '/' . backdrop_get_path('module', 'uc_product') . '/uc_product.js';
+  if (file_exists($filename)) {
+    if (!unlink($filename)) {
+      backdrop_set_message(t('Unable to remove file %filename, which is no longer used in its current location. Please remove it from the file system.', array('filename' => $filename)), 'warning');
+    }
+  }
 }
 
 /**
