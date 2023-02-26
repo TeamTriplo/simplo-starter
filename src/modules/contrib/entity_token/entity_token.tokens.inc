@@ -119,7 +119,7 @@ function entity_token_token_info_alter(&$info) {
     $token_type_for_entity = isset($entity_info_array['token type']) ? $entity_info_array['token type'] : $entity_name;
 
     // Create token types for all non-core entities that don't already exist.
-    if (!_entity_token_is_core_entity($entity_name) && !isset(['types'][$token_type_for_entity])) {
+    if (!_entity_token_is_core_entity($entity_name) && !isset($info['types'][$token_type_for_entity])) {
       $info['types'][$token_type_for_entity] = array(
         'name' => $entity_info[$entity_name]['label'],
         'description' => t('Tokens related to the "@name" entities.', array('@name' => $entity_info[$entity_name]['label'])),

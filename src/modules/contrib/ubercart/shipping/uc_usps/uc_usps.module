@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * United States Postal Service (USPS) shipping quote module.
@@ -312,11 +311,9 @@ function uc_usps_quote($products, $details, $method) {
     'error' => array(),
   );
   $services = array();
-  $address_arrays = array(config_get('uc_quote.settings', 'uc_quote_store_default_address'));
-  foreach ($address_arrays as $address_array) {
-    $address = new UcAddress();
-    $address->__set_state($address_array);
-  }
+  $addresses = array(
+    UcAddress::__set_state(config_get('uc_quote.settings', 'uc_quote_store_default_address')),
+  );
   $packages = _uc_usps_package_products($products, $addresses);
   if (!count($packages)) {
     return array();
@@ -721,7 +718,7 @@ function _uc_usps_package_products($products, &$addresses = array()) {
     }
   }
   else {
-    // !variable_get('uc_usps_all_in_one', TRUE) || count($products) = 1
+    // !(config_get('uc_usps.settings', 'uc_usps_all_in_one') && count($products) > 1)
     // "Each in own" packaging strategy, or only one product line item in order.
     foreach ($products as $product) {
       if ($product->nid) {

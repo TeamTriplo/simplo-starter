@@ -1,0 +1,28 @@
+<p>One of the great features of Backdrop is the ability to control how and what people can access on your site. You can set permissions for these "users" to define who can do what for Backdrop core features and contributed modules. For example, you probably won't want casual visitors to edit your homepage. However, the site owner or a trusted user should be able to do so.</p>
+
+<p>Roles and permissions</p>
+
+<p>To access any given area or functionality of a Backdrop website, a user must be granted “permission” to do so by Backdrop’s&nbsp;<strong>permissions&nbsp;</strong>system. For example, there are separate permissions for viewing, editing and deleting pages on the website. So to allow a user the ability to edit content, the user needs to have that specific permission. To be able to view user profiles requires a separate permission, and so on.</p>
+
+<p>There are dozens of permissions for multiple functions of each Backdrop site, and new&nbsp;modules may add additional permissions.</p>
+
+<p>However, granting each user these permissions individually would be inefficient. Therefore permissions are packaged into groups of permissions called&nbsp;<strong>roles</strong>. Then roles can be granted to individual users. An Editor role, for example, may include permissions to access the website (of course), view all content, edit Post but not Page content, view user profiles, and so on. So for example if we want Tom our article writer to now have all the permissions of an editor, we simply grant him the Editor role.</p>
+
+<p>Backdrop allows you to setup any number of different kinds of users or 'Roles.'</p>
+
+<p>Out of the box, Backdrop recognizes three roles -</p>
+
+<ul dir="ltr">
+	<li><strong>Authenticated&nbsp;</strong>- a role granted automatically to anyone who is logged in</li>
+	<li><strong>Anonymous&nbsp;</strong>- a limited role granted automatically to anyone not logged in; only three permissions are part of this role: view published content, view comments, and access to the HTML editor.</li>
+	<li><strong>Administrator&nbsp;</strong>- persons granted this role are granted all permissions on the site</li>
+</ul>
+
+<p>An exception is the first user created (user/1) who has and maintains all permissions by default.</p>
+
+<p>https://docs.backdropcms.org/documentation/users-roles-and-permissions</p>
+
+<p>&nbsp;</p>
+
+<p>[video:https://youtu.be/Y8lYCqaWgOM]</p>
+

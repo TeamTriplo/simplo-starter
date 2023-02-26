@@ -5,7 +5,7 @@ type = module
 configure = admin/config/content/publishcontent
 
 
-; Added by Backdrop CMS packaging script on 2020-12-20
+; Added by Backdrop CMS packaging script on 2021-12-17
 project = publishcontent
-version = 1.x-1.4-alpha1
-timestamp = 1608492019
+version = 1.x-1.4.0
+timestamp = 1639796260

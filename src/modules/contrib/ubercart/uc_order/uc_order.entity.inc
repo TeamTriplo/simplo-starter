@@ -56,10 +56,6 @@ class UcOrder extends Entity {
    * @param $state
    *   The initial order state.
    */
-
-  /**
-   * function __construct($uid = 0, $state = 'in_checkout') {
-   */
   public function __construct(array $values) {
     parent::__construct($values);
     if ($this->isNew()) {
@@ -98,31 +94,52 @@ class UcOrder extends Entity {
   }
 
   /**
-   * Implements EntityInterface::bundle().
-   */
-  public function bundle() {}
-
-  /**
    * Implements EntityInterface::label().
    */
-  public function label() {}
+  public function label() {
+    return t('Order @id', array('@id' => $this->order_id));
+  }
 
   /**
    * Implements EntityInterface::uri().
    */
-  public function uri() {}
+  public function uri() {
+    // return the admin page for the order.
+    return array(
+      'path' => '/admin/store/orders/' . $this->order_id,
+      'options' => array(),
+    );
+  }
+
+  /** 
+   * Adds products to the order. 
+   * 
+   * @param array $items
+   *   An array of products or cart items.
+   */
+  public function setProducts($items) {
+    // Assure all items are uc_order_product entities.
+    _uc_order_cart_items_to_products($items);
+    $this->products = $items;
+  }
 
 }
 
-
 /**
- * UcOrderProduct extends Entity.
- *
- * A subclass of Entity is a requirement for creating a custom entity. It is
- * also a minimum requirement to define the methods included here, even as
- * empty functions.
+ * Defines an individual product object within an order.
  */
 class UcOrderProduct extends Entity {
+
+  /**
+   * Constructor.
+   */
+  public function __construct(array $values) {
+    parent::__construct($values);
+
+    // UcOrderProduct should not have a path set; if it does, pathauto tries to
+    // update an alias for the entity.
+    unset($this->path);
+  }
 
   /**
    * The node ID.
@@ -153,13 +170,6 @@ class UcOrderProduct extends Entity {
   }
 
   /**
-   * Implements EntityInterface::bundle().
-   */
-  public function bundle() {
-    // return $this->type;
-  }
-
-  /**
    * Implements EntityInterface::label().
    */
   public function label() {
@@ -169,6 +179,8 @@ class UcOrderProduct extends Entity {
   /**
    * Implements EntityInterface::uri().
    */
-  public function uri() {}
-
+  public function uri() {
+    // UcOrderProduct is only used internally, so doesn't have a URI.
+    return NULL;
+  }
 }

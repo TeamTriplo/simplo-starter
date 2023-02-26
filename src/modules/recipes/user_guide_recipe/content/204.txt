@@ -1,0 +1,7 @@
+<p>The&nbsp;<em>File</em>&nbsp;module enables you to&nbsp;<strong>upload&nbsp;</strong>and&nbsp;<strong>attach&nbsp;</strong>files to content, and to manage these uploads if you have the appropriate permissions. This module is responsible for validating file content, and managing uploaded files. It also provides options for displaying media assets.</p>
+
+<p>As a site administrator, you will be able to control what type of files can be uploaded, and their maximum size.</p>
+
+<p>The&nbsp;<em>File</em>&nbsp;module provides its functionality by defining a&nbsp;<strong>File field type</strong>&nbsp;for the&nbsp;<em>Field</em>&nbsp;module. File attachments are defined at the content type level (or other entities). To learn how to define a field and add it to a content type, see Working with the Field UI.</p>
+
+<p>https://docs.backdropcms.org/documentation/working-with-files</p>

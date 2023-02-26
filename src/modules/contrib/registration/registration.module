@@ -63,7 +63,8 @@ function registration_entity_info() {
       'token type' => 'registration',
       'module' => 'registration',
       'label callback' => 'entity_class_label',
-      'entity cache' => module_exists('entitycache'),
+      'entity cache' => TRUE,
+      'field cache' => FALSE,
     ),
     'registration_type' => array(
       'label' => t('Registration type'),
@@ -87,7 +88,8 @@ function registration_entity_info() {
         'file path' => backdrop_get_path('module', 'registration') . '/includes',
         'controller class' => 'RegistrationTypeUIController',
       ),
-      'entity cache' => module_exists('entitycache'),
+      'entity cache' => TRUE,
+      'field cache' => FALSE,
     ),
     'registration_state' => array(
       'label' => t('Registration State'),
@@ -116,7 +118,8 @@ function registration_entity_info() {
       'module' => 'registration',
       'access callback' => 'registration_state_access',
       'exportable' => TRUE,
-      'entity cache' => module_exists('entitycache'),
+      'entity cache' => TRUE,
+      'field cache' => FALSE,
     ),
   );
 
@@ -2256,4 +2259,62 @@ function registration_autoload_info() {
     'RegistrationType' => 'lib/registration_type.entity.inc',
     'RegistrationTypeUIController' => 'lib/registration_type.ui_controller.inc',
   );
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function registration_form_alter(&$form, &$form_state, $form_id) {
+  // Add the value per space
+  if ($form_id === 'field_ui_field_edit_form') {
+    if (isset($form['#instance']['entity_type']) && $form['#instance']['entity_type'] === 'registration') {
+      $form['instance']['settings']['value_per_space'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Require one value per space'),
+        '#default_value' => isset($form['#instance']['settings']['value_per_space']) ? $form['#instance']['settings']['value_per_space'] : FALSE,
+        '#description' => t('If set, the user will need to add a value to this field for each space they register for. This will require the field to have Number of values set to unlimited.'),
+        '#weight' => 10,
+      );
+    }
+  }
+
+  // Add validation handler for registration forms.
+  if ($form_id === 'registration_form') {
+    $value_per_space = FALSE;
+    foreach ($form_state['field'] as $field_name => $field_settings) {
+      if (isset($field_settings[LANGUAGE_NONE]['instance']['settings']['value_per_space'])) {
+        if ($field_settings[LANGUAGE_NONE]['instance']['settings']['value_per_space']) {
+          $value_per_space = TRUE;
+        }
+      }
+    }
+    if ($value_per_space === TRUE) {
+      $form['#validate'][] = 'registration_value_per_space_validate';
+    }
+  }
+}
+
+/**
+ * Validation handler to check the value per space settings and apply them.
+ */
+function registration_value_per_space_validate($form, &$form_state) {
+  foreach ($form_state['field'] as $field_name => $field_settings) {
+    if (isset($field_settings[LANGUAGE_NONE]['instance']['settings']['value_per_space'])) {
+      if ($field_settings[LANGUAGE_NONE]['instance']['settings']['value_per_space']) {
+        // Add up the values, skipping the add more link.
+        $count = 0;
+        foreach ($form_state['values'][$field_name][LANGUAGE_NONE] as $key => $value) {
+          if ($key !== 'add_more' && !empty(array_pop(array_reverse($value)))) {
+            $count++;
+          }
+        }
+        // Set a form error on the field that does not have the correct number of values.
+        if ($count !== (int) $form_state['values']['count']) {
+          form_set_error($field_name, t('@field needs 1 value to be filled out for each space used.', array(
+            '@field' => $form[$field_name][LANGUAGE_NONE]['#title'],
+          )));
+        }
+      }
+    }
+  }
 }

@@ -8,8 +8,9 @@ With this formatter, you can enter a single-line address that Google Maps would
 recognize into a plain text field, such as:
    100 Madison Ave, New York, NY
 And then on your Manage Display screen (or in Views field setup), you can choose
-to display the field with an embedded iframe Google Map, a link to a Google Maps
-map, or both; with or without the original address text.
+to display the field with a responsive embedded iframe Google Map, a static map,
+a link to a Google Maps map, or any combination; with or without the original
+address text.
 
 No Google Maps API, JavaScript downloads, etc. are required. This just uses
 Google Maps' iframe embedding capability to embed a map at a given address that
@@ -32,11 +33,12 @@ Installation
 
 Note: There are no field validation steps in this module, and it just uses a
   regular Text field rather than defining its own field (this is the "simple"
-  part of this module). The display settings let you choose the size of the map,
-  the text for the map link, the map zoom level (applies to both embedded and
-  linked map), whether to display information about the address in a bubble, and
-  to turn on/off the various things you can display. That's pretty much it
-  (remember: simple is in the name!).
+  part of this module). The display settings let you choose the size of the
+  static map (note that the dynamic map is responsive), the text for the map
+  link, the map zoom level (applies to both embedded and linked map), whether
+  to display information about the address in a bubble, and to turn on/off the
+  various things you can display. That's pretty much it (remember: simple is
+  in the name!).
 
 
 License

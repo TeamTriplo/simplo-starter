@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Handles all things concerning Ubercart's shopping cart.
@@ -186,14 +185,6 @@ function uc_cart_theme() {
 }
 
 /**
- * Implements hook_init().
- */
-function uc_cart_init() {
-  global $conf;
-  $conf['i18n_variables'][] = 'uc_cart_breadcrumb_text';
-}
-
-/**
  * Implements hook_config_info().
  */
 function uc_cart_config_info() {
@@ -321,7 +312,7 @@ function uc_cart_block_view($delta = '', $settings = array(), $contexts = array(
         $help_text = check_plain($text);
       }
 
-      $items = FALSE;
+      $items = array();
       $item_count = 0;
       $total = 0;
 

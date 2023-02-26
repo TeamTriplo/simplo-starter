@@ -1,0 +1,1 @@
+<p>Create a list of your content types and how you expect to use each one. This may be helpful to future site managers or developers.</p>

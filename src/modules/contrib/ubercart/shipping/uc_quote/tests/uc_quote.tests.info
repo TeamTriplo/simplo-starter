@@ -1,11 +1,11 @@
 [UbercartQuoteTestCase]
-name = Shipping Quotes
+name = Shipping quotes
 description = Test shipping quotes.
 group = Ubercart
 file = uc_quote.test
 type = module
 
-; Added by Backdrop CMS packaging script on 2021-06-19
+; Added by Backdrop CMS packaging script on 2023-02-07
 project = ubercart
-version = 1.x-3.13.0
-timestamp = 1624117064
+version = 1.x-3.14.0
+timestamp = 1675809673

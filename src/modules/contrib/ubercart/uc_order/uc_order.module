@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Handles all things concerning Ubercart orders.
@@ -530,9 +529,9 @@ function uc_order_user_view($account, $view_mode) {
 
   if ($user->uid && (($user->uid == $account->uid && user_access('view own orders')) || user_access('view all orders'))) {
     $account->content['summary']['orders'] = array(
-      '#type' => 'user_profile_item',
+      '#type' => 'item',
       '#title' => t('Orders'),
-      '#markup' => l(t('Click here to view your order history.'), 'user/' . $account->uid . '/orders'),
+      '#markup' => l(t('View your order history.'), 'user/' . $account->uid . '/orders'),
     );
   }
 }
@@ -641,6 +640,7 @@ function uc_order_form_uc_store_settings_form_alter(&$form, &$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Capitalize address on order screens'),
     '#default_value' => config_get('uc_order.settings', 'uc_order_capitalize_addresses'),
+    '#config' => 'uc_order.settings',
   );
 }
 
@@ -1040,6 +1040,14 @@ function uc_order_product_save($order_id, $product) {
     $product->is_new = TRUE;
   }
 
+  // It's possible that a contrib or custom module updated the order's products
+  // and assigned the product's path variable from the node. In case that
+  // happened, we'll unset it here so that path module doesn't try to update the
+  // node's alias via path_entity_update().
+  unset($product->path);
+
+  // Note that $product can be a UcOrderProduct or a UcCartItem, but we use
+  // the UcOrderProductController class in either case.
   return entity_get_controller('uc_order_product')->save($product);
 }
 
@@ -1093,8 +1101,8 @@ function uc_order_product_load($opid, $reset = FALSE) {
  * Load multiple ordered product entities.
  *
  * @param array $opids
- *   Array of ordered product IDs of products to load.  Default is the empty
- *   array, which loads all ordered products.
+ *   Array of ordered product IDs of products to load.  Default is FALSE, which
+ *   loads all ordered products.
  * @param bool $reset
  *   Whether to reset the internal cache for ordered product IDs. Defaults to
  *   FALSE.
@@ -1103,8 +1111,8 @@ function uc_order_product_load($opid, $reset = FALSE) {
  *   An array of ordered product entities matching $opids, indexed by
  *   ID.
  */
-function uc_order_product_load_multiple($opids = array(), $reset = FALSE) {
-  return entity_load('uc_order_product', $opids, array(), $reset);
+function uc_order_product_load_multiple($opids = FALSE, $reset = FALSE) {
+  return entity_load_multiple('uc_order_product', $opids, array(), $reset);
 }
 
 /**
@@ -1136,6 +1144,9 @@ function uc_order_product_load_multiple($opids = array(), $reset = FALSE) {
  *   there is no information on how to view an entity, FALSE is returned.
  */
 function uc_order_product_view_multiple($order_products, $view_mode = 'full', $langcode = NULL, $page = NULL) {
+  // For backward compatibility, assure that $order_products is an array of
+  // uc_order_product entities.
+  _uc_order_cart_items_to_products($order_products);
   return entity_plus_view('uc_order_product', $order_products, $view_mode, $langcode, $page);
 }
 
@@ -1174,6 +1185,9 @@ function uc_order_product_revive($products, $published = TRUE) {
           $product->$key = $value;
         }
       }
+      // uc_order_product entities should not have a path (inherited from the
+      // node) so that path module doesn't try to update the node's alias.
+      unset($product->path);
       // Order products are always variants.
       $product->variant = TRUE;
     }
@@ -1183,6 +1197,22 @@ function uc_order_product_revive($products, $published = TRUE) {
   }
 
   return $return;
+}
+
+/** 
+ * Convert cart items or node products to uc_order_product entities when needed.
+ *
+ * @param array $items
+ *   An array of cart item or product node entities.
+ */
+function _uc_order_cart_items_to_products(array &$items) {
+  foreach ($items as $index => $item) {
+    $item = (object) $item;
+    if (!method_exists($item, 'entityType') || method_exists($item, 'entityType') && $item->entityType() != 'uc_order_product') {
+      $properties = get_object_vars($item);
+      $items[$index] = new UcOrderProduct($properties);
+    }
+  }
 }
 
 /**

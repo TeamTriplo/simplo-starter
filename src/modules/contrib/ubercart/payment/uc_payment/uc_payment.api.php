@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Hooks provided by the Payment module.
@@ -203,7 +202,7 @@ function hook_uc_payment_method_callback($op, &$order, $form = NULL, &$form_stat
       $form['uc_payment_method_account_number'] = array(
         '#type' => 'textfield',
         '#title' => t('Payment gateway account number'),
-        '#default_value' => variable_get('uc_payment_method_account_number', ''),
+        '#default_value' => config_get('uc_payment.settings', 'uc_payment_method_account_number'),
       );
       return $form;
   }

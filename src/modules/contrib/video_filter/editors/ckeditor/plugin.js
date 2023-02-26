@@ -1,7 +1,10 @@
 /**
  * @file Plugin for inserting video tags with video_filter
  */
-(function ($) {
+(function ($, Backdrop, CKEDITOR) {
+
+"use strict";
+
   CKEDITOR.plugins.add('video_filter', {
 
     requires : [],
@@ -14,20 +17,9 @@
         icon: this.path + 'video_filter.png'
       });
 
-      if(typeof window.showModalDialog !== 'undefined') {
-        editor.addCommand('video_filter', {
-          exec : function () {
-            var path = (Backdrop.settings.video_filter.url.wysiwyg_ckeditor) ? Backdrop.settings.video_filter.url.wysiwyg_ckeditor : Backdrop.settings.video_filter.url.ckeditor
-            var media = window.showModalDialog(path, { 'opener' : window, 'editorname' : editor.name }, "dialogWidth:580px; dialogHeight:480px; center:yes; resizable:yes; help:no;");
-          }
-        });
+      // @todo use Backdrop.ckeditor.openDialog() instead so dialog follows Backdrop conventions.
+      editor.addCommand('video_filter', new CKEDITOR.dialogCommand('video_filterDialog'));
 
-        // Register an extra function, this will be used in the popup.
-        editor._.video_filterFnNum = CKEDITOR.tools.addFunction(insert, editor);
-      }
-      else {
-        editor.addCommand('video_filter', new CKEDITOR.dialogCommand('video_filterDialog'));
-      }
     }
   });
 
@@ -169,4 +161,4 @@
     editor.fire('saveSnapshot');
   }
 
-})(jQuery);
+})(jQuery, Backdrop, CKEDITOR);

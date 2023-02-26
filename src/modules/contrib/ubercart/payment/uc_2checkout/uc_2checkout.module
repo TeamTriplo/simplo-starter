@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Integrates 2Checkout.com's redirected payment service.
@@ -25,14 +24,6 @@ function uc_2checkout_menu() {
   );
 
   return $items;
-}
-
-/**
- * Implements hook_init().
- */
-function uc_2checkout_init() {
-  global $conf;
-  $conf['i18n_variables'][] = 'uc_2checkout_method_title';
 }
 
 /**

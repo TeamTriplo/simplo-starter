@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Features integration for Ubercart product classes.
@@ -89,7 +88,7 @@ function uc_product_classes_features_revert($module) {
     }
     // TODO migrate this
     uc_product_node_info(TRUE);
-    node_types_rebuild();
+    node_type_cache_reset();
     menu_rebuild();
   }
 }
