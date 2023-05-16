@@ -9,9 +9,6 @@ Geofield
      __/ |
     |___/
 
-About Geofield
---------------
-
 Geofield is a Backdrop module that provides a field types for storing
 geographic data. This data can be attached to any entity, e.g., nodes, users
 and taxonomy terms. Geofield provides different widgets for data input and
@@ -21,26 +18,14 @@ types of geographical data: points, lines, polygons, multitypes et cetera.
 
 Great documentation on Geofield can be found at http://drupal.org/node/1089574
 
-Install
--------
-
-- Install this module and geophp using the official Backdrop CMS instructions
-  at https://backdropcms.org/guide/modules
-
-Optionally install Open Layers 2: http://drupal.org/project/openlayers
-
-Configure
----------
-
-To add a geofield to a content type go to /admin/structure/types/ and choose
-"Manage fields" for the chosen content type. Add a new field of the field type
-"Geofield", and choose the preferred widget, e.g., "OpenLayers Map". Configure
-the field according ton the chosen options.
+## Geofield Map submodule
 
 Geofield comes with the basic but easy-to-use submodule Geofield Map that
 allows you to display geographical data in a Google map. Enable Geofield Map
 at /admin/modules. Read more about Geofield Map at
 http://drupal.org/node/1466490
+
+## OpenLayers Integration
 
 For more advanced and flexible data display you need to configure or create a
 map in OpenLayers at /admin/structure/openlayers/maps. You can easily create
@@ -50,35 +35,32 @@ found here: http://drupal.org/node/1481374.
 When you have configured a map in OpenLayers you must define to use the map.
 Go to  /admin/structure/types and choose "Manage display".
 
-Note: you can also add a geofield to a user, a taxonomy term or a comment.
 
-Documentation
--------------
+Requirements <!-- Do not include this section if there are no requirements. -->
+------------
 
-Additional documentation is located in the Wiki:
-https://github.com/backdrop-contrib/geofield/wiki/Documentation.
+This module requires that the following modules are also enabled:
 
-Issues
-------
+* No Requirements (The GeoPHP Library is included in this module).
 
-Bugs and Feature requests should be reported in the Issue Queue:
-https://github.com/backdrop-contrib/geofield/issues.
 
-Current Maintainers
--------------------
+Installation <!-- This section is required. -->
+------------
 
-- Wes Jones (https://github.com/earthday47)
-- gifad (https://github.com/gifad)
-- Jen Lampton (https://github.com/jenlampton)
+- Install this module and geophp using the official Backdrop CMS instructions
+  at https://backdropcms.org/guide/modules
 
-Credits
--------
+- Optionally install Open Layers 2: http://drupal.org/project/openlayers
 
-- Ported to Backdrop CMS by gifad (https://github.com/gifad)
-- Originally written for Drupal by: Tristan O'Neil
-- Contributors to Drupal project: Alex Barth, Jeff Miccolis, Young Hahn, Tom
-  MacWright, Patrick Hayes, Dave Tarc, Nikhil Trivedi, Marek Sotak, Khalid
-  Jebbari, Brandon Morrison, David Peterson
+- To add a geofield to a content type go to /admin/structure/types/ and choose
+  "Manage fields" for the chosen content type.
+
+- Add a new field of the field type "Geofield", and choose the preferred widget,
+  e.g., "OpenLayers Map". Configure the field according ton the chosen options.
+
+- Note: you can add a geofield to any fieldable entity including a user, a
+  taxonomy term, or a comment.
+
 
 API Notes
 ---------
@@ -113,8 +95,38 @@ run any modified geofield instances through geofield_compute_values in order
 to make all columns consistent.
 
 
-License
+Documentation
+-------------
+
+Additional documentation is located in the Wiki:
+https://github.com/backdrop-contrib/geofield/wiki/Documentation.
+
+Issues
+------
+
+Bugs and Feature requests should be reported in the Issue Queue:
+https://github.com/backdrop-contrib/geofield/issues.
+
+Current Maintainers
+-------------------
+
+- Wes Jones (https://github.com/earthday47)
+- Jen Lampton (https://github.com/jenlampton)
+
+Credits
 -------
 
-This project is GPL v2 software.
-See the LICENSE.txt file in this directory for complete text.
+- Ported to Backdrop CMS by gifad (https://github.com/gifad)
+- Originally written for Drupal by: Tristan O'Neil
+- Contributors to Drupal project: Alex Barth, Jeff Miccolis, Young Hahn, Tom
+  MacWright, Patrick Hayes, Dave Tarc, Nikhil Trivedi, Marek Sotak, Khalid
+  Jebbari, Brandon Morrison, David Peterson
+
+License <!-- This section is required. -->
+-------
+
+* This project is GPL v2 software.
+  See the LICENSE.txt file in this directory for complete text.
+
+* The bundled GeoPHP Library is dual-licensed under both GPL v2 and the Modified
+  BSD License. See the file libraries/geophp/LICENSE for complete text.
