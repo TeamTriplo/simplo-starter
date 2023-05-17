@@ -6,7 +6,7 @@ package = Input filters
 
 stylesheets[all][] = css/video_filter.css
 
-; Added by Backdrop CMS packaging script on 2022-12-16
+; Added by Backdrop CMS packaging script on 2023-05-03
 project = video_filter
-version = 1.x-3.4.2
-timestamp = 1671253933
+version = 1.x-3.4.3
+timestamp = 1683123447
