@@ -30,8 +30,10 @@ class geofieldProximityEntityURL extends geofieldProximityBase implements geofie
       '#title' => t('Entity Type'),
       '#default_value' => $views_plugin->options['geofield_proximity_entity_url_entity_type'],
       '#options' => $entity_options,
-      '#dependency' => array(
-        'edit-options-source' => array('entity_from_url'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="options[source]"]' => array('value' => 'entity_from_url'),
+        ),
       ),
     );
 
@@ -46,8 +48,10 @@ class geofieldProximityEntityURL extends geofieldProximityBase implements geofie
       '#title' => t('Source Field'),
       '#default_value' => $views_plugin->options['geofield_proximity_entity_url_field'],
       '#options' => $field_options,
-      '#dependency' => array(
-        'edit-options-source' => array('entity_from_url'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="options[source]"]' => array('value' => 'entity_from_url'),
+        ),
       ),
     );
   }

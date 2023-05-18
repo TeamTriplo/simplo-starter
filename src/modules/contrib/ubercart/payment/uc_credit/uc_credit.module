@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Defines the credit card payment method and hooks in payment gateways.
@@ -106,15 +105,6 @@ function uc_credit_theme() {
       'file' => 'uc_credit.theme.inc',
     ),
   );
-}
-
-/**
- * Implements hook_init().
- */
-function uc_credit_init() {
-  global $conf;
-  $conf['i18n_variables'][] = 'uc_credit_fail_message';
-  $conf['i18n_variables'][] = 'uc_credit_policy';
 }
 
 /**
@@ -589,9 +579,8 @@ function uc_payment_method_credit_form($form, &$form_state, $order) {
   }
 
   $form['cc_policy'] = array(
-    '#prefix' => '<p>',
+    '#type' => 'help',
     '#markup' => $config->get('uc_credit_policy'),
-    '#suffix' => '</p>',
   );
 
   $types = $config->get('uc_credit_accepted_types');

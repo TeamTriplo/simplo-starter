@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Product administration menu items.
@@ -13,15 +12,25 @@ function uc_product_class_default() {
   $header = array(t('Class ID'), t('Name'), t('Description'), t('Operations'));
   $rows = array();
   foreach ($classes as $class) {
-    $ops = array(l(t('edit'), 'admin/store/products/classes/' . $class->pcid . '/edit'));
+    $links[] = array(
+      'title' => t('edit'),
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/edit',
+    );
     if (empty($class->locked)) {
-      $ops[] = l(t('delete'), 'admin/store/products/classes/' . $class->pcid . '/delete');
+      $links[] = array(
+        'title' => t('delete'),
+        'href' => 'admin/store/products/classes/' . $class->pcid . '/delete',
+      );
     }
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => $links,
+    );
     $rows[] = array(
       check_plain($class->pcid),
       check_plain($class->name),
       filter_xss_admin($class->description),
-      implode(' ', $ops),
+      backdrop_render($operations),
     );
   }
 
@@ -43,13 +52,22 @@ function uc_product_class_default() {
 /**
  * Form to change product settings.
  *
+ * Note that modules that alter this form to store their own settings on this
+ * page (like uc_attribute and uc_product_kit) should store their settings in
+ * their own config file.
+ *
  * @ingroup forms
  */
 function uc_product_settings_form($form, &$form_state) {
   $config = config('uc_product.settings');
 
+  // Other modules, including uc_attribute and uc_product_kit, add their own
+  // settings to this form via hook_form_FORM_ID_alter(). For this reason, we
+  // don't set $form['#config'] and use our own submission function rather than
+  // system_settings_form_submit() to avoid stuffing everything into
+  // uc_product.settings config.
+
   // Put fieldsets into vertical tabs
-  $form['#config'] = 'uc_product.settings';
   $form['product-settings'] = array('#type' => 'vertical_tabs');
 
   $form['product'] = array(
@@ -95,8 +113,7 @@ function uc_product_settings_form($form, &$form_state) {
   }
 
   foreach (module_invoke_all('uc_product_feature') as $feature) {
-    if (isset($feature['settings']) &&
-        function_exists($feature['settings'])) {
+    if (isset($feature['settings']) && function_exists($feature['settings'])) {
       $form[$feature['id']] = array(
         '#type' => 'fieldset',
         '#title' => t('@feature settings', array('@feature' => $feature['title'])),
@@ -113,7 +130,35 @@ function uc_product_settings_form($form, &$form_state) {
     }
   }
 
-  return system_settings_form($form);
+  $form = system_settings_form($form);
+
+  // Swap in our own form submission function for the default system settings
+  // form submisison handler. Ours should run before any other submission
+  // functions because it cleans the form values for client modules to extract
+  // and store their own settings.
+
+  unset($form['#submit'][array_search('system_settings_form_submit', $form['#submit'])]);
+  array_unshift($form['#submit'], 'uc_product_settings_form_submit');
+  return $form;
+}
+
+/**
+ * Submission function for product settings.
+ *
+ * @see system_settings_form_submit()
+ */
+function uc_product_settings_form_submit($form, &$form_state) {
+  form_state_values_clean($form_state);
+
+  $config = config('uc_product.settings');
+  $config->set('uc_product_image_widget', $form_state['values']['uc_product_image_widget']);
+  if (module_exists('uc_cart')) {
+    $config->set('uc_product_add_to_cart_qty', $form_state['values']['uc_product_add_to_cart_qty']);
+    $config->set('uc_product_update_node_view', $form_state['values']['uc_product_update_node_view']);
+  }
+  $config->save();
+
+  backdrop_set_message(t('The configuration options have been saved.'));
 }
 
 /**
@@ -127,7 +172,7 @@ function uc_product_features($node, $fid = NULL, $pfid = NULL) {
 
   $features = uc_product_feature_load_multiple($node->nid);
   foreach ($features as $feature) {
-    $operations = array(
+    $links = array(
       'edit' => array(
         'title' => t('edit'),
         'href' => 'node/' . $node->nid . '/edit/features/' . $feature->fid . '/' . $feature->pfid,
@@ -137,13 +182,14 @@ function uc_product_features($node, $fid = NULL, $pfid = NULL) {
         'href' => 'node/' . $node->nid . '/edit/features/' . $feature->fid . '/' . $feature->pfid . '/delete',
       ),
     );
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => $links,
+    );
     $rows[] = array(
       array('data' => uc_product_feature_data($feature->fid, 'title')),
       array('data' => $feature->description),
-      theme('links', array(
-        'links' => $operations,
-        'attributes' => array('class' => array('links', 'inline')),
-      )),
+      backdrop_render($operations),
     );
   }
 
@@ -412,7 +458,7 @@ function uc_product_class_form_submit($form, &$form_state) {
     module_invoke_all('uc_product_class', $pcid, 'update');
   }
 
-  node_types_rebuild();
+  node_type_cache_reset();
   if ($is_new) {
     $type = node_type_get_type($pcid);
     node_add_body_field($type, t('Description'));
@@ -455,6 +501,7 @@ function uc_product_class_delete_confirm($form, &$form_state, $class) {
 function uc_product_class_delete_confirm_submit($form, &$form_state) {
   $type = node_type_get_type($form_state['values']['pcid']);
   $type->base = 'node_content';
+  $type->module = 'node';
   $type->custom = 1;
   node_type_save($type);
 
@@ -462,9 +509,9 @@ function uc_product_class_delete_confirm_submit($form, &$form_state) {
     ->condition('pcid', $form_state['values']['pcid'])
     ->execute();
   module_invoke_all('uc_product_class', $form_state['values']['pcid'], 'delete');
-  // TODO migrate This nedded?
+  // TODO migrate This needed?
   uc_product_node_info(TRUE);
-  node_types_rebuild();
+  node_type_cache_reset();
   menu_rebuild();
 
   backdrop_set_message(t('Product class %type deleted.', array('%type' => $form_state['values']['pcid'])));

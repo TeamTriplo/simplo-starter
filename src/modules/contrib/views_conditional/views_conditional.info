@@ -1,0 +1,6 @@
+name = "Views Conditional"
+description = "Allows conditional views output."
+backdrop = 1.x
+type = module
+package = Views
+

@@ -17,7 +17,6 @@
         "comment_per_page": "50",
         "comment_mode": 0,
         "comment_anonymous": 0,
-        "comment_subject_field": 0,
         "comment_user_picture": true,
         "comment_form_location": 0,
         "comment_preview": "0",

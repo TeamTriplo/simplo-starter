@@ -1,0 +1,13 @@
+<p><strong>Content Types</strong> -&nbsp;A content type is fairly straight forward in Backdrop, it is a type of content that you wish your CMS to manage, examples might be: Locations, Events, Posts, Pages, Venues, Articles, Modules, or Products.</p>
+
+<p><strong>Nodes&nbsp;</strong>- Nodes are individual pieces of content. Each individual Page, Post, Venue, or Article is a node.&nbsp;&nbsp;&nbsp;</p>
+
+<p><strong>Fields&nbsp;</strong>- Fields are individual points of data included in a node or other entity in Backdrop. An individual event node, might include the following fields - Title, date, venue, price, refund policy.&nbsp;</p>
+
+<p><strong>Taxonomies</strong>&nbsp;- The taxonomy system in Backdrop CMS is used to classify and organize content. The most commonly used taxonomy on a Backdrop site might be <em>tags</em>&nbsp;which allows a site editor to filter or sort content based upon common <em>tags</em>. In the world of Backdrop CMS, <em>tags</em>&nbsp;would be a vocabulary consisting of many&nbsp;<em>terms </em>(in this case the individual&nbsp;<em>tags </em>would be<em> terms</em>).</p>
+
+<p><strong>Vocabularies</strong> - are individual groups of taxonomy <em>terms</em> that you can use to organize your content. On your Backdrop site you might create a <em>vocabulary</em> of regions, colors, sizes, event types, or price range.&nbsp;</p>
+
+<p><strong>Terms&nbsp;</strong>- The most basic unit of content in the taxonomy system. Individual <em>terms</em> are part of a larger vocabulary that one uses to group and classify their content. If a <em>vocabulary</em> is 'colors', then individual <em>terms</em> would be 'red,' 'yellow,' or 'blue.' If a <em>vocabulary</em> is regions, the individual <em>terms</em> might be 'New England,' 'Midwest,' or 'Pacific Northwest.'</p>
+
+<p><strong>Display modes</strong>&nbsp;are variations of how an item can be displayed. Each Page display mode can be configured differently. For example: individual fields can be displayed using a different format, or hidden entirely.</p>

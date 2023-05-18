@@ -72,11 +72,15 @@ function template_preprocess_entity_plus_property(&$variables, $hook) {
     'attributes_array' => array(),
   );
   // Generate variables from element properties.
-  foreach (array('label', 'property_name') as $name) {
-    $variables[$name] = check_plain($element['#' . $name]);
+  foreach (array('label_hidden', 'label', 'property_name') as $name) {
+    if (isset($element['#' . $name])) {
+      $variables[$name] = check_plain($element['#' . $name]);
+    }
   }
 
-  $variables['label_hidden'] = ($element['#label_display'] == 'hidden');
+  if (isset($element['#label_display'])) {
+    $variables['label_hidden'] = ($element['#label_display'] == 'hidden');
+  }
 
   $variables['title_attributes_array']['class'][] = 'entity-property-label';
   $variables['content_attributes_array']['class'][] = 'entity-property-item';
@@ -84,9 +88,10 @@ function template_preprocess_entity_plus_property(&$variables, $hook) {
 
   $variables['property_name_css'] = strtr($element['#property_name'], '_', '-');
   $variables['attributes_array']['class'][] = 'entity-property';
-  $variables['attributes_array']['class'][] = 'entity-property-' . $element['#label_display'];
   $variables['attributes_array']['class'][] = 'entity-property-' . $variables['property_name_css'];
-  if ($element['#label_display'] == 'inline') {
+
+  if (isset($element['#label_display']) && $element['#label_display'] == 'inline') {
+    $variables['attributes_array']['class'][] = 'entity-property-' . $element['#label_display'];
     $variables['attributes_array']['class'][]  = 'clearfix';
   }
 
@@ -134,7 +139,10 @@ function entity_plus_property_default_render_value_by_type(EntityMetadataWrapper
  */
 function template_preprocess_entity_plus(&$variables) {
   $variables['view_mode'] = $variables['elements']['#view_mode'];
-  $entity_type = $variables['elements']['#entity_plus_type'];
+  // Backwards compatibility is included below for potential contrib or custom
+  // code that adapted to the non-standard `entity_plus_type' key.
+  // See https://github.com/backdrop-contrib/entity_plus/issues/44.
+  $entity_type = !empty($variables['elements']['#entity_type']) ? $variables['elements']['#entity_type'] : $variables['elements']['#entity_plus_type'];
   $variables['entity_type'] = $entity_type;
   $entity = $variables['elements']['#entity'];
   $variables[$entity_type] = $entity;
@@ -166,9 +174,18 @@ function template_preprocess_entity_plus(&$variables) {
   }
   list(, , $bundle) = entity_extract_ids($entity_type, $entity);
 
-  // Gather css classes.
-  $variables['classes_array'][] = backdrop_html_class('entity-' . $entity_type);
-  $variables['classes_array'][] = backdrop_html_class($entity_type . '-' . $bundle);
+  // Set 'classes_array' as an array if it isn't set.
+  if (!isset($variables['classes_array'])) {
+    $variables['classes_array'] = array();
+  };
+  // Merge the two class arrays.
+  $css_classes = array_merge($variables['classes'], $variables['classes_array']);
+  $css_classes[] = backdrop_html_class('entity-' . $entity_type);
+  $css_classes[] = backdrop_html_class($entity_type . '-' . $bundle);
+
+  // Add css classes to the standard 'classes' array used by Backdrop entities.
+  // For backward compatibility, add the same classes to 'classes_array'. 
+  $variables['classes'] = $variables['classes_array'] = $css_classes;
 
   // Add RDF type and about URI.
   if (module_exists('rdf')) {

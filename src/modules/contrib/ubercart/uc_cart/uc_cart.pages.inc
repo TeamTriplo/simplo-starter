@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Cart menu items.
@@ -161,7 +160,8 @@ function uc_cart_checkout() {
 
     if ($rebuild) {
       // Copy the cart contents to the cart order.
-      $order->products = uc_cart_get_contents();
+      $cart_items = uc_cart_get_contents();
+      $order->setProducts($cart_items);
       unset($_SESSION['uc_cart_order_rebuild']);
     }
     elseif (!uc_order_product_revive($order->products)) {
@@ -340,6 +340,13 @@ function theme_uc_cart_checkout_form($variables) {
  */
 function uc_cart_checkout_form_validate($form, &$form_state) {
   $order = $form_state['storage']['order'];
+
+  // Exit out if the order is no longer in_checkout
+  $order_reloaded = uc_order_load($order->order_id, TRUE);
+  if($order_reloaded->order_status != 'in_checkout') {
+    $form_state['checkout_valid'] = FALSE;
+    return '';
+  }
 
   // Update the order "modified" time to prevent timeout on ajax requests.
   $order->modified = REQUEST_TIME;
@@ -571,7 +578,7 @@ function uc_cart_checkout_review_form_submit($form, &$form_state) {
       $result = $function('submit', $order, NULL);
 
       $msg_type = 'status';
-      if ($result[0]['pass'] === FALSE) {
+      if (isset($result[0]['pass']) && $result[0]['pass'] === FALSE) {
         $error = TRUE;
         $msg_type = 'error';
       }

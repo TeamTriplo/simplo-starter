@@ -245,6 +245,7 @@ function field_permissions_permissions_matrix($field, $instance) {
     $form['permission'][$permission] = array(
       '#type' => 'item',
       '#markup' => $info['title'],
+      '#description' => $info['description'],
     );
     // Save it to be displayed as one of the role checkboxes.
     $options[$permission] = '';
@@ -391,7 +392,7 @@ function field_permissions_overview() {
             $all_users_have_access = isset($role_permissions[BACKDROP_ANONYMOUS_ROLE][$permission]) && isset($role_permissions[BACKDROP_AUTHENTICATED_ROLE][$permission]);
             $status_class = $all_users_have_access ? 'field-permissions-status-on' : 'field-permissions-status-off';
             $title = $all_users_have_access ? t('All users have this permission') : t('Not all users have this permission');
-            $data = l('', 'admin/people/permissions', array(
+            $data = l('', 'admin/config/people/permissions', array(
               'attributes' => array(
                 'class' => array('field-permissions-status', $status_class),
                 'title' => $title,

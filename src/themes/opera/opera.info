@@ -4,7 +4,6 @@ description = Opera theme special for sites with stacked panels on front page.
 backdrop = 1.x
 version = 1.x
 
-
 settings[use_bootstrap] = 0
 
 ; Add theme CSS files - from Tatsu (with edits)
@@ -42,6 +41,8 @@ stylesheets[all][] = css/front.css
 stylesheets[all][] = css/opera-variables.css
 stylesheets[all][] = css/utility.css
 
+; Remove unwanted core CSS
+stylesheets[all][] = system.theme.css
 
 ; Add theme JS files
 scripts[] = js/scripts.js
@@ -56,6 +57,11 @@ settings[color] = true
 
 ; Configuration specifically for Utility CSS module. Classes added to this list
 ; will be available as autocomplete in the block UI where users are allowed to add classes.
+
+utility_css[block][] = 'opera-block-soprano'
+utility_css[block][] = 'opera-block-tenor'
+utility_css[block][] = 'opera-block-baritone'
+
 utility_css[font][] = 'color-inverse'
 utility_css[font][] = 'font-size-xxxxlarge'
 utility_css[font][] = 'font-size-xxxlarge'

@@ -62,8 +62,6 @@ ul.pager {
 .pager-previous a,
 .pager-next a,
 .pager-last a {
-  position: relative;
-  display: block;
   text-indent: -9999em;
   overflow: hidden;
   width: 2.5em;
@@ -136,6 +134,8 @@ ul.pager {
 .pager-next a,
 .pager-last a,
 .pager-item a {
+  position: relative;
+  display: block;
   margin: -0.6em -1em;
   padding: 0.6em 1em;
   text-decoration: none;
@@ -143,4 +143,9 @@ ul.pager {
   transition: background-color 0.2s;
   will-change: background-color;
   white-space: nowrap;
+}
+
+/* Fixing conflict with front page link colors */
+.page .l-content div.item-list ul.pager a {
+  color:  white;
 }

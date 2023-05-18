@@ -414,3 +414,33 @@ ul.primary.responsive-tabs-dropdown li:last-child a {
   -webkit-border-radius: 0;
   border-radius: 0;
 }
+
+/* OPERA - Changes to admin tabs */
+
+nav.tabs {
+  position: relative;
+  padding: 0em 0em 0;
+  background-color: #FAFAFA;
+  height: 28px;
+  border: 1px solid #938d8d;
+  margin: 0 0 15px;
+}
+
+ul.primary li a, ul.primary li a:visited, ul.primary li a:hover, ul.primary li.active a, .expand-dropdown-tabs-control, .responsive-tabs-mobile .expand-dropdown-tabs-control:before, .responsive-tabs-mobile .expand-dropdown-tabs-label {
+  padding: 5px 20px;
+}
+
+nav.tabs {
+
+}
+
+nav.tabs:before {
+
+}
+
+nav.tabs:before {
+  /* Background behind primary tabs */
+  background-color: transparent;
+  border-bottom: none;
+  top: -28px;
+}

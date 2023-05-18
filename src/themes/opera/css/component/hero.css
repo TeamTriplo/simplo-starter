@@ -112,17 +112,13 @@
 }
 
 .block-hero {
-  margin: 0;
+  margin: 0 0 2rem;
 }
 
 .block-hero-image {
   position: relative;
 }
 
-.block-hero-image .container {
-  position: absolute;
-  bottom: 0px;
-}
 .block-hero-image .block-title {
   font-weight: 600;
   font-size: 50px;
@@ -146,16 +142,6 @@
 // .block-hero-image {
 //   background-position: center center;
 // }
-
-.views-row {
-  margin-bottom: 3rem;
-}
-
-/*.header-menu ul.links {
-  position: absolute;
-  right: 0px;
-  top: 0;
-}*/
 
 div.block-layout-custom-block[style] {
   padding-top: 10px;

@@ -1,0 +1,50 @@
+<p>The general meaning of&nbsp;<strong>Taxonomy&nbsp;</strong>is the science of classification. In Backdrop it refers to the method by which your website content is organized, using different words or phrases to label the content. In Backdrop the Taxonomy module enables this ability to classify your site content.</p>
+
+<p>For example, when creating or editing&nbsp;<strong>Post type</strong>&nbsp;content, there is by default a textfield called "<strong>Tags</strong>" which allows you to add a category to your post. So for example, if you are writing a series of stories about dragons, you may decide to type "firebreathing" into that field whenever the dragon you are writing about is of the fire-breathing variety; Other posts may need the tag "wingless" if the dragon being documented here is of the rare wingless variety. If by chance the currently described dragon is both wingless&nbsp;<em>and&nbsp;</em>fire breathing, you may type both terms into the Tags field to label that post as such.</p>
+
+<p>Once published, the post will have a visible label on your site stating the tag or tags which have been applied. Furthermore, visiting the path 'tags/firebreathing' will reveal a list of all content on the site which has been tagged 'firebreathing.'</p>
+
+<p>The "Tags" field is a&nbsp;<strong>field&nbsp;</strong>provided by the Taxonomy module which allows you to "tag" (label) content with "<strong>terms</strong>" (labels) which are part of the "Tags"&nbsp;<strong>vocabulary&nbsp;</strong>(group of related labels).</p>
+
+<p>So to summarize the expressions used to describe Backdrop Taxonomy, consider the following meanings:</p>
+
+<ul>
+	<li><strong>Term&nbsp;</strong>- The word or phrase that is used to describe or label content. In some articles, it is referred to as descriptor. Example "firebreathing."</li>
+	<li><strong>Vocabulary&nbsp;</strong>- The vocabulary is a list of multiple terms related in some way. Example "Dragon color" may be a vocabulary containing the&nbsp;<strong>terms&nbsp;</strong>black, red and silver (see Taxonomy and fields below).</li>
+</ul>
+
+<p>And more generally:</p>
+
+<ul>
+	<li><strong>Taxonomy&nbsp;</strong>- The categorization of the content in a hierarchical structure.</li>
+	<li><strong>Tagging&nbsp;</strong>- The process that associates a term with the content on your Backdrop website.</li>
+</ul>
+
+<table border="1" cellpadding="1" cellspacing="1" width="500">
+	<thead>
+		<tr>
+			<th scope="col"><strong>Vocabulary</strong></th>
+			<th scope="col"><strong>Terms</strong></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Color</td>
+			<td>Red, Blue, Green, Yellow</td>
+		</tr>
+		<tr>
+			<td>Venue</td>
+			<td>1st Avenue, Elks Club on Broadway, Metrodome</td>
+		</tr>
+		<tr>
+			<td>Event Type</td>
+			<td>class, seminar, online, concert, social</td>
+		</tr>
+		<tr>
+			<td>Membership</td>
+			<td>trial, monthly, annual, lifetime</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>https://docs.backdropcms.org/documentation/taxonomy</p>

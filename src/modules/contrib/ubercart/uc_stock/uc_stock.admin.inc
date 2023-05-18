@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Stock administration menu items.
@@ -53,8 +52,7 @@ function uc_stock_settings_form($form, &$form_state) {
  * Displays a stock report for products with stock tracking enabled.
  */
 function uc_stock_report() {
-  // TODO This variable was probably removed in Backdrop without replacement.
-  $page_size = (isset($_GET['nopage'])) ? UC_REPORTS_MAX_RECORDS : variable_get('uc_reports_table_size', 30);
+  $page_size = (isset($_GET['nopage'])) ? UC_REPORTS_MAX_RECORDS : config_get('uc_reports.settings', 'uc_reports_table_size');
   $csv_rows = array();
   $rows = array();
 
@@ -102,10 +100,18 @@ function uc_stock_report() {
 
   $result = $query->execute();
   foreach ($result as $stock) {
-    $op = array();
+    $links = array();
     if (user_access('administer product stock')) {
-      $op[] = l(t('edit'), 'node/' . $stock->nid . '/edit/stock', $options = array('query' => array('destination' => 'admin/store/reports/stock')));
+      $links[] = array(
+        'title' => t('edit'),
+        'href' => 'node/' . $stock->nid . '/edit/stock',
+        'query' => array('destination' => 'admin/store/reports/stock'),
+      );
     }
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => $links,
+    );
 
     // Add the data to a table row for display.
     $rows[] = array(
@@ -114,7 +120,7 @@ function uc_stock_report() {
         array('data' => l($stock->title, 'node/' . $stock->nid)),
         array('data' => $stock->stock),
         array('data' => $stock->threshold),
-        array('data' => implode(' ', $op)),
+        array('data' => backdrop_render($operations)),
       ),
       'class' => array(($stock->threshold >= $stock->stock) ? 'uc-stock-below-threshold' : 'uc-stock-above-threshold'),
     );

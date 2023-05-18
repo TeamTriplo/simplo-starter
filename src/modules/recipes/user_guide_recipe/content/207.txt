@@ -1,0 +1,20 @@
+<p>The&nbsp;<strong>Views module</strong>&nbsp;provides you with a powerful tool for creating customizable lists of content and more.</p>
+
+<p>Using views you can pull together any information on your website and craft dynamic lists, grids, tables, reports, RSS feeds, and navigation. You can use Views to build a table of post titles, their authors, and their creation date to create a "What's New" listing; Views can pull data from fields attached to users to build a list of users and their birthdays; You can use Views to build a grid of user photos; and much more.</p>
+
+<p>New installs of Views can produce displays of information related to:</p>
+
+<ul>
+	<li>Comments</li>
+	<li>Files</li>
+	<li>Content</li>
+	<li>Content revisions</li>
+	<li>Taxonomy terms</li>
+	<li>Users</li>
+	<li>Modules</li>
+	<li>Themes</li>
+	<li>URL redirects</li>
+	<li>Any fields attached to the above</li>
+</ul>
+
+<p>https://docs.backdropcms.org/documentation/views</p>

@@ -1,11 +1,11 @@
-name = Payment method pack
+name = Payment Method Pack
 description = Provides the check/money order, COD, and 'other' payment methods.
 dependencies[] = uc_payment
 package = Ubercart - payment
 backdrop = 1.x
 type = module
 
-; Added by Backdrop CMS packaging script on 2021-06-19
+; Added by Backdrop CMS packaging script on 2023-02-07
 project = ubercart
-version = 1.x-3.13.0
-timestamp = 1624117064
+version = 1.x-3.14.0
+timestamp = 1675809673

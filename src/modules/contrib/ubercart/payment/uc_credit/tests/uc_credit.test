@@ -1,9 +1,13 @@
 <?php
-
 /**
  * @file
  * Credit card payment method tests.
  */
+
+/**
+  * Include our helper class.
+  */
+require_once backdrop_get_path('module', 'uc_store') . '/tests/test_helper.inc';
 
 /**
  * Tests credit card payments with the test gateway.
@@ -174,8 +178,10 @@ class UbercartCreditCardTestCase extends UbercartTestHelper {
       $item->qty = 1;
       $item->price = $item->sell_price;
       $item->data = array();
-      $order->products = array($item);
+      $fields['products'] = array($item);
     }
+
+    $order->setProducts($fields['products']);
 
     $order->order_total = uc_order_get_total($order, TRUE);
     $order->line_items = uc_order_load_line_items($order, TRUE);
@@ -294,7 +300,7 @@ class UbercartCreditCardTestCase extends UbercartTestHelper {
       'panes[payment][details][cc_number]' => array_rand(array_flip(self::$test_cards)),
       'panes[payment][details][cc_cvv]' => mt_rand(100, 999),
       'panes[payment][details][cc_exp_month]' => mt_rand(1, 12),
-      'panes[payment][details][cc_exp_year]' => mt_rand(date('Y') + 1, 2022),
+      'panes[payment][details][cc_exp_year]' => mt_rand(date('Y') + 1, date('Y') + 5),
     ));
     $this->assertText('Your order is complete!');
   }

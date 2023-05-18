@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Contains rules integration for the system module needed during evaluation.
@@ -97,13 +96,18 @@ function rules_action_mail($to, $subject, $message, $from, $langcode, $settings,
     'message' => $message,
     'langcode' => $langcode,
   );
+
+  if (!empty($from)) {
+    $params['from'] = $from;
+  }
+
   // Set a unique key for this mail.
   $name = isset($element->root()->name) ? $element->root()->name : 'unnamed';
   $key = 'rules_action_mail_' . $name . '_' . $element->elementId();
   $languages = language_list();
   $language = isset($languages[$langcode]) ? $languages[$langcode] : language_default();
 
-  $message = backdrop_mail('rules', $key, $to, $language, $params, $from);
+  $message = backdrop_mail('rules', $key, $to, $language, $params);
   if ($message['result']) {
     watchdog('rules', 'Successfully sent email to %recipient', array('%recipient' => $to));
   }
@@ -134,6 +138,10 @@ function rules_action_mail_to_users_of_role($roles, $subject, $message, $from, $
     'subject' => $subject,
     'message' => $message,
   );
+
+  if (!empty($from)) {
+    $params['from'] = $from;
+  }
   // Set a unique key for this mail.
   $name = isset($element->root()->name) ? $element->root()->name : 'unnamed';
   $key = 'rules_action_mail_to_users_of_role_' . $name . '_' . $element->elementId();
@@ -141,7 +149,7 @@ function rules_action_mail_to_users_of_role($roles, $subject, $message, $from, $
 
   $message = array('result' => TRUE);
   foreach ($result as $row) {
-    $message = backdrop_mail('rules', $key, $row->mail, language_default(), $params, $from);
+    $message = backdrop_mail('rules', $key, $row->mail, language_default(), $params);
     // If $message['result'] is FALSE, then it's likely that email sending is
     // failing at the moment, and we should just abort sending any more. If
     // however, $message['result'] is NULL, then it's likely that a module has
@@ -167,6 +175,9 @@ function rules_mail($key, &$message, $params) {
 
   $message['subject'] .= str_replace(array("\r", "\n"), '', $params['subject']);
   $message['body'][] = $params['message'];
+  if (!empty($params['from'])) {
+    $message['from'] = $params['from'];
+  }
 }
 
 /**

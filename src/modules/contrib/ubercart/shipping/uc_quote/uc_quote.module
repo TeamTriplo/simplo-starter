@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * The controller module for fulfillment modules that process physical goods.
@@ -74,6 +73,16 @@ function uc_quote_theme() {
       'render element' => 'form',
       'file' => 'uc_quote.theme.inc',
     ),
+  );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function uc_quote_views_api() {
+  return array(
+    'api' => 3,
+    'path' => backdrop_get_path('module', 'uc_quote') . '/views',
   );
 }
 
@@ -162,7 +171,7 @@ function uc_quote_node_load($nodes, $types) {
       unset($node->shipping_address['nid']);
     }
     else {
-      $node->shipping_address = (array) config_get('uc_quote.settings', 'uc_quote_store_default_address');
+      $node->shipping_address = config_get('uc_quote.settings', 'uc_quote_store_default_address');
     }
   }
 }
@@ -209,9 +218,21 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'fieldset',
       '#title' => t('Shipping settings'),
       '#collapsible' => TRUE,
-      '#weight' => -3,
+      '#weight' => -19,
       '#attributes' => array('class' => array('product-shipping')),
       '#group' => 'additional_settings',
+      '#attached' => array(
+        'js' => array(
+          'vertical-tabs' => backdrop_get_path('module', 'uc_quote') . '/js/uc_quote.js',
+        ),
+      ),
+     );
+
+    $form['shipping']['shippable'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Product is shippable.'),
+      '#default_value' => isset($form['#node']->shippable) ? $form['#node']->shippable : FALSE,
+      '#weight' => -8,
     );
 
     $form['shipping']['shipping_type'] = array(
@@ -221,17 +242,27 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
       '#empty_option' => t('- Store default -'),
       '#default_value' => isset($form['#node']->nid) ? uc_quote_get_shipping_type('product', $form['#node']->nid) : '',
       '#options' => uc_quote_shipping_type_options(),
+      '#states' => array(
+        'visible' => array(
+          '#edit-shippable' => array('checked' => TRUE),
+        ),
+      ),
       '#weight' => -7,
     );
 
     // Add the default pickup address fieldset.
     $form['shipping']['shipping_address'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Default product pickup address'),
-      '#description' => t('When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and set up a delivery. If this pickup address is left blank, this product will default to the <a href="!url">store pickup address</a>.', array('!url' => url('admin/store/settings/quotes/settings'))),
+      '#title' => t('Product pickup address'),
+      '#description' => t('When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and set up a delivery. If the first line of the street address is left blank, this product will default to the <a href="!url">store pickup address</a>.', array('!url' => url('admin/store/settings/quotes/settings'))),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
+      '#states' => array(
+        'visible' => array(
+          '#edit-shippable' => array('checked' => TRUE),
+        ),
       '#weight' => -6,
+      ),
     );
     $form['shipping']['shipping_address']['#tree'] = TRUE;
     $form['shipping']['shipping_address']['address'] = array(
@@ -319,8 +350,10 @@ function uc_quote_uc_order($op, $order, $arg2) {
 
     case 'load':
       $quote = db_query("SELECT method, accessorials, rate FROM {uc_order_quotes} WHERE order_id = :id", array(':id' => $order->order_id))->fetchAssoc();
-      $order->quote = $quote;
-      $order->quote['accessorials'] = strval($quote['accessorials']);
+      if (!empty($quote)) {
+        $order->quote = $quote;
+        $order->quote['accessorials'] = strval($quote['accessorials']);
+      }
       break;
 
     case 'delete':
@@ -449,9 +482,7 @@ function uc_quote_get_default_shipping_address($nid) {
   $address = db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_product_locations} WHERE nid = :nid", array(':nid' => $nid))->fetchObject('UcAddress');
 
   if (empty($address)) {
-    $address_array = config_get('uc_quote.settings', 'uc_quote_store_default_address');
-    $address = new UcAddress();
-    $address->__set_state($address_array);
+    $address = UcAddress::__set_state(config_get('uc_quote.settings', 'uc_quote_store_default_address'));
   }
 
   return $address;
@@ -473,7 +504,7 @@ function uc_cart_pane_quotes($form, &$form_state, $items) {
   $order->delivery_country = isset($form_state['values']['delivery_country']) ? $form_state['values']['delivery_country'] : uc_store_default_country();
   $order->delivery_zone = isset($form_state['values']['delivery_zone']) ? $form_state['values']['delivery_zone'] : '';
   $order->delivery_postal_code = isset($form_state['values']['delivery_postal_code']) ? $form_state['values']['delivery_postal_code'] : '';
-  $order->products = $items;
+  $order->setProducts($items);
 
   $form['#attached']['css'][] = backdrop_get_path('module', 'uc_quote') . '/uc_quote.css';
 

@@ -222,7 +222,17 @@ function matomo_reports_menu() {
     'weight' => 4,
     'type' => MENU_LOCAL_TASK,
   );
-  // If matomo is installed, group with it, otherwise not.
+
+  // Add the menu item for the administrative configration page.
+  $items['admin/config/system/matomo/reports'] = array(
+    'title' => 'Matomo Reports',
+    'description' => 'Configure the settings for your Matomo reports.',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('matomo_reports_admin_settings_form'),
+    'access arguments' => array('administer matomo reports'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // If the Matomo Analytics module is installed, group this module with it.
   if (module_exists('matomo')) {
     $items['admin/config/system/matomo/tracking'] = array(
       'title' => 'Tracking',
@@ -235,25 +245,8 @@ function matomo_reports_menu() {
       'file' => 'matomo.admin.inc',
       'weight' => -10,
     );
-    $items['admin/config/system/matomo/reports'] = array(
-      'title' => 'Reports',
-      'description' => 'Configure the settings for your Matomo reports.',
-      'page callback' => 'backdrop_get_form',
-      'page arguments' => array('matomo_reports_admin_settings_form'),
-      'access arguments' => array('administer matomo reports'),
-      'type' => MENU_NORMAL_ITEM,
-      'weight' => 10,
-    );
-  }
-  else {
-    $items['admin/config/system/matomo_reports'] = array(
-      'title' => 'Matomo Reports',
-      'description' => 'Configure the settings for your Matomo reports.',
-      'page callback' => 'backdrop_get_form',
-      'page arguments' => array('matomo_reports_admin_settings_form'),
-      'access arguments' => array('administer matomo reports'),
-      'type' => MENU_NORMAL_ITEM,
-    );
+    $items['admin/config/system/matomo/reports']['title'] = 'Reports';
+    $items['admin/config/system/matomo/reports']['weight'] = 10;
   }
   return $items;
 }
@@ -300,7 +293,7 @@ function matomo_reports_block_view($delta = '') {
     case 'matomo_page_report':
       $block['subject'] = t('Matomo Page Statistics');
       if (!module_exists('matomo')) {
-        $block['content'] = t('To use this block you need to install <a href="!url">Matomo</a> module', array('!url' => 'http://www.drupal.org/project/matomo'));
+        $block['content'] = t('To use this block you need to install <a href="!url">Matomo</a> module', array('!url' => 'https://backdropcms.org/project/matomo'));
         return $block;
       }
       if ($router_item = menu_get_item()) {
@@ -412,9 +405,9 @@ function matomo_reports_any_access(array $arguments) {
 /**
  * Implements hook_user_presave().
  */
-function matomo_reports_user_presave(&$edit, $account, $category) {
-  if (isset($edit['matomo_reports_token_auth'])) {
-    $edit['data']['matomo_reports_token_auth'] = $edit['matomo_reports_token_auth'];
+function matomo_reports_user_presave($account) {
+  if (isset($account->matomo_reports_token_auth)) {
+    $account->data['matomo_reports_token_auth'] = $account->matomo_reports_token_auth;
   }
 }
 
@@ -500,14 +493,8 @@ function matomo_reports_admin_settings_form(array $form_state) {
   return system_settings_form($form);
 }
 
-/*
- * Implements hook_form_validate().
- *
- * Validate the server url.
- */
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Implements validation for the admin settings form.
  */
 function matomo_reports_admin_settings_form_validate($form, &$form_state) {
   $matomo_url = $form_state['values']['matomo_reports_url_http'];

@@ -1,0 +1,26 @@
+/**
+ * @file
+ * Makes the iframe for the embedded dynamic map responsive
+ *
+ * Makes the iframe responsive so it scales gracefully as the screen size
+ * changes
+ */
+
+/* This provides a 16:9 container for the iframe */
+.simple-gmap-iframe-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio (divide 9 by 16 = 0.5625) */
+}
+
+/* iframe for embedded map */
+.simple-gmap-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+}

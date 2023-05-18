@@ -1,0 +1,12 @@
+<p><em>Content Types</em>&nbsp;define sets of default fields for editors to add content on a Backdrop site and are the building blocks for structured authoring and content. In Backdrop, a Content Type is a pre-defined collection of data types (Fields).</p>
+
+<p>One way to understand content types is to imagine needing to create a form to store information about your friends and contacts. If this were on paper, you would probably print a single long line for name, a block of several lines to write the address, a short line for the telephone number, and so on. Then you would make several copies of this form to reuse for each new contact.&nbsp;</p>
+
+<p>If you were to do this on a Backdrop site you would create a Content Type. You would name your new Content Type (e.g. My Contacts), define the information that you wanted to store about each contact (called Fields in Backdrop), and then add those Fields (name, address, and telephone number, etc.) to that Content Type. You would then use this "My Contacts" Content Type to enter the information for each of the contacts you needed to store.&nbsp;</p>
+
+<p>https://docs.backdropcms.org/documentation/content-types</p>
+
+<p>&nbsp;</p>
+
+<p>[video:https://youtu.be/s7DNBr6d_h8]</p>
+

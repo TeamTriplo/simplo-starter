@@ -18,15 +18,6 @@ body {
 
 }
 
-.layout-flexible-content {
-  display: flex;
-  flex-direction:  column;
-}
-
-.flexible-row {
-  flex: 1 0 auto;
-}
-
 li {
   margin: 0;
 }

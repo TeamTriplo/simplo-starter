@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Contains the controller for uc_cart_item entities.
@@ -18,6 +17,9 @@ class UcCartItemController extends EntityPlusController {
         foreach ($product as $key => $value) {
           $item->$key = $value;
         }
+        // UcCartItem should not have a path (inherited from the node) so that
+        // path module doesn't try to update the node's alias.
+        unset($item->path);
       }
       $item->module = $item->data['module'];
     }
@@ -44,7 +46,7 @@ class UcCartItemController extends EntityPlusController {
   /**
    * Overrides EntityAPIController::buildContent().
    */
-  public function buildContent($product, $view_mode = 'full', $langcode = NULL, $content = array()) {
+  public function buildContent(EntityInterface $product, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $content += module_invoke($product->data['module'], 'uc_cart_display', $product);
     if (!empty($content)) {
       $content['cart_item_id'] = array(
@@ -55,16 +57,10 @@ class UcCartItemController extends EntityPlusController {
 
     return parent::buildContent($product, $view_mode, $langcode, $content);
   }
-
 }
 
-
 /**
- * UcCartItem extends Entity.
- *
- * A subclass of Entity is a requirement for creating a custom entity. It is
- * also a minimum requirement to define the methods included here, even as
- * empty functions.
+ * Defines an item in the user's shopping cart and/or order.
  */
 class UcCartItem extends Entity {
   /**
@@ -73,6 +69,11 @@ class UcCartItem extends Entity {
    * @var integer
    */
   public $cart_item_id;
+
+  function __construct(array $values = array()) {
+    parent::__construct($values);
+    unset($this->path);
+  }
 
   /**
    * Implements EntityInterface::id().
@@ -89,18 +90,17 @@ class UcCartItem extends Entity {
   }
 
   /**
-   * Implements EntityInterface::bundle().
-   */
-  public function bundle() {}
-
-  /**
    * Implements EntityInterface::label().
    */
-  public function label() {}
+  public function label() {
+    return t('Cart item @id', array('@id' => $this->cart_item_id));
+  }
 
   /**
    * Implements EntityInterface::uri().
    */
-  public function uri() {}
-
+  public function uri() {
+    // Only used internally, so doesn't have a URI.
+    return NULL;
+  }
 }

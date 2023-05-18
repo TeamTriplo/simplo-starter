@@ -1,0 +1,15 @@
+type = module
+name = User Guide Recipe
+description = A module to quickly help you get started with a custom user guide for your site.
+package = Recipes
+backdrop = 1.x
+
+dependencies[] = system (>=1.20.0)
+dependencies[] = book
+dependencies[] = video_filter
+dependencies[] = content_view_access
+
+; Added by Backdrop CMS packaging script on 2022-06-01
+project = user_guide_recipe
+version = 1.x-1.0.2
+timestamp = 1654149339

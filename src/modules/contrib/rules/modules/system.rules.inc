@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Rules integration for the system module.
@@ -221,7 +220,12 @@ function rules_system_action_info() {
         'to' => array(
           'type' => 'text',
           'label' => t('To'),
-          'description' => t('The e-mail address or addresses where the message will be sent to. The formatting of this string must comply with RFC 2822.'),
+          'description' => t('The e-mail address or addresses where the message will be sent to. The formatting of this string must comply with <a href="http://www.faqs.org/rfcs/rfc2822.html">RFC 2822</a>. Some examples are:') . theme('item_list', array('items' => array(
+            t('user@example.com'),
+            t('user@example.com, anotheruser@example.com'),
+            t('User &lt;user@example.com&gt;'),
+            t('User &lt;user@example.com&gt;, Another User &lt;anotheruser@example.com&gt;'),
+          ))),
         ),
         'subject' => array(
           'type' => 'text',
@@ -241,7 +245,7 @@ function rules_system_action_info() {
           'description' => t("The mail's from address. Leave it empty to use the site-wide configured address."),
           'optional' => TRUE,
         ),
-        'language' => array(
+        'langcode' => array(
           'type' => 'token',
           'label' => t('Language'),
           'description' => t('If specified, the language used for getting the mail message and subject.'),

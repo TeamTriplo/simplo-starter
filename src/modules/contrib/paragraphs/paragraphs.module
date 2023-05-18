@@ -381,6 +381,15 @@ function paragraphs_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
+  $items['admin/structure/paragraphs/%paragraphs_bundle/clone'] = array(
+    'title' => 'Clone Paragraphs type',
+    'access arguments' => array('administer paragraphs bundles'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_admin_bundle_clone_create_form', 3),
+    'file' => 'paragraphs.type_clone.inc',
+    'type' => MENU_VISIBLE_IN_BREADCRUMB,
+  );
+
   $items['admin/structure/paragraphs/%paragraphs_bundle/delete'] = array(
     'title' => 'Delete Paragraphs type',
     'page callback' => 'backdrop_get_form',
@@ -498,6 +507,8 @@ function paragraphs_field_info() {
     'default_widget' => 'paragraphs_hidden',
     'default_formatter' => 'paragraphs_view',
     'settings' => array(),
+    'property_type' => 'paragraphs_item',
+    'property_callbacks' => array('paragraphs_entity_metadata_property_callback'),
   );
   return $info;
 }
@@ -715,10 +726,8 @@ function theme_paragraphs_bundle_settings_form($variables) {
   // Initialize the variable which will store our table rows.
   $rows = array();
 
-  uasort($form['instance']['settings']['allowed_bundles_table'], 'element_sort');
-
   // Iterate over each element in our $form['example_items'] array.
-  foreach (element_children($form['instance']['settings']['allowed_bundles_table']) as $id) {
+  foreach (element_children($form['instance']['settings']['allowed_bundles_table'], TRUE) as $id) {
 
     // Before we add our 'weight' column to the row, we need to give the
     // element a custom class so that it can be identified in the
@@ -1221,7 +1230,7 @@ function paragraphs_field_property_get($entity, array $options, $name, $entity_t
 function paragraphs_field_property_set($entity, $name, $value, $langcode, $entity_type) {
   $field = field_info_field($name);
   $columns = array_keys($field['columns']);
-  $langcode = entity_metadata_field_get_language($entity_type, $entity, $field, $langcode);
+  $langcode = entity_plus_metadata_field_get_language($entity_type, $entity, $field, $langcode);
   $values = $field['cardinality'] == 1 ? array($value) : (array) $value;
 
   $items = array();
@@ -1591,8 +1600,7 @@ function paragraphs_bundle_copy_info() {
  * Helper to ensure entitycache table.
  */
 function paragraphs_ensure_entitycache_table() {
-  if (module_exists('entitycache') && !db_table_exists('cache_entity_paragraphs_item')) {
-    backdrop_load('module', 'entitycache');
+  if (!db_table_exists('cache_entity_paragraphs_item')) {
     $cache_schema = backdrop_get_schema_unprocessed('system', 'cache');
     $cache_schema['description'] = 'Cache table used to store paragraphs_item entity records.';
     db_create_table('cache_entity_paragraphs_item', $cache_schema);
@@ -1693,6 +1701,9 @@ function paragraphs_modal_admin_links($paragraphs_item) {
   );
   if (module_exists('font_awesome')) {
     $classes[] = 'font-awesome';
+  }
+  else {
+    $classes[] = 'svg-icons';
   }
   if (is_numeric($paragraph_id) && $access) {
     $admin_links = array(
@@ -1840,7 +1851,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
       'type' => 'file',
       'scope' => 'footer',
     );
-    $admin_links['#attached']['library'][] = array('system', 'backdrop.ajax');
+    $admin_links['#attached']['library'][] = array('system', 'backdrop.dialog.ajax');
   }
   return $admin_links;
 }
