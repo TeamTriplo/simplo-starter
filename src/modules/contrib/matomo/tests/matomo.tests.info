@@ -8,27 +8,27 @@ file = matomo.test
 name = Matomo custom variable tests
 description = Tests to confirm that the custom variable settings are working.
 group = Matomo Analytics
-file = matomo.test
+file = matomo_variables.test
 
 [MatomoCustomUrls]
 name = Matomo custom URL tests
 description = Tests to confirm that the custom URL settings are working.
 group = Matomo Analytics
-file = matomo.test
+file = matomo_urls.test
 
 [MatomoStatusMessagesTest]
 name = Matomo status message tests
 description = Tests to make sure that tracking of error messages works.
 group = Matomo Analytics
-file = matomo.test
+file = matomo_messages.test
 
 [MatomoRolesTest]
 name = Matomo role tests
 description = Tests to verify that the tracking code respects tracking per role.
 group = Matomo Analytics
-file = matomo.test
+file = matomo_roles.test
 
-; Added by Backdrop CMS packaging script on 2022-01-23
+; Added by Backdrop CMS packaging script on 2023-08-03
 project = matomo
-version = 1.x-2.12.0
-timestamp = 1643008608
+version = 1.x-2.12.2
+timestamp = 1691050656

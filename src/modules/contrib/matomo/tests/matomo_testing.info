@@ -5,7 +5,7 @@ backdrop = 1.x
 type = module
 hidden = TRUE
 
-; Added by Backdrop CMS packaging script on 2022-01-23
+; Added by Backdrop CMS packaging script on 2023-08-03
 project = matomo
-version = 1.x-2.12.0
-timestamp = 1643008608
+version = 1.x-2.12.2
+timestamp = 1691050656
