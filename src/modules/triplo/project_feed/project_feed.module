@@ -64,6 +64,14 @@ function project_feed_menu() {
     'page callback' => 'project_feed_batch_3',
     'access arguments' => array('administer blocks'),
   );
+
+  $items['admin/config/services/projects/settings/pull_projects_4'] = array(
+    'title' => 'Pull batch 4',
+    'description' => 'Create reusable blocks that can be placed in layouts.',
+    'page callback' => 'project_feed_batch_4',
+    'access arguments' => array('administer blocks'),
+  );
+
   return $items;
 }
 
@@ -77,6 +85,10 @@ function project_feed_batch_2() {
 
 function project_feed_batch_3() {
   project_feed_code('9');
+}
+
+function project_feed_batch_4() {
+  project_feed_code('13');
 }
 
 /**
