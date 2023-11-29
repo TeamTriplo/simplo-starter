@@ -1,0 +1,11 @@
+type = module
+name = Pack and Upload
+description = This module packs assets & files in a tar or zip file, uploads them and extract to a specified directory.
+package = File Management
+backdrop = 1.x
+configure = admin/config/pack-upload
+
+; Added by Backdrop CMS packaging script on 2022-07-04
+project = pack_upload
+version = 1.x-1.0.1
+timestamp = 1657003003

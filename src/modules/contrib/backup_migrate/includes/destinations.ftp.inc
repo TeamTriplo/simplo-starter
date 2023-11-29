@@ -185,7 +185,7 @@ function backdrop_ftp_connected(&$ftp) {
     return FALSE;
   }
 
-  if (!@ftp_systype($ftp->__conn)) {
+  if (empty($ftp->__conn) || !@ftp_systype($ftp->__conn)) {
     // The connection is dead
     return FALSE;
   }
@@ -310,7 +310,7 @@ function backdrop_ftp_file_list($directory, &$ftp) {
     // Iterate through the array
     foreach ($file_list as $file) {
       $file_array[] = array(
-        'filename' => $file,
+        'filename' => ltrim($file, './'),
         'filesize' => ftp_size($ftp->__conn, $directory ."/". $file),
         'filetime' => ftp_mdtm($ftp->__conn, $directory ."/". $file),
       );
