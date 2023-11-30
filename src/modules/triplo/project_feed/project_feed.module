@@ -72,6 +72,27 @@ function project_feed_menu() {
     'access arguments' => array('administer blocks'),
   );
 
+  $items['admin/config/services/projects/settings/pull_projects_5'] = array(
+    'title' => 'Pull batch 5',
+    'description' => 'Create reusable blocks that can be placed in layouts.',
+    'page callback' => 'project_feed_batch_5',
+    'access arguments' => array('administer blocks'),
+  );
+
+  $items['admin/config/services/projects/settings/pull_projects_6'] = array(
+    'title' => 'Pull batch 6',
+    'description' => 'Create reusable blocks that can be placed in layouts.',
+    'page callback' => 'project_feed_batch_6',
+    'access arguments' => array('administer blocks'),
+  );
+
+  $items['admin/config/services/projects/settings/pull_projects_7'] = array(
+    'title' => 'Pull batch 7',
+    'description' => 'Create reusable blocks that can be placed in layouts.',
+    'page callback' => 'project_feed_batch_7',
+    'access arguments' => array('administer blocks'),
+  );
+
   return $items;
 }
 
@@ -89,6 +110,18 @@ function project_feed_batch_3() {
 
 function project_feed_batch_4() {
   project_feed_code('13');
+}
+
+function project_feed_batch_5() {
+  project_feed_code('17');
+}
+
+function project_feed_batch_6() {
+  project_feed_code('21');
+}
+
+function project_feed_batch_7() {
+  project_feed_code('25');
 }
 
 /**
