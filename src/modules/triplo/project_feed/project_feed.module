@@ -182,7 +182,7 @@ function project_feed_code($var) {
         'releases_url' => $repo['releases_url'],
         'pulls_url' => $repo['pulls_url'],
       );
-      $temper = $repo['name'] . " ";
+      $temper = $data[$repo['name']];
       print($temper);
       print(<br>);
 
