@@ -182,6 +182,7 @@ function project_feed_code($var) {
         'releases_url' => $repo['releases_url'],
         'pulls_url' => $repo['pulls_url'],
       );
+      $temp = $repo['name'] . " " . <br>;
 
       // Get information about each project/repo from its .info file.
       $ch = curl_init('https://api.github.com/repos/backdrop-contrib/' . $repo['name'] .'/contents/' . $repo['name'] . '.info');
