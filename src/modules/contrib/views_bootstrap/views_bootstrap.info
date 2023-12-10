@@ -1,13 +1,16 @@
 name = Views Bootstrap
-package = Views
-description = Bootstrap Components
+description = Allows the creation of Views using Bootstrap components.
 backdrop = 1.x
-version = 1.x-1.x
-dependencies[] = views
 type = module
+package = Views
+
+dependencies[] = views
+
+tags[] = Bootstrap
+
 configure = admin/config/user-interface/views_bootstrap
 
-; Added by Backdrop CMS packaging script on 2021-03-15
+; Added by Backdrop CMS packaging script on 2022-07-19
 project = views_bootstrap
-version = 1.x-1.2.3
-timestamp = 1615792337
+version = 1.x-3.5.1
+timestamp = 1658266905

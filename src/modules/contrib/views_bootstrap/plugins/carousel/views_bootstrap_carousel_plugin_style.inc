@@ -8,6 +8,7 @@
  * Class to define a style plugin handler.
  */
 class views_bootstrap_carousel_plugin_style extends views_plugin_style {
+
   /**
    * Definition.
    */
@@ -16,6 +17,7 @@ class views_bootstrap_carousel_plugin_style extends views_plugin_style {
     $options['interval'] = array('default' => 5000);
     $options['navigation'] = array('default' => TRUE);
     $options['indicators'] = array('default' => TRUE);
+    $options['wrap'] = array('default' => TRUE);
     $options['pause'] = array('default' => FALSE);
     $options['items_per_slide'] = array('default' => 1);
     return $options;
@@ -24,8 +26,14 @@ class views_bootstrap_carousel_plugin_style extends views_plugin_style {
   /**
    * Form.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
+
+    // TODO: restore this help line when we can point to a Backdrop doc page.
+//     $form['help'] = array(
+//       '#markup' => t('The Bootstrap carousel displays content as a slideshow (<a href="!docs">see documentation</a>).', ['!docs' => 'https://www.drupal.org/docs/7/modules/views-bootstrap/carousel']),
+//       '#weight' => -99,
+//     );
 
     $form['interval'] = array(
       '#type' => 'textfield',
@@ -47,6 +55,13 @@ class views_bootstrap_carousel_plugin_style extends views_plugin_style {
       '#default_value' => $this->options['indicators'],
     );
 
+    $form['wrap'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Wrap'),
+      '#description' => t('Restarts the carousel after the last slide, rather than having a hard stop.'),
+      '#default_value' => $this->options['wrap'],
+    );
+
     $form['pause'] = array(
       '#type' => 'checkbox',
       '#title' => t('Pause on hover'),
@@ -56,9 +71,10 @@ class views_bootstrap_carousel_plugin_style extends views_plugin_style {
 
     $form['items_per_slide'] = array(
       '#type' => 'textfield',
-      '#title' => t('Items per slide'),
-      '#description' => t('How many items show per slide.'),
+      '#title' => t('Item per slide'),
+      '#description' => t('How many items shown per slide.'),
       '#default_value' => $this->options['items_per_slide'],
     );
   }
+
 }

@@ -1,0 +1,16 @@
+{
+    "_config_name": "image.style.views_bootstrap_demo_carousel",
+    "label": "Views Bootstrap Carousel",
+    "name": "views_bootstrap_demo_carousel",
+    "effects": [
+        {
+            "name": "image_scale",
+            "data": {
+                "width": "1200",
+                "height": "",
+                "upscale": 1
+            },
+            "weight": "1"
+        }
+    ]
+}
