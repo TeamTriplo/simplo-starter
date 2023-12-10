@@ -1,14 +1,14 @@
 <?php
 /**
- * @file views-bootstrap-thumbnail-plugin-rows.tpl.php
- * Default simple view template to display Bootstrap Thumbnails.
+ * @file
+ * Template to display Bootstrap Thumbnails in rows.
+ *
+ * Variables available (beyond standard Views variables):
  *
  * @ingroup views_templates
  */
 ?>
-
 <?php print $image ?>
-
 <?php if (!empty($title) || !empty($content)): ?>
   <div class="caption">
     <?php if (!empty($title)): ?>

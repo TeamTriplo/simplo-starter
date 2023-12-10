@@ -8,12 +8,15 @@
  * Class to define a style plugin handler.
  */
 class views_bootstrap_accordion_plugin_style extends views_plugin_style {
+
   /**
    * Definition.
    */
   public function option_definition() {
     $options = parent::option_definition();
     $options['title_field'] = array('default' => NULL);
+    $options['label_field'] = array('default' => NULL);
+    $options['behavior'] = array('default' => 'closed');
     $options['title_tag'] = array('default' => 'h4');
     return $options;
   }
@@ -21,7 +24,7 @@ class views_bootstrap_accordion_plugin_style extends views_plugin_style {
   /**
    * Options form.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
     if (isset($form['grouping'])) {
@@ -31,7 +34,11 @@ class views_bootstrap_accordion_plugin_style extends views_plugin_style {
           $options = array_merge($options, $form['grouping'][$key]['field']['#options']);
         }
       }
-
+      // TODO: restore this help line when we can point to a Backdrop doc page.
+//       $form['help'] = array(
+//         '#markup' => t('The Bootstrap accordion displays content in collapsible panels (<a href="!docs">see documentation</a>).', ['!docs' => 'https://www.drupal.org/docs/7/modules/views-bootstrap/accordion']),
+//         '#weight' => -99,
+//       );
       $form['title_field'] = array(
         '#type' => 'select',
         '#title' => t('Title field'),
@@ -40,7 +47,26 @@ class views_bootstrap_accordion_plugin_style extends views_plugin_style {
         '#default_value' => $this->options['title_field'],
         '#description' => t('Select the field that will be used as the title.'),
       );
-
+      $form['label_field'] = array(
+        '#type' => 'select',
+        '#title' => t('Label field'),
+        '#options' => $options,
+        '#required' => FALSE,
+        '#default_value' => $this->options['label_field'],
+        '#description' => t('Select the field that will be used as the label.'),
+      );
+      $form['behavior'] = array(
+        '#type' => 'radios',
+        '#title' => t('Collapse Options'),
+        '#options' => array(
+          'closed' => t('All Items Closed'),
+          'first' => t('First Item Open'),
+          'all' => t('All Items Open'),
+        ),
+        '#required' => TRUE,
+        '#description' => t('Default panel state for collapse behavior.'),
+        '#default_value' => $this->options['behavior'],
+      );
       $form['title_tag'] = array(
         '#type' => 'select',
         '#title' => t('Title HTML tag'),
@@ -59,4 +85,5 @@ class views_bootstrap_accordion_plugin_style extends views_plugin_style {
       );
     }
   }
+
 }

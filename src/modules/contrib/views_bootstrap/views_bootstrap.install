@@ -1,16 +1,233 @@
 <?php
-
 /**
  * @file
  * Install, update and uninstall functions for the Views Bootstrap module.
  */
 
 /**
+ * Return the last Drupal update removed.
+ */
+function views_bootstrap_update_last_removed() {
+  return 7101;
+}
+
+/**
+ * Set dependencies to ensure that Views does the conversion to config before
+ * we run our updates that use config versions of Views.
+ */
+function views_bootstrap_update_dependencies() {
+  $dependencies['views_bootstrap'][1301] = array(
+    'views' => 1001,
+  );
+  return $dependencies;
+}
+
+/**
  * Add config option to include Bootstrap assets.
  */
 function views_bootstrap_update_1100() {
-  $should_include_assets = config_get('views_bootstrap.settings', 'include_bootstrap_assets');
-  if ($should_include_assets === NULL) {
-     config_set('views_bootstrap.settings', 'include_bootstrap_assets', TRUE);
+  $config = config('views_bootstrap.settings');
+  if ($config->get('include_bootstrap_assets') === NULL) {
+     $config->set('include_bootstrap_assets', TRUE);
+  }
+  $config->save();
+}
+
+/**
+ * Convert 7.x-3.5, 1.x-1.2.3, and earlier config settings.
+ */
+function views_bootstrap_update_1300(&$sandbox) {
+  // Update numbering assumes the Backdrop release will be 1.x-3.5 to indicate
+  // compatibility with Drupal 7.x-3.5.
+  $config = config('views_bootstrap.settings');
+  // New installations will use 3.4.1 (set in the config file), but upgrades
+  // from 1.2.3 (or earlier) use the value that was hard-coded, 3.3.6.
+  if ($config->get('bootstrap_version') === NULL) {
+    $config->set('bootstrap_version', '3.3.6');
+  }
+  $config->save();
+}
+
+/**
+ * Convert 7.x-3.5, 1.x-1.2.3, and earlier display settings.
+ */
+function views_bootstrap_update_1301(&$sandbox) {
+  if (!isset($sandbox['total'])) {
+    $sandbox['view_configs'] = config_get_names_with_prefix('views.view.');
+    $sandbox['total'] = count($sandbox['view_configs']);
+    $sandbox['current'] = 0;
+  }
+
+  $config = config($sandbox['view_configs'][$sandbox['current']]);
+  $config_changed = FALSE;
+  foreach ($config->get('display') as $display_key => $display) {
+    $options = &$display['display_options'];
+    $display_changed = FALSE;
+    if (empty($options['style_plugin'])) {
+      continue;
+    }
+    switch ($options['style_plugin']) {
+      case 'views_bootstrap_accordion_plugin_style':
+        // Check accordion behavior setting, set empty to closed.
+        if (!isset($options['style_options']['behavior'])) {
+          $options['style_options']['behavior'] = 'closed';
+          $display_changed = TRUE;
+        }
+        // Check accordion label setting, set undefined to empty.
+        if (!isset($options['style_options']['label_field'])) {
+          $options['style_options']['label_field'] = '';
+          $display_changed = TRUE;
+        }
+        // Check title tag from 1.2.3, set undefined to h4.
+        if (!isset($options['style_options']['title_tag'])) {
+          $options['style_options']['title_tag'] = 'h4';
+          $display_changed = TRUE;
+        }
+        break;
+
+      case 'views_bootstrap_carousel_plugin_style':
+        // Check carousel for items per slide setting.
+        if (!isset($options['style_options']['items_per_slide'])) {
+          $options['style_options']['items_per_slide'] = 1;
+          $display_changed = TRUE;
+        }
+        // Check carousel for wrap setting.
+        if (!isset($options['style_options']['wrap'])) {
+          $options['style_options']['wrap'] = 1;
+          $display_changed = TRUE;
+        }
+        break;
+
+      case 'views_bootstrap_dropdown_plugin_style':
+        // No updates needed since this is newly introduced in 1.x-3.5.
+        break;
+
+      case 'views_bootstrap_grid_plugin_style':
+      case 'views_bootstrap_thumbnail_plugin_style':
+        if (isset($options['style_options']['columns'])) {
+          // Get the column count.
+          $columns = $options['style_options']['columns'];
+          // Convert the deprecated column count to the updated column count.
+          $column_type = 12 / $columns;
+          // New style options.
+          $style_options = array(
+            'alignment' => $options['style_options']['alignment'],
+            'columns_horizontal' => '-1',
+            'columns_vertical' => $column_type,
+            'clear_columns' => 1,
+            'columns_xs' => '12',
+            'columns_sm' => '0',
+            'columns_md' => '0',
+            'columns_lg' => '0',
+            'column_class' => '',
+          );
+          switch ($options['style_options']['class_prefix']) {
+            case 'col-xs':
+              $style_options['columns_xs'] = $column_type;
+              break;
+
+             case 'col-sm':
+              $style_options['columns_sm'] = $column_type;
+              break;
+
+            case 'col-md':
+              $style_options['columns_md'] = $column_type;
+              break;
+
+            case 'col-lg':
+            default:
+              $style_options['columns_lg'] = $column_type;
+          }
+
+          // Overwrite the style options on $options, dropping deprecated
+          // 'columns' and 'class_prefix'.
+          $options['style_options'] = $style_options;
+          $display_changed = TRUE;
+        }
+        break;
+
+      case 'views_bootstrap_list_group_plugin_style':
+        // Check list group for panel setting.
+        if (!isset($options['style_options']['panels'])) {
+          $options['style_options']['panels'] = 0;
+          $display_changed = TRUE;
+        }
+        break;
+
+      case 'views_bootstrap_media_plugin_style':
+        // Remove media object body_field setting.
+        unset($options['style_options']['body_field']);
+        if (!isset($options['style_options']['image_class'])) {
+          // Add image_class setting default media-left.
+          $options['style_options']['image_class'] = 'media-left';
+        }
+        // Set media object to exclude fields not set for image and heading.
+        $heading = $options['style_options']['heading_field'];
+        $image = $options['style_options']['image_field'];
+        $fields = $options['fields'];
+        foreach ($fields as $field_name => $field) {
+          if (in_array($field_name, array($heading, $image))) {
+            $options['fields'][$field_name]['exclude'] = 1;
+          }
+        }
+        $display_changed = TRUE;
+        break;
+
+      case 'views_bootstrap_panel_plugin_style':
+        // Remove panel body_field setting.
+        unset($options['style_options']['body_field']);
+        // Set panel to exclude fields not set for heading and footer.
+        $heading = $options['style_options']['heading_field'];
+        $footer = $options['style_options']['footer_field'];
+        $fields = $options['fields'];
+        foreach ($fields as $field_name => $field) {
+          if (in_array($field_name, array($heading, $footer))) {
+            $options['fields'][$field_name]['exclude'] = 1;
+          }
+        }
+        $display_changed = TRUE;
+        break;
+
+      case 'views_bootstrap_tab_plugin_style':
+        // Check tabs justified (convert to tab_position if present).
+        if ($options['style_options']['justified']) {
+          $options['style_options']['tab_position'] = 'justified';
+        }
+        elseif (!isset($options['style_options']['tab_position'])) {
+          $options['style_options']['tab_position'] = 'basic';
+        }
+        // Check tab_fade setting.
+        if (!isset($options['style_options']['tab_fade'])) {
+          $options['style_options']['tab_fade'] = 0;
+        }
+        unset($options['style_options']['justified']);
+        $display_changed = TRUE;
+        break;
+
+      case 'views_bootstrap_table_plugin_style':
+        // No updates needed.
+        break;
+
+    }
+    if ($display_changed) {
+      $config->set('display.' . $display_key, $display);
+      $config_changed = TRUE;
+    }
+  }
+  if ($config_changed) {
+    $config->save();
+  }
+  $sandbox['current']++;
+  $sandbox['#finished'] = ($sandbox['current'] / $sandbox['total']);
+}
+
+/**
+ * Implements hook_enable().
+ */
+function views_bootstrap_enable() {
+  $include_bootstrap_assets = config_get('views_bootstrap.settings', 'include_bootstrap_assets');
+   if ($include_bootstrap_assets !== 1) {
+     backdrop_set_message(t('If your site does not use a Bootstrap-based theme, select the option on the <a href="!url">configuration page</a> to include Bootstrap assets.',
+       array('!url' => url('admin/config/user-interface/views_bootstrap'))));
   }
 }

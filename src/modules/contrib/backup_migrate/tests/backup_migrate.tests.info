@@ -16,7 +16,7 @@ description = Run through basic scenarios and functionality.
 group = Backup and Migrate
 file = BmTestProfiles.test
 
-; Added by Backdrop CMS packaging script on 2023-09-24
+; Added by Backdrop CMS packaging script on 2023-11-14
 project = backup_migrate
-version = 1.x-1.0.24
-timestamp = 1695575092
+version = 1.x-1.0.25
+timestamp = 1699969843

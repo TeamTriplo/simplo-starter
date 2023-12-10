@@ -8,6 +8,7 @@
  * Class to define a style plugin handler.
  */
 class views_bootstrap_table_plugin_style extends views_plugin_style_table {
+
   /**
    * Definition.
    */
@@ -22,8 +23,14 @@ class views_bootstrap_table_plugin_style extends views_plugin_style_table {
   /**
    * Form.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
+
+    // TODO: restore this help line when we can point to a Backdrop doc page.
+//     $form['help'] = array(
+//       '#markup' => t('The Bootstrap table style adds default Bootstrap table classes and optional classes (<a href="!docs">see documentation</a>).', ['!docs' => 'https://www.drupal.org/docs/7/modules/views-bootstrap/table']),
+//       '#weight' => -99,
+//     );
 
     $form['responsive'] = array(
       '#type' => 'checkbox',
@@ -44,4 +51,5 @@ class views_bootstrap_table_plugin_style extends views_plugin_style_table {
       ),
     );
   }
+
 }

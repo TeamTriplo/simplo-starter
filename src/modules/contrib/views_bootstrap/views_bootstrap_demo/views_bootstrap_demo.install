@@ -1,0 +1,93 @@
+<?php
+/**
+ * @file
+ *
+ * Provides Views Bootstrap Demo install and uninstall routines.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function views_bootstrap_demo_install() {
+  _views_bootstrap_demo_create_nodes();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function views_bootstrap_demo_uninstall() {
+  $nids_fids = db_query('
+    SELECT n.nid, i.field_image_fid
+    FROM {node} n
+    LEFT JOIN {field_data_field_image} i ON i.entity_id = n.nid
+    WHERE type = :type
+    ', array(':type' => 'views_bootstrap_demo'))
+    ->fetchAllKeyed();
+
+  // Delete the nodes
+  node_delete_multiple(array_keys($nids_fids));
+
+  // Fully delete the images (don't wait for cleanup)
+  foreach (array_values($nids_fids) as $fid) {
+    file_delete($fid);
+  }
+
+  // Remove the directory we were storing our node images in.
+  backdrop_rmdir('public://views_bootstrap_demo');
+
+  // Drop now-empty tables we created from the db.
+  db_query('
+    DROP TABLE IF EXISTS {field_data_field_snippet},{field_revision_field_snippet}
+    ')->execute();
+
+  backdrop_set_message(t('@count Views Bootstrap Demo nodes have been deleted.', array('@count' => count($nids_fids))));
+}
+
+/**
+ * Create some demonstration nodes for Views Bootstrap Demo.
+ */
+function _views_bootstrap_demo_create_nodes() {
+  // Destination directory for images in demo nodes
+  $image_dir = 'public://views_bootstrap_demo';
+  if (!file_prepare_directory($image_dir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
+    backdrop_set_message(t('Unable to create or write  to directory %dir.',
+      array('%dir' => $image_dir)), 'error');
+    return;
+  }
+  global $base_url;
+  $image_url_base = $base_url . '/' . backdrop_get_path('module', 'views_bootstrap_demo') . '/images/image_';
+
+  $num_to_create = 6;
+
+  $num_existing_nodes = db_query('
+    SELECT COUNT(1)
+    FROM {node}
+    WHERE type = :type
+    ', array(':type' => 'views_bootstrap_demo'))
+    ->fetchField();
+
+  for ($i = 0; $i < $num_to_create; $i++) {
+    $n = $num_existing_nodes + 1 + $i;
+    $node = new Node();
+    $node->type = 'views_bootstrap_demo';
+    node_object_prepare($node);
+    $node->language = 'und';
+    global $user;
+    $node->uid = $user->uid;
+    $node->status = 1;
+    $node->promote = 0;
+    $node->comment = 0;
+    $node->title = t('Title-@n', array('@n' => $n));
+    $node->field_snippet['und'] = array(array('value' => t('Snippet-@n', array('@n' => $n))));
+    $node->body['und'] = array(array('value' => t('This is body text @n.', array('@n' => $n)), 'format' => 'filtered_html'));
+    $image_url = $image_url_base . (1 + $n % 6) . '.jpg';
+    $new_file = system_retrieve_file($image_url, $image_dir, TRUE);
+    $node->field_image['und'][] = array(
+      'fid' => $new_file->fid,
+      'display' => 1,
+      'description' => t('Views Bootstrap Demo image @n', array('@n' => $n)),
+    );
+    node_save($node);
+  }
+  backdrop_set_message(t('@num Views Bootstrap Demo nodes have been created.', array('@num' => $num_to_create)));
+}
