@@ -1,0 +1,439 @@
+<?php
+/**
+ * @file
+ * Gallery tiler main code.
+ */
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function gallery_tiler_field_formatter_info() {
+  $formats = array(
+    'tiled_gallery' => array(
+      'label' => t('Tiled gallery'),
+      'field types' => array(
+        'image',
+      ),
+      'settings' => array(
+        'type' => 'compact',
+        'image_style' => NULL,
+        'breakpoint' => 800,
+        'tile_height' => 220,
+        'gutter' => 0,
+        'colorbox' => 'none',
+        'colorbox_image_style' => NULL,
+        'overlay_caption_source' => 'none',
+      ),
+    ),
+  );
+  return $formats;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function gallery_tiler_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $element = array();
+
+  $is_view = FALSE;
+  if ($instance['entity_type'] == 'views') {
+    $element['warn'] = array(
+      '#type' => 'help',
+      '#markup' => t('This field formatter only works if "Use field template" is selected in the style settings below, and has limited settings in views.'),
+    );
+    $is_view = TRUE;
+  }
+
+  $element['type'] = array(
+    '#type' => 'select',
+    '#title' => t('Gallery type'),
+    '#options' => _gallery_tiler_type_options(),
+    '#default_value' => $settings['type'],
+    '#required' => TRUE,
+  );
+  $image_styles = image_style_options(FALSE, PASS_THROUGH);
+  $element['image_style'] = array(
+    '#type' => 'select',
+    '#title' => t('Image style'),
+    '#default_value' => $settings['image_style'],
+    '#empty_option' => t('None (original image)'),
+    '#options' => $image_styles,
+  );
+  $element['breakpoint'] = array(
+    '#type' => 'number',
+    '#title' => t('Breakpoint'),
+    '#min' => 450,
+    '#max' => 1500,
+    '#default_value' => $settings['breakpoint'],
+    '#field_suffix' => 'px',
+    '#description' => t('If the browser window is smaller than that, the images show in two (boring) rows.'),
+  );
+  $element['tile_height'] = array(
+    '#type' => 'number',
+    '#title' => t('Base tile height'),
+    '#min' => 90,
+    '#max' => 450,
+    '#default_value' => $settings['tile_height'],
+    '#field_suffix' => 'px',
+    '#description' => t('Can have big impact on the gallery display, some experiments might be necessary.'),
+  );
+  $element['gutter'] = array(
+    '#type' => 'number',
+    '#title' => t('Gutter (gap between tiles)'),
+    '#min' => 0,
+    '#max' => 25,
+    '#default_value' => $settings['gutter'],
+    '#field_suffix' => 'px',
+  );
+
+  // @todo Change name of form elements? It's a bit confusing since photoswipe
+  // support came in.
+  $lightbox_options = _gallery_tiler_lightbox_options();
+  $current_setting = $settings['colorbox'];
+
+  // This form item was a checkbox up to v1.x-1.0.1, so the setting was bool.
+  if (!array_key_exists($current_setting, $lightbox_options)) {
+    if ($current_setting == TRUE) {
+      $current_setting = 'colorbox';
+    }
+    else {
+      // Can also happen if the previously selected module is now turned off.
+      $current_setting = 'none';
+    }
+  }
+  if (count($lightbox_options) == 1) {
+    $description = t('Neither Colorbox nor Photoswipe is installed.');
+  }
+  else {
+    $description = t('Clicking on an image will open the image in an overlay using the image style below.');
+  }
+  $element['colorbox'] = array(
+    '#type' => 'select',
+    '#title' => t('Lightbox module'),
+    '#default_value' => $current_setting,
+    '#options' => $lightbox_options,
+    '#description' => $description,
+  );
+
+  $jq_selector = ':input[name="fields[' . $instance['field_name'] . '][settings_edit_form][settings][colorbox]"]';
+  $element['colorbox_image_style'] = array(
+    '#type' => 'select',
+    '#title' => t('Lightbox image style'),
+    '#default_value' => count($lightbox_options) > 1 ? $settings['colorbox_image_style'] : NULL,
+    '#empty_option' => t('None (original image)'),
+    '#options' => $image_styles,
+    '#states' => array(
+      'invisible' => array(
+        $jq_selector => array('value' => 'none'),
+      ),
+    ),
+  );
+
+  $caption_options = array('none' => t('No caption'));
+  if ($instance['settings']['alt_field']) {
+    $caption_options['alt'] = t('Image alt attribute');
+  }
+  if ($instance['settings']['title_field']) {
+    $caption_options['title'] = t('Image title attribute');
+  }
+  $default = 'none';
+  if (isset($settings['overlay_caption_source'])) {
+    if (array_key_exists($settings['overlay_caption_source'], $caption_options)) {
+      $default = $settings['overlay_caption_source'];
+    }
+  }
+  $element['overlay_caption_source'] = array(
+    '#type' => 'radios',
+    '#title' => t('Lightbox image caption'),
+    '#default_value' => $default,
+    '#options' => $caption_options,
+    '#description' => t('The source for overlay image captions, if available. Can be the image "alt" or "title" attribute.'),
+    '#states' => array(
+      'invisible' => array(
+        $jq_selector => array('value' => 'none'),
+      ),
+    ),
+  );
+
+  // These settings get saved with the view. But the first three are not
+  // available in hook_preprocess_field(), and the last one can not get set, as
+  // the necessary instance settings are not available in views_ui.
+  if ($is_view) {
+    $element['type']['#access'] = FALSE;
+    $element['tile_height']['#access'] = FALSE;
+    $element['gutter']['#access'] = FALSE;
+    $element['overlay_caption_source']['#access'] = FALSE;
+  }
+  return $element;
+}
+
+/**
+ * Helper function to return an option list.
+ */
+function _gallery_tiler_type_options() {
+  return array(
+    'compact' => t('Compact'),
+    'pitted' => t('Pitted'),
+    'mountain' => t('Mountain'),
+    'french' => t('French'),
+    'squares' => t('Squares'),
+    'circles' => t('Circles'),
+    'octagon' => t('Octagon'),
+    'hexagon' => t('Hexagon'),
+  );
+}
+
+/**
+ * Helper function to return a list of available lightbox options.
+ */
+function _gallery_tiler_lightbox_options() {
+  $options = array('none' => t('None (no lightbox)'));
+  if (module_exists('colorbox')) {
+    $options['colorbox'] = t('Use Colorbox');
+  }
+  if (module_exists('photoswipe')) {
+    $options['photoswipe'] = t('Use Photoswipe');
+  }
+  return $options;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function gallery_tiler_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $settings = $instance['display'][$view_mode]['settings'];
+  $types = _gallery_tiler_type_options();
+  $variables = array('type' => 'ul');
+  foreach ($settings as $key => $value) {
+    switch ($key) {
+      case 'type':
+        $variables['items'][] = t('Type') . ': <strong>' . $types[$value] . '</strong>';
+        break;
+
+      case 'image_style':
+        $variables['items'][] = t('Image style') . ': ' . $value;
+        break;
+
+      case 'breakpoint':
+        $variables['items'][] = t('Breakpoint') . ': ' . $value . 'px';
+        break;
+
+      case 'tile_height':
+        $variables['items'][] = t('Base tile height') . ': ' . $value . 'px';
+        break;
+
+      case 'gutter':
+        $variables['items'][] = t('Gutter') . ': ' . $value . 'px';
+        break;
+
+      case 'colorbox':
+        if ($value) {
+          $variables['items'][] = t('Lightbox module') . ': ' . $value;
+        }
+        break;
+
+      case 'colorbox_image_style':
+        if ($settings['colorbox'] && $settings['colorbox'] != 'none') {
+          $variables['items'][] = t('Lightbox image style') . ': ' . $value;
+        }
+        break;
+
+      case 'overlay_caption_source':
+        if ($settings['colorbox'] && $settings['colorbox'] != 'none') {
+          $variables['items'][] = t('Lightbox image caption') . ': ' . $value;
+        }
+        break;
+
+    }
+  }
+  return theme('item_list', $variables);
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function gallery_tiler_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  if ($display['type'] == 'tiled_gallery') {
+    $path = backdrop_get_path('module', 'gallery_tiler');
+    $breakpoint = $display['settings']['breakpoint'];
+    $element['#attached']['css'] = array(
+      $path . '/css/gallery-tiler.css',
+      $path . '/css/gallery-tiler-media.css' => array(
+        'media' => "(min-width: {$breakpoint}px)",
+      ),
+    );
+
+    $lightbox_setting = $display['settings']['colorbox'];
+    $use_colorbox = FALSE;
+    $use_photoswipe = FALSE;
+    $cbox_image_style = FALSE;
+    $overlay_caption_source = FALSE;
+
+    if (!empty($lightbox_setting) && $lightbox_setting != 'none') {
+      if (isset($display['settings']['colorbox_image_style'])) {
+        $cbox_image_style = $display['settings']['colorbox_image_style'];
+      }
+      if (isset($display['settings']['overlay_caption_source'])) {
+        if ($display['settings']['overlay_caption_source'] != 'none') {
+          $overlay_caption_source = $display['settings']['overlay_caption_source'];
+        }
+      }
+
+      // The field settings form item used to be a checkbox, so the value still
+      // could be bolean.
+      if ($lightbox_setting === TRUE) {
+        $lightbox_setting = 'colorbox';
+      }
+
+      switch ($lightbox_setting) {
+        case 'colorbox':
+          if (module_exists('colorbox')) {
+            $element['#attached']['library'][] = array('colorbox', 'colorbox');
+            $element['#attached']['js'][] = $path . '/js/gallery-tiler.js';
+            $element['#attached']['js'][] = array(
+              'type' => 'setting',
+              'data' => array(
+                'gallery_tiler' => array('lightboxType' => 'colorbox'),
+              ),
+            );
+            $use_colorbox = TRUE;
+          }
+          break;
+
+        case 'photoswipe':
+          if (module_exists('photoswipe')) {
+            $config = config('photoswipe.settings');
+            $always_loaded = $config->get('photoswipe_always_load_non_admin');
+
+            if (!$always_loaded) {
+              // Module photoswipe did no hook_library_info, so we load the
+              // files individually. But only if it's not always loaded anyway.
+              $ps_path = backdrop_get_path('module', 'photoswipe');
+              $element['#attached']['css'][] = $ps_path . '/library/photoswipe.css';
+              $element['#attached']['css'][] = $ps_path . '/library/default-skin/default-skin.css';
+              $element['#attached']['js'][] = $ps_path . '/library/photoswipe.min.js';
+              $element['#attached']['js'][] = $ps_path . '/library/photoswipe-ui-default.min.js';
+              // This file needs to go to the footer.
+              $element['#attached']['js'][] = array(
+                'type' => 'file',
+                'data' => $ps_path . '/js/photoswipe.jquery.js',
+                'scope' => 'footer',
+              );
+
+              $settings = $config->get('photoswipe_settings');
+              $element['#attached']['js'][] = array(
+                'type' => 'setting',
+                'data' => array(
+                  'photoswipe' => array(
+                    'options' => $settings,
+                  ),
+                ),
+              );
+              photoswipe_assets_loaded(TRUE);
+            }
+            $use_photoswipe = TRUE;
+          }
+          break;
+
+      }
+    }
+
+    foreach ($items as $delta => $item) {
+      if ($use_colorbox || $use_photoswipe) {
+        if ($cbox_image_style) {
+          $file_url = image_style_url($cbox_image_style, $item['uri']);
+          // Meh, getting the dimensions requires us to do that extra run.
+          $dimensions = array(
+            'width' => $item['width'],
+            'height' => $item['height'],
+          );
+          image_style_transform_dimensions($cbox_image_style, $dimensions);
+          $size = $dimensions['width'] . 'x' . $dimensions['height'];
+        }
+        else {
+          $file_url = file_create_url($item['uri']);
+          $size = $item['width'] . 'x' . $item['height'];
+        }
+        $uri = array(
+          'path' => $file_url,
+          'options' => array(),
+        );
+        if ($use_colorbox) {
+          $uri['options']['attributes'] = array('rel' => 'tiled-gallery');
+          if ($overlay_caption_source && isset($item[$overlay_caption_source])) {
+            $uri['options']['attributes']['title'] = $item[$overlay_caption_source];
+          }
+        }
+        elseif ($use_photoswipe) {
+          $uri['options']['attributes'] = array(
+            'class' => 'photoswipe',
+            'data-size' => $size,
+          );
+          if ($overlay_caption_source && isset($item[$overlay_caption_source])) {
+            $uri['options']['attributes']['data-overlay-title'] = $item[$overlay_caption_source];
+          }
+        }
+      }
+
+      $element[$delta] = array(
+        '#theme' => 'image_formatter',
+        '#item' => $item,
+        '#image_style' => $display['settings']['image_style'],
+        '#path' => isset($uri) ? $uri : '',
+      );
+    }
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_preprocess_field().
+ */
+function gallery_tiler_preprocess_field(&$variables) {
+  if (!isset($variables['element']['#formatter'])) {
+    return;
+  }
+  if ($variables['element']['#formatter'] == 'tiled_gallery') {
+    // Custom template file.
+    $variables['theme_hook_suggestions'] = array('gallery_tiler_field');
+
+    $element = $variables['element'];
+    $entity_type = !empty($element['#entity_type']) ? $element['#entity_type'] : '';
+    $field_name = !empty($element['#field_name']) ? $element['#field_name'] : '';
+    $bundle = !empty($element['#bundle']) ? $element['#bundle'] : '';
+    $view_mode = !empty($element['#view_mode']) ? $element['#view_mode'] : '';
+
+    $formatter_info = field_formatter_settings_get_instance_display_settings($entity_type, $field_name, $bundle, $view_mode);
+    if (empty($formatter_info)) {
+      // Fall back to default settings, if we have no settings data. Happens if
+      // the field is set to hidden, but a field block display is attempted.
+      // No real solution, but catches notices.
+      $formatter_info = field_info_formatter_settings('tiled_gallery');
+    }
+    $variables['classes'][] = 'gallery-tiler';
+    $variables['classes'][] = 'gallery-tiler-' . $formatter_info['type'];
+    $variables['content_attributes']['class'] = 'field-items';
+    if (!empty($formatter_info['colorbox']) && $formatter_info['colorbox'] == 'photoswipe') {
+      $variables['content_attributes']['class'] .= ' photoswipe-gallery';
+    }
+    // Set CSS variables.
+    $height = $formatter_info['tile_height'];
+    $gap = $formatter_info['gutter'];
+    $variables['content_attributes']['style'] = "--height: {$height}px; --gap: {$gap}px;";
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function gallery_tiler_theme($existing, $type, $theme, $path) {
+  $theme = array();
+  $theme['gallery_tiler_field'] = array(
+    'template' => 'field-gallery-tiler',
+    'path' => backdrop_get_path('module', 'gallery_tiler') . '/templates',
+  );
+  return $theme;
+}

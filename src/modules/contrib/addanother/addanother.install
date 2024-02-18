@@ -1,0 +1,64 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Add another module.
+ *
+ */
+
+/**
+ * Implements hook_install().
+ */
+function addanother_install() {
+  // Create settings for existing types.
+  $types = node_type_get_names();
+  foreach ($types as $machine_name => $name) {
+    $config = config('addanother.' . $machine_name);
+    $config->set('button', FALSE);
+    $config->set('message', FALSE);
+    $config->set('tab', FALSE);
+    $config->set('tab_edit', FALSE);
+    $config->save();
+  }
+}
+
+/**
+ * Implement hook_update_last_removed().
+ */
+function addanother_update_last_removed() {
+  return 7002;
+}
+
+/**
+ * Move general settings from variables to config.
+ */
+function addanother_update_1000() {
+  // Migrate variables to config.
+  $config = config('addanother.settings');
+  $config->set('button', update_variable_get('addanother_default_button', TRUE));
+  $config->set('message', update_variable_get('addanother_default_message', TRUE));
+  $config->set('tab', update_variable_get('addanother_default_tab', TRUE));
+  $config->set('tab_edit', update_variable_get('addanother_default_tab_edit', TRUE));
+  // Delete variables.
+  update_variable_del('addanother_default_button');
+  update_variable_del('addanother_default_message');
+  update_variable_del('addanother_default_tab');
+  update_variable_del('addanother_default_tab_edit');
+  // Save config.
+  $config->save();
+
+  // Migrate types variables to config.
+  $types = node_type_get_names();
+  foreach ($types as $machine_name => $name) {
+    $config = config('addanother.' . $machine_name);
+    $config->set('button', update_variable_get('addanother_button_' . $machine_name, FALSE));
+    $config->set('message', update_variable_get('addanother_message_' . $machine_name, FALSE));
+    $config->set('tab', update_variable_get('addanother_tab_' . $machine_name, FALSE));
+    $config->set('tab_edit', update_variable_get('addanother_tab_edit_' . $machine_name, FALSE));
+    update_variable_del('addanother_button_' . $machine_name);
+    update_variable_del('addanother_message_' . $machine_name);
+    update_variable_del('addanother_tab_' . $machine_name);
+    update_variable_del('addanother_tab_edit_' . $machine_name);
+    $config->save();
+  }
+}

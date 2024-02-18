@@ -1,0 +1,488 @@
+<?php
+/**
+ * @file
+ * Provides a Views plugin for displaying images in a masonry layout.
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function masonry_gallery_autoload_info() {
+  return array(
+    'views_plugin_style_masonry_gallery' => 'views_plugin_style_masonry_gallery.inc',
+  );
+}
+
+/**
+ * Load include file.
+ */
+module_load_include('inc', 'masonry_gallery', 'masonry_gallery.views');
+
+/**
+ * Implements hook_views_api().
+ */
+function masonry_gallery_views_api() {
+  $module_path = backdrop_get_path('module', 'masonry_gallery');
+  return array(
+    'api' => '3.0',
+    'path' => $module_path,
+    'template path' => $module_path,
+  );
+}
+
+/**
+ * Implements hook_library_info().
+ */
+function masonry_gallery_library_info() {
+  $libraries['lazyload'] = array(
+    'title' => 'LazyLoad',
+    'website' => 'https://github.com/verlok/vanilla-lazyload',
+    'version' => '17.5.0',
+    'js' => array(
+      backdrop_get_path('module', 'masonry_gallery') . '/library/lazyload.min.js' => array(
+        'group' => JS_LIBRARY,
+      ),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function masonry_gallery_menu() {
+  $items['admin/config/media/masonry_gallery'] = array(
+    'title' => 'Masonry Gallery',
+    'description' => 'Configure global options for Masonry Gallery views formatter.',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('masonry_gallery_admin_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'masonry_gallery.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function masonry_gallery_config_info() {
+  return array(
+    'masonry_gallery.settings' => array(
+      'label' => t('Masonry Gallery settings'),
+      'group' => t('Configuration'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_views_pre_render().
+ * Displays warning about styles in preview mode.
+}*/
+function masonry_gallery_views_pre_render(&$view) {
+  if (isset($view->live_preview)) {
+    $options = $view->style_plugin->options;
+    if (!empty($options['caption']['source'])) {
+      // Get deafault and views theme names.
+      $default_theme_name = config_get('system.core', 'theme_default');
+      $views_theme_name = config_get('views_ui.settings', 'custom_theme');
+      if (!$views_theme_name || $views_theme_name == '_default')
+        $views_theme_name = config_get('system.core', 'admin_theme');
+      // Show warning if views and default themes are not the same.
+      if ($views_theme_name != $default_theme_name) {
+        $themes = list_themes();
+        $views_human_name = $themes[$views_theme_name]->info['name'];
+        $default_human_name = $themes[$default_theme_name]->info['name'];
+        backdrop_set_message(
+          t("This preview uses styles from theme %admin. Make sure to check the final look of captions with your site's default theme (%default).", array('%admin' => $views_human_name, '%default' => $default_human_name)),
+          'warning'
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Preprocess function for module's template views_view_masonry-gallery.tpl.php.
+ * Contains most of the module's logic.
+ */
+function template_preprocess_views_view_masonry_gallery(&$vars) {
+  // Get current view.
+  $view = $vars['view'];
+  // Get style plugin for this view.
+  $style_plugin = $view->style_plugin;
+  // Get config and plugin options.
+  $config  = config('masonry_gallery.settings');
+  $options = $vars['options'];
+
+  // Find name of the image field handler.
+  // It is needed to retrieve fields raw and rendered data.
+  $image_field_name = $style_plugin->get_first_non_excluded_image_field()['field_name'];
+  // Get list of valid text fields.
+  $text_fields = $style_plugin->get_non_excluded_text_fields();
+
+  // Get and process all the required data for image display.
+  if (isset($image_field_name)) {
+    // Set arrays for storing data.
+    $images_rendered = array();
+    $images_ratio    = array();
+    $captions = empty($options['caption']['source']) ? NULL : array();
+
+    // Set caption class depending on caption display option.
+    switch ($options['caption']['display']) {
+      case 'static':
+        $caption_class = 'masonry-gallery-caption';
+        break;
+      case 'hover':
+        $caption_class = 'masonry-gallery-caption hover';
+        break;
+      default:
+        $caption_class = '';
+    }
+
+    // Get number of items(rows).
+    $rows = count($view->result);
+
+    // Process each item(row).
+    for ($i = 0; $i < $rows; $i++) {
+      // Get raw image fields value.
+      $image_field_value = $style_plugin->get_field_value($i, $image_field_name);
+      if (empty($image_field_value)) {
+        continue;
+      }
+      // Get width and height of an image. It is assumed that
+      // image field has a single value.
+      $width  = $image_field_value[0]['width'];
+      $height = $image_field_value[0]['height'];
+
+      // Check that image width and height are not zero.
+      // Zero height/width may indicate that image file is missing.
+      if ($width > 0 && $height > 0) {
+        // Calculate image width and height ratio. It will be used
+        // for gallery arrangement via javascript.
+        $images_ratio[$i] = $width/$height;
+
+        // Store rendered image field.
+        $images_rendered[$i] = $style_plugin->get_field($i, $image_field_name);
+
+        // If caption source is set then store captions.
+        switch ($options['caption']['source']) {
+          case 'alt_tag':
+            $alt_value = $image_field_value[0]['alt'];
+            if (isset($alt_value) && $alt_value != '') {
+              $captions[$i] = '<p>' . $alt_value . '</p>';
+            }
+            break;
+          case 'title_tag':
+            $title_value = $image_field_value[0]['title'];
+            if (!empty($title_value)) {
+              $captions[$i] = '<p>' . $title_value . '</p>';
+            }
+            break;
+          default:
+            if (!empty($text_fields)) {
+              // Get text field as caption.
+              $text_field_name = $options['caption']['source'];
+              $text = $style_plugin->get_field($i, $text_field_name);
+              // If text is not html then wrap it in <p> tags. This is required for proper styling.
+              if ($text == strip_tags($text) && !empty($text)) {
+                $text = '<p>' . $text . '</p>';
+              }
+              $captions[$i] = $text ? $text : ''; // Ensure that caption is at least an empty string.
+            }
+        }
+      }
+      elseif (empty($options['hide_empty'])) {
+        // Fill in values needed for empty image warning display.
+        $items_rendered[$i] = FALSE;
+        $items_width[$i] = 100;
+        $items_height[$i] = 100;
+      }
+    }
+  }
+  else {
+    // This shouldn't be ever seen by a user as style plugin
+    // validation should ensure an image field is added to views.
+    backdrop_set_message(t('No image field found.'), 'error');
+    return;
+  }
+
+  // Create unique id for the masonry gallery.
+  $masonry_id = 'masonry-gallery-' . $view->name . '-' . $view->current_display;
+
+  $vars['masonry_id']      = $masonry_id;
+  $vars['images_rendered'] = $images_rendered;
+  $vars['captions']        = $captions;
+  $vars['caption_class']   = $caption_class;
+
+  // Get module's directory.
+  $module_dir = backdrop_get_path('module', 'masonry_gallery');
+
+  // Assign caption height if caption source is set.
+  $caption_height = empty($options['caption']['source']) ? 0 : $options['caption']['height'];
+
+  // Create settings array for js.
+  $js_settings = array(
+    'masonry_gallery' => array(
+      $masonry_id => array(
+        'ratio'          => $images_ratio,
+        'gap'            => $options['gap'],
+        'caption_height' => $caption_height,
+        'threshold'      => $options['advanced']['threshold'],
+      ),
+    ),
+  );
+
+  // Set settings and load library if lazy loading is ebabled.
+  if ($config->get('lazyload_enabled')) {
+    // Check if loader is required.
+    $loader = ($config->get('lazyload_loading_vis') == 'loader') ? TRUE : FALSE;
+    $vars['loader'] = $loader;
+    // Add LazyLoad settings and library.
+    $js_settings['masonry_gallery']['lazyload'] = array(
+      'threshold' => $config->get('lazyload_threshold'),
+      'loader' => $loader,
+    );
+    backdrop_add_library('masonry_gallery', 'lazyload', FALSE);
+    // Add transition animation if loader is on.
+    if ($loader) {
+      backdrop_add_css($module_dir . '/css/masonry_gallery_lazy.css');
+    }
+  }
+
+  // Add script that controls gallery layout.
+  backdrop_add_js($module_dir . '/js/masonry_gallery_lib.js');
+
+  // Add settings and load behavior that launches gallery script. This behavior should be
+  // executed as late as possible so that lightbox modules could read DOM before it is
+  // reordered by the script.
+  backdrop_add_js($js_settings, 'setting');
+  backdrop_add_js($module_dir . '/js/masonry_gallery.js', array('scope' => 'footer', 'weight' => 999));
+
+  // Load module's styles.
+  backdrop_add_css($module_dir . '/css/masonry_gallery.css');
+
+  // The rest of the function code below generates customized CSS, based on
+  // configuration, and module options.
+  $custom_css = '';
+
+  // If columns number is set to auto, then extrapolate columns number
+  // for each screen(breakpoint) between desktop value and 1(phone).
+  if ($options['columns']['auto']) {
+    // In auto mode phone screen always displays one column.
+    $options['columns']['phone'] = 1;
+    // For small columns number (desktop <4) set screen values explicitly.
+    // For larger columns number (desktop >4) calculate the values.
+    switch ($options['columns']['desktop']) {
+      case 1:
+        $options['columns']['laptop']     = 1;
+        $options['columns']['tablet']     = 1;
+        $options['columns']['smartphone'] = 1;
+        break;
+      case 2:
+        $options['columns']['laptop']     = 2;
+        $options['columns']['tablet']     = 2;
+        $options['columns']['smartphone'] = 1;
+        break;
+      case 3:
+      case 4:
+        $options['columns']['laptop']     = 3;
+        $options['columns']['tablet']     = 2;
+        $options['columns']['smartphone'] = 2;
+        break;
+      default:
+        $options['columns']['laptop']     = intval(round($options['columns']['desktop'] * 0.75));
+        $options['columns']['tablet']     = intval(ceil($options['columns']['desktop'] * 0.50));
+        $options['columns']['smartphone'] = intval(ceil($options['columns']['desktop'] * 0.25));
+    }
+  }
+
+  // Truncate number of columns if it is less than number of items.
+  if ($options['columns']['truncate']) {
+    foreach ($options['columns'] as &$screen_size) {
+      if (is_numeric($screen_size)) { // (!)Potential bug if other numeric setting(s) for columns added.
+        $screen_size = $rows < $screen_size ? $rows : $screen_size;
+      }
+    }
+  }
+
+  // Create gallery style based on columns settings.
+  $custom_css .= "
+    #{$masonry_id}.masonry-gallery {
+      column-count: {$options['columns']['phone']};
+    }
+
+    @media (min-width: 36em) {
+      #{$masonry_id}.masonry-gallery {
+        column-count: {$options['columns']['smartphone']};
+      }
+    }
+
+    @media (min-width: 48em) {
+      #{$masonry_id}.masonry-gallery {
+        column-count: {$options['columns']['tablet']};
+      }
+    }
+
+    @media (min-width: 62em) {
+      #{$masonry_id}.masonry-gallery {
+        column-count: {$options['columns']['laptop']};
+      }
+    }
+
+    @media (min-width: 75em) {
+      #{$masonry_id}.masonry-gallery {
+        column-count: {$options['columns']['desktop']};
+      }
+    }
+  ";
+
+  // Create gallery style that takes gap setting into account.
+  $custom_css .= "
+    #{$masonry_id}.masonry-gallery {
+      column-gap: {$options['gap']}px;
+    }
+    #{$masonry_id} .masonry-gallery-item {
+      margin-top: {$options['gap']}px;
+    }
+  ";
+
+  // Create caption style based on caption settings.
+  $custom_css .= "
+    #{$masonry_id} .masonry-gallery-caption {
+      height: {$options['caption']['height']}px;
+    }
+  ";
+
+
+  // Check loader style setting.
+  $loader_style = $config->get('loader_style');
+
+  // If one of the loader styles selected then add it's CSS file.
+  if (!empty($loader_style)) {
+    backdrop_add_css($module_dir . '/css/masonry_gallery_loader_' . $loader_style . '.css');
+
+    // Add color customisation as inline css.
+    $color_hex = $config->get('loader_color');
+    switch ($loader_style) {
+        case 'spinning_ring':
+        case 'spinning_ring_thin':
+          // Check if color is a valid hex color and convert it to rgb.
+          if (Color::validateHex($color_hex)) {
+            $color = Color::hexToRgb($color_hex);
+          }
+          else {
+            $color = Color::hexToRgb('#ffffff');
+          }
+          $custom_css .= "
+            .masonry-gallery-loader {
+              border-color: rgba({$color['red']}, {$color['green']}, {$color['blue']}, 0.2);
+              border-left-color: {$color_hex};
+            }";
+          break;
+
+        case 'floating_balls':
+        case 'three_dots':
+        case 'square_blocks':
+          $custom_css .= "
+            .masonry-gallery-loader {
+              color: {$color_hex};
+            }";
+          break;
+
+        case 'vertical_blocks':
+          $custom_css .= "
+            .masonry-gallery-loader,
+            .masonry-gallery-loader:before,
+            .masonry-gallery-loader:after {
+              background: {$color_hex};
+              color: {$color_hex};
+            }";
+          break;
+      }
+  }
+
+  // Create style overrides if caption style is set to custom.
+  if ($config->get('caption_style_override')) {
+    // Get settings for caption style.
+    $font_color  = $config->get('caption_font_color');
+    $bg_color    = $config->get('caption_background_color');
+    $opacity     = $config->get('caption_opacity') / 100;
+    $font_size   = $config->get('caption_font_size');
+    $padding     = $config->get('caption_padding');
+
+    // Check if background color is a valid hex color and convert it to rgb.
+    if (Color::validateHex($bg_color)) {
+      $color = Color::hexToRgb($bg_color);
+    }
+    else {
+      $color = Color::hexToRgb('#000000');
+    }
+    // Create css with inserted values.
+    $custom_css .= "
+      .masonry-gallery-caption {
+        color: {$font_color};
+        background-color: rgba({$color['red']}, {$color['green']}, {$color['blue']}, {$opacity});
+        font-size: {$font_size}em;
+        padding: {$padding}em;
+      }
+      .masonry-gallery-caption > * {
+        color: {$font_color} !important;
+      }";
+  }
+
+  if ($options['caption']['no_wrap']) {
+    // Enable 'no wrap' option.
+    $custom_css .= "
+      #{$masonry_id} .masonry-gallery-caption > *{
+        white-space: nowrap;
+      }";
+  }
+
+  if ($options['caption']['no_padding_h']) {
+    // Enable 'no horisontal padding' option (overrides custom padding).
+    $custom_css .= "
+      #{$masonry_id} .masonry-gallery-caption {
+        padding-left: 0;
+        padding-right: 0;
+      }";
+  }
+
+  // Minify generated stylesheet and add it to the page.
+  if ($custom_css != '') {
+    $vars['custom_css'] = backdrop_load_stylesheet_content($custom_css, TRUE);
+    backdrop_add_css($vars['custom_css'], array('type' => 'inline'));
+  }
+}
+
+/**
+ * Implements hook_preprocess_image().
+ * Prepares images for lazy loading script.
+ */
+function masonry_gallery_preprocess_image(&$variables) {
+  // Check if there is an active view with this style plugin.
+  $view = views_get_current_view();
+  if (!isset($view) || !is_object($view)) return;
+  if ($view->style_plugin->plugin_name != 'masonry_gallery') return;
+
+  // Check if image lazy loading is enabled in module settings.
+  $config  = config('masonry_gallery.settings');
+  $lazyload = $config->get('lazyload_enabled');
+  if (!$lazyload) return;
+
+  // Change src attribute to blank image and assign actual image url to lazy-src.
+  // This is required for lazy load plugin to work.
+  $path_or_uri = $variables['uri'] ? $variables['uri'] : $variables['path'];
+  $variables['attributes']['data-src'] = file_create_url($path_or_uri);
+  $variables['attributes']['class'][] = 'lazy';
+
+  $loading_vis     = $config->get('lazyload_loading_vis');
+  $thumbnail_style = $config->get('lazyload_thumbnail_style');
+  if (!empty($thumbnail_style) && $loading_vis == 'preview') {
+    $variables['attributes']['src'] = image_style_url($thumbnail_style, backdrop_basename($path_or_uri));
+  }
+  else {
+    $variables['attributes']['src'] = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+  }
+}

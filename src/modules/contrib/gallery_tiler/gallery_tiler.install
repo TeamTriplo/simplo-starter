@@ -1,0 +1,30 @@
+<?php
+/**
+ * @file
+ * Install and update hooks for Gallery Tiler.
+ */
+
+/**
+ * Update colorbox settings if necessary.
+ */
+function gallery_tiler_update_1000() {
+  $config_names = config_get_names_with_prefix('field.instance.');
+  foreach ($config_names as $config_name) {
+    $config = config($config_name);
+    if ($config->get('widget.type') == 'image_image') {
+      $displays = $config->get('display');
+      foreach ($displays as $name => $values) {
+        if ($values['type'] == 'tiled_gallery') {
+          if ($values['settings']['colorbox'] == TRUE) {
+            $config->set("display.{$name}.settings.colorbox", 'colorbox');
+            $config->save();
+          }
+          elseif ($values['settings']['colorbox'] == FALSE) {
+            $config->set("display.{$name}.settings.colorbox", 'none');
+            $config->save();
+          }
+        }
+      }
+    }
+  }
+}

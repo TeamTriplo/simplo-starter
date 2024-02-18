@@ -1,0 +1,12 @@
+name = Masonry Gallery
+description = Provides views style plugin for building image galleries layed out as a responsive masonry grid.
+backdrop = 1.x
+package = Views
+type = module
+dependencies[] = views
+configure = admin/config/media/masonry_gallery
+
+; Added by Backdrop CMS packaging script on 2021-12-09
+project = masonry_gallery
+version = 1.x-1.0.2
+timestamp = 1639075386

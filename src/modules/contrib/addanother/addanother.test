@@ -1,0 +1,59 @@
+<?php
+
+/**
+ * @file
+ * Unit tests for Add another module.
+ */
+
+class AddanotherTestCase extends BackdropWebTestCase {
+  protected $privileged_user;
+
+  public function setUp() {
+    parent::setUp('addanother');
+  }
+
+  public function testAddanother() {
+    $nodetype = $this->randomName(8);
+    variable_set("addanother_button_$nodetype", TRUE);
+    variable_set("addanother_message_$nodetype", TRUE);
+    variable_set("addanother_tab_$nodetype", TRUE);
+    variable_set("addanother_tab_edit_$nodetype", TRUE);
+    $settings = array(
+      'type' => $nodetype,
+      'name' => $nodetype,
+    );
+    $type = $this->backdropCreateContentType($settings);
+    $config = config('addanother.' . $nodetype);
+    $config->set('button', TRUE);
+    $config->set('message', TRUE);
+    $config->set('tab', TRUE);
+    $config->set('tab_edit', TRUE);
+    $config->save();
+
+    $web_user = $this->backdropCreateUser(array('bypass node access', 'administer content types', 'use add another', 'administer add another'));
+    $this->backdropLogin($web_user);
+
+    // Create a node.
+    $edit = array();
+    $langcode = LANGUAGE_NONE;
+    $edit["title"] = $this->randomName(8);
+    $edit["body[$langcode][0][value]"] = $this->randomName(16);
+    $this->backdropPost("node/add/$nodetype", $edit, t('Save'));
+
+    // Check that the node has been created
+    $this->assertRaw(t('!post %title has been created.', array('!post' => $nodetype, '%title' => $edit["title"])), t('Node created.'));
+    $this->assertText(t('You may add another !type.', array('!type' => $nodetype)), t('Addanother message was presented.'));
+    $this->assertLink('Add another');
+
+    // Create a node.
+    $edit = array();
+    $langcode = LANGUAGE_NONE;
+    $edit["title"] = $this->randomName(8);
+    $edit["body[$langcode][0][value]"] = $this->randomName(16);
+    $this->backdropPost("node/add/$nodetype", $edit, t('Save and add another'));
+
+    // Check that the node has been created
+    $this->assertUrl("node/add/$nodetype");
+  }
+
+}
