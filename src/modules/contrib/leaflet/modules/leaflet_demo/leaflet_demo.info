@@ -1,0 +1,7 @@
+name = Leaflet Demo
+description = Creates a block showcasing all Leaflet-powered maps available on your system.
+backdrop = 1.x
+package = Leaflet
+type = module
+
+dependencies[] = leaflet
