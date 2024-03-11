@@ -25,14 +25,22 @@ stylesheets[all][] = css/component/progress.css
 stylesheets[all][] = css/component/admin-tabs.css
 stylesheets[all][] = css/component/breadcrumb.css
 stylesheets[all][] = css/component/pager.css
+stylesheets[all][] = css/component/profile.css
 stylesheets[all][] = css/component/hero.css
 stylesheets[all][] = css/component/teasers.css
 stylesheets[all][] = css/component/comment.css
+stylesheets[all][] = css/component/cards.css
 stylesheets[all][] = css/component/caption.css
 stylesheets[all][] = css/component/opera-views.css
 stylesheets[all][] = css/component/book.css
 stylesheets[all][] = css/component/recipes.css
 stylesheets[all][] = css/opera-component-colors.css
+
+; Remove unwanted core CSS
+stylesheets[all][] = system.theme.css
+stylesheets[all][] = menu-dropdown.theme.css
+stylesheets[all][] = menu-dropdown.theme.breakpoint.css
+stylesheets[all][] = menu-dropdown.theme.breakpoint-queries.css
 
 ; Custom for this theme
 
@@ -40,9 +48,6 @@ stylesheets[all][] = css/block.css
 stylesheets[all][] = css/front.css
 stylesheets[all][] = css/opera-variables.css
 stylesheets[all][] = css/utility.css
-
-; Remove unwanted core CSS
-stylesheets[all][] = system.theme.css
 
 ; Add theme JS files
 scripts[] = js/scripts.js

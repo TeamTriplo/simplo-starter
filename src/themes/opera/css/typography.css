@@ -10,6 +10,10 @@
   --opera-font: 'Merriweather', Helvetica, Arial, sans-serif;
 }
 
+/*html {
+  font-size: 16px;
+}*/
+
 body {
   font-family: var(--opera-san-font);
     /**
@@ -18,7 +22,7 @@ body {
    * under all circumstances, think of 1rem as being equal to 16px.
    */
   font-size: 1.05rem;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 p {
