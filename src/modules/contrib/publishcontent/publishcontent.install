@@ -19,8 +19,7 @@ function publishcontent_update_last_removed() {
 function publishcontent_update_1000() {
   $config = config('publishcontent.settings');
 
-  $config->set('publishcontent_method',
-    update_variable_get('publishcontent_method', 3));
+  $config->set('publishcontent_method', update_variable_get('publishcontent_method', 3));
 
   $types = node_type_get_names();
   foreach ($types as $type => $name) {

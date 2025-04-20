@@ -18,9 +18,9 @@ Installation
 - Install this module using [the official Backdrop CMS instructions](  https://backdropcms.org/guide/modules).
 
 - Visit the configuration page under Administration > Configuration > Content authoring >
-  Publish content settings (admin/config/content/publishcontent) to set the "Quick publish" method and the content types that it applies to.
+  Publish Content (admin/config/content/publishcontent) to set the "Quick publish" method and the content type(s) that it applies to.
 
-- Then go to the Drupal permissions page and set the various permissions:
+- Then go to the Backdrop permissions page (admin/config/people/permissions) and set the various permissions:
     - "publish all content": you can publish any node
     - "publish 'nodetype' content": you can publish any node whose type is 'nodetype'
     - "unpublish all content": you can unpublish any node
@@ -32,10 +32,10 @@ If you choose the Tabs method of quick publication, a tab button 'Publish' or 'U
 node edit and view pages. Click on 'Publish' to publish and 'Unpublish' to
 unpublish.
 
-Documentation
--------------
+Similar Modules
+----------------
 
-Additional documentation is located in [the Wiki](https://github.com/backdrop-contrib/publishcontent/wiki/Documentation).
+* The [URL Publish and Unpublish](https://backdropcms.org/project/url_unpublish) module provides some similar functionality, creating URLs that you can use to publish and unpublish content.
 
 Issues
 ------

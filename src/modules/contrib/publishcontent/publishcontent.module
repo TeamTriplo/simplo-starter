@@ -24,7 +24,7 @@ function publishcontent_menu() {
   $menu_type = _publishcontent_get_menutype();
 
   $items['admin/config/content/publishcontent'] = array(
-    'title' => 'Publish content settings',
+    'title' => 'Publish Content',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('publishcontent_config_form'),
     'access callback' => 'user_access',
@@ -295,8 +295,8 @@ function publishcontent_permission() {
  */
 function _publishcontent_get_message($nid, $title, $status) {
   return ($status) ?
-    t('"@title" [node @nid] has been published', array('@title' => $title, '@nid' => $nid)) :
-    t('"@title" [node @nid] has been unpublished', array('@title' => $title, '@nid' => $nid));
+    t('"@title" [node @nid] has been published.', array('@title' => $title, '@nid' => $nid)) :
+    t('"@title" [node @nid] has been unpublished.', array('@title' => $title, '@nid' => $nid));
 }
 
 
@@ -350,13 +350,13 @@ function publishcontent_toggle_status_form_submit($form, &$form_state) {
  *   A node object.
  */
 function publishcontent_toggle_status($node) {
-  // XOR the current status with 1 to get the opposite value.
-  $node->status = $node->status ^ 1;
+  // Change the current status to the opposite value.
+  $node->status = !$node->status;
+
   // If this content type specifies that a new revision should be created on
   // editing, then make sure to respect this option.
-  // TODO This variable was probably removed in Backdrop without replacement.
-  $node_options = variable_get('node_options_' . $node->type, array());
-  if (in_array('revision', $node_options)) {
+  $node_settings = config_get('node.type.' . $node->type, 'settings');
+  if ($node_settings['revision_default']) {
     $node->revision = 1;
   }
 
