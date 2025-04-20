@@ -4,12 +4,12 @@ package = Ubercart - core
 backdrop = 1.x
 type = module
 
-dependencies[] = system (>= 1.21.0)
+dependencies[] = system (>= 1.28.2)
 dependencies[] = rules (>= 2.2.0)
 dependencies[] = views
 dependencies[] = image
 
-; Added by Backdrop CMS packaging script on 2023-02-07
+; Added by Backdrop CMS packaging script on 2024-11-12
 project = ubercart
-version = 1.x-3.14.0
-timestamp = 1675809673
+version = 1.x-3.14.7
+timestamp = 1731443203

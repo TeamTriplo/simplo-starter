@@ -9,6 +9,45 @@
 module_load_include('inc', 'video_filter', 'video_filter.codecs');
 
 /**
+ * Implements hook_menu().
+ */
+function video_filter_menu() {
+  $items = array();
+
+  $items['video_filter/dashboard/%'] = array(
+    'title' => 'Videofilter',
+    'description' => 'Dashboard',
+    'page callback' => 'video_filter_dashboard_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(2),
+    'theme callback' => 'ajax_base_page_theme',
+  );
+
+  $items['video_filter/instructions'] = array(
+    'title' => 'Videofilter instructions',
+    'description' => 'instructions',
+    'page callback' => 'video_filter_instructions_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'theme callback' => 'ajax_base_page_theme',
+  );
+
+  $items['editor/dialog/video-filter/%filter_format'] = array(
+    'title' => 'Select video',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('video_filter_select_video_form', 3),
+    'access callback' => 'filter_dialog_access',
+    'access arguments' => array(3, 'video_filter'),
+    'theme callback' => 'ajax_base_page_theme',
+    'type' => MENU_CALLBACK,
+    'file' => 'video_filter.pages.inc',
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_filter_info().
  */
 function video_filter_filter_info() {
@@ -24,7 +63,6 @@ function video_filter_filter_info() {
       'video_filter_height' => '400',
       'video_filter_autoplay' => 1,
       'video_filter_related' => 1,
-      'video_filter_html5' => 1,
       'video_filter_privacy' => 1,
       'video_filter_codecs' => array_combine($codecs, $codecs),
       'video_filter_multiple_sources' => TRUE,
@@ -36,6 +74,11 @@ function video_filter_filter_info() {
   return $filters;
 }
 
+/**
+ * Filter settings callback
+ *
+ * @see video_filter_filter_info().
+ */
 function _video_filter_settings($form, &$form_state, $filter, $format) {
   $settings['video_filter_width'] = array(
     '#type' => 'textfield',
@@ -64,17 +107,6 @@ function _video_filter_settings($form, &$form_state, $filter, $format) {
     '#title' => t('Related videos setting'),
     '#description' => t('Show "related videos"? Not all video formats support this setting.'),
     '#default_value' => $filter->settings['video_filter_related'],
-    '#options' => array(
-      0 => t('No'),
-      1 => t('Yes'),
-    ),
-  );
-
-  $settings['video_filter_html5'] = array(
-    '#type' => 'radios',
-    '#title' => t('Use HTML5'),
-    '#description' => t('Use HTML5 if the codec provides it. Makes your videos more device agnostic.'),
-    '#default_value' => $filter->settings['video_filter_html5'],
     '#options' => array(
       0 => t('No'),
       1 => t('Yes'),
@@ -114,6 +146,38 @@ function _video_filter_settings($form, &$form_state, $filter, $format) {
   return $settings;
 }
 
+
+/**
+ * Implements hook_library_info().
+ */
+function video_filter_library_info() {
+  $module_path = backdrop_get_path('module', 'video_filter');
+  $info = system_get_info('module', 'video_filter');
+
+  $libraries['video_filter.ckeditor5.video-filter'] = array(
+    'title' => 'CKEditor plugin to insert videos.',
+    'version' => $info['version'],
+    'js' => array(
+      $module_path . '/editors/ckeditor5/video-filter.js' => array(),
+    ),
+    'css' => array(
+      $module_path . '/css/video_filter.css' => array(),
+    ),
+    'dependencies' => array(
+      array('ckeditor5', 'ckeditor5'),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+ * Creates a list of codec names, keyed by machine_name.
+ *
+ * @param array $codecs
+ *
+ * @return array
+ */
 function _video_filter_map_codecs_name($codecs) {
   $codecs_map = array();
   foreach ($codecs as $codec_cod => $codec) {
@@ -123,6 +187,11 @@ function _video_filter_map_codecs_name($codecs) {
   return $codecs_map;
 }
 
+/**
+ * Filter tips callback
+ *
+ * @see video_filter_filter_info().
+ */
 function _video_filter_tips($filter, $format, $long = FALSE) {
   if ($long) {
     $codecs = video_filter_get_codec_enabled($filter->settings['video_filter_codecs']);
@@ -158,6 +227,11 @@ function _video_filter_tips($filter, $format, $long = FALSE) {
   }
 }
 
+/**
+ * Filter process callback
+ *
+ * @see video_filter_filter_info().
+ */
 function _video_filter_process($text, $filter, $format, $langcode, $cache, $cache_id) {
   if (preg_match_all('/\[video(\:(.+))?( .+)?\]/isU', $text, $matches_code)) {
     foreach ($matches_code[0] as $ci => $code) {
@@ -291,7 +365,7 @@ function _video_filter_process($text, $filter, $format, $langcode, $cache, $cach
         // Let modules have final say on video parameters.
         backdrop_alter('video_filter_video', $video);
 
-        if (isset($video['codec']['html5_callback']) && $filter->settings['video_filter_html5'] == 1 && is_callable($video['codec']['html5_callback'], FALSE)) {
+        if (isset($video['codec']['html5_callback']) && is_callable($video['codec']['html5_callback'], FALSE)) {
           $replacement = call_user_func($video['codec']['html5_callback'], $video);
         }
         elseif (is_callable($video['codec']['callback'], FALSE)) {
@@ -317,13 +391,6 @@ function _video_filter_process($text, $filter, $format, $langcode, $cache, $cach
 /**
  * Wrapper that calls the theme function.
  */
-function video_filter_flash($video, $params = array()) {
-  return theme('video_filter_flash', array('video' => $video, 'params' => $params));
-}
-
-/**
- * Wrapper that calls the theme function.
- */
 function video_filter_iframe($video) {
   return theme('video_filter_iframe', array('video' => $video));
 }
@@ -341,7 +408,11 @@ function video_filter_get_codec_info() {
 }
 
 /**
+ * Create a list of codecs across all filters.
  *
+ * @param array $filters_codecs
+ *
+ * @return array
  */
 function _video_filter_merge_format_codecs($filters_codecs) {
   $codecs = array_pop($filters_codecs);
@@ -370,45 +441,6 @@ function video_filter_get_codec_enabled($video_filter_codecs) {
 }
 
 /**
- * Function that outputs the <object> element.
- *
- * @ingroup themeable
- */
-function theme_video_filter_flash($variables) {
-  $output = '';
-
-  $video = $variables['video'];
-  $params = isset($variables['params']) ? $variables['params'] : array();
-
-  $classes = video_filter_get_classes($video);
-
-  $attributes = '';
-  if (!empty($video['attributes'])) {
-    $attributes = backdrop_attributes($video['attributes']);
-  }
-
-  $output .= '<div class="video-filter"><object class="' . implode(' ', $classes) . '" type="application/x-shockwave-flash" ';
-
-  $output .= 'width="' . $video['width'] . '" height="' . $video['height'] . '" data="' . $video['source'] . '" ' . $attributes . '>' . "\n";
-
-  $defaults = array(
-    'movie' => $video['source'],
-    'wmode' => 'transparent',
-    'allowFullScreen' => 'true',
-  );
-
-  $params = array_merge($defaults, (is_array($params) && count($params)) ? $params : array());
-
-  foreach ($params as $name => $value) {
-    $output .= '  <param name="' . $name . '" value="' . $value . '" />' . "\n";
-  }
-
-  $output .= '</object></div>' . "\n";
-
-  return $output;
-}
-
-/**
  * Function that outputs HTML5 compatible iFrame for codecs that support it.
  *
  * @ingroup themeable
@@ -431,9 +463,6 @@ function theme_video_filter_iframe($variables) {
  */
 function video_filter_theme($existing, $type, $theme, $path) {
   return array(
-    'video_filter_flash' => array(
-      'variables' => array('video' => NULL, 'params' => NULL),
-    ),
     'video_filter_iframe' => array(
       'variables' => array('video' => NULL, 'params' => NULL),
     ),
@@ -466,41 +495,6 @@ function video_filter_get_classes($video) {
   }
 
   return $classes;
-}
-
-/**
- * Implements hook_menu().
- */
-function video_filter_menu() {
-  $items = array();
-
-  $items['video_filter/dashboard/%'] = array(
-    'title' => 'Videofilter',
-    'description' => 'Dashboard',
-    'page callback' => 'video_filter_dashboard_page',
-    'access arguments' => array('access content'),
-    'type' => MENU_CALLBACK,
-    'page arguments' => array(2),
-    'theme callback' => '_video_filter_dashboard_theme',
-  );
-
-  $items['video_filter/instructions'] = array(
-    'title' => 'Videofilter instructions',
-    'description' => 'instructions',
-    'page callback' => 'video_filter_instructions_page',
-    'access arguments' => array('access content'),
-    'type' => MENU_CALLBACK,
-    'theme callback' => '_video_filter_dashboard_theme',
-  );
-
-  return $items;
-}
-
-/**
- * Return the theme name to be used when showing linkit dashboard
- */
-function _video_filter_dashboard_theme() {
-  return config_get('system.core', 'admin_theme');
 }
 
 /**
@@ -549,6 +543,9 @@ function video_filter_instructions_page() {
   exit();
 }
 
+/**
+ * Dialog form
+ */
 function _video_filter_form() {
   $form['video_filter'] = array(
     '#type' => 'fieldset',
@@ -690,6 +687,86 @@ function video_filter_ckeditor_video_filter_plugin_check($format, $plugin_name) 
 }
 
 /**
+ * Implements hook_tinymce_external_plugins().
+ */
+function video_filter_tinymce_external_plugins($format) {
+  if (module_exists('tinymce_video_filter')) {
+    return;
+  }
+  $module_url = base_path() . backdrop_get_path('module', 'video_filter');
+  $plugins = array(
+    'video_filter' => array(
+      'plugin_path' => $module_url . '/editors/tinymce/plugin.js',
+      'buttons' => array(
+        'video_filter' => array(
+          'icon' => 'embed',
+          'tooltip' => t('Add video'),
+        ),
+      ),
+      'variables' => array(
+        'videoFilterInstructionUrl' => url('video_filter/instructions'),
+        'videoFilterTooltip' => t('Add video'),
+      ),
+    ),
+  );
+  return $plugins;
+}
+
+/**
+ * Implements hook_ckeditor5_plugins().
+ *
+ * Return a list of all plugins provided by this module.
+ */
+function video_filter_ckeditor5_plugins() {
+  $image_prefix = backdrop_get_path('module', 'video_filter') . '/editors/ckeditor5/icons';
+
+  $plugins['videoFilter.VideoFilter'] = array(
+    'library' => array('video_filter', 'video_filter.ckeditor5.video-filter'),
+    'css' => array(backdrop_get_path('module', 'video_filter') . '/css/video_filter.css'),
+    'enabled_callback' => 'video_filter_ckeditor5_video_filter_plugin_check',
+    'buttons' => array(
+      'videoFilter' => array(
+        'label' => t('Video filter'),
+        'image' => $image_prefix . '/video.svg',
+        'plugins' => array('videoFilter.VideoFilter'),
+      ),
+    ),
+  );
+
+  return $plugins;
+}
+
+/**
+ * Implements hook_ckeditor5_upgrade_button_mapping().
+ */
+function video_filter_ckeditor5_upgrade_button_mapping() {
+  return array(
+    'video_filter' => 'videoFilter',
+  );
+}
+
+/**
+ * Enabled callback for hook_ckeditor5_plugins().
+ */
+function video_filter_ckeditor5_video_filter_plugin_check($format, $plugin_name) {
+  return !empty($format->filters['video_filter']->status);
+}
+
+/**
+ * Implements hook_ckeditor5_config_alter().
+ */
+function video_filter_ckeditor5_config_alter(array &$config, $format) {
+  // Create a token for access to dialogs.
+  if (in_array('videoFilter.VideoFilter', $config['pluginList'])) {
+    $token = filter_editor_dialog_token($format, 'video_filter');
+    $config['video_filter']['dialogUrl'] = url('editor/dialog/video-filter/' . $format->format, array('query' => array(
+      'token' => $token,
+      'calling_path' => $_GET['q'],
+    )));
+  }
+}
+
+/**
  * Implements hook_element_info_alter().
  */
 function video_filter_element_info_alter(&$types) {
@@ -739,7 +816,7 @@ function _video_filter_instructions() {
   $formats = filter_formats($user);
   $filters_codecs = array();
   foreach ($formats as $format) {
-    if (isset($format->filters['video_filter'])) {
+    if (isset($format->filters['video_filter']) && $format->filters['video_filter']->status) {
       $filters_codecs[$format->name] = $format->filters['video_filter']->settings['video_filter_codecs'];
     }
   }
@@ -757,6 +834,35 @@ function _video_filter_instructions() {
   }
   $output .= '</ul>';
   return $output;
+}
+
+/**
+ * Build the token to insert.
+ *
+ * @param string $file_url
+ * @param array $attributes
+ *   Optional attributes.
+ *
+ * @return string
+ */
+function _video_filter_build_token($file_url, $attributes) {
+  $token = '[video:' . $file_url;
+  if (!empty($attributes['width'])) {
+    $token .= ' width:' . $attributes['width'];
+  }
+  if (!empty($attributes['height'])) {
+    $token .= ' height:' . $attributes['height'];
+  }
+  if ($attributes['align'] != 'none') {
+    $token .= ' align:' . $attributes['align'];
+  }
+  if (!empty($attributes['autoplay'])) {
+    $token .= ' autoplay:' . $attributes['autoplay'];
+  }
+
+  $token .= ']';
+
+  return $token;
 }
 
 /**

@@ -165,6 +165,7 @@ function uc_store_menu() {
     'page callback' => 'uc_store_admin',
     'access callback' => 'uc_store_admin_access',
     'weight' => -12,
+    'icon' => 'shopping-cart-simple-fill',
     'file' => 'uc_store.admin.inc',
   );
   $items['admin/store/reports'] = array(
@@ -286,6 +287,19 @@ function uc_store_admin_access() {
  */
 function uc_store_init() {
   module_load_include('inc', 'uc_store', 'includes/tapir');
+
+  $parts = explode('.', BACKDROP_VERSION);
+  if ($parts[1] < 28) {
+    // For Backdrop versions below 1.28.0, use a CSS icon for the Store menu in
+    // the admin bar. 1.28.0 and higher will use a core icon.
+    global $base_url;
+    $path = $base_url . '/' . backdrop_get_path('module', 'uc_store');
+    backdrop_add_css('
+#admin-bar #admin-bar-menu > li > .dropdown > li > a.admin-store {
+  background: transparent url(' . $path . '/images/cart--white--64.png) 5% center no-repeat;
+  background-size: 16px;
+}', 'inline');
+  }
 }
 
 /**
@@ -1656,7 +1670,7 @@ function uc_store_rfc2822_display_name($name) {
   // From RFC2822, section 3.4.2, define valid characters for an atom.
   $valid_chars = "[a-zA-Z0-9\!\#\$\%\&\'\*\+\-\/\=\?\^\_\`\{\|\}\~]";
   // Display name is composed of 0 or more atoms separated by white space.
-  if (!preg_match("/^(${valid_chars}*[ \t]*)*$/", $name)) {
+  if (!preg_match("/^({$valid_chars}*[ \t]*)*$/", $name)) {
     return '"' . addcslashes($name, '"') . '"';
   }
   return $name;
@@ -1745,7 +1759,11 @@ function uc_store_get_image_widgets() {
 /**
  * Implements hook_uc_image_widget().
  *
- * Built-in support for Colorbox, Thickbox and Lightbox2.
+ * Built-in support for Colorbox, GLightbox, and Featherlight.
+ * Lightbox2 was supported in D7, so leaving its code in place
+ * for the event that those modules get ported.
+ *
+ * @see uc_product_settings_form()
  */
 function uc_store_uc_image_widget() {
   $widgets = array();
@@ -1756,10 +1774,16 @@ function uc_store_uc_image_widget() {
       'callback' => 'uc_store_image_widget_colorbox',
     );
   }
-  if (module_exists('thickbox')) {
-    $widgets['thickbox'] = array(
-      'name' => t('Thickbox'),
-      'callback' => 'uc_store_image_widget_thickbox',
+  if (module_exists('glightbox')) {
+    $widgets['glightbox'] = array(
+      'name' => t('GLightbox'),
+      'callback' => 'uc_store_image_widget_glightbox',
+    );
+  }
+  if (module_exists('featherlight')) {
+    $widgets['featherlight'] = array(
+      'name' => t('Featherlight'),
+      'callback' => 'uc_store_image_widget_featherlight',
     );
   }
   if (module_exists('lightbox2')) {
@@ -1786,20 +1810,39 @@ function uc_store_image_widget_colorbox($rel_count) {
 }
 
 /**
- * Generates the Thickbox-specific HTML attributes.
+ * Generates the GLightbox-specific HTML attributes.
  */
-function uc_store_image_widget_thickbox($rel_count) {
+function uc_store_image_widget_glightbox($rel_count) {
+  $module_path = backdrop_get_path('module', 'glightbox');
+  backdrop_add_library('glightbox', 'glightbox', FALSE);
+  backdrop_add_js(array('glightbox' => config_get('glightbox.settings')), 'setting');
+  backdrop_add_js($module_path . '/js/glightbox.js');
+  backdrop_add_css($module_path . '/css/glightbox.css');
   if (!is_null($rel_count)) {
     $img_index = 'uc_image_' . $rel_count;
   }
   else {
     $img_index = 'uc_image';
   }
-  return ' class="thickbox" rel="' . $img_index . '"';
+  return ' class="glightbox" rel="' . $img_index . '" data-gallery="single-image"';
+}
+
+/**
+ * Generates the Featherlight-specific HTML attributes.
+ */
+function uc_store_image_widget_featherlight($rel_count) {
+  if (!is_null($rel_count)) {
+    $img_index = 'uc_image_' . $rel_count;
+  }
+  else {
+    $img_index = 'uc_image';
+  }
+  return ' data-featherlight="image" rel="' . $img_index . '"';
 }
 
 /**
  * Generates the Lightbox2-specific HTML attributes.
+ * Lightbox2 is not yet ported to Backdrop.
  */
 function uc_store_image_widget_lightbox2($rel_count) {
   if (!is_null($rel_count)) {

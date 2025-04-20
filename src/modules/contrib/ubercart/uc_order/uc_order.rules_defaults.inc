@@ -8,6 +8,12 @@
  * Implements hook_default_rules_configuration().
  */
 function uc_order_default_rules_configuration() {
+  // If we are in the middle of upgrading from D7, filter_default_format() is
+  // not yet set, so don't return any default rules. See
+  // https://github.com/backdrop-contrib/ubercart/issues/484.
+  if (state_get('update_d7_upgrade')) {
+    return array();
+  }
   $rule = rules_reaction_rule();
   $rule->label = t('E-mail an order update notification');
   $rule->active = TRUE;

@@ -46,7 +46,7 @@ function uc_roles_cron() {
     $account = user_load($expiration->uid);
 
     // Cleanup if user or role was deleted already.
-    if (!$account || !in_array($expiration->role, array_keys($account->roles))) {
+    if (!$account || !in_array($expiration->role, $account->roles)) {
       uc_roles_delete($expiration, $expiration->role, TRUE);
     }
 
@@ -138,7 +138,7 @@ function uc_roles_form_user_profile_form_alter(&$form, &$form_state) {
     return;
   }
 
-  $role_choices = _uc_roles_get_choices(array_keys($account->roles));
+  $role_choices = _uc_roles_get_choices($account->roles);
 
   $polarity_widget = array(
     '#type' => 'select',
@@ -432,7 +432,7 @@ function uc_roles_uc_store_status() {
     $message[] = array(
       'status' => 'ok',
       'title' => t('Roles'),
-      'desc' => t('The role(s) %roles are set to be used with the Role Assignment product feature.', array('%roles' => implode(', ', $role_choices))),
+      'desc' => format_plural(count($role_choices), 'The role %roles is set to be used with the Role Assignment product feature.', 'The roles %roles are set to be used with the Role Assignment product feature.', array('%roles' => implode(', ', $role_choices))),
     );
   }
   return $message;
@@ -958,8 +958,8 @@ function _uc_roles_get_choices($exclude = array()) {
   // User set specific roles that we must use?
   $selected = config_get('uc_roles.settings', 'uc_roles_default_role_choices');
 
-  // If there's none, or if none are checked, use all of em.
-  $default = empty($selected) || array_sum($selected) == 0;
+  // If there's none, or if none are checked, use all roles.
+  $default = empty(array_filter($selected));
   foreach ($roles as $role => $name) {
     if ($default || (!empty($selected[$role]) && !in_array($role, $exclude))) {
       $output[$role] = $roles[$role];
@@ -1043,7 +1043,7 @@ function uc_roles_delete($account, $role = NULL, $silent = FALSE) {
  * @param bool $silent
  *   When set to TRUE will suppress any Backdrop messages from this function.
  */
-function uc_roles_revoke(&$account, $role, $silent = FALSE) {
+function uc_roles_revoke($account, $role, $silent = FALSE) {
   global $user;
 
   // Remove this role from the user's list.
@@ -1060,9 +1060,9 @@ function uc_roles_revoke(&$account, $role, $silent = FALSE) {
   // Remove our record of the expiration.
   uc_roles_delete($account, $role, $silent);
 
-  $role_name = db_query("SELECT name FROM {role} WHERE role = :role", array(':role' => $role))->fetchField();
-
   if (!$silent) {
+    $role_load = user_role_load($role);
+    $role_name = $role_load->label;
     if ($user->uid == $account->uid) {
       backdrop_set_message(t('Your %role role has been revoked.', array('%role' => $role_name)));
     }
@@ -1101,7 +1101,7 @@ function uc_roles_revoke(&$account, $role, $silent = FALSE) {
  * @param bool $silent
  *   When set to TRUE will suppress any Backdrop messages from this function.
  */
-function uc_roles_grant(&$account, $role, $timestamp, $save_user = TRUE, $silent = FALSE) {
+function uc_roles_grant($account, $role, $timestamp, $save_user = TRUE, $silent = FALSE) {
   global $user;
 
   // First, delete any previous record of this user/role association.
@@ -1130,7 +1130,6 @@ function uc_roles_grant(&$account, $role, $timestamp, $save_user = TRUE, $silent
   if (!$silent) {
     $role_load = user_role_load($role);
     $role_name = $role_load->label;
-
     if ($user->uid == $account->uid) {
       $message = t('You have been granted the %role role.', array('%role' => $role_name));
     }

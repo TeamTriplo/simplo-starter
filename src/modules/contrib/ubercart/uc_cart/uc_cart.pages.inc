@@ -96,7 +96,7 @@ function uc_cart_checkout() {
     if (config_get('system.core', 'user_register') != 0) {
       backdrop_set_message(t('If you do not have an account yet, you should <a href="!url">register now</a>.', array('!url' => url('user/register', array('query' => backdrop_get_destination())))));
     }
-    backdrop_goto('user', array('query' => backdrop_get_destination()));
+    backdrop_goto('user/login', array('query' => backdrop_get_destination()));
   }
 
   // Load an order from the session, if available.
@@ -202,8 +202,8 @@ function uc_cart_checkout_form($form, &$form_state, $order) {
   }
 
   $form['#attributes']['class'][] = 'uc-cart-checkout-form';
-  $form['#attached']['js'][] = backdrop_get_path('module', 'uc_cart') . '/uc_cart.js';
-  $form['#attached']['css'][] = backdrop_get_path('module', 'uc_cart') . '/uc_cart.css';
+  $form['#attached']['js'][] = backdrop_get_path('module', 'uc_cart') . '/js/uc_cart.js';
+  $form['#attached']['css'][] = backdrop_get_path('module', 'uc_cart') . '/css/uc_cart.css';
 
   if ($instructions = config_get('uc_cart.settings', 'uc_checkout_instructions')) {
     $form['instructions'] = array(
@@ -411,7 +411,7 @@ function uc_cart_checkout_form_cancel($form, &$form_state) {
  * @see uc_cart_checkout_form()
  */
 function uc_cart_checkout_review() {
-  backdrop_add_js(backdrop_get_path('module', 'uc_cart') . '/uc_cart.js');
+  backdrop_add_js(backdrop_get_path('module', 'uc_cart') . '/js/uc_cart.js');
 
   if (empty($_SESSION['cart_order']) || empty($_SESSION['uc_checkout'][$_SESSION['cart_order']]['do_review'])) {
     backdrop_goto('cart/checkout');
@@ -477,47 +477,74 @@ function theme_uc_cart_checkout_review($variables) {
   $panes = $variables['panes'];
   $form = $variables['form'];
 
-  backdrop_add_css(backdrop_get_path('module', 'uc_cart') . '/uc_cart.css');
+  backdrop_add_css(backdrop_get_path('module', 'uc_cart') . '/css/uc_cart.css');
 
-  $output = '<div id="review-instructions">' . filter_xss_admin(config_get('uc_cart.settings', 'uc_checkout_review_instructions')) . '</div>';
+  $build['review'] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => array('order-review')),
+  );
 
-  $output .= '<table class="order-review-table">';
+  $build['review']['review_instructions'] = array(
+    '#type' => 'help',
+    '#markup' => filter_xss_admin(config_get('uc_cart.settings', 'uc_checkout_review_instructions')),
+  );
 
   foreach ($panes as $title => $data) {
-    $output .= '<tr class="pane-title-row">';
-    $output .= '<td colspan="2">' . $title . '</td>';
-    $output .= '</tr>';
+    $identifier = backdrop_html_class($title);
+    $build['review'][$identifier] = array(
+    '#type' => 'fieldset',
+    '#title' => $title,
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#attributes' => array(
+      'class' => array(
+        $identifier,
+      )),
+    );
     if (is_array($data)) {
-      foreach ($data as $row) {
-        if (is_array($row)) {
-          if (isset($row['border'])) {
-            $border = ' class="row-border-' . $row['border'] . '"';
+      $rows = array();
+      foreach ($data as $item) {
+        $row = [];
+        if (is_array($item)) {
+          if (isset($item['border'])) {
+            $row['class'][] = 'row-border-' . $item['border'];
           }
-          else {
-            $border = '';
-          }
-          $output .= '<tr' . $border . '>';
-          $output .= '<td class="title-col">' . $row['title'] . ':</td>';
-          $output .= '<td class="data-col">' . $row['data'] . '</td>';
-          $output .= '</tr>';
+          $row['data']['title'] = array(
+            'data' => $item['title'],
+            'class' => array('title-col'),
+          );
+          $row['data']['body'] = array(
+            'data' => $item['data'],
+            'class' => array('data-col'),
+          );
         }
         else {
-          $output .= '<tr><td colspan="2">' . $row . '</td></tr>';
+          $row['data']['body'] = $item;
         }
+        $rows[] = $row;
       }
     }
     else {
-      $output .= '<tr><td colspan="2">' . $data . '</td></tr>';
+      $build['review'][$identifier]['markup'] = array(
+        '#markup' => $data,
+      );
     }
+    $build['review'][$identifier]['table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#attributes' => array(
+        'class' => array('order-review-table'),
+      ),
+    );
   }
 
-  $output .= '<tr class="review-button-row">';
-  $output .= '<td colspan="2">' . backdrop_render($form) . '</td>';
-  $output .= '</tr>';
+  $build['review']['actions'] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => array('review-button-row')),
+  );
+  $build['review']['actions']['review_actions'] = $form;
 
-  $output .= '</table>';
-
-  return $output;
+  return backdrop_render($build);
 }
 
 /**

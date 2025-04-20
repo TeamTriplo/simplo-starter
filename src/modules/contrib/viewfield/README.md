@@ -32,7 +32,7 @@ https://github.com/backdrop-contrib/viewfield/issues.
 Current Maintainers
 -------------------
 
-- Robert Garrigos (https://github.com/robertgarrigos).
+- Robert Garrigós (https://github.com/robertgarrigos).
 
 Credits
 -------

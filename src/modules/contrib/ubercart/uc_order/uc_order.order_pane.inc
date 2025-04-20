@@ -244,9 +244,13 @@ function uc_order_pane_products($op, $order, &$form = NULL, &$form_state = NULL)
 
     case 'edit-process':
       if (isset($form_state['values']['products'])) {
-        foreach ($form_state['values']['products'] as $key => $product) {
-          $product['data'] = unserialize($product['data']);
-          uc_order_product_save($order->order_id, (object) $product);
+        foreach ($form_state['values']['products'] as $product_values) {
+          $uc_order_product = $order->products[$product_values['order_product_id']];
+          foreach ($product_values as $key => $value) {
+            $uc_order_product->$key = $value;
+          }
+          $uc_order_product->data = unserialize($product_values['data']);
+          uc_order_product_save($order->order_id, $uc_order_product);
         }
       }
 
@@ -540,7 +544,7 @@ function uc_order_edit_products_add_blank($form, &$form_state) {
 
   $order = $form_state['build_info']['args'][0];
 
-  $product = new stdClass();
+  $product = entity_create('uc_order_product', array());
   $product->qty = 1;
   $product->order_id = $order->order_id;
   $product->data = NULL;

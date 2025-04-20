@@ -3,16 +3,7 @@
  * Styles for uc_cart module.
  */
 
-.order-review-table {
-  font-size: .9em;
-  line-height: 1.4em;
-  margin: auto;
-  width: auto;
-}
-
 .order-review-table td {
-  padding-bottom: 0.7em;
-  padding-top: 0.7em;
   vertical-align: top;
   border: none;
 }
@@ -21,27 +12,18 @@
   border: none;
 }
 
-.order-review-table .pane-title-row td {
-  padding-bottom: 0.4em;
-  padding-top: 0.4em;
-}
-
 .order-review-table .pane-title-row {
   background-color: #ddd;
   font-weight: bold;
-  padding: .5em 1em;
-  text-align: center;
 }
 
 .order-review-table .title-col {
   font-weight: bold;
-  padding-left: 3em; /* LTR */
-  text-align: right; /* LTR */
   white-space: nowrap;
 }
 
 .order-review-table .data-col {
-  padding-right: 3em; /* LTR */
+  text-align: right;
 }
 
 .order-review-table .row-border-top {
@@ -57,14 +39,9 @@
   border: solid 1px #999;
 }
 
-.order-review-table .review-button-row td {
-  padding-top: 1em;
-  text-align: right; /* LTR */
-}
-
-.order-review-table .review-button-row div,
-.order-review-table .review-button-row form {
+.review-button-row {
   display: inline;
+  text-align: right; /* LTR */
 }
 
 /* I cannot testify for any of the data below.. it's a hodge podge. */
