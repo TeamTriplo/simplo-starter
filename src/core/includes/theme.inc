@@ -108,7 +108,16 @@ function backdrop_theme_initialize() {
   $base_themes = array();
   $ancestor = $theme;
   while ($ancestor && isset($themes[$ancestor]->base_theme)) {
+    $current_theme = $themes[$ancestor];
     $ancestor = $themes[$ancestor]->base_theme;
+    if (!array_key_exists($ancestor, $themes)) {
+      // A base theme is missing, warn about the problem and skip adding.
+      watchdog('theme', '%theme is a sub theme of %base_theme, but its base theme is missing.', array(
+        '%theme' => $current_theme->info['name'],
+        '%base_theme' => $ancestor,
+      ), WATCHDOG_WARNING);
+      continue;
+    }
     $base_themes[] = $themes[$ancestor];
   }
   _backdrop_theme_initialize($themes[$theme], array_reverse($base_themes));
@@ -931,10 +940,10 @@ function backdrop_find_base_themes($themes, $key, $used_keys = array()) {
  * @subsection sub_preprocess_templates Preprocessing for Template Files
  * If the implementation is a template file, several functions are called
  * before the template file is invoked, to modify the $variables array. These
- * fall into the "preprocessing" phase and the "processing" phase, and are
- * executed (if they exist), in the following order (note that in the following
- * list, HOOK indicates the theme hook name, MODULE indicates a module name,
- * THEME indicates a theme name, and ENGINE indicates a theme engine name):
+ * fall into the "preprocessing" phase, and are executed (if they exist) in the
+ * following order (note that in the following list, HOOK indicates the theme
+ * hook name, MODULE indicates a module name, THEME indicates a theme name, and
+ * ENGINE indicates a theme engine name):
  * - template_preprocess(&$variables, $hook): Creates a default set of
  *   variables for all theme hooks with template implementations.
  * - template_preprocess_HOOK(&$variables): Should be implemented by the module
@@ -952,11 +961,6 @@ function backdrop_find_base_themes($themes, $key, $used_keys = array()) {
  *   variables for all theme hooks with template implementations.
  * - THEME_preprocess_HOOK(&$variables): Allows the theme to set necessary
  *   variables specific to the particular theme hook.
- * - MODULE_process(&$variables, $hook): hook_process() is invoked on all
- *   implementing modules.
- * - MODULE_process_HOOK(&$variables): hook_process_HOOK() is invoked on
- *   on all implementing modules, so that modules that didn't define the theme
- *   hook can alter the variables.
  *
  * @subsection sub_preprocess_theme_funcs Preprocessing for Theme Functions
  * If the implementation is a function, only the theme-hook-specific preprocess
@@ -1012,11 +1016,16 @@ function backdrop_find_base_themes($themes, $key, $used_keys = array()) {
  * @see themeable
  * @see hook_theme()
  * @see template_preprocess()
+ *
+ * @since 1.0.0 The template process layer and process functions (e.g.
+ *   template_process_HOOK(), MODULE_process_HOOK(), THEME_process_HOOK()) have
+ *   been removed.
+ *   See https://docs.backdropcms.org/change-records/removed-the-theme-process-layer
  */
 function theme($hook, $variables = array()) {
   // If called before all modules are loaded, we do not necessarily have a full
-  // theme registry to work with, and therefore cannot process the theme
-  // request properly. See also _theme_load_registry().
+  // theme registry to work with, and therefore cannot process the theme request
+  // properly. See also _theme_load_registry().
   if (!module_load_all(NULL) && !defined('MAINTENANCE_MODE')) {
     throw new Exception(t('theme() may not be called until all modules are loaded.'));
   }
@@ -1254,8 +1263,9 @@ function path_to_theme() {
  * @param $prefixes
  *   An array of prefixes to test, in reverse order of importance.
  *
- * @return $implementations
- *   The functions found, suitable for returning from hook_theme;
+ * @return array
+ *   An array of the functions found, suitable for returning from hook_theme.
+ *   Keyed by the theme hook and includes the function that implements it.
  */
 function backdrop_find_theme_functions($cache, $prefixes) {
   $implementations = array();
@@ -1473,6 +1483,10 @@ function theme_get_setting($setting_name, $theme = NULL) {
   $value = $configs[$theme]->get($setting_name);
   if (is_null($value)) {
     $themes = list_themes();
+    // Do not try to access settings of missing (base-)themes.
+    if (!isset($themes[$theme])) {
+      return;
+    }
     $theme_info = $themes[$theme];
     $value = isset($theme_info->info['settings'][$setting_name]) ? $theme_info->info['settings'][$setting_name] : NULL;
   }
@@ -1503,6 +1517,9 @@ function theme_has_settings($theme) {
     return TRUE;
   }
   $themes = list_themes();
+  if (!isset($themes[$theme])) {
+    return FALSE;
+  }
   $theme_info = $themes[$theme];
   if (!empty($theme_info->info['settings'])) {
     return TRUE;
@@ -2260,8 +2277,8 @@ function theme_table(array $variables) {
     $sections['tfoot'] = $variables['footer'];
   }
 
-  // tbody and tfoot have the same structure, and are built using the same
-  // procedure.
+  // The tbody and tfoot HTML tags have the same structure, and are built
+  // using the same procedure.
   foreach ($sections as $tag => $content) {
     $output .= "<$tag>\n";
     $flip = array('even' => 'odd', 'odd' => 'even');
@@ -2395,16 +2412,21 @@ function theme_mark($variables) {
  *   - title: The title of the list.
  *   - type: The type of list to return (e.g. "ul", "ol").
  *   - attributes: The attributes applied to the list element.
+ *   - wrapper_attributes: Any additional attributes that should be applied to
+ *       the wrapper DIV around the list element (the "item-list" CSS class is
+ *       added by default).
  *   - empty: A message to display when there are no items. Allowed value is a
  *     string or render array.
  *
  * @since 1.21.0: added the "empty" variable.
+ * @since 1.27.0: added the "wrapper_attributes" variable.
  */
 function theme_item_list($variables) {
   $items = $variables['items'];
   $title = $variables['title'];
   $type = $variables['type'];
   $list_attributes = $variables['attributes'];
+  $wrapper_attributes = $variables['wrapper_attributes'];
 
   $output = '';
   if ($items) {
@@ -2462,14 +2484,29 @@ function theme_item_list($variables) {
     $output .= render($variables['empty']);
   }
 
-  // Only output the list container and title, if there are any list items.
-  // Check to see whether the block title exists before adding a header.
-  // Empty headers are not semantic and present accessibility challenges.
+  // Only output the list container and title if there are any list items.
   if ($output !== '') {
+    // Check to see whether the list title exists before adding a header. Empty
+    // headers are not semantic and present accessibility challenges.
     if (isset($title) && $title !== '') {
       $title = '<h3>' . $title . '</h3>';
     }
-    $output = '<div class="item-list">' . $title . $output . '</div>';
+
+    // Add any attributes specified for the wrapper div tag.
+    if (!isset($wrapper_attributes['class'])) {
+      // Make sure that the 'class' key exists in the array.
+      $wrapper_attributes['class'] = array();
+    }
+    elseif (is_string($wrapper_attributes['class'])) {
+      // Do not choke if 'class' was provided as a string which may include
+      // commas, spaces, or semicolons. Convert sub-strings into array items.
+      $wrapper_class_items = array_map('trim', preg_split("/[;,]/", $wrapper_attributes['class']));
+      $wrapper_attributes['class'] = $wrapper_class_items;
+    }
+    // Finally, include a default CSS class "item-list".
+    $wrapper_attributes['class'][] = 'item-list';
+
+    $output = '<div' . backdrop_attributes($wrapper_attributes) . '>' . $title . $output . '</div>';
   }
 
   return $output;
