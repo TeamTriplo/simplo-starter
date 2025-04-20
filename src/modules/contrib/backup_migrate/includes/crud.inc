@@ -53,7 +53,7 @@ function backup_migrate_crud_subtypes($type) {
   if ($info = backup_migrate_crud_type_info($type)) {
     // Include the function that contains the type base.
     if (!empty($info['include'])) {
-      backup_migrate_include($info['include']);
+      require_once dirname(__FILE__) . '/' . $info['include'] . '.inc';
     }
 
     // Allow modules (including this one) to declare subtypes.
@@ -103,7 +103,7 @@ function backup_migrate_crud_type_load($type, $subtype = NULL) {
 
   if (!empty($info)) {
     if (!empty($info['include'])) {
-      backup_migrate_include($info['include']);
+      require_once dirname(__FILE__) . '/' . $info['include'] . '.inc';
     }
     if (!empty($info['file'])) {
       include_once './' . (isset($info['path']) ? $info['path'] : '') . $info['file'];
@@ -398,7 +398,7 @@ function backup_migrate_crud_create_item($type, $params) {
 /**
  * A base class for items which can be stored in the database.
  */
-#[AllowDynamicProperties]
+#[\AllowDynamicProperties]
 class backup_migrate_item {
   public $show_in_list = TRUE;
   public $settings_path = '/settings/';

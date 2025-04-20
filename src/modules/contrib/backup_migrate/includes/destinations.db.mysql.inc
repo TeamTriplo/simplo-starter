@@ -5,7 +5,7 @@
  * Functions to handle the direct to database destination.
  */
 
-backup_migrate_include('destinations.db');
+require_once dirname(__FILE__) . '/destinations.db.inc';
 
 /**
  * A destination type for saving to a database server.
@@ -22,7 +22,9 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   protected static $tableData = array();
 
   /**
-   * The tables keyed by name.
+   * Static cache of tables.
+   * 
+   * Keyed by source or destination machine_name.
    *
    * @var array
    */
@@ -278,7 +280,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     $out = '';
     while ($line = $file->read()) {
       $first2 = substr($line, 0, 2);
-      $first3 = substr($line, 0, 2);
+      $first3 = substr($line, 0, 3);
 
       // Ignore single line comments. This function doesn't support multiline
       // comments or inline comments.
@@ -297,12 +299,14 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    * Get a list of tables in the database.
    */
   public function _get_table_names() {
-    if (empty(static::$tableNames)) {
-      static::$tableNames = $this->query("SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
+    $machine_name_field = $this->get_machine_name_field();
+    $machine_name = $this->{$machine_name_field};
+    if (empty(static::$tableNames[$machine_name])) {
+      static::$tableNames[$machine_name] = $this->query("SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
         ->fetchAllKeyed(0, 0);
     }
 
-    return static::$tableNames;
+    return static::$tableNames[$machine_name];
   }
 
   /**
@@ -562,7 +566,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
 
-SET NAMES utf8;
+SET NAMES utf8mb4;
 
 ";
   }

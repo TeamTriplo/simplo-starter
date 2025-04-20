@@ -155,14 +155,14 @@ function css_injector_admin() {
   if (!module_exists('ace_editor')) {
     $form['css_injector_use_ace'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Use Ace syntex highlighter'),
-      '#default_value' => config_get('css_injector.settings', 'css_injector_use_ace') ?: 1,
-      '#description' => t("Check if you want to enhance your editing experience with Ace syntex highlighter. If checked, Ace will be loaded via CDN."),
+      '#title' => t('Use Ace syntax highlighter'),
+      '#default_value' => config_get('css_injector.settings', 'css_injector_use_ace'),
+      '#description' => t('Check if you want to enhance your editing experience with Ace syntax highlighter. If checked, Ace will be loaded via CDN.'),
     );
   } else {
     $form['css_injector_use_ace_error'] = array(
       '#type' => 'markup',
-      '#markup' => t('You already have Ace highlighter module installed. Please enable it to enhance your editing experience with Ace syntex highlighter.'),
+      '#markup' => t('You already have Ace highlighter module installed. Please enable it to enhance your editing experience with Ace syntax highlighter.'),
     );
   }
 

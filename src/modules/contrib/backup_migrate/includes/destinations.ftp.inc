@@ -29,7 +29,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
    * Load from the ftp destination.
    */
   function load_file($file_id) {
-    backup_migrate_include('files');
+    require_once dirname(__FILE__) . '/files.inc';
     $file = new backup_file(array('filename' => $file_id));
     $this->ftp_object();
     if (backdrop_ftp_ftp_to_file($file->filepath(), $file_id, '.', $this->ftp)) {
@@ -47,7 +47,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
   }
 
   function _list_files() {
-    backup_migrate_include('files');
+    require_once dirname(__FILE__) . '/files.inc';
     $files = array();
     $this->ftp_object();
     $ftp_files = (array)backdrop_ftp_file_list('.', $this->ftp);

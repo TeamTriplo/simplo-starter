@@ -116,7 +116,7 @@ function backup_migrate_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  backup_migrate_include('crud');
+  require_once dirname(__FILE__) . '/includes/crud.inc';
   $items += backup_migrate_crud_menu();
   return $items;
 }
@@ -191,8 +191,8 @@ function backup_migrate_cron() {
     watchdog('backup_migrate', 'Cron starting.');
   }
 
-  backup_migrate_include('files');
-  backup_migrate_include('schedules');
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/schedules.inc';
 
   // Set the message mode to logging.
   _backup_migrate_message_callback('_backup_migrate_message_log');
@@ -233,7 +233,8 @@ function backup_migrate_cronapi($op, $job = NULL) {
   }
 
   $items = array();
-  backup_migrate_include('schedules');
+  require_once dirname(__FILE__) . '/includes/schedules.inc';
+
   foreach (backup_migrate_get_schedules() as $schedule) {
     if ($schedule->get('cron') == BACKUP_MIGRATE_CRON_ELYSIA) {
       $id = $schedule->get('id');
@@ -354,7 +355,7 @@ function _backup_migrate_block_view_quick_backup() {
  * Implements hook_backup_migrate_destinations().
  */
 function backup_migrate_backup_migrate_schedules() {
-  backup_migrate_include('sources');
+  require_once dirname(__FILE__) . '/includes/sources.inc';
 
   $schedules = array();
 
@@ -386,7 +387,7 @@ function backup_migrate_backup_migrate_schedules() {
  */
 function backup_migrate_menu_callback($include, $function, $interactive = TRUE) {
   if ($include) {
-    backup_migrate_include($include);
+    require_once dirname(__FILE__) . '/includes/' . $include . '.inc';
   }
   // Set the message handler based on interactivity setting.
   _backup_migrate_message_callback($interactive ? '_backup_migrate_message_browser' : '_backup_migrate_message_log');
@@ -397,6 +398,8 @@ function backup_migrate_menu_callback($include, $function, $interactive = TRUE) 
 
 /**
  * Include views .inc files as necessary.
+ * 
+ * @deprecated
  */
 function backup_migrate_include() {
   static $used = array();
@@ -439,7 +442,7 @@ function backup_migrate_ui_manual_backup_quick() {
  * The menu callback for advanced manual backups.
  */
 function backup_migrate_ui_manual_backup_advanced() {
-  backup_migrate_include('profiles');
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
   $out = array();
   $profile_id = arg(BACKUP_MIGRATE_MENU_DEPTH + 2);
   $profile = _backup_migrate_profile_saved_default_profile($profile_id);
@@ -497,7 +500,9 @@ function backup_migrate_ui_manual_backup_load_profile_form_submit($form, &$form_
  * The menu callback for quick schedules.
  */
 function backup_migrate_ui_schedule() {
-  backup_migrate_include('sources', 'schedules', 'profiles');
+  require_once dirname(__FILE__) . '/includes/sources.inc';
+  require_once dirname(__FILE__) . '/includes/schedules.inc';
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
   $out = '';
 
   $sources = backup_migrate_get_sources();
@@ -637,7 +642,7 @@ function backup_migrate_ui_schedule_form($form, &$form_state, $sources, $schedul
  * Submit the quick schedule form.
  */
 function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
-  backup_migrate_include('schedules');
+  require_once dirname(__FILE__) . '/includes/schedules.inc';
   if (user_access('administer backup and migrate')) {
     // Override the backups.
     foreach ($form_state['values']['quickschedule'] as $key => $values) {
@@ -655,7 +660,9 @@ function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
  * The quick backup form.
  */
 function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline = TRUE) {
-  backup_migrate_include('profiles', 'destinations', 'sources');
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
+  require_once dirname(__FILE__) . '/includes/sources.inc';
   backdrop_add_js(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.js');
 
   $form = array();
@@ -723,7 +730,8 @@ function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline
  * Validate the quick backup form.
  */
 function backup_migrate_ui_manual_quick_backup_form_validate($form, &$form_state) {
-  backup_migrate_include('profiles', 'destinations');
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
   if ($form_state['values']['source_id'] == $form_state['values']['destination_id']) {
     form_set_error('destination_id', t('A source cannot be backed up to itself. Please pick a different destination for this backup.'));
   }
@@ -753,7 +761,8 @@ function backup_migrate_ui_manual_quick_backup_form_validate($form, &$form_state
  * Submit the quick backup form.
  */
 function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) {
-  backup_migrate_include('profiles', 'destinations');
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
   if (user_access('perform backup') && !empty($form_state['values']['settings'])) {
     // Save the settings for next time.
     config_set("backup_migrate.settings","backup_migrate_source_id", $form_state['values']['source_id']);
@@ -1096,7 +1105,7 @@ function backup_migrate_ui_action_form_pre_validate($form, &$form_state) {
  * to the end user before an action is submitted.
  **/
 function backup_migrate_ui_action_form_post_validate($form, &$form_state) {
-  backup_migrate_include('filters');
+  require_once dirname(__FILE__) . '/includes/filters.inc';
 
   if (!empty($form_state['values']['settings'])) {
     // See if there are extra form items to be processed.
@@ -1155,7 +1164,9 @@ function backup_migrate_ui_manual_restore() {
  * The restore/import upload form.
  */
 function backup_migrate_ui_manual_restore_form() {
-  backup_migrate_include('filters', 'destinations', 'sources');
+  require_once dirname(__FILE__) . '/includes/filters.inc';
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
+  require_once dirname(__FILE__) . '/includes/sources.inc';
 
   backdrop_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
 
@@ -1257,11 +1268,11 @@ function backup_migrate_ui_manual_restore_form() {
  * The restore submit. Do the restore.
  */
 function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
-  backup_migrate_include('destinations');
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
   $validators = array('file_validate_extensions' => array('gz zip sql mysql bz bz2'));
 
   $values = $form_state['values'];
-  if ($values['from'] == 'upload' && $file = file_save_upload('backup_migrate_restore_upload', $validators)) {
+  if ($values['from'] == 'upload' && $file = file_save_upload('backup_migrate_restore_upload', $validators, FALSE, FILE_EXISTS_REPLACE)) {
     backup_migrate_perform_restore('upload', $file->uri, $values);
   }
   else if ($values['from'] == 'saved' && $file = $values['file']) {
@@ -1290,7 +1301,9 @@ function backup_migrate_ui_export_form($form, &$form_state, $item) {
  * List the previously created backups from across multiple destinations.
  */
 function backup_migrate_ui_saved_backups() {
-  backup_migrate_include('profiles', 'destinations', 'sources');
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
+  require_once dirname(__FILE__) . '/includes/sources.inc';
   backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $remote = FALSE;
@@ -1331,7 +1344,9 @@ function backup_migrate_ui_saved_backups() {
  * List the previously created backups from accross multiple destinations.
  */
 function backup_migrate_get_saved_backups($refresh = FALSE) {
-  backup_migrate_include('profiles', 'destinations', 'sources');
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
+  require_once dirname(__FILE__) . '/includes/sources.inc';
   backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $remote = FALSE;
@@ -1375,7 +1390,9 @@ function backup_migrate_get_saved_backups($refresh = FALSE) {
  * Perform a backup with the given settings.
  */
 function backup_migrate_perform_backup(&$settings) {
-  backup_migrate_include('destinations', 'files', 'filters');
+  require_once dirname(__FILE__) . '/includes/destinations.inc';
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/filters.inc';
   timer_start('backup_migrate_backup');
 
   // If not in 'safe mode', increase the maximum execution time.
@@ -1493,7 +1510,8 @@ function backup_migrate_format_elapsed_time($time) {
  * Restore from a file in the given destination.
  */
 function backup_migrate_perform_restore($destination_id, $file, $settings = array()) {
-  backup_migrate_include('files', 'filters');
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/filters.inc';
   timer_start('backup_migrate_restore');
 
   _backup_migrate_set_timeout();
@@ -1558,7 +1576,8 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
  * Clean up when a backup operation fails.
  */
 function backup_migrate_backup_fail($message, $params, $settings) {
-  backup_migrate_include('files', 'filters');
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/filters.inc';
 
   _backup_migrate_message($message, $params, 'error');
   backup_migrate_cleanup();
@@ -1570,7 +1589,8 @@ function backup_migrate_backup_fail($message, $params, $settings) {
  * Clean up when a backup operation succeeds.
  */
 function backup_migrate_backup_succeed($message, $params, $settings) {
-  backup_migrate_include('filters', 'files');
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/filters.inc';
   _backup_migrate_message($message, $params, 'success');
   backup_migrate_cleanup();
   backup_migrate_filters_invoke_all('backup_succeed', $settings, $message, $params);
@@ -1581,7 +1601,8 @@ function backup_migrate_backup_succeed($message, $params, $settings) {
  * Clean up when a restore operation fails.
  */
 function backup_migrate_restore_fail($message, $params, $settings) {
-  backup_migrate_include('files', 'filters');
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/filters.inc';
   _backup_migrate_message($message, $params, 'error');
   backup_migrate_cleanup();
   backup_migrate_filters_invoke_all('restore_fail', $settings, $message, $params);
@@ -1592,7 +1613,8 @@ function backup_migrate_restore_fail($message, $params, $settings) {
  * Clean up when a restore operation succeeds.
  */
 function backup_migrate_restore_succeed($message, $params, $settings) {
-  backup_migrate_include('filters', 'files');
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/filters.inc';
   _backup_migrate_message($message, $params, 'success');
   backup_migrate_cleanup();
   backup_migrate_filters_invoke_all('restore_succeed', $settings, $message, $params);
@@ -1693,7 +1715,8 @@ function backup_migrate_action_backup() {
  * Backup the database with the default settings.
  */
 function _backup_migrate_backup_with_defaults($destination_id = "manual") {
-  backup_migrate_include('files', 'profiles');
+  require_once dirname(__FILE__) . '/includes/files.inc';
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
 
   $settings = _backup_migrate_profile_saved_default_profile();
   $settings->destination_id = $destination_id;
@@ -1968,4 +1991,20 @@ function backup_migrate_array_name_value($a) {
 function _backup_migrate_is_valid_memory_limit($value) {
   $test = preg_match('/^(-1|[0-9]+|[0-9]*(\.[0-9]+)?[mg])$/i', $value);
   return $test;
+}
+
+/**
+ * Implements hook_autoload_info().
+ * 
+ * TODO: Most classes are loaded through include_once since this is the way
+ * this was done in D7. Those should eventually be replaced by including them
+ * in the autoload hook below. For now, only the needed ones are included.
+ */
+function backup_migrate_autoload_info() {
+  return array(
+    'backup_migrate_files_destination_archivesource' => 'includes/sources.archivesource.inc',
+    'BackupMigrateFilesDestinationDbConfigSource' => 'includes/BackupMigrateFilesDestinationDbConfigSource.inc',
+    'backup_migrate_destination_filesource' => 'includes/sources.filesource.inc',
+    'BackupMigrateFilesDestinationConfigSource' => 'includes/BackupMigrateFilesDestinationConfigSource.inc',
+  );
 }
