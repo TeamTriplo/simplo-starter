@@ -6,7 +6,7 @@ package = Testing
 
 dependencies[] = geofield
 
-; Added by Backdrop CMS packaging script on 2023-03-27
+; Added by Backdrop CMS packaging script on 2024-02-07
 project = geofield
-version = 1.x-1.0.2
-timestamp = 1679930518
+version = 1.x-1.0.4
+timestamp = 1707340075

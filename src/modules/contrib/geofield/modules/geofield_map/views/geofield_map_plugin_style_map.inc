@@ -147,7 +147,7 @@ class geofield_map_plugin_style_map extends views_plugin_style {
       }
 
       $map_settings = geofield_map_settings_do($style_options);
-      $container_id = drupal_html_id($this->view->name . '_' . $this->view->current_display);
+      $container_id = backdrop_html_id($this->view->name . '_' . $this->view->current_display);
 
       $js_settings = array(
         $container_id => array(

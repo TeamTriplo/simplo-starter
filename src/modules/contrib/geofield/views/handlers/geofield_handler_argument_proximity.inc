@@ -77,7 +77,7 @@ class geofield_handler_argument_proximity extends views_handler_argument {
     }
     // Provide hook_geofield_handler_default_argument_alter(), so args may be
     // altered by other modules.
-    drupal_alter('geofield_handler_argument_proximity', $this, $lat_lon_dist);
+    backdrop_alter('geofield_handler_argument_proximity', $this, $lat_lon_dist);
 
     $table = $this->ensure_my_table() ? $this->table_alias : $this->table;
     $haversine_args = array(

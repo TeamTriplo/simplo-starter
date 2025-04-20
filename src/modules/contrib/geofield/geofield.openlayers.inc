@@ -18,8 +18,8 @@ function geofield_openlayers_maps() {
   $widget->data = array(
     'width' => '600px',
     'height' => '400px',
-    'image_path' => drupal_get_path('module', 'openlayers') . '/themes/default_dark/img/',
-    'css_path' => drupal_get_path('module', 'openlayers') . '/themes/default_dark/style.css',
+    'image_path' => backdrop_get_path('module', 'openlayers') . '/themes/default_dark/img/',
+    'css_path' => backdrop_get_path('module', 'openlayers') . '/themes/default_dark/style.css',
     'proxy_host' => '',
     'hide_empty_map' => 0,
       'center' => array(
@@ -94,8 +94,8 @@ function geofield_openlayers_maps() {
   $formatter->data = array(
     'width' => '600px',
     'height' => '400px',
-    'image_path' => drupal_get_path('module','openlayers') . '/themes/default_dark/img/',
-    'css_path' => drupal_get_path('module','openlayers') . '/themes/default_dark/style.css',
+    'image_path' => backdrop_get_path('module','openlayers') . '/themes/default_dark/img/',
+    'css_path' => backdrop_get_path('module','openlayers') . '/themes/default_dark/style.css',
     'proxy_host' => '',
     'hide_empty_map' => 0,
     'center' => array(
@@ -178,7 +178,7 @@ function geofield_openlayers_behaviors() {
       'description' => t('Fuels the geofield map-input form.'),
       'type' => 'layer',
       'behavior' => array(
-        'path' => drupal_get_path('module', 'geofield') . '/includes/behaviors',
+        'path' => backdrop_get_path('module', 'geofield') . '/includes/behaviors',
         'file' => 'openlayers_behavior_geofield.inc',
         'class' => 'openlayers_behavior_geofield',
         'parent' => 'openlayers_behavior',

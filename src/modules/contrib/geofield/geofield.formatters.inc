@@ -367,13 +367,13 @@ function _geofield_item_microdata_propertyvalue($entity, $instance, $item) {
   if ($item['geo_type'] == 'point') {
     foreach (array('lat', 'lon') as $property) {
       $microdata[$property]['#attributes']['content'] = $item[$property];
-      $output .= '<meta' . drupal_attributes($microdata[$property]['#attributes']) .' />';
+      $output .= '<meta' . backdrop_attributes($microdata[$property]['#attributes']) .' />';
     }
   }
   else {
     $schemaorg_shape = geofield_schemaorg_shape($item);
     $microdata['schemaorg_shape']['#attributes']['content'] = $schemaorg_shape;
-    $output .= '<meta' . drupal_attributes($microdata['schemaorg_shape']['#attributes']) .' />';
+    $output .= '<meta' . backdrop_attributes($microdata['schemaorg_shape']['#attributes']) .' />';
   }
 
   return $output;
@@ -403,7 +403,7 @@ function _geofield_openlayers_formatter($map_name, $items) {
   $map = openlayers_build_map($preset->data);
 
   if (!isset($map['layers']['geofield_formatter'])) {
-    drupal_set_message(t('Trying to render a geofield formatter on a map without the placeholder layer'), 'error');
+    backdrop_set_message(t('Trying to render a geofield formatter on a map without the placeholder layer'), 'error');
   }
 
   // Add the features to the placeholder layer
@@ -412,7 +412,7 @@ function _geofield_openlayers_formatter($map_name, $items) {
   // Return themed map if no errors found
   if (empty($map['errors'])) {
     $js = array('openlayers' => array('maps' => array($map['id'] => $map)));
-    drupal_add_js($js, 'setting');
+    backdrop_add_js($js, 'setting');
 
     // Push map through theme function and return
     $output = theme('openlayers_map', array(
@@ -451,7 +451,7 @@ function _geofield_def_list_formatter($item, $settings) {
 function _geofield_def_list_formatter_dl($info) {
   $output = '<dl>';
   foreach ($info as $dt => $dd) {
-    $output .= '<dt>' . drupal_ucfirst($dt) . '</dt><dd>' . $dd . '</dd>';
+    $output .= '<dt>' . backdrop_ucfirst($dt) . '</dt><dd>' . $dd . '</dd>';
   }
 
   $output .= '</dl>';

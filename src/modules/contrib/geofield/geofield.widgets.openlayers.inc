@@ -143,7 +143,7 @@ function openlayers_field_widget_form(&$form, &$form_state, $field, $instance, $
   $parents = $form['#parents'];
   $field_name = $field['field_name'];
   $id_prefix = implode('-', array_merge($parents, array($field_name, $delta)));
-  $wrapper_id = drupal_html_id($id_prefix . '-use-geocoder-wrapper');
+  $wrapper_id = backdrop_html_id($id_prefix . '-use-geocoder-wrapper');
 
   $settings_defaults = array(
     'openlayers_map' => 'geofield_widget_map',
@@ -283,7 +283,7 @@ function openlayers_geofield_widget_afterbuild($element, &$form_state) {
     '#markup' => t('<div class="description geofield-help">Use the icons to select what type of feature to draw. Each map can contain one simple feature. Pan and zoom with arrows and the zoom bar.</div>')
   );
 
-  drupal_add_js(
+  backdrop_add_js(
     array(
       'geofield' => array(
         'widget_settings' => $element['#widget_settings'],
@@ -314,7 +314,7 @@ function openlayers_use_geocoder_submit($form, &$form_state) {
   $button = $form_state['triggering_element'];
 
   // Go one level up in the form, to the widgets container.
-  $element = drupal_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -1));
+  $element = backdrop_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -1));
   $field_name = $element['#field_name'];
   $langcode = $element['#language'];
   $delta = $element['#delta'];
@@ -330,7 +330,7 @@ function openlayers_use_geocoder_submit($form, &$form_state) {
     $field_value[$langcode][$delta]['input_format'] = 'wkt';
     // Override the field's value in the 'input' array to substitute the new
     // field value for the one that was submitted.
-    drupal_array_set_nested_value($form_state, array_merge(array('values'), $parents, array($field_name)), $field_value);
+    backdrop_array_set_nested_value($form_state, array_merge(array('values'), $parents, array($field_name)), $field_value);
   }
 }
 
@@ -343,13 +343,13 @@ function openlayers_widget_geocode($form, $form_state) {
   $button = $form_state['triggering_element'];
 
   // Go one level up in the form, to the widgets container.
-  $element = drupal_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -1));
+  $element = backdrop_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -1));
   $field_name = $element['#field_name'];
   $langcode = $element['#language'];
   $delta = $element['#delta'];
   $parents = $element['#field_parents'];
 
-  $value = drupal_array_get_nested_value($form_state, array_merge(array('values'), $parents, array($field_name)));
+  $value = backdrop_array_get_nested_value($form_state, array_merge(array('values'), $parents, array($field_name)));
   $element['geom']['#value'] = $value[$langcode][$delta]['geom'];
   // Return the map, but remove the '_weight' element inserted
   // by the field API.
