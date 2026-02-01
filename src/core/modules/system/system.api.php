@@ -1225,6 +1225,29 @@ function hook_menu_contextual_links_alter(&$links, $router_item, $root_path) {
 }
 
 /**
+ * Modify a menu structure before it is rendered in a menu block.
+ *
+ * The tree contains an array of menu links in the order they should be
+ * rendered. menu_tree_page_data() explains the data structure in more detail.
+ *
+ * @param array $tree
+ *   An array of menu links.
+ * @param array $config
+ *   The settings for a menu block.
+ *
+ * @see system_menu_tree_block_data()
+ * @see menu_tree_page_data()
+ */
+function hook_menu_block_tree_alter(&$tree, &$config) {
+
+  // Trim to the active path regardless of block settings.
+  system_menu_tree_trim_active_path($tree);
+
+  // Force the style to be a tree.
+  $config['style'] = 'tree';
+}
+
+/**
  * Perform alterations before a form is rendered.
  *
  * One popular use of this hook is to add form elements to the node form. When
@@ -1793,6 +1816,9 @@ function hook_permission() {
  *   - base hook: A string declaring the base theme hook if this theme
  *     implementation is actually implementing a suggestion for another theme
  *     hook.
+ *   - attached: If specified, the designated library, icons, CSS, or JS file
+ *     will be attached to the page when this theme implementation is used. This
+ *     is intended as an alternative to adding these in preprocess functions.
  *   - pattern: A regular expression pattern to be used to allow this theme
  *     implementation to have a dynamic name. The convention is to use __ to
  *     differentiate the dynamic portion of the theme. For example, to allow
@@ -1820,6 +1846,8 @@ function hook_permission() {
  *     module, so that it doesn't need to be looked up.
  *
  * @see hook_theme_registry_alter()
+ *
+ * @since 1.31.0 Added optional "attached" key.
  */
 function hook_theme($existing, $type, $theme, $path) {
   return array(
@@ -1829,6 +1857,24 @@ function hook_theme($existing, $type, $theme, $path) {
     'status_report' => array(
       'render element' => 'requirements',
       'file' => 'system.admin.inc',
+    ),
+    'my_module_item' => array(
+      'template' => 'templates/my-module-item',
+      'file' => 'my_module.theme.inc',
+      'attached' => array(
+        'library' => array(
+          array('my_module', 'library-name'),
+        ),
+        'js' => array(
+          'core/misc/ajax.js' => array(),
+        ),
+        'css' => array(
+          'css/my-module.css' => array(),
+        ),
+        'icons' => array(
+          'acorn-fill' => array(),
+        ),
+      ),
     ),
   );
 }
