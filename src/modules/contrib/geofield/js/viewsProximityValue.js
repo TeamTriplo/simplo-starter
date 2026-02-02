@@ -1,5 +1,5 @@
 ;(function ($) {
-  Drupal.behaviors.viewsProximityValue = {
+  Backdrop.behaviors.viewsProximityValue = {
     attach: function (context, settings) {
       if (!$('body').hasClass('page-admin-structure-views-nojs')) {
         $('#edit-options-source-change').hide();

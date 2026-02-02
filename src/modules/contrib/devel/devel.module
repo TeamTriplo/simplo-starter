@@ -22,6 +22,7 @@ function devel_menu() {
     'title' => t('Devel tools'),
     'access arguments' => array('access devel information'),
     'page callback' => 'system_admin_menu_block_page',
+    'icon' => 'code-fill',
     'weight' => 5,
     'file' => 'system.admin.inc',
     'file path' => backdrop_get_path('module', 'system'),
@@ -301,6 +302,8 @@ function devel_admin_paths() {
     'user/*/devel/*' => TRUE,
     'taxonomy/term/*/devel' => TRUE,
     'taxonomy/term/*/devel/*' => TRUE,
+    'file/*/devel' => TRUE,
+    'file/*/devel/*' => TRUE,
   );
   return $paths;
 }
