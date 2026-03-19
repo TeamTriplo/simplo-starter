@@ -1,6 +1,6 @@
 // Collapsible dashboard blocks with persistence
 (function() {
-  if (!window.location.pathname.match(/^\/admin\/dashboard/)) return;
+  if (!window.location.pathname.match(/\/admin\/dashboard/)) return;
   document.addEventListener('DOMContentLoaded', function() {
     var blocks = document.querySelectorAll('.block-dashboard, .admin-panel');
     blocks.forEach(function(block, i) {

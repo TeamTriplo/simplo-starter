@@ -45,6 +45,7 @@ class DashboardManageContentBlock extends Block {
     //    $options = array('destination' => current_path());
     $header = array(
       array('data' => t('Content type')),
+      array('data' => t('Count')),
       array('data' => t('Create')),
       array('data' => t('Manage')),
     );
@@ -54,6 +55,7 @@ class DashboardManageContentBlock extends Block {
       foreach ($node_types as $machine => $node_type) {
         // If no types are specified, show all types.
         if (empty($this->settings['types']) || in_array($machine, $this->settings['types'])) {
+          $count = db_query('SELECT COUNT(*) FROM {node} WHERE type = :type', array(':type' => $machine))->fetchField();
           $create = node_access('create', $machine)
             ? l(t('Create', array('@type' => t($node_type->name))), 'node/add/' . $node_type->type, array('html' => TRUE))
             : '-';
@@ -63,6 +65,7 @@ class DashboardManageContentBlock extends Block {
           $rows[] = array(
             'data' => array(
               check_plain(t($node_type->name)),
+              $count,
               $create,
               $manage,
             ),

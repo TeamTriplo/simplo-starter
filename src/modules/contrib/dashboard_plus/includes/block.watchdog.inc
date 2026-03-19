@@ -51,6 +51,7 @@ class DashboardWatchdogBlock extends Block {
       $form .= '<option value="' . $option . '"' . $selected . '>' . $option . '</option>';
     }
     $form .= '</select> ' . t('messages') . '</form>';
+    module_load_include('inc', 'dblog', 'dblog.admin');
     $query = db_select('watchdog', 'w')
       ->fields('w')
       ->orderBy('wid', 'DESC')
@@ -62,7 +63,7 @@ class DashboardWatchdogBlock extends Block {
         'data' => array(
           format_date($row->timestamp, 'short'),
           check_plain($row->type),
-          check_plain($row->message),
+          dblog_format_message($row),
         ),
       );
     }
