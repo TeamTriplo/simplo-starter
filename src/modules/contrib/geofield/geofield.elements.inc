@@ -38,7 +38,6 @@ define('GEOFIELD_NAUTICAL_MILES', 3444);
 /**
  * Implements hook_element_info().
  */
-
 function geofield_element_info() {
   return array(
     'geofield_latlon' => array(
@@ -47,6 +46,7 @@ function geofield_element_info() {
       '#element_validate' => array('geofield_latlon_element_validate'),
       '#theme' => array('geofield_latlon'),
       '#theme_wrappers' => array('fieldset'),
+      '#value_callback' => 'geofield_latlon_element_value_callback',
     ),
     'geofield_bounds' => array(
       '#input' => TRUE,
@@ -65,9 +65,24 @@ function geofield_element_info() {
 }
 
 /**
+ * Custom value callback for 'geofield_latlon' elements.
+ */
+function geofield_latlon_element_value_callback($element, $input, &$form_state) {
+  // Silently discard invalid data type. This prevents TypeError when building
+  // the form. For example triggered by viwes exposed form GET data.
+  if (is_string($input)) {
+    unset($form_state['input']['field_geofield_distance']['origin']);
+    return array(
+      'lat' => '',
+      'lon' => '',
+    );
+  }
+  return $input;
+}
+
+/**
  * Process function for geofield_latlon.
  */
-
 function geofield_latlon_element_process($element, &$form_values) {
   $element['#tree'] = TRUE;
   $element['#input'] = TRUE;
@@ -320,9 +335,28 @@ function geofield_proximity_element_process($element, &$form_state, $form) {
  * Validate the geofield proximity search form item
  */
 function geofield_proximity_search_validate($element, &$form_state) {
-  //If the origin is set, ensure the distance is set as well
-  if (!empty($element['origin']['#value']) && trim($element['origin']['#value']) != '' && empty($element['distance']['#value']))
-    form_set_error(implode('][', $element['#array_parents']) . '][distance', t('@title must be set when @origin is specified.', array('@title' => $element['distance']['#title'], '@origin' => $element['origin']['#title'])));
+  // If the origin is set, ensure the distance is set as well.
+  $origin_empty = TRUE;
+  // String based like geocoder.
+  if (isset($element['origin']['#value']) && is_string($element['origin']['#value'])) {
+    $element['origin']['#value'] = trim($element['origin']['#value']);
+    $origin_empty = ($element['origin']['#value'] == '');
+  }
+  // Array based like manual input.
+  elseif (is_array($element['origin']['#default_value'])) {
+    foreach ($element['origin']['#default_value'] as $key => $default) {
+      if (isset($element['origin'][$key]) && strlen($element['origin'][$key]['#value'])) {
+        $origin_empty = FALSE;
+        break;
+      }
+    }
+  }
+  if (!$origin_empty && empty($element['distance']['#value'])) {
+    form_set_error(implode('][', $element['#array_parents']) . '][distance', t('@title must be set when @origin is specified.', array(
+      '@title' => $element['distance']['#title'],
+      '@origin' => $element['origin']['#title'],
+    )));
+  }
 }
 
 function geofield_theme($existing, $type, $theme, $path) {

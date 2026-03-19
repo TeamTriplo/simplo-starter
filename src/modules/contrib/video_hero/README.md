@@ -18,6 +18,7 @@ Installation
   https://backdropcms.org/guide/modules.
 
 - Add a Video Hero block to any layout.
+- Use YouTube link provided under 'Share > Embed' (link only)
 
 Documentation
 -------------

@@ -122,6 +122,7 @@ function viewfield_field_formatter_info() {
           'vname' => 'vname',
           'vdisplay' => 'vdisplay',
           'vargs' => 'vargs',
+          'show_title' => 'show_title',
         ),
       ),
     ),
@@ -145,6 +146,7 @@ function viewfield_field_formatter_settings_form($field, $instance, $view_mode, 
       'vname' => 'View name',
       'vdisplay' => 'Display',
       'vargs' => 'Arguments',
+      'show_title' => 'Show title',
     ),
   );
 
@@ -160,19 +162,19 @@ function viewfield_field_formatter_settings_summary($field, $instance, $view_mod
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
 
-if ($display['type'] == 'viewfield_field_values') {
-  if (isset($settings['fields_to_display'])) {
-    // Remove items which are empty.
-    $fields_to_display = array_filter($settings['fields_to_display']);
-    // Make field names more human-friendly.
-    $fields_to_display = array_map(function ($key) {
-      return ucfirst(substr($key, 1));
-    }, $fields_to_display);
-    // Create a comma-separated list.
-    $summary = implode(', ', $fields_to_display);
-    $summary = $summary? $summary : t('No information to list');
+  if ($display['type'] == 'viewfield_field_values') {
+    if (isset($settings['fields_to_display'])) {
+      // Remove items which are empty.
+      $fields_to_display = array_filter($settings['fields_to_display']);
+      // Make field names more human-friendly.
+      $fields_to_display = array_map(function ($key) {
+        return ucfirst(substr($key, 1));
+      }, $fields_to_display);
+      // Create a comma-separated list.
+      $summary = implode(', ', $fields_to_display);
+      $summary = $summary ? $summary : t('No information to list');
+    }
   }
-}
 
   return $summary;
 }
@@ -193,14 +195,17 @@ function viewfield_field_formatter_view($entity_type, $entity, $field, $instance
         // @todo Store name and display separately.
         list($view_name, $view_display) = explode('|', $item['vname'], 2);
         $view = views_get_view($view_name);
+        $view->set_display($view_display);
 
         $elements[$delta] = array(
           '#type' => 'viewfield',
           '#access' => $view && $view->access($view_display),
+          '#show_title' => $item['show_title'],
           '#view' => $view,
           '#view_name' => $view_name,
           '#view_display' => $view_display,
           '#view_arguments' => $item['vargs'],
+          '#view_title' => $item['show_title'] ? $view->get_title() : '',
           '#entity_type' => $entity_type,
           '#entity_id' => $entity_id,
           '#entity' => $entity,
@@ -222,6 +227,7 @@ function viewfield_field_formatter_view($entity_type, $entity, $field, $instance
         $items[$delta]['vname'] = 'View name: ' . $view->human_name;
         $items[$delta]['vdisplay'] = 'Display: ' . $view->display[$view_display]->display_title;
         $items[$delta]['vargs'] = 'Arguments: ' . $items[$delta]['vargs'];
+        $items[$delta]['show_title'] = 'Show title: ' . $items[$delta]['show_title'] ? t('Yes') : t('No');
 
         $fields_to_display = array_filter($display['settings']['fields_to_display']);
         $items[$delta] = array_intersect_key($items[$delta], $fields_to_display);
@@ -322,10 +328,16 @@ function viewfield_default_elements_post_render($content, $element) {
  * @see views_embed_view()
  */
 function theme_viewfield_formatter_default($variables) {
+  $rendered_html = '';
   $element = $variables['element'];
+  if (!empty($element['#show_title']) && !empty($element['#view_title'])) {
+    // Add the view title if requested and if it is not empty.
+    $rendered_html .= '<h2 class="view-title">' . check_plain($element['#view_title']) . '</h2>';
+  }
   $view = $element['#view'];
   $view_arguments = !empty($element['#view_arguments']) ? $element['#view_arguments'] : NULL;
-  return $view->preview($element['#view_display'], $view_arguments);
+  $rendered_html .= $view->preview($element['#view_display'], $view_arguments);
+  return $rendered_html;
 }
 
 /**
@@ -370,6 +382,12 @@ function viewfield_field_widget_form(&$form, &$form_state, $field, $instance, $l
     '#description' => t('A comma separated list of arguments to pass to the selected view. '),
     '#maxlength' => 255,
   );
+  $element['show_title'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show view title'),
+    '#default_value' => $items[$delta]['show_title'] ?? FALSE,
+    '#access' => !$instance['settings']['force_default'],
+  );
 
   // Provide token help.
   if (module_exists('token')) {
@@ -385,7 +403,7 @@ function viewfield_field_widget_form(&$form, &$form_state, $field, $instance, $l
       );
       $element['token_help']['tokens'] = array(
         '#theme' => 'token_tree',
-        '#token_types' =>  array(str_replace('_', '-', $entity_type)),
+        '#token_types' => array(str_replace('_', '-', $entity_type)),
         '#global_types' => TRUE,
         '#dialog' => TRUE,
       );
@@ -424,7 +442,7 @@ function _viewfield_potential_references($field, $instance) {
   $options = array();
   foreach ($views as $view_name => $view) {
     foreach ($view->display as $display) {
-      $options[$view->name . '|' . $display->id] = $view->name . ' - ' . $display->display_title;
+      $options[$view->name . '|' . $display->id] = $view->human_name . ' - ' . $display->display_title;
     }
   }
   return $options;
@@ -455,7 +473,7 @@ function _viewfield_get_view_args($vargs, $entity_type, $entity) {
       } elseif (($comma = strpos($vargs, ',', $pos)) !== FALSE) {
         // Otherwise, get everything before next comma.
         $args[] = substr($vargs, $pos, $comma - $pos);
-        // Skip to after comma and repeat
+        // Skip to after comma and repeat.
         $pos = $comma + 1;
         $found = TRUE;
       }
