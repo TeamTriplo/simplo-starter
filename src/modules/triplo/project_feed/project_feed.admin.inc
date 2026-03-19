@@ -116,6 +116,14 @@ function project_feed_settings($form, &$form_state) {
   );
 
   // --- Batch 1: GitHub data fetch ------------------------------------------
+  $last_manual = state_get('project_feed_last_manual_fetch', 0);
+  $last_manual_display = $last_manual
+    ? t('Last manually triggered @time ago (@date).', array(
+        '@time' => format_interval(REQUEST_TIME - $last_manual),
+        '@date' => format_date($last_manual, 'short'),
+      ))
+    : t('Never manually triggered.');
+
   $form['fetch'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Step 1: Fetch project data from GitHub'),
@@ -124,7 +132,7 @@ function project_feed_settings($form, &$form_state) {
       . 'and creates or updates local project nodes. Updates only GitHub-sourced fields — '
       . 'manually entered data (maintainer, community tags, notes, etc.) is never overwritten. '
       . 'Makes ~4,300 GitHub API calls (~29 pages × 150 calls/page). Save credentials above before running.'
-    ),
+    ) . '<br><em>' . $last_manual_display . '</em>',
   );
   $form['fetch']['fetch_submit'] = array(
     '#type'     => 'submit',

@@ -211,6 +211,8 @@ function project_feed_start_fetch($form, &$form_state) {
     $operations[] = array('project_feed_fetch_page', array($page, $total_pages));
   }
 
+  state_set('project_feed_last_manual_fetch', REQUEST_TIME);
+
   batch_set(array(
     'operations'       => $operations,
     'finished'         => 'project_feed_fetch_finished',
