@@ -43,14 +43,25 @@ define('PROJECT_FEED_SEED_TAGS', implode(', ', array(
  * cron runs, avoiding PHP timeouts.
  */
 function project_feed_cron() {
-  $last_run = state_get('project_feed_last_fetch', 0);
-  $one_week = 60 * 60 * 24 * 7;
+  $pf_config = config('project_feed.settings');
 
-  if (REQUEST_TIME - $last_run < $one_week) {
+  $intervals = array(
+    'daily'   => 60 * 60 * 24,
+    'weekly'  => 60 * 60 * 24 * 7,
+    'monthly' => 60 * 60 * 24 * 30,
+  );
+  $frequency = $pf_config->get('fetch_frequency') ?: 'weekly';
+
+  if ($frequency === 'never') {
     return;
   }
 
-  $pf_config = config('project_feed.settings');
+  $last_run = state_get('project_feed_last_fetch', 0);
+  $interval = isset($intervals[$frequency]) ? $intervals[$frequency] : $intervals['weekly'];
+
+  if (REQUEST_TIME - $last_run < $interval) {
+    return;
+  }
   $user  = $pf_config->get('username');
   $token = $pf_config->get('github_auth_token');
 
@@ -236,40 +247,8 @@ function project_feed_fetch_page($page, $total_pages, &$context) {
   }
 
   foreach ($repos as $repo) {
-    // Fetch the .info file for Backdrop-specific metadata.
-    $info_response = project_feed_github_request(
-      'https://api.github.com/repos/backdrop-contrib/' . $repo['name'] . '/contents/' . $repo['name'] . '.info',
-      $user, $token, 'application/vnd.github.raw+json'
-    );
-    $info = ($info_response['code'] == 200) ? backdrop_parse_info_format($info_response['body']) : array();
-
-    // Releases count (up to 100).
-    $rel = project_feed_github_request(
-      'https://api.github.com/repos/backdrop-contrib/' . $repo['name'] . '/releases?per_page=100',
-      $user, $token
-    );
-    $releases_count = 0;
-    if ($rel['code'] == 200) {
-      $r = json_decode($rel['body'], TRUE);
-      $releases_count = is_array($r) ? count($r) : 0;
-    }
-
-    // Open PR count (up to 100).
-    $prs = project_feed_github_request(
-      'https://api.github.com/repos/backdrop-contrib/' . $repo['name'] . '/pulls?state=open&per_page=100',
-      $user, $token
-    );
-    $open_prs = 0;
-    if ($prs['code'] == 200) {
-      $p = json_decode($prs['body'], TRUE);
-      $open_prs = is_array($p) ? count($p) : 0;
-    }
-
-    // open_issues_count from GitHub includes PRs; subtract for issues only.
-    $open_issues = max(0, (int) $repo['open_issues_count'] - $open_prs);
-
     try {
-      $result = project_feed_save_project($repo, $info, $releases_count, $open_issues, $open_prs);
+      $result = project_feed_process_repo($repo, $user, $token);
       $context['results'][$result] = ($context['results'][$result] ?? 0) + 1;
     }
     catch (Exception $e) {
@@ -278,6 +257,60 @@ function project_feed_fetch_page($page, $total_pages, &$context) {
   }
 
   $context['message'] = t('Processed page @page of @total.', array('@page' => $page, '@total' => $total_pages));
+}
+
+/**
+ * Fetch all GitHub data for one repo and save it as a project node.
+ *
+ * This is the single shared helper used by both the batch process and the
+ * single-project fetch, ensuring both paths handle data identically.
+ *
+ * @param array $repo
+ *   Repo array from the GitHub API (list or single-repo endpoint).
+ * @param string $user
+ *   GitHub username for API authentication.
+ * @param string $token
+ *   GitHub personal access token.
+ *
+ * @return string
+ *   'created' or 'updated'.
+ *
+ * @throws Exception
+ */
+function project_feed_process_repo($repo, $user, $token) {
+  // Fetch the .info file for Backdrop-specific metadata.
+  $info_response = project_feed_github_request(
+    'https://api.github.com/repos/backdrop-contrib/' . $repo['name'] . '/contents/' . $repo['name'] . '.info',
+    $user, $token, 'application/vnd.github.raw+json'
+  );
+  $info = ($info_response['code'] == 200) ? backdrop_parse_info_format($info_response['body']) : array();
+
+  // Releases count (up to 100).
+  $rel = project_feed_github_request(
+    'https://api.github.com/repos/backdrop-contrib/' . $repo['name'] . '/releases?per_page=100',
+    $user, $token
+  );
+  $releases_count = 0;
+  if ($rel['code'] == 200) {
+    $r = json_decode($rel['body'], TRUE);
+    $releases_count = is_array($r) ? count($r) : 0;
+  }
+
+  // Open PR count (up to 100).
+  $prs = project_feed_github_request(
+    'https://api.github.com/repos/backdrop-contrib/' . $repo['name'] . '/pulls?state=open&per_page=100',
+    $user, $token
+  );
+  $open_prs = 0;
+  if ($prs['code'] == 200) {
+    $p = json_decode($prs['body'], TRUE);
+    $open_prs = is_array($p) ? count($p) : 0;
+  }
+
+  // open_issues_count from GitHub includes PRs; subtract for issues only.
+  $open_issues = max(0, (int) $repo['open_issues_count'] - $open_prs);
+
+  return project_feed_save_project($repo, $info, $releases_count, $open_issues, $open_prs);
 }
 
 /**
@@ -869,8 +902,11 @@ function project_feed_save_project($repo, $info, $releases_count, $open_issues, 
     $node->field_info_maintainers[$lang] = array();
   }
 
-  // Maintainers wanted flag from .info file.
-  $node->field_maintainers_wanted[$lang][0]['value'] = !empty($info['maintainers_wanted']) ? 1 : 0;
+  // Set the seeking maintainers flag if the .info file declares it.
+  // Only set to TRUE from .info data; never override a manually set TRUE value.
+  if (!empty($info['maintainers_wanted'])) {
+    $node->field_seeking_maintainers[$lang][0]['value'] = 1;
+  }
 
   node_save($node);
   return $is_new ? 'created' : 'updated';

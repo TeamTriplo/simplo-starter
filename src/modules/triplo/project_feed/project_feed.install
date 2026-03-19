@@ -93,13 +93,17 @@ function project_feed_update_1000() {
 }
 
 /**
- * Add field_info_maintainers and field_maintainers_wanted to project nodes.
+ * Add field_info_maintainers to project nodes.
+ *
+ * Note: field_seeking_maintainers already exists on the content type and is
+ * used for the maintainers_wanted flag from .info files. No new boolean field
+ * is needed.
  */
 function project_feed_update_1001() {
   // --- field_info_maintainers -----------------------------------------------
   // Multi-value plain text field storing maintainer GitHub usernames from the
   // .info file's maintainers[] array. Kept separate from the hand-curated
-  // field_maintainer taxonomy field.
+  // field_maintainer taxonomy field and the README-parsed field_maintainer_parsed.
   if (!field_info_field('field_info_maintainers')) {
     field_create_field(array(
       'field_name'  => 'field_info_maintainers',
@@ -119,34 +123,6 @@ function project_feed_update_1001() {
         'default' => array(
           'label' => 'above',
           'type'  => 'text_default',
-        ),
-      ),
-    ));
-  }
-
-  // --- field_maintainers_wanted ---------------------------------------------
-  // Boolean field set when the .info file contains maintainers_wanted = TRUE.
-  if (!field_info_field('field_maintainers_wanted')) {
-    field_create_field(array(
-      'field_name'  => 'field_maintainers_wanted',
-      'type'        => 'list_boolean',
-      'cardinality' => 1,
-      'settings'    => array(
-        'allowed_values' => array(0 => '', 1 => ''),
-      ),
-    ));
-  }
-  if (!field_info_instance('node', 'field_maintainers_wanted', 'project')) {
-    field_create_instance(array(
-      'field_name'  => 'field_maintainers_wanted',
-      'entity_type' => 'node',
-      'bundle'      => 'project',
-      'label'       => 'Maintainers Wanted',
-      'widget'      => array('type' => 'options_onoff'),
-      'display'     => array(
-        'default' => array(
-          'label' => 'above',
-          'type'  => 'list_default',
         ),
       ),
     ));
