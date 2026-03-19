@@ -1,13 +1,13 @@
 Dashboard Plus
 ==============
 
-This module does two things:
+This module provides two things:
 
-  * Provides the option to make all dashboard blocks collapsible (on by default).
+  * The option to make all dashboard blocks collapsible (on by default).
 
 ![image](https://github.com/user-attachments/assets/9a559f1f-277a-451e-82cd-838830bc3aaf)
 
-  * Provides a set of additional blocks that can be (optionally) placed on the Dashboard provided by Backdrop CMS. 
+  * A set of additional blocks that can be placed on the Dashboard provided by Backdrop CMS.
 
 At this point, we are looking for good ideas for blocks to include in this module, please use the issue queue to submit requests. 
 
@@ -22,9 +22,9 @@ https://github.com/backdrop-contrib/dashboard_plus/issues
 
  * Dashboard Plus - Recent unpublished comments
    - *Contains a block with a list of recent comments that are not published a link to "moderate" them.*
-   
+
 ![image](https://github.com/user-attachments/assets/b9521fa4-ea38-4675-b501-f9dfc127d695)
-  
+
  * Dashboard Plus - Recent log messages
    - *Contains a block with 10/25/50/100 recent log messages along with a link to the log page.*
 
@@ -35,10 +35,28 @@ https://github.com/backdrop-contrib/dashboard_plus/issues
 
 ![image](https://github.com/user-attachments/assets/cb098a2f-f2f5-4b95-aaf0-4e7da86bf77e)
 
- * Dashboard Plus - Resources 
+ * Dashboard Plus - Resources
    - *Contains hardcoded links to some important and useful Backdrop CMS resources.*
 
 ![image](https://github.com/user-attachments/assets/663234db-08cc-4e30-80a4-ab20b3572459)
+
+ * Dashboard Plus - Cron status
+   - *Shows when cron last ran (with a warning or error indicator if overdue) and provides a link to run it manually.*
+
+ * Dashboard Plus - Current weather
+   - *Shows current weather conditions for a configured location. Displays temperature, feels-like temperature, humidity, and wind speed using WMO weather codes. Configurable temperature units (°C/°F) and an optional link to an external forecast page. Powered by [Open-Meteo](https://open-meteo.com) — no API key required.*
+
+ * Dashboard Plus - Module of the day
+   - *Displays a randomly selected Backdrop CMS module each day, pulled live from the BackdropCMS.org project directory. Shows the module title (linked to its project page), a truncated description with a "Read more" toggle, and install/maintenance stats. Includes a "See another" button to browse additional modules without leaving the dashboard.*
+
+ * Dashboard Plus - New module releases
+   - *Lists the most recently published modules on BackdropCMS.org (first releases only, not updates). Pulls from the BackdropCMS.org RSS feed and displays modules sorted by release date, newest first. Configurable to show 5, 10, 15, or 20 entries. Includes a link to browse all releases on BackdropCMS.org.*
+
+ * Dashboard Plus - Manage taxonomy
+   - *Shows all taxonomy vocabularies (or a configurable subset) with a term count and links to add a new term or manage existing terms for each vocabulary.*
+
+ * Dashboard Plus - JSON Feed
+   - *Displays items from any [JSON Feed](https://www.jsonfeed.org/)-compliant URL. Configurable URL, item count, date display, content display, and cache duration. Can be placed multiple times with different feeds. Useful for following external blogs or news sources directly from the dashboard.*
 
 ## Installation
 

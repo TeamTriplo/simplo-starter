@@ -14,6 +14,7 @@ class BlockVideoHero extends BlockText {
 
     $this->settings += array(
       'video' => '',
+      'options' => array(),
     );
   }
 
@@ -44,8 +45,68 @@ class BlockVideoHero extends BlockText {
       return check_markup(token_replace($this->settings['content']), $this->settings['format'], '', TRUE);
     }
     elseif (!empty($this->settings['video'])) {
-      $url = trim($this->settings['video']);
-      $output .= '<iframe width="560" height="315" src="' . $url . '?controls=0&autoplay=1&loop=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;" allowfullscreen></iframe>';
+
+      // Set query options.
+      $options = backdrop_map_assoc(array('controls', 'autoplay', 'loop'));
+      foreach ($options as $value) {
+        if (in_array($value, $this->settings['options'])) {
+          $options[$value] = 1;
+        }
+        else {
+          $options[$value] = 0;
+        }
+      }
+
+      // Set playlist query value
+      // needed if looping, unused if not looping.
+      $vid = preg_replace('~(?#!js YouTubeId Rev:20160125_1800)
+        # Match non-linked youtube URL in the wild. (Rev:20130823)
+        https?://          # Required scheme. Either http or https.
+        (?:[0-9A-Z-]+\.)?  # Optional subdomain.
+        (?:                # Group host alternatives.
+          youtu\.be/       # Either youtu.be,
+        | youtube          # or youtube.com or
+          (?:-nocookie)?   # youtube-nocookie.com
+          \.com            # followed by
+          \S*?             # Allow anything up to VIDEO_ID,
+          [^\w\s-]         # but char before ID is non-ID char.
+        )                  # End host alternatives.
+        ([\w-]{11})        # $1: VIDEO_ID is exactly 11 chars.
+        (?=[^\w-]|$)       # Assert next char is non-ID or EOS.
+        (?!                # Assert URL is not pre-linked.
+          [?=&+%\w.-]*     # Allow URL (query) remainder.
+          (?:              # Group pre-linked alternatives.
+            [\'"][^<>]*>   # Either inside a start tag,
+          | </a>           # or inside <a> element text contents.
+          )                # End recognized pre-linked alts.
+        )                  # End negative lookahead assertion.
+        [?=&+%\w.-]*       # Consume any URL (query) remainder.
+        ~ix', '$1',
+        $this->settings['video']);
+      $options['playlist'] = $vid;
+
+      // Needed to autoplay on reloading page.
+      $options['mute'] = 1;
+
+      $url = url(trim($this->settings['video']), array('query' => $options));
+
+      $allow = array(
+        'accelerometer',
+        'autoplay',
+        'clipboard-write',
+        'encrypted-media',
+        'gyroscope',
+      );
+      $attributes = array(
+        'width' => '560',
+        'height' => '315',
+        'src' => $url,
+        'title' => t('YouTube video player'),
+        'frameborder' => '0',
+        'allow' => implode('; ', $allow),
+        'allowfullscreen' => TRUE,
+      );
+      $output .= '<iframe ' . backdrop_attributes($attributes) . '></iframe>';
     }
     elseif (!empty($this->settings['title'])) {
       $output .= '&nbsp;';
@@ -59,13 +120,24 @@ class BlockVideoHero extends BlockText {
    */
   function form(&$form, &$form_state) {
     parent::form($form, $form_state);
-
-    // Add an image field at the top of the settings form.
+    unset($form['title_display']);
+    unset($form['content']);
+    // Add a video field at the top of the settings form.
     $form['video'] = array(
       '#type' => 'textfield',
       '#title' => t('Background video'),
       '#description' => 'YouTube video URL in the format https://www.youtube.com/embed/j16T_QlAPRc',
       '#default_value' => $this->settings['video'],
+      '#weight' => -10,
+    );
+    $options = backdrop_map_assoc(array('controls', 'autoplay', 'loop'));
+    // Add an image field at the top of the settings form.
+    $form['options'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Player options'),
+      '#options' => $options,
+      // '#default_value' => $this->settings['options']?: array_keys($options),
+      '#default_value' => $this->settings['options'],
       '#weight' => -10,
     );
 
@@ -96,6 +168,14 @@ class BlockVideoHero extends BlockText {
       if ($form_state['values']['video'] != $form['video']['#default_value']) {
         $this->settings['video'] = $form_state['values']['video'];
       }
+    }
+    $checked_options = array_filter($form_state['values']['options']);
+
+    if (!empty($checked_options)) {
+      $this->settings['options'] = $checked_options;
+    }
+    else {
+      $this->settings['options'] = array();
     }
   }
 }

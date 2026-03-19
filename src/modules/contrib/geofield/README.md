@@ -104,6 +104,7 @@ Current Maintainers
 
 - Wes Jones (https://github.com/earthday47)
 - Jen Lampton (https://github.com/jenlampton)
+- indigoxela (https://github.com/indigoxela)
 
 Credits
 -------

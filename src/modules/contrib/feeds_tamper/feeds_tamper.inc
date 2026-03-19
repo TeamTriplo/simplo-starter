@@ -5,7 +5,6 @@
  * Version agnostic parts of feeds_tamper.module.
  */
 
-
 /**
  * @defgroup feeds_tamper_api Feeds Tamper API
  * @{
@@ -25,7 +24,6 @@
  */
 // function feeds_tamper_load_all_instances($disabled = FALSE) {
 //   $instances = array();
-
 //   $configs = feeds_tamper_load_tamper_object();
 //   foreach ($configs as $instance_id => $config) {
 //     if (!empty($config->id) && ($disabled || empty($config->disabled))) {
@@ -270,4 +268,87 @@ function feeds_tamper_access(FeedsImporter $importer) {
   }
 
   return FALSE;
+}
+
+/**
+ * Implements hook_form_feeds_ui_mapping_form_alter().
+ *
+ * This is an interesting bit of work. Each source name has to be unique,
+ * but we have no idea how many to create with
+ * feeds_tamper_feeds_parser_sources_alter() because we don't know how many
+ * targets there are going to be.
+ *
+ * The solution is to keep track in the form how many have been added.
+ */
+function feeds_tamper_form_feeds_ui_mapping_form_alter(array &$form, array &$form_state) {
+  $form['#submit'][] = 'feeds_tamper_form_feeds_ui_mapping_form_submit';
+
+  // Don't alter the sources on the form for parsers that use manual input.
+  $manual_source_input = ($form['source']['#type'] == 'textfield');
+
+  $max_source = 0;
+  $max_target = 0;
+  foreach ($form['#mappings'] as $mapping) {
+    if (!$manual_source_input && strpos($mapping['source'], 'Blank source ') === 0) {
+      list(, , $source_value) = explode(' ', $mapping['source']);
+      if ($source_value > $max_source) {
+        $max_source = $source_value;
+      }
+    }
+    if (strpos($mapping['target'], 'Temporary target ') === 0) {
+      list(, , $target_value) = explode(' ', $mapping['target']);
+      if ($target_value > $max_target) {
+        $max_target = $target_value;
+      }
+    }
+  }
+
+  if (!$manual_source_input) {
+    if ($max_source) {
+      unset($form['source']['#options']['Blank source 1']);
+      $form['source']['#options']['Blank source ' . ++$max_source] = 'Blank source';
+
+      // Declare extra mapping sources.
+      for ($i = 2; $i <= $max_source; $i++) {
+        $form['#feeds_sources']['Blank source ' . $i] = $form['#feeds_sources']['Blank source 1'];
+      }
+    }
+    else {
+      $form['source']['#options']['Blank source 1'] = 'Blank source';
+    }
+  }
+
+  if ($max_target) {
+    unset($form['target']['#options']['Temporary target 1']);
+    $form['target']['#options']['Temporary target ' . ++$max_target] = 'Temporary target';
+
+    // Declare extra mapping targets.
+    for ($i = 2; $i <= $max_target; $i++) {
+      $form['#feeds_targets']['Temporary target ' . $i] = $form['#feeds_targets']['Temporary target 1'];
+    }
+  }
+  else {
+    $form['target']['#options']['Temporary target 1'] = 'Temporary target';
+  }
+}
+
+/**
+ * Submit callback for feeds_ui_mapping_form().
+ */
+function feeds_tamper_form_feeds_ui_mapping_form_submit(array &$form, array &$form_state) {
+  $importer = feeds_importer($form['#importer']);
+  $source_instances = feeds_tamper_load_by_importer($importer);
+  $sources = feeds_tamper_get_unique_source_list($importer, FALSE);
+
+  foreach ($source_instances as $source => $instances) {
+    if (in_array($source, $sources)) {
+      continue;
+    }
+    foreach ($instances as $instance) {
+      if (!is_object($instance)) {
+        continue;
+      }
+      feeds_tamper_delete_instance($importer, $instance);
+    }
+  }
 }

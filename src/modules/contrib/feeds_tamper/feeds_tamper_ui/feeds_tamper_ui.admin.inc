@@ -82,6 +82,12 @@ function feeds_tamper_ui_list_form($form, &$form_state, $importer) {
       $plugin = feeds_tamper_get_plugin($instance->plugin_id);
       $map[$delta]['table'][$instance->id]['#name'] = $plugin['name'];
 
+      // Enable/disable checkbox.
+      $map[$delta]['table'][$instance->id]['enabled'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => !$instance->disabled,
+      );
+
       // Build Edit | Delete links.
       $current_path = current_path();
       $options = array('destination' => $current_path);
@@ -106,11 +112,6 @@ function feeds_tamper_ui_list_form($form, &$form_state, $importer) {
         ),
       );
 
-      // Enable/disable checkbox.
-      $map[$delta]['table'][$instance->id]['enabled'] = array(
-        '#type' => 'checkbox',
-        '#default_value' => !$instance->disabled,
-      );
     }
   }
 
@@ -187,8 +188,8 @@ function theme_feeds_tamper_ui_list_form($variables) {
     t('Description'),
     t('Weight'),
     t('Plugin'),
-    t('Operations'),
     t('Enabled'),
+    t('Operations'),
   );
   // Remove weight column for empty tables. It looks nicer.
   $header_empty = $header_normal;
@@ -225,10 +226,10 @@ function theme_feeds_tamper_ui_list_form($variables) {
           $this_row[] = backdrop_render($map[$i]['table'][$id]['weight']);
           // The name of the plugin, as defined in a PLUGIN.inc.
           $this_row[] = $map[$i]['table'][$id]['#name'];
-          // Operations to perform on a plugin instance.
-          $this_row[] = $map[$i]['table'][$id]['operations'];
           // Enabled checkbox.
           $this_row[] = backdrop_render($map[$i]['table'][$id]['enabled']);
+          // Operations to perform on a plugin instance.
+          $this_row[] = $map[$i]['table'][$id]['operations'];
           // Add draggable class for sortable table.
           $table_rows[] = array(
             'data' => $this_row,
@@ -244,11 +245,11 @@ function theme_feeds_tamper_ui_list_form($variables) {
           $this_row[] = backdrop_render($map[$i]['table'][$id]['weight']);
           // The name of the plugin, as defined in a PLUGIN.inc.
           $this_row[] = $map[$i]['table'][$id]['#name'];
+          // Enabled checkbox.
+          $this_row[] = backdrop_render($map[$i]['table'][$id]['enabled']);
           // Operations to perform on a plugin instance. It's disabled, so make
           // it just text.
           $this_row[] = t('Disabled');
-          // Enabled checkbox.
-          $this_row[] = backdrop_render($map[$i]['table'][$id]['enabled']);
           // Add disabled class to differentiate.
           $disabled_rows[] = array(
             'data' => $this_row,

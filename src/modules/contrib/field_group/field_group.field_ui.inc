@@ -254,21 +254,23 @@ function field_group_field_ui_overview_form_alter(&$form, &$form_state, $display
         '#type' => 'submit',
         '#name' => $name . '_group_settings_edit',
         '#value' => t('Configure'),
-        '#attributes' => array('class' => array('field-formatter-settings-edit button-secondary'), 'alt' => t('Configure')),
+        '#attributes' => array('class' => array('field-formatter-settings-edit field-group-formatter-settings-edit button-secondary'), 'alt' => t('Configure')),
         '#op' => 'edit',
         // Do not check errors for the 'Configure' button.
         '#limit_validation_errors' => array(),
       );
+      $table[$name]['settings_edit']['delete'] = array(
+        '#type' => 'link',
+        '#title' => t('Delete'),
+        '#href' => '',
+        '#attributes' => array('class' => array('field-formatter-settings-edit field-group-formatter-settings-delete button')),
+      );
       if ($display_overview) {
-        $table[$name]['settings_edit']['delete'] = array(
-          '#markup' => l(t('Delete'), $params->admin_path . '/groups/' . $name . '/delete/' . $params->mode),
-        );
+        $table[$name]['settings_edit']['delete']['#href'] = $params->admin_path . '/groups/' . $name . '/delete/' . $params->mode;
       }
     }
     if (!$display_overview) {
-      $table[$name]['settings_edit']['delete'] = array(
-        '#markup' => l(t('Delete'), $params->admin_path . '/groups/' . $name . '/delete/form'),
-      );
+      $table[$name]['settings_edit']['delete']['#href'] = $params->admin_path . '/groups/' . $name . '/delete/form';
     }
   }
 
@@ -518,8 +520,24 @@ function field_group_formatter_settings_update(&$group, $settings) {
 
   // For format changes we load the defaults.
   if (empty($settings['format_settings']['settings'])) {
+    $original_formatter_settings = $group->format_settings;
     $mode = $group->mode == 'form' ? 'form' : 'display';
     $group->format_settings = _field_group_get_default_formatter_settings($group->format_type, $mode);
+    // If the format type is changed, make sure we carry over the unique
+    // changes such as classes, ids.
+    $group->format_settings['instance_settings'] = _field_group_preserve_shared_instance_settings($group->format_settings['instance_settings'], $original_formatter_settings['instance_settings']);
+    // Classes are a special case. Need to parse and change "field-group-TYPE"
+    // to the new format type.
+    if (!empty($group->format_settings['instance_settings']['classes'])) {
+      $classes = explode(' ', $group->format_settings['instance_settings']['classes']);
+      foreach ($classes as $class_key => $class) {
+        if (substr($class, 0, 12) === 'field-group-') {
+          $classes[$class_key] = 'field-group-' . $group->format_type;
+        }
+      }
+      $group->format_settings['instance_settings']['classes'] = implode(' ', $classes);
+    }
+
   }
   else {
     $group->format_type = $settings['format']['type'];
@@ -915,7 +933,7 @@ function field_group_field_ui_create_vertical_tabs(&$form, &$form_state, $params
     '#type' => 'fieldset',
     '#title' => t('Fieldgroups'),
     '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
+    '#collapsed' => TRUE,
     '#parents' => array('additional_settings'),
   );
   $form['additional_settings']['field_group']['fieldgroup_clone'] = array(
@@ -937,7 +955,7 @@ function field_group_field_ui_create_vertical_tabs(&$form, &$form_state, $params
   );
   $form['additional_settings']['field_group']['help'] = array(
     '#type' => 'help',
-    '#markup' => t('<p>Fields can be dragged into groups with unlimited nesting. Each Fieldgroup format comes with a configuration form, specific for that format type.</p><p>Some formats come in pairs. These types have an HTML wrapper to nest its fieldgroup children. For example, place accordion items into the accordion; vertical tabs into the vertical tab group; and horizontal tabs into the horizontal tab group. There is one exception to this rule: you can use a vertical tab without a wrapper when the additional settings tabs are available, such as with content type forms.</p>'),
+    '#markup' => t('<p>Fields can be dragged into groups with unlimited nesting. Each Fieldgroup format comes with a configuration form, specific for that format type.</p><p>Some formats come in pairs. These types have an HTML wrapper to nest its fieldgroup children. For example, place vertical tabs into the vertical tab group. There is one exception to this rule: you can use a vertical tab without a wrapper when the additional settings tabs are available, such as with content type forms.</p>'),
   );
 
 }
@@ -963,15 +981,14 @@ function field_group_field_ui_clone_field_groups_validate($form, &$form_state) {
   }
 
   // Check for types are not known in current mode.
-  if ($form_state['field_group_params']->mode != 'form') {
-    $non_existing_types = array('multipage', 'multipage-group');
-  }
+  $non_existing_types = array('div');
+  backdrop_alter('field_group_mode_types_excluded', $non_existing_types, $form_state['field_group_params']->mode);
 
   if (!empty($form_state['#source_groups'])) {
     $field_instances = field_info_instances($form_state['field_group_params']->entity_type, $form_state['field_group_params']->bundle);
     $visible_fields = array();
     foreach ($field_instances as $field_name => $field_instance) {
-      if ($field_instance['display'][$form_state['field_group_params']->mode]['type'] != 'hidden') {
+      if ($form_state['field_group_params']->mode == 'form' || $field_instance['display'][$form_state['field_group_params']->mode]['type'] != 'hidden') {
         $visible_fields[] = $field_name;
       }
     }

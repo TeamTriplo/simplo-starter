@@ -12,7 +12,7 @@ group = Ubercart
 file = uc_attribute_checkout.test
 type = module
 
-; Added by Backdrop CMS packaging script on 2024-11-12
+; Added by Backdrop CMS packaging script on 2026-01-16
 project = ubercart
-version = 1.x-3.14.7
-timestamp = 1731443203
+version = 1.x-3.15.4
+timestamp = 1768584549

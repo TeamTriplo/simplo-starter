@@ -1,6 +1,44 @@
 <?php
 
 /**
+ * Implements hook_menu().
+ */
+function dashboard_plus_menu() {
+  $items['dashboard-plus/motd-next'] = array(
+    'page callback' => 'dashboard_plus_motd_next',
+    'access callback' => 'user_access',
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * AJAX callback: increments the module-of-day skip counter and returns new HTML.
+ */
+function dashboard_plus_motd_next() {
+  $today = date('Y-m-d');
+
+  // Initialise and clean up the session skip counter.
+  if (!isset($_SESSION['dashboard_plus_motd_skip'])) {
+    $_SESSION['dashboard_plus_motd_skip'] = array();
+  }
+  // Remove stale dates so the session doesn't grow indefinitely.
+  foreach (array_keys($_SESSION['dashboard_plus_motd_skip']) as $date) {
+    if ($date !== $today) {
+      unset($_SESSION['dashboard_plus_motd_skip'][$date]);
+    }
+  }
+  if (!isset($_SESSION['dashboard_plus_motd_skip'][$today])) {
+    $_SESSION['dashboard_plus_motd_skip'][$today] = 0;
+  }
+  $_SESSION['dashboard_plus_motd_skip'][$today]++;
+
+  $block = new DashboardModuleOfDayBlock('dashboard_plus:module_of_day', array());
+  backdrop_json_output(array('html' => $block->renderModuleHtml()));
+}
+
+/**
  * Implements hook_block_info().
  */
 function dashboard_plus_block_info() {
@@ -28,10 +66,40 @@ function dashboard_plus_block_info() {
     'description' => t('Shows the release notes for the latest version of Backdrop CMS.'),
     'class' => 'DashboardBackdropReleaseNotesBlock',
   );
+  $blocks['cron_status'] = array(
+    'info' => t('Dashboard Plus - Cron status'),
+    'description' => t('Shows when cron last ran and provides a link to run it manually.'),
+    'class' => 'DashboardCronStatusBlock',
+  );
+  $blocks['weather'] = array(
+    'info' => t('Dashboard Plus - Current weather'),
+    'description' => t('Shows current weather conditions for a configured location. Powered by Open-Meteo (no API key required).'),
+    'class' => 'DashboardWeatherBlock',
+  );
+  $blocks['module_of_day'] = array(
+    'info' => t('Dashboard Plus - Module of the day'),
+    'description' => t('Displays a randomly selected Backdrop CMS module each day.'),
+    'class' => 'DashboardModuleOfDayBlock',
+  );
+  $blocks['recent_modules'] = array(
+    'info' => t('Dashboard Plus - New module releases'),
+    'description' => t('Lists newly published modules on BackdropCMS.org (first releases only, not updates).'),
+    'class' => 'DashboardRecentModulesBlock',
+  );
+  $blocks['manage_taxonomy'] = array(
+    'info' => t('Dashboard Plus - Manage taxonomy'),
+    'description' => t('Provides links to manage taxonomy vocabularies and terms.'),
+    'class' => 'DashboardManageTaxonomyBlock',
+  );
+  $blocks['json_feed'] = array(
+    'info' => t('Dashboard Plus - JSON Feed'),
+    'description' => t('Displays items from any JSON Feed-compliant URL.'),
+    'class' => 'DashboardJsonFeedBlock',
+  );
   return $blocks;
 }
 
-function dashboard_plus_block_view() {
+function dashboard_plus_block_view($delta = '') {
   $block['subject'] = 'Backdrop CMS Resources';
   $block['content'] = '<li><a target="_blank" href="https://forum.backdropcms.org">Ask A Question</a> - Backdrop CMS Forums</li>';
   $block['content'] .= '<li><a target="_blank" href="https://backdropcms.org/user-guide">Learn about Backdrop CMS</a> - User Guide</li>';
@@ -48,6 +116,12 @@ function dashboard_plus_autoload_info() {
     'DashboardWatchdogBlock' => 'includes/block.watchdog.inc',
     'DashboardUnpublishedCommentsBlock' => 'includes/block.unpublished_comments.inc',
     'DashboardBackdropReleaseNotesBlock' => 'includes/block.release_notes.inc',
+    'DashboardCronStatusBlock' => 'includes/block.cron_status.inc',
+    'DashboardWeatherBlock' => 'includes/block.weather.inc',
+    'DashboardModuleOfDayBlock' => 'includes/block.module_of_day.inc',
+    'DashboardRecentModulesBlock' => 'includes/block.recent_modules.inc',
+    'DashboardManageTaxonomyBlock' => 'includes/block.manage_taxonomy.inc',
+    'DashboardJsonFeedBlock'       => 'includes/block.json_feed.inc',
   );
 }
 
