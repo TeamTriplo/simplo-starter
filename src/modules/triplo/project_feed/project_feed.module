@@ -36,6 +36,83 @@ define('PROJECT_FEED_SEED_TAGS', implode(', ', array(
 // ===========================================================================
 
 /**
+ * Implements hook_cron().
+ *
+ * Once per week, queues all pages of backdrop-contrib repos for processing.
+ * Each page is handled by the project_feed_fetch queue worker on subsequent
+ * cron runs, avoiding PHP timeouts.
+ */
+function project_feed_cron() {
+  $last_run = state_get('project_feed_last_fetch', 0);
+  $one_week = 60 * 60 * 24 * 7;
+
+  if (REQUEST_TIME - $last_run < $one_week) {
+    return;
+  }
+
+  $pf_config = config('project_feed.settings');
+  $user  = $pf_config->get('username');
+  $token = $pf_config->get('github_auth_token');
+
+  if (empty($user) || empty($token)) {
+    watchdog('project_feed', 'Weekly fetch skipped: GitHub credentials not configured.', array(), WATCHDOG_WARNING);
+    return;
+  }
+
+  // Fetch page 1 to discover total page count via Link header.
+  $response = project_feed_github_request(
+    'https://api.github.com/orgs/backdrop-contrib/repos?per_page=50&page=1',
+    $user, $token
+  );
+
+  if ($response['code'] != 200) {
+    watchdog('project_feed', 'Weekly fetch failed: GitHub API returned HTTP @code.', array('@code' => $response['code']), WATCHDOG_ERROR);
+    return;
+  }
+
+  preg_match('/page=(\d+)>; rel="last"/', $response['headers'], $m);
+  $total_pages = isset($m[1]) ? (int) $m[1] : 1;
+
+  $queue = BackdropQueue::get('project_feed_fetch');
+  $queue->createQueue();
+  for ($page = 1; $page <= $total_pages; $page++) {
+    $queue->createItem(array('page' => $page, 'total_pages' => $total_pages));
+  }
+
+  state_set('project_feed_last_fetch', REQUEST_TIME);
+  watchdog('project_feed', 'Weekly GitHub fetch queued: @total pages to process.', array('@total' => $total_pages), WATCHDOG_INFO);
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function project_feed_cron_queue_info() {
+  return array(
+    'project_feed_fetch' => array(
+      'worker callback' => 'project_feed_queue_process_page',
+      'time'            => 30,
+    ),
+  );
+}
+
+/**
+ * Queue worker: fetch and process one page of repos from GitHub.
+ *
+ * @param array $data
+ *   Queue item data with keys 'page' and 'total_pages'.
+ */
+function project_feed_queue_process_page($data) {
+  $context = array('results' => array('created' => 0, 'updated' => 0, 'errors' => array()));
+  project_feed_fetch_page($data['page'], $data['total_pages'], $context);
+
+  if (!empty($context['results']['errors'])) {
+    foreach ($context['results']['errors'] as $error) {
+      watchdog('project_feed', 'Cron fetch error: @error', array('@error' => $error), WATCHDOG_WARNING);
+    }
+  }
+}
+
+/**
  * Implements hook_config_info().
  */
 function project_feed_config_info() {
@@ -776,6 +853,24 @@ function project_feed_save_project($repo, $info, $releases_count, $open_issues, 
       }
     }
   }
+
+  // Maintainers from .info file.
+  if (!empty($info['maintainers'])) {
+    $maintainers = is_array($info['maintainers']) ? $info['maintainers'] : array($info['maintainers']);
+    $node->field_info_maintainers[$lang] = array();
+    foreach ($maintainers as $username) {
+      $username = trim($username);
+      if ($username !== '') {
+        $node->field_info_maintainers[$lang][] = array('value' => $username);
+      }
+    }
+  }
+  elseif (!$is_new) {
+    $node->field_info_maintainers[$lang] = array();
+  }
+
+  // Maintainers wanted flag from .info file.
+  $node->field_maintainers_wanted[$lang][0]['value'] = !empty($info['maintainers_wanted']) ? 1 : 0;
 
   node_save($node);
   return $is_new ? 'created' : 'updated';
