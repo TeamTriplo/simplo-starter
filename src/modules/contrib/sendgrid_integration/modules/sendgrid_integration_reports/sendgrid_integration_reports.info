@@ -1,0 +1,14 @@
+name = Sendgrid Integration Reports
+description = Sendgrid Reports Module
+package = Mail
+type = module
+backdrop = 1.x
+
+files[] = tests/sendgrid_integration_reports.test
+
+dependencies[] = sendgrid_integration
+
+; Added by Backdrop CMS packaging script on 2023-10-20
+project = sendgrid_integration
+version = 1.x-1.0.2
+timestamp = 1697799159

@@ -1,0 +1,18 @@
+{
+  "name": "backdropcms/sendgrid_integration",
+  "description": "SendGrid Integration Backdrop Module.",
+  "homepage": "https://www.backdropcms.org/project/sendgrid_integration",
+  "license": "GNU",
+  "keywords": [
+    "SendGrid",
+    "sendgrid",
+    "email",
+    "send",
+    "grid",
+    "transactional",
+    "php"
+  ],
+  "require": {
+    "fastglass/sendgrid": "~1.0"
+  }
+}
