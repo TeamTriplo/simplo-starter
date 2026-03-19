@@ -33,7 +33,7 @@
 })(navigator.geolocation, jQuery);
 
 ;(function ($) {
-  Drupal.behaviors.geofieldGeolocation = {
+  Backdrop.behaviors.geofieldGeolocation = {
     attach: function (context, settings) {
       // callback for getCurrentPosition
       function updateLocation(position) {

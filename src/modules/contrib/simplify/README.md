@@ -57,7 +57,8 @@ https://github.com/backdrop-contrib/simplify/issues.
 Current Maintainers
 -------------------
 
-- Peter Anderson (https://github.com/BWPanda).
+- [Martin Price](https://github.com/yorkshire-pudding) - [System Horizons Ltd](https://www.systemhorizons.co.uk)
+- Collaboration and co-maintainers welcome!
 
 Credits
 -------

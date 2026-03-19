@@ -1,0 +1,55 @@
+.masonry-gallery-loader,
+.masonry-gallery-loader:before,
+.masonry-gallery-loader:after {
+  width: 2.5em;
+  height: 2.5em;
+  margin-left: -1.25em;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+  -webkit-animation: load7 1.6s infinite ease-in-out;
+  animation: load7 1.6s infinite ease-in-out;
+}
+.masonry-gallery-loader {
+  color: #000000;
+  font-size: 4px;
+  text-indent: -9999em;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+.masonry-gallery-loader:before,
+.masonry-gallery-loader:after {
+  content: '';
+  position: absolute;
+  top: 0;
+}
+.masonry-gallery-loader:before {
+  left: -2.25em;
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+.masonry-gallery-loader:after {
+  left: 4.75em;
+}
+@-webkit-keyframes load7 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 -2.5em 0 -1.3em;
+  }
+  40% {
+    box-shadow: 0 -2.5em 0 0;
+  }
+}
+@keyframes load7 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 -2.5em 0 -1.3em;
+  }
+  40% {
+    box-shadow: 0 -2.5em 0 0;
+  }
+}

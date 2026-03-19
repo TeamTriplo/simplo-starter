@@ -1,0 +1,13 @@
+img.lazy {
+  opacity: 0;
+}
+
+img.lazy.loaded {
+  -webkit-transition:opacity .5s;
+  -moz-transition:opacity .5s;
+  -ms-transition:opacity .5s;
+  -o-transition:opacity .5s;
+  transition:opacity .5s;
+  opacity:1
+}
+

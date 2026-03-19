@@ -116,7 +116,7 @@ function backup_migrate_temp_directory() {
  * Return a list of backup filetypes.
  */
 function _backup_migrate_filetypes() {
-  backup_migrate_include('filters');
+  require_once dirname(__FILE__) . '/filters.inc';
 
   $out = backup_migrate_filters_file_types();
 
@@ -202,6 +202,7 @@ class backup_file {
   public $path = "";
   public $name = "";
   public $handle = NULL;
+  public $destination = "";
 
   /**
    * Construct a file object given a file path, or create a temp file for writing.
@@ -325,21 +326,30 @@ class backup_file {
    * Can this file be used to backup to.
    */
   public function can_backup() {
-    return @$this->type['backup'];
+    if (!empty($this->type)) {
+      return $this->type['backup'];
+    }
+    return FALSE;
   }
 
   /**
    * Can this file be used to restore to.
    */
   public function can_restore() {
-    return @$this->type['restore'];
+    if (!empty($this->type)) {
+      return $this->type['restore'];
+    }
+    return FALSE;
   }
 
   /**
    * Can this file be used to restore to.
    */
   public function is_recognized_type() {
-    return @$this->type['restore'] || @$this->type['backup'];
+    if (!empty($this->type)) {
+      return $this->type['restore'] || $this->type['backup'];
+    }
+    return FALSE;
   }
 
   /**
@@ -517,7 +527,9 @@ class backup_file {
   function set_file_info($file_info) {
     $this->file_info = $file_info;
 
-    $this->ext = explode('.', @$this->file_info['filename']);
+    if (!empty($this->file_info['filename'])) {
+      $this->ext = explode('.', $this->file_info['filename']);
+    }
     // Remove the underscores added to file extensions by Drupal's upload security.
     foreach ($this->ext as $key => $val) {
       $this->ext[$key] = trim($val, '_');

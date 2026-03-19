@@ -56,7 +56,7 @@ class geofield_handler_field extends views_handler_field_numeric {
       '#default_value' => $this->options['source'],
       '#attached' => array(
         'js' => array(
-          drupal_get_path('module', 'geofield') . '/js/viewsProximityValue.js',
+          backdrop_get_path('module', 'geofield') . '/js/viewsProximityValue.js',
         ),
       ),
     );

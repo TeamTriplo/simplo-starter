@@ -1,0 +1,9 @@
+[AddanotherTestCase]
+name = 'Add another'
+description = 'Ensure that the Add another functionality works correctly'
+group = 'Add another'
+file=addanother.test
+; Added by Backdrop CMS packaging script on 2015-11-09
+project = addanother
+version = 1.x-1.0.2
+timestamp = 1447062359

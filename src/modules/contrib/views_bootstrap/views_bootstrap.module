@@ -4,7 +4,43 @@
  * Bootstrap integration.
  */
 
-define('VIEWS_BOOTSTRAP_ASSETS_VERSION', '3.3.6');
+/**
+ * Implements hook_menu().
+ */
+function views_bootstrap_menu() {
+  $items['admin/config/user-interface/views_bootstrap'] = array(
+    'title' => 'Views Bootstrap',
+    'description' => 'Administer Views Bootstrap settings',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('views_bootstrap_settings'),
+    'access arguments' => array('access views_bootstrap settings'),
+    'file' => 'views_bootstrap.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function views_bootstrap_permission() {
+  return array(
+    'access views_bootstrap settings' => array(
+      'title' => t('Access Views Bootstrap settings'),
+      'description' => t('Access Views Bootstrap settings.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function views_bootstrap_views_api() {
+  return array(
+    'api' => '3.0',
+    'path' => backdrop_get_path('module', 'views_bootstrap'),
+    'template_path' => backdrop_get_path('module', 'views_bootstrap'),
+  );
+}
 
 /**
  * Implements hook_config_info().
@@ -25,9 +61,11 @@ function views_bootstrap_autoload_info() {
     'views_bootstrap_accordion_plugin_style' => 'plugins/accordion/views_bootstrap_accordion_plugin_style.inc',
     'views_bootstrap_carousel_plugin_rows' => 'plugins/carousel/views_bootstrap_carousel_plugin_rows.inc',
     'views_bootstrap_carousel_plugin_style' => 'plugins/carousel/views_bootstrap_carousel_plugin_style.inc',
+    'views_bootstrap_dropdown_plugin_style' => 'plugins/dropdown/views_bootstrap_dropdown_plugin_style.inc',
     'views_bootstrap_grid_plugin_style' => 'plugins/grid/views_bootstrap_grid_plugin_style.inc',
     'views_bootstrap_list_group_plugin_style' => 'plugins/list_group/views_bootstrap_list_group_plugin_style.inc',
     'views_bootstrap_media_plugin_style' => 'plugins/media/views_bootstrap_media_plugin_style.inc',
+    'views_bootstrap_panel_plugin_style' => 'plugins/panel/views_bootstrap_panel_plugin_style.inc',
     'views_bootstrap_tab_plugin_style' => 'plugins/tab/views_bootstrap_tab_plugin_style.inc',
     'views_bootstrap_table_plugin_style' => 'plugins/table/views_bootstrap_table_plugin_style.inc',
     'views_bootstrap_thumbnail_plugin_rows' => 'plugins/thumbnail/views_bootstrap_thumbnail_plugin_rows.inc',
@@ -36,69 +74,37 @@ function views_bootstrap_autoload_info() {
 }
 
 /**
- * Implements hook_views_api()
- */
-function views_bootstrap_views_api() {
-  return array(
-    'api' => '3.0',
-    'path' => backdrop_get_path('module', 'views_bootstrap'),
-    'template_path' => backdrop_get_path('module', 'views_bootstrap'),
-  );
-}
-
- /**
- * Implements hook_menu().
- */
-function views_bootstrap_menu() {
-  $items = array();
-
-  $items['admin/config/user-interface/views_bootstrap'] = array(
-    'title' => 'Views Bootstrap',
-    'description' => 'Administer Views Bootstrap settings',
-    'page callback' => 'backdrop_get_form',
-    'page arguments' => array('views_bootstrap_settings'),
-    'access arguments' => array('access views_bootstrap settings'),
-    'file' => 'views_bootstrap.admin.inc',
-    'type' => MENU_NORMAL_ITEM,
-  );
-
-  return $items;
-}
-
-/**
- * Implements hook_permission().
- */
-function views_bootstrap_permission() {
-  return array(
-    'access views_bootstrap settings' => array(
-      'title' => t('Access Views Bootstrap settings'),
-      'description' => t('Access Views Bootstrap settings.'),
-    ),
-  );
-}
-
-/**
  * Include Bootstrap CSS & JS assets if the site is configured to do so.
  */
 function _views_bootstrap_include_bootstrap_assets() {
   // We only want to include assets if the user says so.
-  $should_include_assets = config_get('views_bootstrap.settings', 'include_bootstrap_assets');
+  $include_bootstrap_assets = config_get('views_bootstrap.settings', 'include_bootstrap_assets');
 
-  if (($should_include_assets)) {
-    $version = VIEWS_BOOTSTRAP_ASSETS_VERSION;
+  $module_path = backdrop_get_path('module', 'views_bootstrap');
 
-    backdrop_add_css("https://maxcdn.bootstrapcdn.com/bootstrap/{$version}/css/bootstrap.min.css", array(
+  if (($include_bootstrap_assets)) {
+    $version = config_get('views_bootstrap.settings', 'bootstrap_version');
+    if ($version == 'module') {
+      $bootstrap_css = $module_path . '/css/bootstrap.3.4.1.min.css';
+      $bootstrap_js = $module_path . '/js/bootstrap.3.4.1.min.js';
+    }
+    else {
+      $cdn = 'https://maxcdn.bootstrapcdn.com/bootstrap/' . $version;
+      $bootstrap_css = $cdn . '/css/bootstrap.min.css';
+      $bootstrap_js = $cdn . '/js/bootstrap.min.js';
+    }
+    backdrop_add_css($bootstrap_css, array(
       'type' => 'external',
       'preprocess' => FALSE,
       // Load very early so that it's very easy for other CSS to override it.
       'group' => CSS_SYSTEM,
       'weight' => -1000,
     ));
-    backdrop_add_css( backdrop_get_path('module', 'views_bootstrap') . '/css/views_bootstrap.css', array(
+    backdrop_add_css($module_path . '/css/views_bootstrap.css', array(
       'type' => 'file',
       'preprocess' => TRUE,
     ));
-    backdrop_add_js("https://maxcdn.bootstrapcdn.com/bootstrap/{$version}/js/bootstrap.min.js", array(
+    backdrop_add_js($bootstrap_js, array(
       'type' => 'external',
       'scope' => 'footer',
       'preprocess' => FALSE,
@@ -107,61 +113,161 @@ function _views_bootstrap_include_bootstrap_assets() {
 }
 
 /**
- * Split items by rows and columns.
- * - Stolen from Drupal 8 template_preprocess_views_view_grid().
+ * Distribute items in rows/columns as required for horizontal alignment.
  *
- * @param $vars
- * @param $columns
- * @param bool $horizontal
+ * @param array $rows
+ *   The rendered views result rows.
+ * @param int $nb_columns
+ *   The desired number of columns per row.
  *
  * @return array
- *
- * @TODO: Use array_chunk().
+ *   A multi-dimensional array with the calculated rows and columns.
  */
-function _views_bootstrap_split_rows($vars, $columns, $horizontal = TRUE) {
+function _views_bootstrap_split_rows_horizontal(array $rows, $nb_columns) {
   $col = 0;
   $row = 0;
   $items = array();
-  $remainders = count($vars['rows']) % $columns;
-  $num_rows = floor(count($vars['rows']) / $columns);
 
   // Iterate over each rendered views result row.
-  foreach ($vars['rows'] as $item) {
-
+  foreach ($rows as $item) {
     // Add the item.
-    if ($horizontal) {
-      $items[$row]['content'][$col]['content'] = $item;
-    }
-    else {
-      $items[$col]['content'][$row]['content'] = $item;
-    }
+    $items[$row]['content'][$col]['content'] = $item;
 
-    // Increase, decrease or reset appropriate integers.
-    if ($horizontal) {
-      if ($col == 0 && $col != ($columns - 1)) {
-        $col++;
-      }
-      elseif ($col >= ($columns - 1)) {
-        $col = 0;
-        $row++;
-      }
-      else {
-        $col++;
-      }
-    }
-    else {
+    // If we've reached the maximum number of columns per row, reset the column
+    // index and proceed to the next row.
+    if ($col == ($nb_columns - 1)) {
+      $col = 0;
       $row++;
-      if (!$remainders && $row == $num_rows) {
-        $row = 0;
-        $col++;
-      }
-      elseif ($remainders && $row == $num_rows + 1) {
-        $row = 0;
-        $col++;
-        $remainders--;
-      }
+    }
+    // Otherwise, proceed to the next column.
+    else {
+      $col++;
     }
   }
 
   return $items;
+}
+
+/**
+ * Distribute items in columns as required for vertical alignment.
+ *
+ * @param array $rows
+ *   The rendered views result rows.
+ * @param int $nb_columns
+ *   The desired number of columns per row.
+ *
+ * @return array
+ *   A multi-dimensional array with the calculated columns.
+ */
+function _views_bootstrap_split_rows_vertical(array $rows, $nb_columns) {
+  $col = 0;
+  $row = 0;
+  $items = array();
+  $remainders = count($rows) % $nb_columns;
+  $num_rows = floor(count($rows) / $nb_columns);
+
+  // Iterate over each rendered views result row.
+  foreach ($rows as $item) {
+    // Add the item.
+    $items[$col]['content'][$row]['content'] = $item;
+
+    // Increase, decrease or reset appropriate integers.
+    $row++;
+    if (!$remainders && $row == $num_rows) {
+      $row = 0;
+      $col++;
+    }
+    elseif ($remainders && $row == $num_rows + 1) {
+      $row = 0;
+      $col++;
+      $remainders--;
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * View preprocessing that prepares the results as a Bootstrap grid.
+ *
+ * Depending on the options selected on the style plugin handler, this function
+ * distributes the results into rows and columns, calculates where clearfix divs
+ * should be added (if applicable), and prepares the bootstrap classes that
+ * should be added to each column.
+ *
+ * Used by the Bootstrap Grid and Bootstrap Thumbnail plugins.
+ *
+ * @see template_preprocess_views_bootstrap_grid_plugin_style()
+ * @see template_preprocess_views_bootstrap_thumbnail_plugin_style()
+ */
+function _views_bootstrap_preprocess_views_style_plugin_prepare_grid(&$vars) {
+  $options = $vars['view']->style_plugin->options;
+
+  // Prepare column css classes. Add the class for each device size if set and if
+  // different than 0 ("Do not define" option).
+  $col_classes = explode(' ', $options['column_class']);
+  foreach (array('xs', 'sm', 'md', 'lg') as $size) {
+    if (!empty($options["columns_$size"])) {
+      $col_classes[] = 'col-' . $size . '-' . $options["columns_$size"];
+    }
+  }
+  $vars['col_classes'] = implode(' ', $col_classes);
+
+  if ($options['alignment'] === 'horizontal') {
+    _views_bootstrap_preprocess_views_style_plugin_prepare_grid_horizontal($vars);
+    return;
+  }
+
+  _views_bootstrap_preprocess_views_style_plugin_prepare_grid_vertical($vars);
+}
+
+/**
+ * Further preprocessing for horizontal alignment.
+ *
+ * @see _views_bootstrap_preprocess_views_style_plugin_prepare_grid()
+ */
+function _views_bootstrap_preprocess_views_style_plugin_prepare_grid_horizontal(&$vars) {
+  $options = $vars['view']->style_plugin->options;
+
+  // If columns are set to 0 (Auto), apply the maximum from the number of columns
+  // defined per device size.
+  if (!$options['columns_horizontal']) {
+    $options['columns_horizontal'] = 1;
+    foreach (array('xs', 'sm', 'md', 'lg') as $size) {
+      if (isset($options["columns_$size"]) && $options["columns_$size"] > 0) {
+        $tmpColumns = 12 / $options["columns_$size"];
+        if ($tmpColumns > $options['columns_horizontal']) {
+          $options['columns_horizontal'] = $tmpColumns;
+        }
+      }
+    }
+  }
+
+  // Distribute items in rows and columns.
+  $vars['items'] = _views_bootstrap_split_rows_horizontal($vars['rows'], $options['columns_horizontal']);
+
+  // If the number of columns is set to -1 ("Single row" option), calculate the
+  // number of columns after which the clearfix divs should be placed for each
+  // screen size. No clearfix is necessary for large screens (lg) and when the
+  // size of the column is 12 (full row).
+  if ($options['columns_horizontal'] == -1) {
+    $vars['clearfix'] = array();
+    foreach (array('xs', 'sm', 'md', 'lg') as $size) {
+      if (!empty($options["columns_$size"]) && $options["columns_$size"] != 12) {
+        $vars['clearfix'][$size] = 12 / $options["columns_$size"];
+      }
+    }
+  }
+}
+
+/**
+ * Further preprocessing for vertical alignment.
+ *
+ * @see _views_bootstrap_preprocess_views_style_plugin_prepare_grid()
+ */
+function _views_bootstrap_preprocess_views_style_plugin_prepare_grid_vertical(&$vars) {
+  $options = $vars['view']->style_plugin->options;
+
+  // Distribute items in rows and columns.
+  $vars['items'] = _views_bootstrap_split_rows_vertical($vars['rows'], $options['columns_vertical']);
 }

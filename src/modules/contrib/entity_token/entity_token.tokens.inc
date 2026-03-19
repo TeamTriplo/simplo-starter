@@ -402,7 +402,7 @@ function entity_token_tokens($type, $tokens, array $data = array(), array $optio
     $chained_token_names = array();
     foreach ($tokens as $name => $original) {
       $property_name = str_replace('-', '_', $name);
-      if (!empty($token_info['tokens'][$type][$property_name]['entity-token'])) {;
+      if (!empty($token_info['tokens'][$type][$property_name]['entity-token'])) {
         try {
           if (isset($wrapper->$property_name)) {
             $replacement = _entity_token_get_token($wrapper->$name, $options);
@@ -422,11 +422,11 @@ function entity_token_tokens($type, $tokens, array $data = array(), array $optio
         $property_name = str_replace('-', '_', $name_parts[0]);
         if (!empty($property_name) && isset($wrapper->{$property_name}) ) {
           // Collect the name of the property
-          $chained_token_names[$name_parts[0]] = TRUE;
+          $chained_token_names[$name_parts[0]] = $property_name;
         }
       }
     }
-    foreach (array_keys($chained_token_names) as $token_name) {
+    foreach ($chained_token_names as $token_name => $property_name) {
       $chained_tokens = token_find_with_prefix($tokens, $token_name);
       if (isset($wrapper->$property_name)) {
         $replacements += token_generate('wrapped-field', $chained_tokens, array('wrapped-field' => $wrapper->$property_name), $options);

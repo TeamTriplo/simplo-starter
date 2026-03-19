@@ -27,6 +27,7 @@ function system_menu_block_defaults($menu_name) {
     'expand_all' => FALSE,
     'clickdown' => FALSE,
     'collapse' => 'default',
+    'toggle_text' => 'Menu',
   );
   if ($menu_name == 'main-menu') {
     $defaults['depth'] = 1;
@@ -121,11 +122,17 @@ function system_menu_block_form($config) {
       ),
     ),
   );
+  if (!isset($config['clickdown']) || !$config['clickdown']) {
+    $config['clickdown'] = 0;
+  }
   $form['clickdown'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Use a click to open, instead of a hover'),
+    '#type' => 'radios',
+    '#title' => t('Dropdown menu trigger'),
+    '#options' => array(
+      0 => t('Open menu with touch or hover'),
+      1 => t('Open menu with touch or click'),
+    ),
     '#default_value' => $config['clickdown'],
-    '#description' => t('Menus that don\'t appear or disappear on hover can be better for usability in some cases.'),
     '#states' => array(
       'visible' => array(
         'select[name="block_settings[style]"]' => array('value' => 'dropdown'),
@@ -145,6 +152,21 @@ function system_menu_block_form($config) {
     '#description' => t('On devices with small screens, this option reduces the menu to a toggle button, commonly known as <a href="https://en.wikipedia.org/wiki/Hamburger_button" target="_blank"><em>hamburger button</em></a>. Clicking the icon reveals or hides the menu, saving screen space. The breakpoint for small screens can be configured in the global !menu_settings.', array(
       '!menu_settings' => $link,
     )),
+  );
+  $toggle_text_default = system_menu_block_defaults($config['menu_name'])['toggle_text'];
+  $form['toggle_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Toggle button text'),
+    '#default_value' => $config['toggle_text'],
+    '#description' => t('Text to display beside the toggle button. Default: %toggle_text.', array(
+      '%toggle_text' => $toggle_text_default,
+    )),
+    '#indentation' => 1,
+    '#states' => array(
+      'visible' => array(
+        'input[name="block_settings[toggle]"]' => array('checked' => TRUE),
+      ),
+    ),
   );
   $form['collapse'] = array(
     '#type' => 'radios',
@@ -246,16 +268,30 @@ function system_menu_block_build(array $config) {
         $collapsible_behavior = (empty($config['collapse'])) ? 'default' : $config['collapse'];
       }
       $data['content']['#wrapper_attributes']['data-collapse'] = $collapsible_behavior;
-      $data['content']['#attached']['library'][] = array('system', 'backdrop.menus');
+      $data['content']['#attached']['library'][] = array(
+        'system',
+        'backdrop.menus',
+      );
       if ($config['style'] === 'dropdown') {
-        $data['content']['#attached']['library'][] = array('system', 'smartmenus');
+        $data['content']['#attached']['library'][] = array(
+          'system',
+          'smartmenus',
+        );
       }
     }
     if (!empty($config['toggle']) && $config['toggle'] == TRUE) {
       $id = backdrop_html_id('menu-toggle-state');
       $data['content']['#wrapper_attributes']['data-menu-toggle-id'] = $id;
-      $data['content']['#prefix'] = theme('menu_toggle', array('enabled' => $config['toggle'], 'id' => $id, 'text' => t('Menu')));
-      $data['content']['#attached']['library'][] = array('system', 'backdrop.menu-toggle');
+      $data['content']['#prefix'] = theme('menu_toggle', array(
+        'enabled' => $config['toggle'],
+        'id' => $id,
+        // Allow the user-entered menu toggle text to be translated.
+        'text' => t(trim($config['toggle_text'])),
+      ));
+      $data['content']['#attached']['library'][] = array(
+        'system',
+        'backdrop.menu-toggle',
+      );
     }
     if (!empty($config['style_settings'])) {
       $data['content']['#wrapper_attributes']['data-menu-style'] = backdrop_json_encode($config['style_settings']);
@@ -269,7 +305,7 @@ function system_menu_block_build(array $config) {
  * Gets the data structure representing a menu tree for the given configuration.
  *
  * @param array $config
- *   See the $config param of menu_tree_build().
+ *   See the $config param of system_menu_block_build().
  *
  * @return array
  */
@@ -334,10 +370,10 @@ function system_menu_tree_block_data(array &$config) {
  *   The menu tree to prune.
  * @param int $level
  *   The level of the original tree that will start the pruned tree.
- * @param array $parent_item
+ * @param array|null $parent_item
  *   The menu item that should be used as the root of the tree.
  */
-function system_menu_tree_prune_tree(array &$tree, $level, array $parent_item = NULL) {
+function system_menu_tree_prune_tree(array &$tree, $level, ?array $parent_item = NULL) {
   if (!empty($parent_item)) {
     // Prune the tree along the path to the menu item.
     for ($i = 1; $i <= MENU_MAX_DEPTH && $parent_item["p$i"] != '0'; $i++) {

@@ -33,7 +33,8 @@ https://github.com/backdrop-contrib/css_injector/issues
 Current Maintainers
 -------------------
 
-- Vincent Stemen (https://github.com/vstemen)
+- [Vincent Stemen](https://github.com/vstemen)
+- [klonos](https://github.com/klonos)
 
 Credits
 -------

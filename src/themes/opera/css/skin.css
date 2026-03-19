@@ -51,11 +51,6 @@ td {
   border-color: #dee2ea;
 }
 
-th {
-  border-right-color: #bbbbbb;
-  background: #dee2ea;
-}
-
 th:last-child {
   border-right-color: #dee2ea;
 }

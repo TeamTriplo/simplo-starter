@@ -25,7 +25,6 @@
   };
 
   Backdrop.ajax.prototype.commands.viewsShowButtons = function (ajax, response, status) {
-    $('div.views-edit-view div.form-actions').removeClass('js-hide');
     $('div.views-edit-view div.view-changed.messages').removeClass('js-hide');
   };
 
@@ -57,7 +56,7 @@
    */
   Backdrop.theme.tableDragChangedWarning = function () {
     return [];
-  }
+  };
 
   /**
    * Trigger preview when the "live preview" checkbox is checked.
@@ -70,7 +69,7 @@
         }
       });
     }
-  }
+  };
 
   /**
    * Sync preview display.

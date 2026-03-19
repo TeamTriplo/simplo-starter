@@ -1,4 +1,5 @@
 {
     "_config_name": "views_bootstrap.settings",
-    "include_bootstrap_assets": false
+    "include_bootstrap_assets": false,
+    "bootstrap_version": "3.4.1"
 }

@@ -1,13 +1,13 @@
 <?php
-
 namespace Flow\JSONPath\Test;
 
 require_once __DIR__ . "/../vendor/autoload.php";
 
 use Flow\JSONPath\JSONPath;
-use PHPUnit\Framework\TestCase;
+use Flow\JSONPath\JSONPathLexer;
+use \Peekmo\JsonPath\JsonPath as PeekmoJsonPath;
 
-class JSONPathTest extends TestCase
+class JSONPathTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
@@ -38,105 +38,45 @@ class JSONPathTest extends TestCase
         $this->assertEquals(['Sayings of the Century', 'Sword of Honour', 'Moby Dick', 'The Lord of the Rings'], $result->data());
     }
 
-    /**
-     * Positive end indexes
-     * $[0:2]
-     */
-    public function testFilterSlice_PositiveEndIndexes()
+    public function testFilterSliceB()
     {
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[0:0]");
-        $this->assertEquals([], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[0:1]");
-        $this->assertEquals(["first"], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[0:2]");
-        $this->assertEquals(["first", "second"], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[:2]");
-        $this->assertEquals(["first", "second"], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[1:2]");
-        $this->assertEquals(["second"], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[0:3:1]");
-        $this->assertEquals(["first", "second","third"], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[0:3:0]");
-        $this->assertEquals(["first", "second","third"], $result->data());
+        // Fetch every second item starting with the first index (odd items)
+        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$['store']['books'][1::2].title");
+        $this->assertEquals(['Sword of Honour', 'The Lord of the Rings'], $result->data());
     }
 
-    public function testFilterSlice_NegativeStartIndexes()
+    public function testFilterSliceC()
     {
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[-2:]");
-        $this->assertEquals(["fourth", "fifth"], $result->data());
+        // Fetch up to the second index
+        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$['store']['books'][0:2:1].title");
+        $this->assertEquals(['Sayings of the Century', 'Sword of Honour', 'Moby Dick'], $result->data());
+    }
 
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[-1:]");
-        $this->assertEquals(["fifth"], $result->data());
+    public function testFilterSliceD()
+    {
+        // Fetch up to the second index
+        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$['store']['books'][-1:].title");
+        $this->assertEquals(['The Lord of the Rings'], $result->data());
     }
 
     /**
-     * Negative end indexes
-     * $[:-2]
+     * Everything except the last 2 items
      */
-    public function testFilterSlice_NegativeEndIndexes()
+    public function testFilterSliceE()
     {
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[:-2]");
-        $this->assertEquals(["first", "second", "third"], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[0:-2]");
-        $this->assertEquals(["first", "second", "third"], $result->data());
+        // Fetch up to the second index
+        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$['store']['books'][:-2].title");
+        $this->assertEquals(['Sayings of the Century', 'Sword of Honour'], $result->data());
     }
-
-    /**
-     * Negative end indexes
-     * $[:-2]
-     */
-    public function testFilterSlice_NegativeStartAndEndIndexes()
-    {
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[-2:-1]");
-        $this->assertEquals(["fourth"], $result->data());
-
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[-4:-2]");
-        $this->assertEquals(["second", "third"], $result->data());
-    }
-
-    /**
-     * Negative end indexes
-     * $[:-2]
-     */
-    public function testFilterSlice_NegativeStartAndPositiveEnd()
-    {
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[-2:2]");
-        $this->assertEquals([], $result->data());
-    }
-
-    public function testFilterSlice_StepBy2()
-    {
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[0:4:2]");
-        $this->assertEquals(["first", "third"], $result->data());
-    }
-
 
     /**
      * The Last item
-     * $[-1]
      */
-    public function testFilterLastIndex()
-    {
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[-1]");
-        $this->assertEquals(["fifth"], $result->data());
-    }
-
-    /**
-     * Array index slice only end
-     * $[:2]
-     */
-    public function testFilterSliceG()
+    public function testFilterSliceF()
     {
         // Fetch up to the second index
-        $result = (new JSONPath(["first", "second", "third", "fourth", "fifth"]))->find("$[:2]");
-        $this->assertEquals(["first", "second"], $result->data());
+        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$['store']['books'][-1].title");
+        $this->assertEquals(['The Lord of the Rings'], $result->data());
     }
 
     /**
@@ -307,9 +247,9 @@ class JSONPathTest extends TestCase
      */
     public function testSimpleArrayAccess()
     {
-        $result = (new JSONPath(['title' => 'test title']))->find('title');
+        $result = (new JSONPath(array('title' => 'test title')))->find('title');
 
-        $this->assertEquals(['test title'], $result->data());
+        $this->assertEquals(array('test title'), $result->data());
     }
 
     public function testFilteringOnNoneArrays()
@@ -340,7 +280,7 @@ class JSONPathTest extends TestCase
     public function testQueryMatchWithRecursive()
     {
         $locations = $this->exampleDataLocations();
-        $result    = (new JSONPath($locations))->find("..[?(@.type == 'suburb')].name");
+        $result = (new JSONPath($locations))->find("..[?(@.type == 'suburb')].name");
         $this->assertEquals(["Rosebank"], $result->data());
     }
 
@@ -369,25 +309,14 @@ class JSONPathTest extends TestCase
         );
     }
 
-    public function testCyrillicText()
-    {
-        $result = (new JSONPath(["трололо" => 1]))->find("$['трололо']");
-
-        $this->assertEquals([1], $result->data());
-
-        $result = (new JSONPath(["трололо" => 1]))->find("$.трололо");
-
-        $this->assertEquals([1], $result->data());
-    }
-
     public function testOffsetUnset()
     {
-        $data = [
-            "route" => [
-                ["name" => "A", "type" => "type of A"],
-                ["name" => "B", "type" => "type of B"],
-            ],
-        ];
+        $data = array(
+            "route" => array(
+                array("name" => "A", "type" => "type of A"),
+                array("name" => "B", "type" => "type of B")
+            )
+        );
         $data = json_encode($data);
 
         $jsonIterator = new JSONPath(json_decode($data));
@@ -413,7 +342,7 @@ class JSONPathTest extends TestCase
         $this->assertEquals('a', $firstKey);
 
         // Array test for object
-        $jsonPath = new JSONPath((object)['a' => 'A', 'b', 'B']);
+        $jsonPath = new JSONPath((object) ['a' => 'A', 'b', 'B']);
 
         $firstKey = $jsonPath->firstKey();
 
@@ -430,7 +359,7 @@ class JSONPathTest extends TestCase
         $this->assertEquals('c', $lastKey);
 
         // Array test for object
-        $jsonPath = new JSONPath((object)['a' => 'A', 'b' => 'B', 'c' => 'C']);
+        $jsonPath = new JSONPath((object) ['a' => 'A', 'b' => 'B', 'c' => 'C']);
 
         $lastKey = $jsonPath->lastKey();
 
@@ -615,12 +544,13 @@ class JSONPathTest extends TestCase
     }
 
 
+
 }
 
 class JSONPathTestClass
 {
     protected $attributes = [
-        'foo' => 'bar',
+        'foo' => 'bar'
     ];
 
     public function __get($key)

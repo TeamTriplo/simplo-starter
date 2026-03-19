@@ -4,9 +4,14 @@ backdrop = 1.x
 package = Views
 type = module
 dependencies[] = views
+dependencies[] = image
+maintainers[korontari] = Pavel
 configure = admin/config/media/mosaic_grid
+tags[] = Images
+tags[] = Media
+tags[] = Structure
 
-; Added by Backdrop CMS packaging script on 2022-01-04
+; Added by Backdrop CMS packaging script on 2025-01-15
 project = mosaic_grid
-version = 1.x-2.1.5
-timestamp = 1641305813
+version = 1.x-2.2.2
+timestamp = 1736942189

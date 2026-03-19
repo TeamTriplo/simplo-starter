@@ -1,9 +1,9 @@
 (function($) {
 
   /**
-   * Add syntext highlighter for textarea.
+   * Add syntax highlighter for textarea.
    */
-  Drupal.behaviors.slideUpDown = {
+  Backdrop.behaviors.slideUpDown = {
     attach: function(context, settings) {
       $('body').addClass('has-js');
       var editor = ace.edit("editor");

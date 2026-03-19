@@ -10,6 +10,13 @@ html {
     border-radius: inherit;
 }
 
+/* Restore Views display labels which are overridden by Bootstrap. */
 .views-displays .label {
-    color: #666666;
+    color: #000;
+    font-size: 14px;
+    font-weight: normal;
+    margin: 0 0px 0 0;
+    padding-left: 0;
+    padding-right: 0;
+    border: none;
 }

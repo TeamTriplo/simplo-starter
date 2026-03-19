@@ -159,7 +159,7 @@ class views_handler_field extends views_handler {
   }
 
   /**
-   * Called to determine what to tell the clicksorter.
+   * Called to determine what to tell the click sorter.
    */
   function click_sort($order) {
     if (isset($this->field_alias)) {
@@ -474,6 +474,7 @@ class views_handler_field extends views_handler {
       '#type' => 'textfield',
       '#title' => t('Label'),
       '#default_value' => $label,
+      '#indentation' => 1,
       '#states' => array(
         'visible' => array(
           ':input[name="options[custom_label]"]' => array('checked' => TRUE),
@@ -486,6 +487,7 @@ class views_handler_field extends views_handler {
       '#type' => 'checkbox',
       '#title' => t('Place a colon after the label'),
       '#default_value' => $this->options['element_label_colon'],
+      '#indentation' => 1,
       '#states' => array(
         'visible' => array(
           ':input[name="options[custom_label]"]' => array('checked' => TRUE),
@@ -1487,7 +1489,10 @@ If you would like to have the characters \'[\' and \']\' please use the html ent
     }
 
     // Store the tokens for the row so we can reference them later if necessary.
-    $this->view->style_plugin->render_tokens[$this->view->row_index] = $tokens;
+    // Skip over formulas for which the row_index is null.
+    if ($row_index = $this->view->row_index) {
+      $this->view->style_plugin->render_tokens[$row_index] = $tokens;
+    }
     $this->last_tokens = $tokens;
 
     return $tokens;

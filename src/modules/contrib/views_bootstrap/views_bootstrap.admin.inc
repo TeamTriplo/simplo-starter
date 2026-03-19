@@ -1,41 +1,49 @@
 <?php
-
 /**
  * @file
  * Contains the administration pages for views_bootstrap.
  *
  */
-function views_bootstrap_settings($form_state) {
-  $form = array();
+function views_bootstrap_settings($form, &$form_state) {
+  $form['#config'] = 'views_bootstrap.settings';
+  $config = config('views_bootstrap.settings');
   $form['bootstrap_assets'] = array(
     '#type' => 'fieldset',
     '#title' => t('Bootstrap Assets'),
-    '#description' => t('Bootstrap version this setting provides: %version', array('%version' => VIEWS_BOOTSTRAP_ASSETS_VERSION)),
-    'include_bootstrap_assets' => array(
-      '#type' => 'checkbox',
-      '#title' => t('Include Bootstrap CSS & JS when used by Views'),
-      '#default_value' => config_get('views_bootstrap.settings', 'include_bootstrap_assets'),
-      '#description' => t('If your site does not use a Bootstrap based theme, then you will need to select this option for this module to work correctly. If your site theme includes Bootstrap assets, then this setting should be disabled (unchecked).'),
+  );
+
+  $form['bootstrap_assets']['include_bootstrap_assets'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include Bootstrap CSS & JS when used by Views'),
+    '#default_value' => $config->get('include_bootstrap_assets'),
+    '#description' => t('Select this option if your site does not use a Bootstrap based theme; it will include the necessary Bootstrap libraries for Views using Views Bootstrap settings. If your site theme already includes Bootstrap assets, then this setting should be disabled (unchecked) to prevent including multiple (and possibly incompatible) Bootstrap libraries.'),
+  );
+
+  $form['bootstrap_assets']['bootstrap_version'] = array(
+    '#type' => 'select',
+    '#title' => t('Version'),
+    '#description' => t('Select the version of Bootstrap to use from the Bootstrap CDN or you can use the library integrated within the module.'),
+    '#options' => views_bootstrap_version_options(),
+    '#default_value' => $config->get('bootstrap_version'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="include_bootstrap_assets"]' => array('checked' => TRUE),
+      ),
     ),
   );
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-  );
-  return $form;
+
+  return system_settings_form($form);
 }
 
 /**
- * Submit handler for module_settings_form().
+ * Returns an array of supported Bootstrap versions.
  */
-function views_bootstrap_settings_submit($form, &$form_state) {
-    $config = config('views_bootstrap.settings');
-    foreach ($form_state['values'] as $key => $value)
-    {
-      $config->set($key, $value);
-    }
-
-    $config->save();
-    backdrop_set_message(t('The configuration options have been saved.'));
+function views_bootstrap_version_options() {
+  return array(
+    '3.3.6' => '3.3.6 (CDN)',
+    '3.3.7' => '3.3.7 (CDN)',
+    '3.4.0' => '3.4.0 (CDN)',
+    '3.4.1' => '3.4.1 (CDN)',
+    'module' => '3.4.1 (module)',
+  );
 }

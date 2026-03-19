@@ -5,7 +5,7 @@ Adds the Matomo tracking system to your website.
 [Matomo](https://matomo.org/) is an Open Source analytics tool to track
 website traffic.
 
-This module is compatible with Matomo 3.x and 4.x.
+This module is compatible with Matomo 3.x, 4.x and 5.x.
 
 ## Requirements
 

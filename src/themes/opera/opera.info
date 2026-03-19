@@ -25,14 +25,22 @@ stylesheets[all][] = css/component/progress.css
 stylesheets[all][] = css/component/admin-tabs.css
 stylesheets[all][] = css/component/breadcrumb.css
 stylesheets[all][] = css/component/pager.css
+stylesheets[all][] = css/component/profile.css
 stylesheets[all][] = css/component/hero.css
 stylesheets[all][] = css/component/teasers.css
 stylesheets[all][] = css/component/comment.css
+stylesheets[all][] = css/component/cards.css
 stylesheets[all][] = css/component/caption.css
 stylesheets[all][] = css/component/opera-views.css
 stylesheets[all][] = css/component/book.css
 stylesheets[all][] = css/component/recipes.css
 stylesheets[all][] = css/opera-component-colors.css
+
+; Remove unwanted core CSS
+stylesheets[all][] = system.theme.css
+stylesheets[all][] = menu-dropdown.theme.css
+stylesheets[all][] = menu-dropdown.theme.breakpoint.css
+stylesheets[all][] = menu-dropdown.theme.breakpoint-queries.css
 
 ; Custom for this theme
 
@@ -40,9 +48,6 @@ stylesheets[all][] = css/block.css
 stylesheets[all][] = css/front.css
 stylesheets[all][] = css/opera-variables.css
 stylesheets[all][] = css/utility.css
-
-; Remove unwanted core CSS
-stylesheets[all][] = system.theme.css
 
 ; Add theme JS files
 scripts[] = js/scripts.js
@@ -101,3 +106,57 @@ utility_css[color][] = 'opera-bg3-yellow'
 utility_css[alignment][] = 'text-align-center'
 utility_css[alignment][] = 'text-align-right'
 utility_css[alignment][] = 'text-align-left'
+
+utility_css[margin][] = 'm-10'
+utility_css[margin][] = 'm-20'
+utility_css[margin][] = 'm-30'
+utility_css[margin][] = 'mb-20'
+utility_css[margin][] = 'mb-30'
+utility_css[margin][] = 'mb-50'
+utility_css[margin][] = 'mt-20'
+utility_css[margin][] = 'mt-30'
+utility_css[margin][] = 'mt-50'
+
+utility_css[padding][] = 'p-10'
+utility_css[padding][] = 'p-20'
+utility_css[padding][] = 'p-30'
+utility_css[padding][] = 'pt-20'
+utility_css[padding][] = 'pt-30'
+utility_css[padding][] = 'pt-50'
+utility_css[padding][] = 'pb-20'
+utility_css[padding][] = 'pb-30'
+utility_css[padding][] = 'pb-50'
+
+utility_css[border][] = 'border'
+utility_css[border][] = 'border-bottom'
+utility_css[border][] = 'border-top'
+utility_css[border][] = 'border-gray'
+utility_css[border][] = 'border-gray-bottom'
+utility_css[border][] = 'border-gray-top'
+
+utility_css[flex][] = 'flex'
+utility_css[flex][] = 'flex-direction-column'
+utility_css[flex][] = 'flex-direction-row'
+utility_css[flex][] = 'space-between'
+utility_css[flex][] = 'gap-20'
+utility_css[flex][] = 'gap-30'
+utility_css[flex][] = 'gap-50'
+utility_css[flex][] = 'flex-basis'
+utility_css[flex][] = 'flex-basis-half'
+utility_css[flex][] = 'flex-basis-200'
+utility_css[flex][] = 'flex-basis-500'
+utility_css[flex][] = 'flex-basis-700'
+
+utility_css[text-ellipses][] = 'text-ellipses-2'
+utility_css[text-ellipses][] = 'text-ellipses-4'
+
+utility_css[text-decoration][] = 'text-decoration-none'
+
+utility_css[display][] = 'd-none'
+utility_css[display][] = 'd-block'
+
+utility_css[column-count][] = 'column-count-2'
+utility_css[column-count][] = 'column-count-3'
+utility_css[column-count][] = 'column-rule'
+utility_css[column-count][] = 'column-gap-50'
+utility_css[column-count][] = 'column-gap-70'

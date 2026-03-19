@@ -28,14 +28,19 @@ class FeedsJSONPathParser extends FeedsParser {
   public function parse(FeedsSource $source, FeedsFetcherResult $fetcher_result) {
     $mappings = $this->getOwnMappings();
     $source_config = $source->getConfigFor($this);
+
     // Allow config inheritance.
     if (empty($source_config)) {
       $source_config = $this->config;
     }
-    $this->debug = array_keys(array_filter($source_config['debug']['options']));
+
+    if (isset($source_config['debug']['options'])) {
+      $this->debug = array_keys(array_filter($source_config['debug']['options']));
+    }
 
     $raw = trim($fetcher_result->getRaw());
     $result = new FeedsParserResult();
+
     // Set link so we can set the result link attribute.
     $fetcher_config = $source->getConfigFor($source->importer->fetcher);
     $result->link = $fetcher_config['source'];

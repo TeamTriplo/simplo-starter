@@ -8,6 +8,7 @@
  * Class to define a row plugin handler.
  */
 class views_bootstrap_thumbnail_plugin_rows extends views_plugin_row {
+
   /**
    * Definition.
    */
@@ -22,7 +23,7 @@ class views_bootstrap_thumbnail_plugin_rows extends views_plugin_row {
   /**
    * Form.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
     // Pre-build all of our option lists for the dials and switches that follow.
@@ -58,4 +59,5 @@ class views_bootstrap_thumbnail_plugin_rows extends views_plugin_row {
       '#default_value' => $this->options['content'],
     );
   }
+
 }

@@ -1,8 +1,8 @@
-ImgAreaSelect (v0.9.11-rc.1)
+ImgAreaSelect (v1.0.0-rc.1)
 ======================
 
-This module is a wrapper for the [ImgAreaSelect library](https://github.com/odyniec/imgareaselect), 
-and you should only need to install it if another module requires it. It does 
+This module is a wrapper for the [ImgAreaSelect library](https://github.com/odyniec/imgareaselect),
+and you should only need to install it if another module requires it. It does
 not provide any new functionality on its own.
 
 Installation
@@ -27,13 +27,13 @@ Bugs and Feature requests should be reported in the [Issue Queue](https://github
 Current Maintainers
 -------------------
 
-- [Laryn Kragt Bakker](https://github.com/laryn/), [CEDC.org](https://CEDC.org) 
+- [Laryn Kragt Bakker](https://github.com/laryn/)
 
 Credits
 -------
 
-- [Laryn Kragt Bakker](https://github.com/laryn/), [CEDC.org](https://CEDC.org) 
-
+- Created for Backdrop by [Laryn Kragt Bakker](https://github.com/laryn/)
+- Initial development was sponsored by [CEDC.org](https://CEDC.org)
 
 License
 -------

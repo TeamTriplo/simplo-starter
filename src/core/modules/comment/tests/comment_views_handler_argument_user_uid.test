@@ -37,11 +37,11 @@ class CommentViewsHandlerArgumentUserUidTest extends ViewsSqlTest {
    *
    * @param object $node
    *   Node to post comment on.
-   * @param array $comment
+   * @param array $comment_parameters
    *   Comment to save.
    */
-  public function postComment($node, $comment = array()) {
-    $comment += array(
+  public function postComment($node, $comment_parameters = array()) {
+    $comment_parameters += array(
       'uid' => $this->loggedInUser->uid,
       'nid' => $node->nid,
       'cid' => NULL,
@@ -49,7 +49,8 @@ class CommentViewsHandlerArgumentUserUidTest extends ViewsSqlTest {
       // zero instead of an empty string.
       'pid' => 0,
     );
-    $comment = entity_create('comment', $comment);
+    /** @var Comment $comment */
+    $comment = entity_create('comment', $comment_parameters);
     return comment_save($comment);
   }
 
@@ -115,8 +116,8 @@ class CommentViewsHandlerArgumentUserUidTest extends ViewsSqlTest {
     $view->api_version = '3.0';
     $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
-    /* Display: Master */
-    $handler = $view->new_display('default', 'Master', 'default');
+    /* Display: Default */
+    $handler = $view->new_display('default', 'Default', 'default');
     $handler->display->display_options['access']['type'] = 'perm';
     $handler->display->display_options['cache']['type'] = 'none';
     $handler->display->display_options['query']['type'] = 'views_query';

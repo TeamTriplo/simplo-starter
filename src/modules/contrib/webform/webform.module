@@ -66,7 +66,7 @@ function webform_menu() {
 
   // Submissions listing.
   $items['admin/content/webform'] = array(
-    'title' => 'Webforms',
+    'title' => 'Manage webforms',
     'page callback' => 'webform_admin_content',
     'access callback' => 'user_access',
     'access arguments' => array('access all webform results'),
@@ -1016,6 +1016,11 @@ function webform_element_info() {
     '#theme' => 'webform_email',
     '#size' => 60,
   );
+  $elements['webform_link'] = array(
+    '#input' => TRUE,
+    '#theme' => 'webform_link',
+    '#size' => 60,
+  );
   $elements['webform_number'] = array(
     '#input' => TRUE,
     '#theme' => 'webform_number',
@@ -1101,6 +1106,25 @@ function webform_webform_component_info() {
         'private' => FALSE,
         'wrapper_classes' => FALSE,
         'css_classes' => FALSE,
+        'conditional_action_set' => TRUE,
+      ),
+    ),
+    'link' => array(
+      'label' => t('Link'),
+      'description' => t('A special textfield that accepts URLs.'),
+      'file' => 'components/link.inc',
+      'features' => array(
+        'email' => TRUE,
+        'email_address' => FALSE,
+        'email_name' => FALSE,
+        'required' => TRUE,
+        'title_display' => TRUE,
+        'title_inline' => TRUE,
+        'conditional' => TRUE,
+        'group' => FALSE,
+        'spam_analysis' => FALSE,
+        'attachment' => FALSE,
+        'placeholder' => TRUE,
         'conditional_action_set' => TRUE,
       ),
     ),
@@ -1392,6 +1416,34 @@ function webform_webform_submission_render_alter(&$renderable) {
 }
 
 /**
+ * Implements hook_webform_token_modifiers_info().
+ */
+function webform_webform_token_modifiers_info() {
+  return array(
+    array(
+      'modifier' => 'label',
+      'component' => 'all',
+      'callback' => 'webform_token_modifier_defaults',
+    ),
+    array(
+      'modifier' => 'withlabel',
+      'component' => 'all',
+      'callback' => 'webform_token_modifier_defaults',
+    ),
+    array(
+      'modifier' => 'nolabel',
+      'component' => 'all',
+      'callback' => 'webform_token_modifier_defaults',
+    ),
+    array(
+      'modifier' => 'key',
+      'component' => 'select',
+      'callback' => 'webform_token_modifier_defaults',
+    ),
+  );
+}
+
+/**
  * Implements hook_file_download().
  *
  * Only allow users with view webform submissions to download files.
@@ -1400,7 +1452,7 @@ function webform_file_download($uri) {
   module_load_include('inc', 'webform', 'includes/webform.submissions');
 
   // Determine whether this file was a webform upload.
-  $row = db_query("SELECT fu.id as sid, f.fid FROM {file_managed} f LEFT JOIN {file_usage} fu ON f.fid = fu.fid AND fu.module = :webform AND fu.type = :submission WHERE f.uri = :uri", array('uri' => $uri, ':webform' => 'webform', ':submission' => 'submission'))->fetchObject();
+  $row = db_query("SELECT fu.id as sid, f.fid FROM {file_managed} f LEFT JOIN {file_usage} fu ON f.fid = fu.fid AND fu.module = :webform AND fu.type = :submission WHERE f.uri = :uri", array(':uri' => $uri, ':webform' => 'webform', ':submission' => 'submission'))->fetchObject();
   if ($row) {
     $file = file_load($row->fid);
   }
@@ -2180,7 +2232,7 @@ function theme_webform_view_messages(array $variables) {
   }
 
   // If the user has exceeded the limit of submissions, explain the limit.
-  elseif ($user_limit_exceeded && !$cached) {
+  elseif ($user_limit_exceeded) {
     if ($node->webform['submit_interval'] == -1 && $node->webform['submit_limit'] > 1) {
       $message = t('You have submitted this form the maximum number of times (@count).', array('@count' => $node->webform['submit_limit']));
     }
@@ -2191,7 +2243,7 @@ function theme_webform_view_messages(array $variables) {
       $message = t('You may not submit another entry at this time.');
     }
   }
-  elseif ($total_limit_exceeded && !$cached) {
+  elseif ($total_limit_exceeded) {
     if ($node->webform['total_submit_interval'] == -1 && $node->webform['total_submit_limit'] > 1) {
       $message = t('This form has received the maximum number of entries.');
     }
@@ -2534,7 +2586,7 @@ function webform_client_form($form, &$form_state, $node, $submission = FALSE, $r
       // If this is the first time this draft has been restore and presented to
       // the user, let them know that they are looking at a draft, rather than
       // a new form. This applies to the node view page, but not to a submission
-      // edit page (where they presummably know what submission they are
+      // edit page (where they presumably know what submission they are
       // editing).
       if ($resume_draft && empty($form_state['input'])) {
         backdrop_set_message(t('A partially-completed form was found. Please complete the remaining portions.'));
@@ -4003,6 +4055,25 @@ function _webform_fetch_draft_sid($nid, $uid) {
  */
 function webform_get_conditional_sorter($node) {
   return WebformConditionals::factory($node);
+}
+
+/**
+ * Assembles the token modifiers.
+ *
+ * @return
+ *   The list of all token modifiers that can be used in webform output.
+ *
+ * @see webform_tokens()
+ * @see hook_webform_token_modifiers()
+ * @see webform_webform_token_modifiers_info()
+ */
+function webform_get_token_modifiers() {
+  $token_modifiers = &backdrop_static(__FUNCTION__);
+  if (!isset($token_modifiers)) {
+    $token_modifiers = module_invoke_all('webform_token_modifiers_info');
+    backdrop_alter('webform_token_modifiers_info', $token_modifiers);
+  }
+  return $token_modifiers;
 }
 
 /**
@@ -5574,6 +5645,7 @@ function webform_count_input_vars(array $element) {
     'hidden' => 1,
     'value' => 1,
     'webform_email' => 1,
+    'webform_link' => 1,
     'webform_number' => 1,
   );
   $children = array_intersect_key($element, array_flip(element_children($element)));

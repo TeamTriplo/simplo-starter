@@ -1,0 +1,11 @@
+name = Gallery Tiler
+description = Field formatter for image fields
+tags[] = Fields
+backdrop = 1.x
+type = module
+dependencies[] = image
+
+; Added by Backdrop CMS packaging script on 2022-11-10
+project = gallery_tiler
+version = 1.x-1.1.0
+timestamp = 1668077582

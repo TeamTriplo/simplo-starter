@@ -43,7 +43,7 @@ class GeoGenerator {
     $func = 'wkt_generate_' . $type;
     if (method_exists($this, $func)) {
       $wkt = $this->$func();
-      return drupal_strtoupper($type) . ' (' . $wkt . ')';
+      return backdrop_strtoupper($type) . ' (' . $wkt . ')';
     }
     return 'POINT (0 0)';
   }

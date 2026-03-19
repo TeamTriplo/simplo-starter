@@ -1,0 +1,44 @@
+/**
+ * @file
+ *
+ * Provides some minimal CSS for the Views Bootstrap Demo pages.
+ */
+
+ /* Accordion */
+
+.view-views-bootstrap-demo .views-bootstrap-accordion-plugin-style .panel {
+  margin-bottom: 5px;
+}
+
+/* Grid */
+
+.view-views-bootstrap-demo .views-bootstrap-demo-grid-column {
+  margin-bottom: 15px;
+}
+.view-views-bootstrap-demo .views-bootstrap-demo-grid-column article {
+  border: #EEE 1px solid;
+  background-color: #F7F7F7;
+  padding: 15px;
+}
+
+/* Media */
+
+.view-views-bootstrap-demo .views-bootstrap-media-plugin-style .media {
+  border: #EEE 1px solid;
+  background-color: #F7F7F7;
+  padding: 15px;
+}
+.view-views-bootstrap-demo .views-bootstrap-media-plugin-style img {
+  max-width: 300px;
+  margin: 0;
+}
+
+/* Table */
+
+.view-views-bootstrap-demo .views-table {
+  border: #DDD 1px solid;
+}
+.view-views-bootstrap-demo .views-table th,
+.view-views-bootstrap-demo .views-table td {
+  padding: 0 15px;
+}

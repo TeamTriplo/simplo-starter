@@ -96,7 +96,7 @@ function geofield_latlon_element_process($element, &$form_values) {
   $element['#required'] = FALSE;
 
   if (!empty($element['#geolocation']) && $element['#geolocation'] == TRUE) {
-    $element['#attached']['js'][] = drupal_get_path('module', 'geofield') . '/js/geolocation.js';
+    $element['#attached']['js'][] = backdrop_get_path('module', 'geofield') . '/js/geolocation.js';
     $element['geocode'] = array(
       '#type' => 'button',
       '#value' => t('Find my location'),
@@ -261,7 +261,7 @@ function geofield_bounds_element_validate($element, &$form_values) {
 function geofield_proximity_element_process($element, &$form_state, $form) {
   $element['#attributes'] = array('class' => array('clearfix'));
   $element['#tree'] = TRUE;
-  $element['#attached']['css'] = array(drupal_get_path('module', 'geofield') . '/css/proximity-element.css');
+  $element['#attached']['css'] = array(backdrop_get_path('module', 'geofield') . '/css/proximity-element.css');
 
   //Create the textfield for distance
   $element['distance'] = array(
@@ -351,15 +351,15 @@ function theme_geofield_proximity($vars) {
   $wrapper_attributes['class'][] = 'clearfix';
 
   if (isset($element['#children']))
-    $element['#children'] = '<div id="' . $element['#id'] . '" ' . drupal_attributes($wrapper_attributes) . '>' . $element['#children'] . '</div>';
+    $element['#children'] = '<div id="' . $element['#id'] . '" ' . backdrop_attributes($wrapper_attributes) . '>' . $element['#children'] . '</div>';
 
-  $output = '<div ' . drupal_attributes($attributes) . '>' . theme('form_element', $element) . '</div>';
+  $output = '<div ' . backdrop_attributes($attributes) . '>' . theme('form_element', $element) . '</div>';
 
   return $output;
 }
 
 function theme_geofield_latlon($vars) {
-  return drupal_render($vars['element']['lat']) . drupal_render($vars['element']['lon']) . drupal_render($vars['element']['geocode']);
+  return backdrop_render($vars['element']['lat']) . backdrop_render($vars['element']['lon']) . backdrop_render($vars['element']['geocode']);
 }
 
 /**

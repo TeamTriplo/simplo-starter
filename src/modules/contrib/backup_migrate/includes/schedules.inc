@@ -21,7 +21,7 @@ define('BACKUP_MIGRATE_SMART_KEEP_WEEKLY', PHP_INT_MAX);
 
 define('BACKUP_MIGRATE_KEEP_DEFAULT', 100);
 
-backup_migrate_include('crud');
+require_once dirname(__FILE__) . '/crud.inc';
 
 /**
  * Implementation of hook_backup_migrate_destination_types().
@@ -44,7 +44,7 @@ function backup_migrate_backup_migrate_schedule_types() {
  * Run the preconfigured schedules. Called on cron.
  */
 function backup_migrate_schedules_cron() {
-  backup_migrate_include('profiles');
+  require_once dirname(__FILE__) . '/profiles.inc';
   foreach (backup_migrate_get_schedules() as $schedule) {
     $schedule->cron();
   }
@@ -55,7 +55,7 @@ function backup_migrate_schedules_cron() {
  * Run the preconfigured schedules regardless of scheduled time settings.
  */
 function backup_migrate_schedules_run() {
-  backup_migrate_include('profiles');
+  require_once dirname(__FILE__) . '/profiles.inc';
   foreach (backup_migrate_get_schedules() as $schedule) {
     $schedule->run();
   }
@@ -66,7 +66,7 @@ function backup_migrate_schedules_run() {
  * Run the preconfigured schedules. Called on cron.
  */
 function backup_migrate_schedule_run($schedule_id) {
-  backup_migrate_include('profiles');
+  require_once dirname(__FILE__) . '/profiles.inc';
   if ($schedule = backup_migrate_get_schedule($schedule_id)) {
     $schedule->run();
   }
@@ -237,7 +237,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Get the destination object of the schedule.
    */
   function get_destinations() {
-    backup_migrate_include('destinations');
+  require_once dirname(__FILE__) . '/destinations.inc';
     $out = array();
     foreach ($this->get_destination_ids() as $id) {
       if ($dest = backup_migrate_get_destination($id)) {
@@ -251,14 +251,14 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Get the destination object of the schedule.
    */
   function get_destination_remote() {
-    backup_migrate_include('destinations');
+  require_once dirname(__FILE__) . '/destinations.inc';
     return backup_migrate_get_destination($this->get('destination_remote_id'));
   }
  /**
    * Get the destination object of the schedule.
    */
   function get_destination_local() {
-    backup_migrate_include('destinations');
+  require_once dirname(__FILE__) . '/destinations.inc';
     return backup_migrate_get_destination($this->get('destination_local_id'));
   }
 
@@ -280,7 +280,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Get the destination of the schedule.
    */
   function get_profile() {
-    backup_migrate_include('profiles');
+  require_once dirname(__FILE__) . '/profiles.inc';
     if ($settings = backup_migrate_get_profile($this->get('profile_id'))) {
       $settings->file_info = empty($settings->file_info) ? array() : $settings->file_info;
       $settings->file_info += array(
@@ -394,7 +394,9 @@ class backup_migrate_schedule extends backup_migrate_item {
    */
   function edit_form() {
     $form = parent::edit_form();
-    backup_migrate_include('destinations', 'sources', 'profiles');
+  require_once dirname(__FILE__) . '/destinations.inc';
+  require_once dirname(__FILE__) . '/sources.inc';
+  require_once dirname(__FILE__) . '/profiles.inc';
 
     $form['name'] = array(
       "#type" => "textfield",
@@ -676,7 +678,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Remove older backups keeping only the number specified by the administrator.
    */
   function remove_expired_backups() {
-    backup_migrate_include('destinations');
+    require_once dirname(__FILE__) . '/destinations.inc';
 
     $num_to_keep = $this->keep;
     // If num to keep is not 0 (0 is infinity).
@@ -703,7 +705,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Remove older backups keeping only the number specified by the administrator.
    */
   function delete_backups($destination, $files, $num_to_keep) {
-    backup_migrate_include('destinations');
+  require_once dirname(__FILE__) . '/destinations.inc';
 
     $num_to_keep = $this->keep;
 

@@ -1,4 +1,3 @@
-
 <?php
 
 /**
@@ -13,6 +12,21 @@ function dashboard_plus_block_info() {
     'info' => t('Dashboard Plus - Manage content'),
     'description' => t('Provides links to manage content'),
     'class' => 'DashboardManageContentBlock',
+  );
+  $blocks['watchdog'] = array(
+    'info' => t('Dashboard Plus - Recent log messages'),
+    'description' => t('Shows the 10 most recent watchdog log messages.'),
+    'class' => 'DashboardWatchdogBlock',
+  );
+  $blocks['recent_unpublished_comments'] = array(
+    'info' => t('Dashboard Plus - Recent unpublished comments'),
+    'description' => t('Shows the most recent unpublished comments.'),
+    'class' => 'DashboardUnpublishedCommentsBlock',
+  );
+  $blocks['backdrop_release_notes'] = array(
+    'info' => t('Dashboard Plus - Backdrop release notes'),
+    'description' => t('Shows the release notes for the latest version of Backdrop CMS.'),
+    'class' => 'DashboardBackdropReleaseNotesBlock',
   );
   return $blocks;
 }
@@ -31,6 +45,46 @@ function dashboard_plus_block_view() {
 function dashboard_plus_autoload_info() {
   return array(
     'DashboardManageContentBlock' => 'includes/block.manage_content.inc',
-
+    'DashboardWatchdogBlock' => 'includes/block.watchdog.inc',
+    'DashboardUnpublishedCommentsBlock' => 'includes/block.unpublished_comments.inc',
+    'DashboardBackdropReleaseNotesBlock' => 'includes/block.release_notes.inc',
   );
+}
+
+/**
+ * Implements hook_init().
+ * Attach collapsible dashboard block assets on admin dashboard.
+ */
+function dashboard_plus_init() {
+  if (strpos(current_path(), 'admin/dashboard') === 0) {
+    $config = config('dashboard_plus.settings');
+    if ($config->get('collapsible_blocks') !== NULL ? $config->get('collapsible_blocks') : TRUE) {
+      backdrop_add_js(backdrop_get_path('module', 'dashboard_plus') . '/js/dashboard-block-toggle.js');
+      backdrop_add_css(backdrop_get_path('module', 'dashboard_plus') . '/css/dashboard-block-toggle.css');
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Add collapsible dashboard blocks setting to dashboard settings form.
+ */
+function dashboard_plus_form_dashboard_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $config = config('dashboard_plus.settings');
+  $form['dashboard_plus_collapsible_blocks'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable collapsible dashboard blocks'),
+    '#default_value' => $config->get('collapsible_blocks') !== NULL ? $config->get('collapsible_blocks') : TRUE,
+    '#description' => t('Allow dashboard blocks to be collapsed and expanded. State is remembered per user.'),
+  );
+  $form['#submit'][] = 'dashboard_plus_dashboard_settings_submit';
+}
+
+/**
+ * Submit handler for dashboard settings form.
+ */
+function dashboard_plus_dashboard_settings_submit($form, &$form_state) {
+  $config = config('dashboard_plus.settings');
+  $config->set('collapsible_blocks', !empty($form_state['values']['dashboard_plus_collapsible_blocks']));
+  $config->save();
 }

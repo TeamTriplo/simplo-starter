@@ -18,7 +18,7 @@ function geofield_devel_generate($object, $field, $instance, $bundle) {
 }
 
 function _geofield_devel_generate($object, $field, $instance, $bundle) {
-  include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+  include_once(backdrop_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
   $generator = new GeoGenerator(); // @TODO: Make this static.
   $input = array();
 

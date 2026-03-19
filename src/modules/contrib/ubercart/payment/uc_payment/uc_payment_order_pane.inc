@@ -89,7 +89,7 @@ function uc_order_pane_payment($op, $order, &$form = NULL, &$form_state = NULL) 
 
       $method = isset($form_state['values']['payment_method']) ? $form_state['values']['payment_method'] : $order->payment_method;
       $func = _uc_payment_method_data($method, 'callback');
-      if (function_exists($func) && $details = $func('order-details', $order)) {
+      if (!empty($func) && function_exists($func) && $details = $func('order-details', $order)) {
         if (is_array($details)) {
           $form['payment']['payment_details'] += $details;
         }

@@ -6,7 +6,7 @@ backdrop = 1.x
 dependencies[] = votingapi
 configure = admin/config/content/fivestar
 
-; Added by Backdrop CMS packaging script on 2017-12-20
+; Added by Backdrop CMS packaging script on 2025-02-16
 project = fivestar
-version = 1.x-2.2
-timestamp = 1513796585
+version = 1.x-2.3.2
+timestamp = 1739750941

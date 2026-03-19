@@ -41,7 +41,7 @@ abstract class PublishContentWebTestBase extends BackdropWebTestCase {
     }
 
     foreach ($types as $type) {
-      variable_set('publishcontent_' . $type, TRUE);
+      config_set('publishcontent.settings', 'publishcontent_' . $type, TRUE);
     }
 
     // Rebuild SimpleTests permissions cache.

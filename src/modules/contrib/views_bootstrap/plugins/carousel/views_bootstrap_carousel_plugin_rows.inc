@@ -8,6 +8,7 @@
  * Class to define a row plugin handler.
  */
 class views_bootstrap_carousel_plugin_rows extends views_plugin_row {
+
   /**
    * Definition.
    */
@@ -16,13 +17,14 @@ class views_bootstrap_carousel_plugin_rows extends views_plugin_row {
     $options['image'] = array('default' => '');
     $options['title'] = array('default' => '');
     $options['description'] = array('description' => '');
+    $options['items_per_slide'] = array('default' => 1);
     return $options;
   }
 
   /**
    * Form.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
     // Pre-build all of our option lists for the dials and switches that follow.
@@ -58,4 +60,5 @@ class views_bootstrap_carousel_plugin_rows extends views_plugin_row {
       '#default_value' => $this->options['description'],
     );
   }
+
 }

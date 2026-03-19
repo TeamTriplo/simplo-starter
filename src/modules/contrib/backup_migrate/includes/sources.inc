@@ -6,7 +6,9 @@
  * All of the source handling code needed for Backup and Migrate.
  */
 
-backup_migrate_include('crud', 'locations', 'destinations');
+require_once dirname(__FILE__) . '/crud.inc';
+require_once dirname(__FILE__) . '/locations.inc';
+require_once dirname(__FILE__) . '/destinations.inc';
 
 /**
  * Get all the available backup sources.
@@ -60,6 +62,27 @@ function backup_migrate_backup_migrate_source_subtypes() {
       'class' => 'backup_migrate_source_db_mysql',
       'can_create' => TRUE,
     ),
+    'db_config' => array(
+      'description' => t('Database and active config folder.'),
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationDbConfigSource.inc',
+      'class' => 'BackupMigrateFilesDestinationDbConfigSource',
+      'type_name' => t('Database and active config directory'),
+      'can_create' => FALSE,
+    ),
+    'config_files_active' => array(
+      'description' => t('Configuration File Directory (Active).'),
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationConfigSource.inc',
+      'class' => 'BackupMigrateFilesDestinationConfigSource',
+      'type_name' => t('Configuration File Directory (Active).'),
+      'can_create' => FALSE,
+    ),
+    'config_files_staging' => array(
+      'description' => t('Configuration File Directory (Staging).'),
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationConfigSource.inc',
+      'class' => 'BackupMigrateFilesDestinationConfigSource',
+      'type_name' => t('Configuration File Directory (Staging).'),
+      'can_create' => FALSE,
+    ),
     'filesource' => array(
       'description' => t('A files directory which can be backed up from.'),
       'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/sources.filesource.inc',
@@ -88,7 +111,7 @@ function backup_migrate_backup_migrate_sources() {
   $out = array();
 
   // Expose the configured databases as sources.
-  backup_migrate_include('filters');
+  require_once dirname(__FILE__) . '/filters.inc';
   $out += backup_migrate_filters_invoke_all('sources');
 
   return $out;
@@ -98,7 +121,7 @@ function backup_migrate_backup_migrate_sources() {
  * Get the source options as a form element.
  */
 function _backup_migrate_get_source_form($source_id = 'db') {
-  backup_migrate_include('destinations');
+  require_once dirname(__FILE__) . '/destinations.inc';
 
   $form = array();
   $sources = _backup_migrate_get_source_pulldown($source_id);

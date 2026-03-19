@@ -124,7 +124,7 @@ class geofield_handler_filter extends views_handler_filter_numeric {
       '#options' => array(),
       '#attached' => array(
         'js' => array(
-          drupal_get_path('module', 'geofield') . '/js/viewsProximityValue.js',
+          backdrop_get_path('module', 'geofield') . '/js/viewsProximityValue.js',
         ),
       ),
       '#default_value' => $this->options['source'],

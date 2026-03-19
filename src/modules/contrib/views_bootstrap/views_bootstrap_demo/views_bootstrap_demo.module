@@ -1,0 +1,60 @@
+<?php
+/**
+ * @file
+ *
+ * Provides support for Views Bootstrap demonstration pages.
+ */
+
+/**
+ * Implements hook_config_info().
+ */
+function views_bootstrap_demo_config_info() {
+  $prefixes['field.bundle.node.views_bootstrap_demo'] = array(
+    'label' => t('Views Bootstrap Demo node bundle'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['field.field.field_image'] = array(
+    'label' => t('Views Bootstrap Demo Image field'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['field.field.field_snippet'] = array(
+    'label' => t('Views Bootstrap Demo Snippet field'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['field.instance.comment.comment_node_views_bootstrap_demo.comment_body'] = array(
+    'label' => t('Views Bootstrap Demo Comment field instance'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['field.instance.node.views_bootstrap_demo.body'] = array(
+    'label' => t('Views Bootstrap Demo node body field instance'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['field.instance.node.views_bootstrap_demo.field_image'] = array(
+    'label' => t('Views Bootstrap Demo node image field instance'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['field.instance.node.views_bootstrap_demo.field_snippet'] = array(
+    'label' => t('Views Bootstrap Demo node snippet field instance'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['image.style.views_bootstrap_demo_carousel'] = array(
+    'label' => t('Views Bootstrap Demo Carousel image style'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['node.type.views_bootstrap_demo'] = array(
+    'label' => t('Views Bootstrap Demo node type'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  $prefixes['views.view.views_bootstrap_demo'] = array(
+    'label' => t('Views Bootstrap Demo View with demo pages'),
+    'group' => t('Views Bootstrap Demo'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_init();
+ */
+function views_bootstrap_demo_init() {
+  backdrop_add_css(backdrop_get_path('module', 'views_bootstrap_demo') . '/css/views_bootstrap_demo.css');
+}

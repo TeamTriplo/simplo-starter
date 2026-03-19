@@ -69,7 +69,7 @@ class backup_migrate_destination_browser_download extends backup_migrate_destina
    * File save destination callback.
    */
   function save_file($file, $settings) {
-    backup_migrate_include('files');
+    require_once dirname(__FILE__) . '/files.inc';
     $file->transfer();
   }
 }

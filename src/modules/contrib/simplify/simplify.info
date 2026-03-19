@@ -2,12 +2,15 @@ name = Simplify
 description = Simplifies the user interface by hiding particular fields.
 backdrop = 1.x
 type = module
+
+maintainers[yorkshire-pudding] = Martin Price
+maintainers_wanted = TRUE
+
 package = User interface
 tags[] = Fields
 configure = admin/config/user-interface/simplify
 
-
-; Added by Backdrop CMS packaging script on 2019-09-17
+; Added by Backdrop CMS packaging script on 2024-09-18
 project = simplify
-version = 1.x-1.2.1
-timestamp = 1568746869
+version = 1.x-1.2.5
+timestamp = 1726677207

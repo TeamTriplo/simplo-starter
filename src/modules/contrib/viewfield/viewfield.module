@@ -114,8 +114,69 @@ function viewfield_field_formatter_info() {
       'label' => t('Default'),
       'field types' => array('viewfield'),
     ),
+    'viewfield_field_values' => array(
+      'label' => t('Field values'),
+      'field types' => array('viewfield'),
+      'settings' => array(
+        'fields_to_display' => array(
+          'vname' => 'vname',
+          'vdisplay' => 'vdisplay',
+          'vargs' => 'vargs',
+        ),
+      ),
+    ),
+
   );
 }
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function viewfield_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $element = array();
+  $element['fields_to_display'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Information to list'),
+    '#default_value' => isset($settings['fields_to_display']) ? $settings['fields_to_display'] : array(),
+    '#options' => array(
+      'vname' => 'View name',
+      'vdisplay' => 'Display',
+      'vargs' => 'Arguments',
+    ),
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function viewfield_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $summary = NULL;
+
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+if ($display['type'] == 'viewfield_field_values') {
+  if (isset($settings['fields_to_display'])) {
+    // Remove items which are empty.
+    $fields_to_display = array_filter($settings['fields_to_display']);
+    // Make field names more human-friendly.
+    $fields_to_display = array_map(function ($key) {
+      return ucfirst(substr($key, 1));
+    }, $fields_to_display);
+    // Create a comma-separated list.
+    $summary = implode(', ', $fields_to_display);
+    $summary = $summary? $summary : t('No information to list');
+  }
+}
+
+  return $summary;
+}
+
 
 /**
  * Implements hook_field_formatter_view().
@@ -125,6 +186,9 @@ function viewfield_field_formatter_view($entity_type, $entity, $field, $instance
   $elements = array();
   switch ($display['type']) {
     case 'viewfield_default':
+      $elements['#post_render'] = array(
+        'viewfield_default_elements_post_render',
+      );
       foreach ($items as $delta => $item) {
         // @todo Store name and display separately.
         list($view_name, $view_display) = explode('|', $item['vname'], 2);
@@ -140,6 +204,32 @@ function viewfield_field_formatter_view($entity_type, $entity, $field, $instance
           '#entity_type' => $entity_type,
           '#entity_id' => $entity_id,
           '#entity' => $entity,
+        );
+      }
+      break;
+    case 'viewfield_field_values':
+      foreach ($items as $delta => $item) {
+        list($view_name, $view_display) = explode('|', $item['vname'], 2);
+        $view = views_get_view($view_name);
+
+        if (!is_object($view) || !isset($view->display[$view_display])) {
+          $elements[$delta] = array(
+            '#markup' => t('Missing or broken view/display'),
+          );
+          continue;
+        }
+
+        $items[$delta]['vname'] = 'View name: ' . $view->human_name;
+        $items[$delta]['vdisplay'] = 'Display: ' . $view->display[$view_display]->display_title;
+        $items[$delta]['vargs'] = 'Arguments: ' . $items[$delta]['vargs'];
+
+        $fields_to_display = array_filter($display['settings']['fields_to_display']);
+        $items[$delta] = array_intersect_key($items[$delta], $fields_to_display);
+        krsort($items[$delta]);
+
+        $elements[$delta][] = array(
+          '#theme' => 'item_list',
+          '#items' => $items[$delta],
         );
       }
       break;
@@ -206,14 +296,36 @@ function viewfield_post_render($content, $element) {
 }
 
 /**
+ * #post_render callback for viewfield default formatter.
+ */
+function viewfield_default_elements_post_render($content, $element) {
+  // Set the default state to empty.
+  $empty = TRUE;
+
+  // Retrieve all element children.
+  $children = array_intersect_key($element, element_children($element));
+  foreach ($children as $key => $child) {
+    $view = $child['#view'];
+    // If any child view has results, output the field.
+    if (!empty($view->result) || !empty($view->empty)) {
+      $empty = FALSE;
+    }
+  }
+
+  return ($empty === FALSE) ? $content : NULL;
+}
+
+
+/**
  * Return HTML for a view in a field.
  *
  * @see views_embed_view()
  */
 function theme_viewfield_formatter_default($variables) {
   $element = $variables['element'];
-
-  return $element['#view']->preview($element['#view_display'], $element['#view_arguments']);
+  $view = $element['#view'];
+  $view_arguments = !empty($element['#view_arguments']) ? $element['#view_arguments'] : NULL;
+  return $view->preview($element['#view_display'], $view_arguments);
 }
 
 /**
@@ -234,10 +346,7 @@ function viewfield_field_widget_info() {
 function viewfield_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   // Administrators need to be able to re-configure the default value on the
   // field edit form if 'force_default' is enabled.
-  // @todo Core: Provide a solid identifier in field_ui_default_value_widget().
-  $is_field_settings_form = FALSE;
-  if (isset($form['#type']) && $form['#type'] == 'fieldset') {
-    $is_field_settings_form = TRUE;
+  if ($form_state['build_info']['form_id'] == 'field_ui_field_edit_form') {
     $instance['settings']['force_default'] = FALSE;
   }
 
@@ -259,6 +368,7 @@ function viewfield_field_widget_form(&$form, &$form_state, $field, $instance, $l
     '#default_value' => isset($items[$delta]['vargs']) ? $items[$delta]['vargs'] : NULL,
     '#access' => !$instance['settings']['force_default'],
     '#description' => t('A comma separated list of arguments to pass to the selected view. '),
+    '#maxlength' => 255,
   );
 
   // Provide token help.
@@ -266,6 +376,7 @@ function viewfield_field_widget_form(&$form, &$form_state, $field, $instance, $l
     $element['vargs']['#description'] .= t('Any token from the placeholder token list may be used as an argument.');
     // Only show token help for first value or in field settings form.
     if ($element['#delta'] === 0 && !$instance['settings']['force_default']) {
+      $entity_type = ($element['#entity_type'] == 'taxonomy_term') ? 'term' : $element['#entity_type'];
       $element['token_help'] = array(
         '#type' => 'fieldset',
         '#title' => t('Placeholder tokens'),
@@ -274,13 +385,12 @@ function viewfield_field_widget_form(&$form, &$form_state, $field, $instance, $l
       );
       $element['token_help']['tokens'] = array(
         '#theme' => 'token_tree',
-        '#token_types' => array($element['#entity_type']),
+        '#token_types' =>  array(str_replace('_', '-', $entity_type)),
         '#global_types' => TRUE,
         '#dialog' => TRUE,
       );
     }
-  }
-  else {
+  } else {
     $element['vargs']['#description'] .= t('Enable the %token module to see a complete list of tokens that may be used as arguments.', array('%token' => t('Token')));
   }
 
@@ -342,8 +452,7 @@ function _viewfield_get_view_args($vargs, $entity_type, $entity) {
           $pos = $quote + $ql + 1;
           $found = TRUE;
         }
-      }
-      elseif (($comma = strpos($vargs, ',', $pos)) !== FALSE) {
+      } elseif (($comma = strpos($vargs, ',', $pos)) !== FALSE) {
         // Otherwise, get everything before next comma.
         $args[] = substr($vargs, $pos, $comma - $pos);
         // Skip to after comma and repeat

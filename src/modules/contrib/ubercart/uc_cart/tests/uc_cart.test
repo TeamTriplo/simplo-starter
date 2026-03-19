@@ -240,7 +240,7 @@ class UbercartCartCheckoutTestCase extends UbercartTestHelper {
     $this->backdropPost('admin/store/settings/checkout', $settings, t('Save configuration'));
     $this->backdropLogout();
 
-    $new_user = new stdClass();
+    $new_user = new User();
     $new_user->name = $this->randomName(20);
     $new_user->pass_raw = $this->randomName(20);
 
@@ -289,7 +289,7 @@ class UbercartCartCheckoutTestCase extends UbercartTestHelper {
     // Test new account email.
     $mail = $this->backdropGetMails(array('id' => 'user_register_no_approval_required'));
     $mail = array_pop($mail);
-    $new_user = new stdClass();
+    $new_user = new User();
     $new_user->name = $mail['params']['account']->name;
     $new_user->pass_raw = $mail['params']['account']->password;
     $this->assertTrue(!empty($new_user->name), 'New username is not empty.');

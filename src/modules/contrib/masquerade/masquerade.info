@@ -10,7 +10,7 @@ package = "User Management"
 backdrop = 1.x
 project = "Masquerade"
 
-; Added by Backdrop CMS packaging script on 2016-11-21
+; Added by Backdrop CMS packaging script on 2025-02-26
 project = masquerade
-version = 1.x-1.0.0
-timestamp = 1479735395
+version = 1.x-1.0.1
+timestamp = 1740603821

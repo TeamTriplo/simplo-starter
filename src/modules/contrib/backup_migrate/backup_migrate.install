@@ -543,7 +543,9 @@ function backup_migrate_update_1005() {
 function backup_migrate_update_1006() {
   // Get schedule
   module_load_include('module', 'backup_migrate', 'backup_migrate');
-  backup_migrate_include('sources', 'schedules', 'profiles');
+  require_once dirname(__FILE__) . '/includes/sources.inc';
+  require_once dirname(__FILE__) . '/includes/schedules.inc';
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
   $schedules = backup_migrate_get_schedules();
   foreach ($schedules as $schedule_id => $schedule) {
     // Check for existing last_run variable
@@ -562,8 +564,8 @@ function backup_migrate_update_1006() {
  */
 function backup_migrate_update_1007() {
   module_load_include('module', 'backup_migrate', 'backup_migrate');
-  backup_migrate_include('destinations');
-  backup_migrate_include('schedules');
+  require_once dirname(__FILE__) . '/includes/destinations.inc'; 
+  require_once dirname(__FILE__) . '/includes/schedules.inc'; 
   foreach (backup_migrate_get_schedules() as $schedule) {
     // Look for backups which use NodeSquirrel as its destination.
     if ($schedule->destination_id == 'nodesquirrel') {
@@ -623,4 +625,41 @@ function backup_migrate_update_1008() {
     }
   }
   $config->save();
+}
+
+/**
+ * Add the exclude_filepaths configuration for the new "DB and active config" source to all profiles.
+ */
+function backup_migrate_update_1009() {
+  module_load_include('module', 'backup_migrate', 'backup_migrate');
+  require_once dirname(__FILE__) . '/includes/profiles.inc';
+  foreach (backup_migrate_get_profiles() as $profile) {
+    if (!isset($profile->filters['sources']['db_config']['exclude_filepaths'])) {
+      $profile->filters['sources']['db_config']['exclude_filepaths'] = '';
+      $profile->save();
+    }
+  }
+}
+
+/**
+ * Set weekly backups to be smart-deleted after 12 weeks if the original wrong
+ * "2147483647 weeks" value is found.
+ */
+function backup_migrate_update_1010() {
+  $backup_migrate_smart_keep_weekly = config_get('backup_migrate.settings', 'backup_migrate_smart_keep_weekly');
+  // This was the original setting changed in:
+  // https://github.com/backdrop-contrib/backup_migrate/issues/46
+  // The problem is that that commit never included this update hook! 
+  if ($backup_migrate_smart_keep_weekly == 2147483647) {
+    config_set('backup_migrate.settings', 'backup_migrate_smart_keep_weekly', 12);
+  }
+}
+
+/**
+ * Provide correct list of tables when site uses multiple databases.
+ */
+function backup_migrate_update_1011() {
+  // Nothing to do here, as we don't want to mess up any settings. Just show
+  // a warning.
+  backdrop_set_message(t('If your site uses multiple databases, you will need to edit and save each of your Backup and Migrate !setting_link. Inspect each of your databases\' "Backup Options" accordion settings to assure the correct tables are shown.', array('!setting_link' => l('Settings Profiles', 'admin/config/system/backup_migrate/settings/profile'))), 'warning');
 }
