@@ -1,0 +1,105 @@
+/**
+ * @file
+ * Shared admin UI styles for Design Tokens.
+ */
+
+/* Collapse all / Show preview buttons. */
+#design-tokens-collapse-all {
+  margin-right: 0.75rem;
+}
+
+#design-tokens-preview-toggle {
+  margin-bottom: 1.5rem;
+}
+
+/* Navigation link to theme settings. */
+.design-tokens-nav-link {
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+/* Keep the group indicator dot on the same line as the fieldset title.
+   Backdrop's admin theme makes .fieldset-title display:block, which pushes
+   any following inline element to the next line. Flex corrects this. */
+#design-tokens-settings-form .fieldset-legend {
+  display: flex;
+  align-items: center;
+}
+
+/* Section headers that divide groups of token fieldsets. */
+.design-tokens-section-header {
+  margin: 1.5rem 0 0.25rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid #d0d0d0;
+  font-size: 1em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+
+/* Group description text inside fieldsets. */
+.design-tokens-group-description {
+  color: #555;
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin: 0 0 1rem;
+}
+
+/* Push the admin page content left when the preview panel is open. */
+body.design-tokens-preview-open .l-page,
+body.design-tokens-preview-open .layout-container {
+  margin-right: 50vw;
+  transition: margin-right 0.2s ease;
+}
+
+/* Fixed preview panel — sits to the right, below the Backdrop toolbar. */
+#design-tokens-preview-panel {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 50vw;
+  min-width: 400px;
+  background: #fff;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  /* top is set dynamically by JS to account for the toolbar height */
+  top: 0;
+}
+
+#design-tokens-preview-panel[hidden] {
+  display: none;
+}
+
+.design-tokens-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: #20252e;
+  color: #fff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+#design-tokens-preview-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
+#design-tokens-preview-close:hover {
+  color: #ccc;
+}
+
+/* iframe fills the remaining panel height. */
+#design-tokens-preview-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+}
