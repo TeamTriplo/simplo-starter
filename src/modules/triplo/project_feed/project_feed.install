@@ -1,29 +1,93 @@
 <?php
 /**
  * @file
- * Install, update, and uninstall functions for the My Module module.
+ * Install, update and uninstall functions for the Project Feed module.
  */
 
 /**
- * Upgrade from Drupal 7.
+ * Implements hook_install().
+ *
+ * Creates the project_type taxonomy terms on first install.
  */
-// function my_module_update_1000() {
-//   // Do update-y things here.
-//   // See: https://docs.backdropcms.org/api/backdrop/core%21modules%21system%21system.api.php/function/hook_update_N/1
-// }
-
-  function project_feed_install() {
-
-    $new_terms = array('module', 'theme', 'layout');
-
-    // Adds all new terms to 'tags' vocabulary
-    foreach ($new_terms as $new_term) {
-      $term = entity_create('taxonomy_term', array(
-        'name' => $new_term,
-        'description' => '',
-        'format' => 1,
-        'vocabulary' => 'project_type',
-      ));
-      taxonomy_term_save($term);
-    }
+function project_feed_install() {
+  foreach (array('module', 'theme', 'layout') as $term_name) {
+    $term = new TaxonomyTerm(array(
+      'name'        => $term_name,
+      'vocabulary'  => 'project_type',
+      'description' => '',
+      'weight'      => 0,
+    ));
+    taxonomy_term_save($term);
   }
+}
+
+/**
+ * Add field_maintainer_parsed and field_auto_tags to project nodes.
+ */
+function project_feed_update_1000() {
+  // --- field_maintainer_parsed -------------------------------------------
+  // Multi-value plain text field storing maintainers parsed from README.
+  if (!field_info_field('field_maintainer_parsed')) {
+    field_create_field(array(
+      'field_name'  => 'field_maintainer_parsed',
+      'type'        => 'text',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'settings'    => array('max_length' => 255),
+    ));
+  }
+  if (!field_info_instance('node', 'field_maintainer_parsed', 'project')) {
+    field_create_instance(array(
+      'field_name'  => 'field_maintainer_parsed',
+      'entity_type' => 'node',
+      'bundle'      => 'project',
+      'label'       => 'Maintainers (parsed from README)',
+      'widget'      => array('type' => 'text_textfield'),
+      'display'     => array(
+        'default' => array(
+          'label' => 'above',
+          'type'  => 'text_default',
+        ),
+      ),
+    ));
+  }
+
+  // --- auto_tags vocabulary -------------------------------------------------
+  if (!taxonomy_vocabulary_load('auto_tags')) {
+    $vocab = new TaxonomyVocabulary(array(
+      'name'         => 'Auto Tags',
+      'machine_name' => 'auto_tags',
+      'description'  => 'AI-generated category tags from README analysis.',
+    ));
+    taxonomy_vocabulary_save($vocab);
+  }
+
+  // --- field_auto_tags -------------------------------------------------------
+  // Multi-value taxonomy reference to the auto_tags vocabulary.
+  if (!field_info_field('field_auto_tags')) {
+    field_create_field(array(
+      'field_name'  => 'field_auto_tags',
+      'type'        => 'taxonomy_term_reference',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'settings'    => array(
+        'allowed_values' => array(
+          array('vocabulary' => 'auto_tags', 'parent' => 0),
+        ),
+      ),
+    ));
+  }
+  if (!field_info_instance('node', 'field_auto_tags', 'project')) {
+    field_create_instance(array(
+      'field_name'  => 'field_auto_tags',
+      'entity_type' => 'node',
+      'bundle'      => 'project',
+      'label'       => 'Auto Tags (AI generated)',
+      'widget'      => array('type' => 'taxonomy_autocomplete'),
+      'display'     => array(
+        'default' => array(
+          'label' => 'above',
+          'type'  => 'taxonomy_term_reference_link',
+        ),
+      ),
+    ));
+  }
+}
