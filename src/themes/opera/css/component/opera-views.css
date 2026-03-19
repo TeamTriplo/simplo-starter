@@ -4,7 +4,15 @@
 }
 
 .view-content img {
+  filter: drop-shadow(3px 2px 5px gray);
   margin-bottom: 1.3rem;
+}
+
+/* Prevent decorative image shadow from applying to map tiles. */
+.view-content .gm-style img,
+.view-content .leaflet-container img {
+  filter: none;
+  margin-bottom: 0;
 }
 
 .view-blog-post .views-field-name {
@@ -37,12 +45,25 @@
   padding: 0;
 }
 
-.view.container,
-.view .views-view-grid {
-  margin-left: -0.9375rem;
-  margin-right: -0.9375rem;
-}
 
 .view-header {
   margin-bottom: 2rem;
+}
+
+/* Strip Bootstrap container padding from views — the outer layout container
+ * already provides page margins, so a nested .view.container would otherwise
+ * indent view content an extra 15px relative to surrounding elements. */
+.view.container {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/**
+ * Prevent the global table reset in base.css from breaking FullCalendar's
+ * grid layout, which relies on display: table for correct column/row sizing.
+ */
+.fc table {
+  display: table;
+  overflow-x: visible;
+  max-width: none;
 }

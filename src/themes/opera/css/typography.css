@@ -1,34 +1,13 @@
 /**
- * fonts
+ * @file
+ * Typography — applies font token variables to page elements.
+ *
+ * Font family values come from CSS custom properties defined in
+ * opera-variables.css and overridden by the Theme Tokens module when active.
  */
 
-:root {
-  --opera-san-font: Lato, 'Lucida Console', 'Courier New', monospace;
-  --opera-font: 'Merriweather', Helvetica, Arial, sans-serif;
-}
-
-/*html {
-  font-size: 16px;
-}*/
-
 body {
-  font-family: var(--opera-san-font);
-    /**
-   * Default font size for site should be set on body element in rem units.
-   * This is better for some accessibility technologies. Although it's not true
-   * under all circumstances, think of 1rem as being equal to 16px.
-   */
-  font-size: 1.05rem;
-  line-height: 1.5;
-}
-
-p {
-  margin: 0 0 .7rem;
-}
-
-.l-header-inner,
-.button {
-  font-family: var(--opera-font);
+  font-family: var(--font-body);
 }
 
 h1,
@@ -36,55 +15,8 @@ h2,
 h3,
 h4,
 h5,
-h6 {
-  font-family: var(--opera-font);
-  line-height: 1.4;
-  font-weight: 700;
-}
-
-h1,
-h2 {
-  margin: 0 0 3rem;
-}
-
-h3, h4, h5, h6 {
-  margin: 0 0 0.5rem;
-}
-
-h1 {
-  font-size: 2rem;
-}
-
-h2 {
-  font-size: 1.6rem;
-}
-
-h3 {
-  font-size: 1.4rem;
-}
-
-h4,
-h4.panel-title {
-  font-size: 1.4375rem;
-}
-
-h5 {
-  font-size: 1.25rem;
-}
-
-h6 {
-  font-size: 1.25rem;
-}
-
-h1 a,
-h2 a,
-h3 a,
-h4 a,
-h5 a,
-h6 a {
-  text-decoration: none;
-}
-
-li {
-  margin-bottom: .5rem;
+h6,
+.l-header .site-name,
+.l-header .header-site-name-link {
+  font-family: var(--font-heading);
 }

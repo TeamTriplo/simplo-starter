@@ -4,7 +4,8 @@
  */
 .l-footer {
   margin: 1.5rem 0 0;
-  padding: 2rem 0;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
   line-height: 1.5;
 }
 
@@ -48,6 +49,20 @@
 }
 
 /**
+ * Prevent double padding for any .container nested inside
+ * .l-footer-inner.container. This covers:
+ *   - block--inner-wrapper.container (front page blocks)
+ *   - flexible layout row containers (mini-layouts used as footer blocks)
+ * The outer .l-footer-inner.container already provides the page margins,
+ * so inner containers must not add their own horizontal padding.
+ */
+.l-footer-inner .container,
+.l-footer-inner .container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/**
  * Powered by Backdrop Block
  */
 .l-footer .block-system-powered-by a {
@@ -83,13 +98,4 @@
 
 .l-footer .block:first-child .drop-lounging:before {
   display: block;
-}
-
-@media (max-width: 48em) {
-  .l-footer .block-system-powered-by {
-    text-align: center;
-  }
-  .block {
-    margin-bottom:  20px;
-  }
 }

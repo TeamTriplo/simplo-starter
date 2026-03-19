@@ -2,34 +2,60 @@
  * @file
  * Breadcrumb styles.
  */
+
 .breadcrumb {
-  background: transparent;
-  line-height: 16px;
-  margin: 0 0 3rem;
+  margin: 0 0 1em;
+  padding-top: 0.5em;
+}
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  list-style: none;
+  margin: 0;
   padding: 0;
+  gap: 0;
+  font-size: 0.85rem;
 }
 
 .breadcrumb li {
-  border-right: 1px solid #707070;
-  display: inline-block;
-  padding: 0 10px;
-}
-
-.breadcrumb li:first-child {
-  padding-left: 0;
-}
-
-.breadcrumb li:last-child {
-  border: 0;
-}
-
-.breadcrumb li a,
-.breadcrumb li span {
-  color: #707070;
-  display: inline-block;
-  font-size: 16px;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  margin: 0;
   padding: 0;
+}
+
+/* Separator between items */
+.breadcrumb li + li::before {
+  content: '›';
+  margin: 0 0.4em;
+  color: #aaa;
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+[dir="rtl"] .breadcrumb li + li::before {
+  content: '‹';
+}
+
+/* Links */
+.breadcrumb a,
+.breadcrumb a:link,
+.breadcrumb a:visited {
+  color: var(--color-primary, #6e0e0a);
   text-decoration: none;
-  text-transform: uppercase;
+  padding: 0.2em 0;
+}
+
+.breadcrumb a:hover,
+.breadcrumb a:focus {
+  text-decoration: underline;
+}
+
+/* Last item — current page context, visually quieter */
+.breadcrumb li:last-child a,
+.breadcrumb li:last-child span {
+  color: #666;
+  pointer-events: none;
 }

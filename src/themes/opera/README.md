@@ -1,221 +1,217 @@
 # Opera
 
-The Opera theme was inspired by work that Triplo did for the Twin Cities Opera Guild with a design 
-by John Seymour Anderson of Triangle Park Creative. Certain elements of that design were carried 
-over into this contrib theme. Most importantly, a stacked design of full width panels with 
-background colors.
+### Need testing and feedback on the 2.x branch of Opera. This is a MAJOR rewrite with new features and will not be backward compatible.  Best when tested with https://github.com/stpaultim/design_tokens. The Design Tokens module is a possible alternative to the color module. Need feedback on this idea. 
 
-See Opera in action: https://themeswitcher.simplo.site/
+### Read below for details.
 
-Here are some Simplo sites that are using Opera. None of these have been subthemed, but they are 
-using contributed modules and custom configuation to acheive some special effects.
-
-- https://simplo.site/
-- https://learn-backdrop.simplo.site/
-- http://simplo-market.simplo.site/
-
-## Status
-
-We just released an beta version of this theme as we are moving closer to a stable release in the
-near future. We still need more folks to test it out and provide feedback and file bug reports. In 
-the beta stage we may still make changes that could effect end users. If you use an alpha or beta version 
-on a production site, you may not be able to upgrade without noticing some small (or even large) 
-changes on your site. 
-
-Once we issue a stabile release, we will avoid any breaking changes within minor releases. At that
-stage, all changes in minor releases will be backward compatible.
-
-Most recent release includes fixes to make it work better with the new Cards content type in default
-Backdrop installations and the new [Welcome Recipe](https://backdropcms.org/project/welcome) released by Simplo. 
-
-## Who is this theme for?
-
-The primary audience of this theme are individuals and organizations interested in any of the 
-following:
-
-- A flexible theme that allows for significant customization 
-  without the need for any custom css. 
-- Anyone interested in a single page website with many stacked
-  panels. 
-- (Future) Subthemers interested in inheriting any of the 
-  previously mentioned features. 
+Opera is a Backdrop CMS theme designed for sites that use stacked, full-width panels on the
+front page with alternating background colors. It is approachable for people new to Backdrop
+and offers significant customization through the admin UI — no CSS required.
 
 ![A screenshot of a site with stacked full width blocks and hero images.](https://simplo.site/files/opera-opera.png)
 
-## Assumptions / Design or Theming Principles
+## Status
 
-- Trying to use REM as consistently as possible (lots of work to do)
-- Minimize the need for ANY custom css, while leaving the possibily or 
-  opportunity for users to create their own sub-theme if they choose. 
+Opera 2.x is under active development. The theme is functional and suitable for testing,
+feedback, and building on. Not recommended for production sites until a stable release is
+tagged. Bug reports, feature requests, and pull requests are welcome.
 
-## Recommended Modules
+## Who is this theme for?
 
-Some specific modules that we think will improve your experience with this theme. 
+Opera is a good fit if you want to:
 
-- [Configurable Block Style](https://backdropcms.org/project/configurable_block_style)
-- [Utility CSS](https://backdropcms.org/project/utlility_css)
+- Build a front page with full-width stacked content panels in different background colors
+- Customize colors, fonts, buttons, and links through the admin UI without writing CSS
+- Use a theme that works well out of the box for a non-profit, arts organization, or
+  community site
 
-## Goals
+## Key features
 
-- Instructions for sub-theming (future)
-- Compatible with color module (done)
-- Provide default CSS files in simple CSS (done)
-- Provide a SASS starter kit for sub-theming (future)
-- Provide a straight CSS starter kit for sub-theming (future) 
+### Stacked full-width blocks
+The signature Opera layout uses Backdrop's Boxton layout on the front page. Blocks in the
+content region extend the full width of the screen with their own background colors. The
+first block is always white; subsequent blocks cycle through your chosen color sets.
 
-## Instructions
+### Two-bar split header
+Opera uses a two-bar header: a **logo bar** above (white by default) and a **nav bar** below
+(your primary brand color). Each bar has independent color controls so the nav bar can match
+the footer while the logo area stays neutral. Both colors are Design Token–controlled.
 
-One of the primary features of the Opera theme is the ability to build a layout using full width blocks 
-with backgroud images and/or colors stacked one above the other. full-with layouts on the front page 
-with To leverage these features you will need to follow the following instructions:
+### Flexible logo
+The header supports two logo modes, configured under **Appearance > Settings > Opera**:
 
-1) Be sure to use the Boxton layout on front page (for full width blocks with background colors)
-2) Any blocks placed in content region of front page will automatically get assigned background colors based upon site color scheme
-3) Choose from pre-defined color schemes in theme settings (or use color module to define your own)
+- **Image** — upload a logo via the standard site settings
+- **Phosphor icon** — choose any icon from Backdrop's built-in Phosphor icon set by name.
+  The icon automatically inherits your header text color, so it adapts when you change your
+  color scheme. A live preview updates as you type the icon name.
 
-If you use the Boxton layout for your front page. The following will be true:
-1) The first and last block in the content region will have a white background with black text. 
-2) Any blocks in the content region between the first and last, will cycle through a list of three colors schemes set in the themes settings.
-3) Any hero blocks will start out with min-height of 450px.
+A **Logo size** setting (Small / Medium / Large / X-Large) controls the maximum height of
+the logo in the header bar, accommodating everything from compact icon marks to wide
+illustrated wordmarks.
 
-## Features implemented so far
+### Polished navigation menu
+Top-level navigation links are displayed in white semi-bold text against the primary color
+bar for strong readability. Interactive feedback includes:
 
-Please, feel free to provide feedback on these features and/or the implementation.
+- A sliding accent bar that animates in on hover (color controlled by the Secondary / Accent
+  token, independent of link colors)
+- A lighter background highlight on hovered items
+- Consistent semi-bold weight and white text in dropdown sub-menus
 
-1) This theme has a the following template to override Boxton when it is on the front page. The layout--boxton--front.tpl.php removes the container class from the content region and header allowing blocks to spread out the full width of the screen. An override of block.tpl.php puts the container class into the title and content of any block found on the front page. 
-2) We have provided template files for all of the core templates that move the top region above the default locaton for title and tabs. This puts the default position for breadcrumbs above the page title and tabs. We now have the possibility to make other adjustments in all core layouts. 
-3) So far, this theme inherits a lot of it's default styling from Basis and Tatsu, but with improvements. That may change over time.
-4) We have added a setting to load Bootstrap CSS from CDN. 
+### Design Tokens integration
+Opera uses the [Design Tokens](https://backdropcms.org/project/design_tokens) module to
+manage all visual configuration. From a single admin page you can change:
 
-Here is a 30 minute video discussion of several members of the Backdrop CMS community talking about how to build a contrib theme like this one. https://youtu.be/BeEzXuwLxo8 
+- **Header / Logo Bar** — background and text color for the logo bar
+- **Navigation & Footer (Primary Colors)** — background, text, and link colors for the nav
+  bar and footer
+- **Secondary / Accent Color** — the highlight bar color used on nav menu hover states,
+  independent of link colors
+- **Buttons** — background, text, hover, border radius, and text transform
+- **Links** — color, hover color, visited color, and underline behavior
+- **Typography** — heading and body font families, with Google Fonts support built in
+- **Hero Blocks** — colors for hero blocks without a custom image
+- **Cards & Teasers** — card background color and corner radius
+- **Block Color Sets** — up to 8 background colors for cycling front-page blocks. Text and
+  link colors are calculated automatically based on whether the background is light or dark.
 
-## Utility CSS Classes
+Changes are reflected in a live preview alongside the form — no page reload required.
 
-Font Styles
-- color-inverse
-- font-size-xxxxlarge
-- font-size-xxxlarge
-- font-size-xxlarge
-- font-size-xlarge
-- font-size-large
-- font-size-medium
-- font-size-normal
-- font-size-small
-- font-size-xsmall
-- font-weight-bold
-- font-weight-normal
-- font-weight-light
-- font-style-italic
-- font-style-normal
+### Preset color schemes
+Opera ships with four preset color schemes: **Opera** (deep red and gold), **Plume**
+(navy and teal), **Bright** (vivid primaries), and **Night** (dark mode feel). Applying
+a scheme populates all color fields at once. Modifying any value after applying a scheme
+marks it as Custom.
 
-Background Colors
-- opera-bg1-black
-- opera-bg1-blue
-- opera-bg1-brown
-- opera-bg1-firebrick
-- opera-bg1-green
-- opera-bg1-indigo
-- opera-bg1-khaki
-- opera-bg2-lemonchiffon
-- opera-bg2-olive
-- opera-bg2-orange
-- opera-bg2-pink
-- opera-bg2-red
-- opera-bg2-sienna
-- opera-bg3-silver
-- opera-bg3-tan
-- opera-bg3-teal
-- opera-bg3-violet
-- opera-bg3-white
-- opera-bg3-yellow
+### Accessibility
+The Design Tokens admin page shows WCAG contrast ratio badges next to each text color
+field, updated in real time as colors change. Text and link colors for colored blocks are
+auto-calculated using the WCAG luminance threshold so they always meet AA contrast
+requirements against their background.
 
-Text alignment
-- text-align-center
-- text-align-right
-- text-align-left
+## Requirements
 
-Margin
-- m-10
-- m-20
-- m-30
-- mb-20
-- mb-30
-- mb-50
-- mt-20
-- mt-30
-- mt-50
+- Backdrop CMS 1.x
 
-Padding
-- p-10
-- p-20
-- p-30
-- pb-20
-- pb-30
-- pb-50
-- pt-20
-- pt-30
-- pt-50
+The [Design Tokens](https://backdropcms.org/project/design_tokens) module and its
+`design_tokens_color` and `design_tokens_font` sub-modules are strongly recommended. Opera
+works without them using its built-in default styles, but full color and font customization
+requires Design Tokens.
 
-Border
-- border
-- border-bottom
-- border-top
-- border-gray
-- border-gray-bottom
-- border-gray-top
+## Setup
 
-Flex
-- flex
-- flex-direction-column
-- flex-direction-row
-- space-between
-- gap-20
-- gap-30
-- gap-50
-- flex-basis
-- flex-basis-half
-- flex-basis-200
-- flex-basis-500
-- flex-basis-700
+1. Set Opera as your default theme at **Appearance**.
+2. Install and enable the Design Tokens module and its `design_tokens_color` and
+   `design_tokens_font` sub-modules at **Functionality > Modules**.
+3. Configure your site's appearance at **Appearance > Design Tokens > Opera**.
+4. Set your front page to use the **Boxton** layout at **Structure > Layouts**.
+5. Add blocks to the Boxton layout's content region — they will automatically receive
+   cycling background colors.
 
-Text Ellipse
-- text-ellipses-2
-- text-ellipses-4
+## Recommended modules
 
-Text Decoration
-- text-decoration-none
+The Opera theme settings page (**Appearance > Settings > Opera**) includes a list of
+modules that pair well with Opera, with direct links to install them. These include:
 
-Display
-- d-none
-- d-block
+- **Configurable Block Styles** — apply style presets to individual blocks
+- **Nice Messages** — improved styling for status and error messages
+- **Tab Icons** — icons on admin task tabs
+- **Custom Breadcrumbs** — control over the breadcrumb trail
 
-Column Count
-- column-count-2
-- column-count-3
-- column-rule
-- column-gap-50
-- column-gap-70
+## Template customizations
 
-## Installation
+Opera overrides several of Backdrop core's layout templates to improve behavior for
+typical use cases. The most significant change from core is **collapsible sidebar regions**.
 
-- Install this module using the official Backdrop CMS instructions at
-  https://backdropcms.org/guide/modules.
+In core layout templates, sidebar regions are always rendered even when empty, which
+reserves column space and narrows the main content area unnecessarily. Opera's templates
+for all sidebar layouts (Moscone, Moscone Flipped, Taylor, Taylor Flipped, Harris, and
+Simmons) check whether each sidebar region contains content before rendering it. When a
+sidebar is empty, the main content area expands to fill the full available width. In
+two-sidebar layouts, each sidebar collapses independently, so a layout with only one
+populated sidebar renders as a two-column layout rather than three.
 
-## Credits
+This behavior is implemented entirely in the layout templates and requires no CSS changes
+or configuration.
 
-Default hero image = Vienna State Opera, Jiuguang Wang
-https://www.flickr.com/photos/jiuguangw/5943433030
-Attribution-ShareAlike 2.0 Generic
-https://creativecommons.org/licenses/by-sa/2.0/
+The **Boxton layout** has a second Opera-specific template variant, `layout--boxton--front.tpl.php`,
+used on the front page. In this variant, `.l-wrapper-inner` does not carry Bootstrap's
+`container container-fluid` classes, so blocks in the content region are free to stretch
+to the full viewport width. Each block is responsible for constraining its own inner
+content via the `block--inner-wrapper container` div in `block.tpl.php`. The top region
+is also moved outside `.l-wrapper-inner` so it too can extend edge to edge. On interior
+pages the standard Boxton template is used, where `.l-wrapper-inner` applies the
+container constraint as usual.
 
+## Layout details
 
-## Current maintainers
+### Front page (Boxton layout)
+- First content block: always white background, standard link colors
+- Subsequent content blocks: cycle through your configured color sets (2–8 sets, configurable
+  in theme settings)
+- Color sequencing is controlled by the **Color sequence length** setting
 
-- [Tim Erickson](https://github.com/stpaultim) - [Simplo](https://www.simplo.site) by [Triplo](https://www.triplo.co)
+### Block color sets
+Each color set is defined by a single background color. Text and link colors are
+automatically computed from the background's luminance — dark backgrounds get light text
+and light links; light backgrounds get dark text and standard body link colors.
 
-## License   
+### Hero blocks
+Blocks using the Hero block type display with a minimum height of 450px. The hero region
+uses its own color set separate from the cycling block colors.
 
-This project is GPL v2 software. See the LICENSE.txt file in this directory 
-for complete text.
+## CSS conventions for site architects
 
+### Tag-style pill lists in Views blocks
 
+Opera automatically styles tag pill badges for two cases:
+
+1. **Taxonomy term reference fields** — any `field-type-taxonomy-term-reference` field
+   displayed on a node renders its term links as pill badges.
+2. **The built-in Tags view** — the `view-tags` block (Backdrop's default Tags view)
+   is reflowed into a matching flex pill group.
+
+If you create a custom Views block that lists taxonomy terms or other tag-like links and
+want the same pill treatment, add the CSS class `tag-list` to the view display:
+
+- Open the view in the Views UI
+- Under **Advanced → CSS class**, enter `tag-list`
+- Save the view
+
+Opera will then apply the pill badge styles to that view's output automatically.
+
+## Sub-theming
+
+Opera is suitable as a base for a sub-theme. A sub-theme can:
+
+- Override any template in `templates/`
+- Add its own `tokens.inc` to extend or replace Opera's Design Token definitions
+- Override CSS in component files under `css/component/`
+
+## Contributing
+
+The Opera theme is maintained at https://github.com/backdrop-contrib/opera.
+
+Notes About Use of AI
+---------------------
+
+This theme was developed with significant assistance from AI tools (specifically Claude by
+Anthropic). AI was used to generate code, plan features, and make iterative improvements
+throughout development. We welcome feedback.
+
+Pull requests and issue reports are welcome.
+
+LICENSE
+---------------
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.
+
+CURRENT MAINTAINERS
+---------------
+
+- Tim Erickson (https://github.com/stpaultim/)
+
+CREDITS
+---------------
+
+Development supported by Simplo (by Triplo) - https://simplo.site
