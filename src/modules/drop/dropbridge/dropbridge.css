@@ -281,8 +281,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
   font-size: 0.9em;
+  cursor: pointer;
+  list-style: none;
+  margin: 0;
+}
+
+.dropbridge-notifications-header::-webkit-details-marker {
+  display: none;
+}
+
+.dropbridge-notifications[open] .dropbridge-notifications-header {
+  margin-bottom: 0.5rem;
 }
 
 .dropbridge-notifications-list {

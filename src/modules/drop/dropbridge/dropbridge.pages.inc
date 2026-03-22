@@ -271,10 +271,10 @@ function dropbridge_daily_list() {
       $all_link = l(t('View all'), 'admin/drop/notifications');
 
       $output['notifications'] = array(
-        '#markup' => '<div class="dropbridge-notifications">'
-          . '<div class="dropbridge-notifications-header"><strong>' . $heading . '</strong>' . $all_link . '</div>'
+        '#markup' => '<details class="dropbridge-notifications">'
+          . '<summary class="dropbridge-notifications-header"><strong>' . $heading . '</strong>' . $all_link . '</summary>'
           . '<ul class="dropbridge-notifications-list">' . $items_html . '</ul>'
-          . '</div>',
+          . '</details>',
         '#weight' => -10,
       );
     }

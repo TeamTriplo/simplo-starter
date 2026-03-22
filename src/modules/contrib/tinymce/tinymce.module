@@ -1,0 +1,597 @@
+<?php
+/**
+ * @file
+ * TinyMCE module hook implementations and helper functions.
+ */
+
+/**
+ * Implements hook_editor_info().
+ */
+function tinymce_editor_info() {
+  $editors['tinymce'] = array(
+    'label' => t('TinyMCE'),
+    'default settings' => array(
+      'tinymce_settings' => array(
+        'profile' => 'default',
+        'skin' => 'oxide',
+        'content_css' => NULL,
+      ),
+      'image_browser' => array(
+        'enable' => 1,
+      ),
+    ),
+    'library' => array('tinymce', 'backdrop.tinymce'),
+    'file' => 'tinymce.admin.inc',
+    'settings callback' => '_tinymce_settings_form',
+    'js settings callback' => '_tinymce_js_settings',
+  );
+  return $editors;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function tinymce_menu() {
+  $items['tinymce/upload/image/%filter_format'] = array(
+    'title' => 'Upload image',
+    'page callback' => 'tinymce_image_upload',
+    'page arguments' => array(3),
+    'access callback' => 'filter_dialog_access',
+    'access arguments' => array(3, 'image'),
+    'theme callback' => 'ajax_base_page_theme',
+    'delivery callback' => 'backdrop_json_deliver',
+    'type' => MENU_CALLBACK,
+    'file' => 'tinymce.pages.inc',
+  );
+  $items['admin/config/content/tinymce-builder'] = array(
+    'title' => 'TinyMCE profiles',
+    'page callback' => 'tinymce_profile_listing_page',
+    'access arguments' => array('administer filters'),
+    'description' => 'List TinyMCE editor profiles.',
+    'file' => 'tinymce.builder.inc',
+  );
+  $items['admin/config/content/tinymce-builder/add'] = array(
+    'title' => 'TinyMCE profile builder',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('tinymce_builder_form'),
+    'access arguments' => array('administer filters'),
+    'file' => 'tinymce.builder.inc',
+  );
+  $items['admin/config/content/tinymce-builder/%tinymceprofile/edit'] = array(
+    'title' => 'Edit profile',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('tinymce_builder_form', 4),
+    'access arguments' => array('administer filters'),
+    'file' => 'tinymce.builder.inc',
+  );
+  $items['admin/config/content/tinymce-builder/%tinymceprofile/delete'] = array(
+    'title' => 'Delete profile',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('tinymce_builder_delete_confirm', 4),
+    'access arguments' => array('administer filters'),
+    'file' => 'tinymce.builder.inc',
+  );
+  return $items;
+}
+
+/**
+ * Auto-loader for tinymceprofile item wildcard.
+ *
+ * @param string $name
+ *   Profile name from path.
+ *
+ * @return Config|false
+ *   Config object if this profile exists, FALSE otherwise.
+ */
+function tinymceprofile_load($name) {
+  $profile = config("tinymce.profiles.$name");
+  return (!$profile->isNew()) ? $profile : FALSE;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function tinymce_form_filter_format_editor_image_form_alter(array &$form, array $form_state) {
+  $format = $form_state['format'];
+  if ($format->editor === 'tinymce' && !$format->editor_settings['image_browser']['enable']) {
+    // Suppress library view based on setting.
+    $form['image']['src']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function tinymce_form_filter_admin_format_form_alter(array &$form, array $form_state) {
+  $form['#attached']['js'][] = backdrop_get_path('module', 'tinymce') . '/js/tinymce-admin.js';
+  $all_profiles = config_get_names_with_prefix('tinymce.profile');
+  $featurelist = array();
+  foreach ($all_profiles as $config_name) {
+    $config = config($config_name);
+    $profile_name = $config->get('name');
+    $taglist = $config->get('filter_allowed_html');
+    $tags = ($taglist) ? explode(',', $taglist) : array();
+    $featurelist[$profile_name] = $tags;
+  }
+  $form['#attached']['js'][] = array(
+    'type' => 'setting',
+    'data' => array(
+      'tinymceprofiletags' => $featurelist,
+    ),
+  );
+}
+
+/**
+ * Custom callback for JavaScript settings.
+ *
+ * @param stdClass $format
+ *   Filter format object.
+ * @param array $existing_settings
+ *   Settings collected so far (not used here).
+ *
+ * @return array
+ *   Options to get attached to the page as js settings.
+ */
+function _tinymce_js_settings($format, array $existing_settings) {
+  $options = array();
+  $settings = $format->editor_settings;
+
+  // Load settings from JSON profile.
+  $profile = $settings['tinymce_settings']['profile'];
+  $options['tiny_options'] = config_get('tinymce.profiles.' . $profile, 'tiny_options');
+  // This profile doesn't exist (anymore), fall back to default and log.
+  if (!$options['tiny_options']) {
+    watchdog('tinymce', 'TinyMCE profile %profile not found in active config directory, falling back to default.', array(
+      '%profile' => $profile,
+    ), WATCHDOG_WARNING);
+    $options['tiny_options'] = config_get('tinymce.profiles.default', 'tiny_options');
+  }
+
+  // Merge defaults.
+  $options['tiny_options'] = _tinymce_merge_default_settings($options['tiny_options']);
+
+  // If the filter_html setting is enabled. The filter will remove any inline
+  // styles on content display, so we prevent to use them in the editor.
+  if ($format->filters['filter_html']->status) {
+    // Note: this doesn't fully work.
+    $options['tiny_options']['valid_styles'] = array('*' => '');
+    // The table plugin uses lots of inline styles.
+    $options['tiny_options']['table_cell_advtab'] = FALSE;
+    $options['tiny_options']['table_row_advtab'] = FALSE;
+    $options['tiny_options']['table_advtab'] = FALSE;
+    $options['tiny_options']['table_appearance_options'] = FALSE;
+    // Remove menu items that rely on inline styles.
+    $options['tiny_options']['removed_menuitems'] = 'forecolor backcolor fontfamily fontsize lineheight';
+    // Unregister formats that won't get displayed. Deactivates menu items, that
+    // would otherwise be available (usually h1...).
+    $unregister = _tinymce_get_unregister_formats($format->filters['filter_html']->settings['allowed_html']);
+    if ($unregister) {
+      $options['unregisterFmts'] = $unregister;
+    }
+    $options['allowInlineStyle'] = FALSE;
+  }
+  else {
+    $options['allowInlineStyle'] = TRUE;
+  }
+
+  // Settings from admin UI.
+  $options['tiny_options']['skin'] = $settings['tinymce_settings']['skin'];
+  $options['tiny_options']['content_css'] = _tinymce_get_content_css($settings['tinymce_settings']);
+
+  // If that specific file is also part of content CSS, let Tiny parse it.
+  if (count($options['tiny_options']['content_css']) > 1) {
+    $parse_file_found = preg_grep('#tinymce-styles-dropdown\.css$#', $options['tiny_options']['content_css']);
+    if (!empty($parse_file_found)) {
+      $options['tiny_options']['plugins'] .= ' importcss';
+      $options['tiny_options']['importcss_file_filter'] = 'tinymce-styles-dropdown.css';
+      $options['tiny_options']['importcss_append'] = TRUE;
+    }
+  }
+
+  // Collect additional TinyMCE plugins from hook.
+  $external_plugins = module_invoke_all('tinymce_external_plugins', $format);
+  $icon_registry = array();
+  global $base_path;
+  foreach ($external_plugins as $name => $plugin) {
+    if (strpos($options['tiny_options']['plugins'], $name) === FALSE) {
+      // Do not load plugin if not needed.
+      if (!_tinymce_plugin_is_dependency($options['tiny_options']['plugins'], $name)) {
+        continue;
+      }
+    }
+    $options['tiny_options']['external_plugins'][$name] = $plugin['plugin_path'];
+    if (!empty($plugin['variables'])) {
+      foreach ($plugin['variables'] as $key => $value) {
+        $options['backdrop'][$key] = $value;
+      }
+    }
+    if (!empty($plugin['icons'])) {
+      $url = dirname($plugin['plugin_path']);
+      foreach ($plugin['icons'] as $name => $file) {
+        if (file_get_mimetype($file) != 'image/svg+xml') {
+          continue;
+        }
+        $rel_path = substr($url, strlen($base_path)) . '/icons/' . $file;
+        if ($icon_data = file_get_contents($rel_path)) {
+          $icon_registry[$name] = $icon_data;
+        }
+      }
+    }
+    // This helper plugin deals with inline styles produced by advlist.
+    if (strpos($options['tiny_options']['plugins'], 'advlist') !== FALSE) {
+      if ($format->filters['filter_html']->status) {
+        // Extend restrictions for inline styles, if the filter's enabled.
+        // Otherwise not necessary, as there's no restriction then.
+        $options['tiny_options']['valid_styles']['ol'] = 'list-style-type';
+        $options['tiny_options']['valid_styles']['ul'] = 'list-style-type';
+      }
+    }
+  }
+  if (!empty($icon_registry)) {
+    $options['iconRegistry'] = $icon_registry;
+  }
+
+  // Drag-and-drop upload.
+  if ($format->editor_settings['image_upload']['status'] && user_access('upload editor images')) {
+    $extensions = image_get_supported_extensions();
+    $options['tiny_options']['images_file_types'] = implode(',', $extensions);
+    $options['tiny_options']['images_upload_url'] = _tinymce_images_upload_url($format);
+    $options['tiny_options']['automatic_uploads'] = TRUE;
+    $options['tiny_options']['images_reuse_filename'] = TRUE;
+    // The default image plugin doesn't reliably handle data-file-id. Prevent
+    // uploading, in case a profile uses that plugin. Providing urls to images
+    // still works.
+    $options['tiny_options']['image_uploadtab'] = FALSE;
+  }
+  else {
+    $options['tiny_options']['paste_data_images'] = FALSE;
+  }
+
+  // Set content language independently from editor UI language, as the editor
+  // has only a limited number of translations.
+  global $language;
+  $options['contentLanguageDefault'] = $language->langcode;
+
+  backdrop_alter('tinymce_options', $options, $format);
+  return $options;
+}
+
+/**
+ * Helper for an improvised dependency check.
+ *
+ * @param string $plugins
+ *   Plugin list from profile.
+ * @param string $name
+ *   Plugin name from loop over registered plugins.
+ *
+ * @return bool
+ */
+function _tinymce_plugin_is_dependency($plugins, $name) {
+  if ($name == 'liststyle' && strpos($plugins, 'advlist') !== FALSE) {
+    return TRUE;
+  }
+  // Not really a dependency, but start/reversed without list-style-type are
+  // odd.
+  if ($name == 'backdroplistprop' && strpos($plugins, 'advlist') !== FALSE) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function to collect content CSS files.
+ *
+ * @param array $settings
+ *   Settings from admin UI.
+ *
+ * @return array
+ */
+function _tinymce_get_content_css(array $settings) {
+  $content_css = array(
+    base_path() . backdrop_get_path('module', 'tinymce') . '/css/tinymce-content.css',
+  );
+  $theme_css = _tinymce_collect_theme_css();
+  $content_css = array_merge($content_css, $theme_css);
+  if (!empty($settings['content_css'])) {
+    $css_files = explode("\n", trim($settings['content_css']));
+    foreach ($css_files as $file) {
+      $content_css[] = trim($file);
+    }
+  }
+  return $content_css;
+}
+
+/**
+ * Helper function to get CSS files suggested by themes.
+ *
+ * @param string|null $theme
+ *   Theme name.
+ *
+ * @return array
+ */
+function _tinymce_collect_theme_css($theme = NULL) {
+  $css = array();
+  if (!isset($theme)) {
+    $theme = config_get('system.core', 'theme_default');
+  }
+  if ($theme_path = backdrop_get_path('theme', $theme)) {
+    $theme_url = base_path() . $theme_path;
+    $info = system_get_info('theme', $theme);
+    if (isset($info['tinymce_content_css'])) {
+      foreach ($info['tinymce_content_css'] as $path) {
+        $css[] = $theme_url . '/' . $path;
+      }
+    }
+    if (isset($info['base theme'])) {
+      $css = array_merge(_tinymce_collect_theme_css($info['base theme']), $css);
+    }
+  }
+  return $css;
+}
+
+/**
+ * Helper function to build the upload URL.
+ *
+ * @param stdClass $format
+ *   Filter format.
+ *
+ * @return string
+ */
+function _tinymce_images_upload_url($format) {
+  $upload_url_opts = array(
+    'query' => array(
+      'token' => filter_editor_dialog_token($format, 'image'),
+      'calling_path' => $_GET['q'],
+    ),
+  );
+  return url('tinymce/upload/image/' . $format->format, $upload_url_opts);
+}
+
+/**
+ * Helper funtion to filter for heading tags to unregister in formats.
+ *
+ * @param string $taglist
+ *   List of allowed tags from filter settings.
+ *
+ * @return array
+ */
+function _tinymce_get_unregister_formats($taglist) {
+  preg_match_all('/h\d/', $taglist, $matches);
+  $all = array('h1', 'h2', 'h3', 'h4', 'h5', 'h6');
+
+  if ($matches[0]) {
+    $diff = array_diff($all, $matches[0]);
+    return array_values($diff);
+  }
+  return $all;
+}
+
+/**
+ * Helper function that merges default settings with profiles.
+ *
+ * @param array $settings
+ *   TinyMCE settings from profile.
+ *
+ * @return array
+ */
+function _tinymce_merge_default_settings(array $settings) {
+  $tiny_defaults = array(
+    'branding' => FALSE,
+    'promotion' => FALSE,
+    'language' => _tinymce_interface_language_option(),
+    'browser_spellcheck' => TRUE,
+    'entity_encoding' => 'raw',
+    'license_key' => 'gpl',
+    'toolbar_mode' => 'wrap',
+  );
+  $settings += $tiny_defaults;
+
+  // Get formats from profile, if any.
+  $formats = isset($settings['formats']) ? $settings['formats'] : array();
+
+  // Text align with classes only. The theme's supposed to provide styles.
+  $align_selector = 'p,h1,h2,h3,h4,h5,h6,div';
+  $formats['alignleft'] = array(
+    array(
+      'selector' => $align_selector,
+      'classes' => 'text-align-left',
+    ),
+  );
+  $formats['aligncenter'] = array(
+    array(
+      'selector' => $align_selector,
+      'classes' => 'text-align-center',
+    ),
+  );
+  $formats['alignright'] = array(
+    array(
+      'selector' => $align_selector,
+      'classes' => 'text-align-right',
+    ),
+  );
+  $formats['alignjustify'] = array(
+    array(
+      'selector' => $align_selector,
+      'classes' => 'text-align-justify',
+    ),
+  );
+  // Set tag as default for underline (instead of style).
+  $formats['underline'] = array(
+    array(
+      'inline' => 'u',
+    ),
+  );
+  $settings['formats'] = $formats;
+
+  return $settings;
+}
+
+/**
+ * Implements hook_library_info().
+ */
+function tinymce_library_info() {
+  $path = backdrop_get_path('module', 'tinymce');
+  $libraries['tinymce'] = array(
+    'title' => 'TinyMCE',
+    'website' => 'https://www.tiny.cloud/',
+    'version' => '8.3.2',
+    'js' => array(
+      $path . '/libraries/tinymce/js/tinymce/tinymce.min.js' => array(
+        'preprocess' => FALSE,
+        'group' => JS_LIBRARY,
+      ),
+    ),
+  );
+  $info = system_get_info('module', 'tinymce');
+  $libraries['backdrop.tinymce'] = array(
+    'title' => 'TinyMCE integration',
+    'version' => isset($info['version']) ? $info['version'] : 'dev',
+    'js' => array(
+      $path . '/js/tinymce-uploader.js' => array(),
+      $path . '/js/tinymce-integration.js' => array(),
+    ),
+    'dependencies' => array(
+      array('filter', 'filter'),
+      array('system', 'backdrop.ajax'),
+      array('tinymce', 'tinymce'),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function tinymce_config_info() {
+  $prefixes['tinymce.profiles'] = array(
+    'name_key' => 'name',
+    'label_key' => 'label',
+    'group' => t('Editor profiles'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_tinymce_external_plugins().
+ *
+ * @param stdClass $format
+ *   Filter format.
+ *
+ * @return array
+ */
+function tinymce_tinymce_external_plugins($format) {
+  $link_url_opts = array(
+    'query' => array(
+      'token' => filter_editor_dialog_token($format, 'link'),
+      'calling_path' => $_GET['q'],
+    ));
+  $link_dialog_url = url('editor/dialog/link/' . $format->format, $link_url_opts);
+
+  $img_url_opts = array(
+    'query' => array(
+      'token' => filter_editor_dialog_token($format, 'image'),
+      'calling_path' => $_GET['q'],
+    ));
+  $image_dialog_url = url('editor/dialog/image/' . $format->format, $img_url_opts);
+
+  $module_url = base_path() . backdrop_get_path('module', 'tinymce');
+  $plugins = array(
+    'backdroplink' => array(
+      'plugin_path' => $module_url . '/js/plugins/backdroplink/plugin.js',
+      'variables' => array(
+        'backdroplinkDialogUrl' => $link_dialog_url,
+      ),
+      'buttons' => array(
+        'backdroplink' => array(
+          'icon' => 'link',
+          'tooltip' => 'Insert/Edit Link',
+          'required_tags' => array('a'),
+        ),
+        'backdropunlink' => array(
+          'icon' => 'unlink',
+          'tooltip' => 'Remove link',
+          'required_tags' => array('a'),
+        ),
+      ),
+    ),
+    'backdropimage' => array(
+      'plugin_path' => $module_url . '/js/plugins/backdropimage/plugin.js',
+      'variables' => array(
+        'backdropimageDialogUrl' => $image_dialog_url,
+        'backdropimageInitialCaption' => t('Enter caption text here.'),
+      ),
+      'buttons' => array(
+        'backdropimage' => array(
+          'icon' => 'image',
+          'tooltip' => 'Insert/Edit Image',
+          'required_tags' => array('img', 'figure', 'figcaption'),
+        ),
+      ),
+    ),
+    'liststyle' => array(
+      'plugin_path' => $module_url . '/js/plugins/liststyle/plugin.js',
+    ),
+    'backdroplistprop' => array(
+      'plugin_path' => $module_url . '/js/plugins/backdroplistprop/plugin.js',
+    ),
+  );
+
+  return $plugins;
+}
+
+/**
+ * Helper function to determine the editor's UI language.
+ *
+ * @return string
+ *   Language code to use for editor option.
+ */
+function _tinymce_interface_language_option() {
+  $langcode = &backdrop_static(__FUNCTION__);
+
+  if (!isset($langcode)) {
+    global $language;
+    $langcode = $language->langcode;
+
+    if ($langcode == 'en') {
+      // Return early, as "en" is the default editor UI language.
+      return $langcode;
+    }
+
+    // Note: this mapping needs to get checked with every language pack update.
+    // @see standard_language_list()
+    $mapping = array(
+      'bg' => 'bg_BG',
+      'bn' => 'bn_BD',
+      'en-gb' => 'en',
+      'fr' => 'fr_FR',
+      'he' => 'he_IL',
+      'hu' => 'hu_HU',
+      'is' => 'is_IS',
+      'ka' => 'ka_GE',
+      'ko' => 'ko_KR',
+      'nb' => 'nb_NO',
+      'pt' => 'pt_PT',
+      'pt-br' => 'pt_BR',
+      'pt-pt' => 'pt_PT',
+      'sl' => 'sl_SI',
+      'sv' => 'sv_SE',
+      'ta-lk' => 'ta',
+      'th' => 'th_TH',
+      'zh-hans' => 'zh_CN',
+      'zh-hant' => 'zh_TW',
+    );
+    if (array_key_exists($langcode, $mapping)) {
+      $langcode = $mapping[$langcode];
+    }
+    else {
+      // Otherwise check if such a file exists, fall back to English if not.
+      $path = backdrop_get_path('module', 'tinymce');
+      $file_exists = file_exists("$path/libraries/tinymce/js/tinymce/langs/$langcode.js");
+      if (!$file_exists) {
+        $langcode = 'en';
+      }
+    }
+  }
+
+  return $langcode;
+}

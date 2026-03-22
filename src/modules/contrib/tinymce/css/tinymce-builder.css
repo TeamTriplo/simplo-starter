@@ -1,0 +1,57 @@
+.wrapper {
+  min-height: 2rem;
+  margin: .5rem 0 1rem;
+  border: 1px solid #c6c6c6;
+}
+.wrapper ul {
+  display: inline-block;
+  margin: 0;
+  padding: .3rem;
+}
+.wrapper li {
+  cursor: move;
+}
+#buttons-active {
+  display: block;
+  border: 1px solid #0074bd;
+}
+#buttons-space {
+  margin-right: .5rem;
+}
+.tinybutton {
+  background-color: #fff;
+  display: inline-block;
+  padding: 3px;
+  margin: 2px;
+  line-height: 1rem;
+  font-size: 1rem;
+  vertical-align: middle;
+}
+.tinybutton svg {
+  vertical-align: bottom;
+}
+.tinybutton.separator {
+  padding: 5px .8em;
+  height: 1em;
+  width: auto !important;
+  border: 1px dashed;
+}
+.tinybutton:not(:has(svg)) {
+  padding: 5px 8px;
+}
+.tinybutton span {
+  font-size: smaller;
+  vertical-align: text-top;
+  opacity: 0.8;
+}
+#edit-tb .ui-sortable-helper {
+  outline: 3px solid #0074bd;
+}
+#edit-keyboard-help {
+  border: none;
+  padding: 0;
+}
+#edit-keyboard-help summary span {
+  font-size: initial;
+  color: inherit;
+}

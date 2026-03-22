@@ -1,0 +1,29 @@
+[MimeMailUnitTestCase]
+name = Mime Mail unit tests
+description = Test that Mime Mail helper functions work properly.
+group = Mime Mail
+file = mimemail.test
+
+[MimeMailWebTestCase]
+name = Mime Mail web tests
+description = Test that Mime Mail works properly.
+group = Mime Mail
+file = mimemail.test
+
+[MimeMailCompressUnitTestCase]
+name = Mime Mail Compress unit tests
+description = Test that Mime Mail Compress helper functions work properly.
+group = Mime Mail
+file = mimemail_compress.test
+
+[MimeMailRulesTestCase]
+name = Rules integration
+description = Test the Rules integration.
+group = Mime Mail
+file = mimemail_rules.test
+
+
+; Added by Backdrop CMS packaging script on 2025-11-06
+project = mimemail
+version = 1.x-1.1.9
+timestamp = 1762480220

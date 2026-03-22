@@ -1,0 +1,83 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for Mime Mail module.
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function mimemail_enable() {
+  config_set('system.mail','mimemail','MimeMailSystem');
+  $line_endings = settings_get('mail_line_endings', MAIL_LINE_ENDINGS);
+  config_set('mimemail.settings','mimemail_crlf',$line_endings);
+  user_role_grant_permissions(BACKDROP_AUTHENTICATED_ROLE, array('edit mimemail user settings'));
+}
+
+/**
+ * Implements hook_disable().
+ */
+function mimemail_disable() {
+  config_clear('system.mail','mimemail');
+}
+
+/** 
+ * Move mimemail settings from variables to config.
+ */
+function mimemail_update_1000() {
+  $config = config('mimemail.settings');
+
+  // Because this update task was added after version 1.x-1.1.4, we must check
+  // if the config file mimemail.settings.json already exists. If it does, we
+  // skip all this variable migration to avoid wiping out the existing
+  // configurations. 
+  if ($config->isNew()) {
+    // Migrate variables.
+    $config->set('mimemail_crlf', update_variable_get('mimemail_crlf'));
+    $config->set('mimemail_linkonly', update_variable_get('mimemail_linkonly'));
+    $config->set('mimemail_alter', update_variable_get('mimemail_alter'));
+    $config->set('mimemail_key', update_variable_get('mimemail_key'));
+    $config->set('mimemail_incoming', update_variable_get('mimemail_incoming'));
+
+    $config->set('mimemail_simple_address', update_variable_get('mimemail_simple_address'));
+    $config->set('mimemail_engine', update_variable_get('mimemail_engine'));
+    $config->set('mimemail_name', update_variable_get('mimemail_name'));
+    $config->set('mimemail_mail', update_variable_get('mimemail_mail'));
+    $config->set('mimemail_textonly', update_variable_get('mimemail_textonly'));
+
+    $config->set('mimemail_sitestyle', update_variable_get('mimemail_sitestyle'));
+    $config->set('mimemail_preserve_class', update_variable_get('mimemail_preserve_class'));
+    $config->set('mimemail_format', update_variable_get('mimemail_format'));
+    $config->save();
+
+    // Delete variables.
+    update_variable_del('mimemail_crlf');
+    update_variable_del('mimemail_linkonly');
+    update_variable_del('mimemail_format');
+    update_variable_del('mimemail_alter');
+    update_variable_del('mimemail_key');
+
+    update_variable_del('mimemail_incoming');
+    update_variable_del('mimemail_simple_address');
+    update_variable_del('mimemail_engine');
+    update_variable_del('mimemail_name');
+    update_variable_del('mimemail_mail');
+
+    update_variable_del('mimemail_textonly');
+    update_variable_del('mimemail_sitestyle');
+    update_variable_del('mimemail_preserve_class');
+  }
+}
+
+/**
+ * Set the correct CRLF end-of-line characters for email headers.
+ */
+function mimemail_update_1001() {
+  // Since January 2024, sendmail is more strict in requiring the use of \r\n
+  // as end-of-line to separate email headers. This adds a new configuration
+  // called mimemail_headers_crlf that can be changed manually if necessary.
+  $config = config('mimemail.settings');
+  $config->set('mimemail_headers_crlf', "\r\n");
+  $config->save();
+}

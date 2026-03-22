@@ -1,0 +1,17 @@
+{
+  "_config_name": "mimemail.settings",
+  "mimemail_crlf": "\n",
+  "mimemail_headers_crlf": "\r\n",
+  "mimemail_linkonly": 0,
+  "mimemail_alter": 0,
+  "mimemail_key": "",
+  "mimemail_incoming": 0,
+  "mimemail_simple_address": 1,
+  "mimemail_engine": "mimemail",
+  "mimemail_name": "",
+  "mimemail_mail": "",
+  "mimemail_textonly": 0,
+  "mimemail_sitestyle": 0,
+  "mimemail_preserve_class": 0,
+  "mimemail_format": "full_html"
+}

@@ -1,0 +1,102 @@
+<?php
+/**
+ * @file
+ * Menu callbacks for TinyMCE module.
+ */
+
+/**
+ * Menu callback; Saves images uploaded via copy/paste into the editor.
+ *
+ * @param stdClass $format
+ *   Filter format.
+ *
+ * @return array|void
+ */
+function tinymce_image_upload($format) {
+  $upload_settings = $format->editor_settings['image_upload'];
+  if (!$upload_settings['status']) {
+    backdrop_add_http_header('Status', '403 Forbidden');
+    return;
+  }
+
+  // Odd structure needed for file_save_upload().
+  if (isset($_FILES['file'])) {
+    $_FILES['files'] = array();
+    foreach ($_FILES['file'] as $key => $value) {
+      $_FILES['files'][$key]['upload'] = $value;
+    }
+  }
+
+  $destination = $upload_settings['scheme'] . '://' .  $upload_settings['directory'];
+  $extensions = image_get_supported_extensions();
+  $validators = array(
+    'file_validate_extensions' => array(implode(' ', $extensions)),
+    'tinymce_validate_is_image' => array(),
+  );
+  if ($upload_settings['max_size']) {
+    $validators['file_validate_size'] = array(parse_size($upload_settings['max_size']));
+  }
+  if (!empty($upload_settings['max_dimensions']['width'])) {
+    $validators['file_validate_image_resolution'] = array(
+      $upload_settings['max_dimensions']['width'] . 'x' . $upload_settings['max_dimensions']['height'],
+    );
+  }
+
+  file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
+  $file = file_save_upload('upload', $validators, $destination);
+  if ($file) {
+    // Try to make a local path if possible for better portability.
+    $absolute_path = parse_url($GLOBALS['base_url'], PHP_URL_PATH) . '/';
+    $url = file_create_url($file->uri);
+    $url = str_replace($GLOBALS['base_url'] . '/', $absolute_path, $url);
+    $image_info = image_get_info($file->uri);
+    $response = array(
+      'uploaded' => 1,
+      'location' => $url,
+      'fileId' => $file->fid,
+      'width' => !empty($image_info['width']) ? $image_info['width'] : '',
+      'height' => !empty($image_info['height']) ? $image_info['height'] : '',
+    );
+  }
+  else {
+    $response = array('uploaded' => 0);
+  }
+
+  // file_save_upload() sets messages via backdrop_set_message(). Pull the
+  // responses out and display via TinyMCE's notification system.
+  $messages = backdrop_get_messages();
+  $message_string = '';
+  foreach ($messages as $type) {
+    $message_string .= $type[0] . ' ';
+  }
+  if ($message_string) {
+    $response['errors'] = strip_tags($message_string);
+  }
+
+  return $response;
+}
+
+/**
+ * Custom validation callback for image upload.
+ *
+ * Currently file_validate_is_image() fails for newly uploaded files, as the uri
+ * is something like "/tmp/phpAbCde" - without file extension.
+ * @see https://github.com/backdrop/backdrop-issues/issues/6497
+ */
+function tinymce_validate_is_image(File $file) {
+  $errors = array();
+
+  // SVG have their own validator on upload (file_validate_svg).
+  // If SVG aren't supported, yet, TinyMCE would refuse to upload in the first
+  // place and even if upload was attempted, the server-side extension based
+  // validation would fail.
+  if ($file->filemime == 'image/svg+xml') {
+    return $errors;
+  }
+  // Validate that the image toolkit can handle this raster image.
+  if (!$info = image_get_info($file->uri)) {
+    $errors[] = t('The image appears to be broken.');
+  }
+
+  return $errors;
+}

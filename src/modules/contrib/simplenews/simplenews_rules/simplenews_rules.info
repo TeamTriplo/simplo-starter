@@ -1,0 +1,12 @@
+name = SimpleNews rules
+description = Provides integration with Rules module for SimpleNews.
+dependencies[] = simplenews
+dependencies[] = rules
+package = Mail
+backdrop = 1.x
+type = module
+
+; Added by Backdrop CMS packaging script on 2026-02-10
+project = simplenews
+version = 1.x-1.2.2
+timestamp = 1770767812

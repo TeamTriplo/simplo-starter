@@ -1,0 +1,11 @@
+name = Mime Mail
+description = Send MIME-encoded emails with embedded images and attachments.
+package = Mail
+backdrop = 1.x
+type = module
+configure = admin/config/system/mimemail
+
+; Added by Backdrop CMS packaging script on 2025-11-06
+project = mimemail
+version = 1.x-1.1.9
+timestamp = 1762480220

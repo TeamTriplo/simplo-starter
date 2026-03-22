@@ -1,0 +1,18 @@
+type = module
+name = TinyMCE Editor
+description = Integrates TinyMCE as WYSIWYG editor for content.
+tags[] = Text Editors
+tags[] = Formats
+package = User Interface
+maintainers[indigoxela] = indigoxela
+
+dependencies[] = filter
+
+backdrop = 1.x
+configure = admin/config/content/formats
+stylesheets[all][] = css/tinymce-frontend.css
+
+; Added by Backdrop CMS packaging script on 2026-01-23
+project = tinymce
+version = 1.x-1.5.6
+timestamp = 1769162065

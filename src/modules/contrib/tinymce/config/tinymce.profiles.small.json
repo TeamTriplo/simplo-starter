@@ -1,0 +1,31 @@
+{
+    "_config_name": "tinymce.profiles.small",
+    "name": "small",
+    "label": "Small",
+    "filter_allowed_html": "a,br,em,strong,cite,blockquote,ul,ol,li,h3,h4,h5,p,span",
+    "tiny_options": {
+        "menubar": false,
+        "toolbar": "bold italic blockquote | styles | bullist numlist | link unlink",
+        "plugins": "link lists autoresize",
+        "link_target_list": false,
+        "link_title": false,
+        "style_formats": [
+            {
+                "title": "Paragraph",
+                "format": "p"
+            },
+            {
+                "title": "Heading 3",
+                "format": "h3"
+            },
+            {
+                "title": "Heading 4",
+                "format": "h4"
+            },
+            {
+                "title": "Heading 5",
+                "format": "h5"
+            }
+        ]
+    }
+}
