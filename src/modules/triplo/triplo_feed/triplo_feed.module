@@ -1,0 +1,32 @@
+
+<?php
+
+/**
+ * Implements hook_block_info().
+ */
+function triplo_feed_block_info() {
+  $blocks['news'] = array(
+    'info' => t('Triplo News'),
+    'description' => t('Displays a news feed from Triplo.co'),
+    'class' => 'DashboardTriploNewsBlock',
+    'required contexts' => array('dashboard'),
+  );
+  return $blocks;
+}
+
+function triplo_feed_block_view() {
+  $block['subject'] = 'Backdrop CMS Resources';
+  $block['content'] = '<li><a target="_blank" href="https://forum.backdropcms.org">Ask A Question</a> - Backdrop CMS Forums</li>';
+  $block['content'] .= '<li><a target="_blank" href="https://backdropcms.org/user-guide">Learn about Backdrop CMS</a> - User Guide</li>';
+  $block['content'] .= '<li><a target="_blank" href="https://github.com/backdrop/backdrop-issues/issues">Report a bug</a> - Backdrop CMS Core Issue Queue</li>';
+  return $block;
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function triplo_feed_autoload_info() {
+  return array(
+    'DashboardTriploNewsBlock' => 'includes/block.triplo_feed.inc',
+  );
+}

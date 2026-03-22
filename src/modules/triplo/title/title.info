@@ -1,0 +1,6 @@
+name = Title
+description = Replaces entity legacy fields with regular fields.
+backdrop = 1.x
+package = Fields
+configure = admin/config/content/title
+type = module

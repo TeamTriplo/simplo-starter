@@ -1,0 +1,9 @@
+{
+    "_config_name": "taxonomy.vocabulary.maintainer",
+    "name": "Maintainer",
+    "machine_name": "maintainer",
+    "description": "",
+    "hierarchy": "0",
+    "language": 0,
+    "weight": 0
+}

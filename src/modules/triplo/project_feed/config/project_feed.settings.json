@@ -1,0 +1,7 @@
+{
+  "_config_name": "project_feed.settings",
+  "username": "",
+  "github_auth_token": "",
+  "claude_api_key": "",
+  "fetch_frequency": "weekly"
+}

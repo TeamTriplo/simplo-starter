@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * @file
+ * Installation functions for the Title module.
+ */
+
+/**
+ * Helper function.
+ */
+function _title_install_set_weight($weight) {
+  db_update('system')
+    ->fields(array('weight' => $weight))
+    ->condition('name', 'title')
+    ->execute();
+}
+
+/**
+ * Implements hook_install().
+ */
+function title_install() {
+  // Make (reasonably) sure that title_module_implements_alter() is invoked as
+  // last so we can determine the priority of our hook implementations reliably.
+  _title_install_set_weight(100);
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function title_update_last_removed() {
+  return 7002;
+}
+
+/**
+ * Upgrade Title variables to config.
+ */
+function title_update_1000() {
+  //'title_auto_attach'
+  //'title_field_replacement_batch_size'
+  //'title_$entity_type(s)'
+}

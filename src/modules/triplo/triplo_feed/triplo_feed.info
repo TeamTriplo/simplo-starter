@@ -1,0 +1,5 @@
+type = module
+name = Triplo Feed
+description = Adds block with announcements from Triplo.co.
+package = Dashboard
+backdrop = 1.x
