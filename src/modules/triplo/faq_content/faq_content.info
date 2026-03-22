@@ -1,5 +1,0 @@
-type = module
-name = FAQ Content
-description = REQUIRES: FAQ Content Type. Demo Content for Demo Sites.
-package = Triplo
-backdrop = 1.x
