@@ -1,0 +1,304 @@
+<?php
+/**
+ * @file
+ * DropTime — Time tracking for the Drop ecosystem.
+ */
+
+// ---------------------------------------------------------------------------
+// Autoload
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_autoload_info().
+ */
+function droptime_autoload_info() {
+  return array(
+    'DropTimeEntry'           => 'droptime.entity.inc',
+    'DropTimeEntryController' => 'droptime.entity.inc',
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Entity info
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_entity_info().
+ */
+function droptime_entity_info() {
+  return array(
+    // Note: drop_project entity is now declared in dropcrm_entity_info().
+    'drop_time_entry' => array(
+      'label'            => t('Time entry'),
+      'plural label'     => t('Time entries'),
+      'description'      => t('A logged time entry.'),
+      'entity class'     => 'DropTimeEntry',
+      'controller class' => 'DropTimeEntryController',
+      'base table'       => 'drop_time_entry',
+      'fieldable'        => FALSE,
+      'entity keys'      => array('id' => 'eid'),
+      'uri callback'    => 'entity_class_uri',
+      'access callback' => 'droptime_entry_access',
+      'module'          => 'droptime',
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Permissions
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_permission().
+ */
+function droptime_permission() {
+  return array(
+    'administer droptime' => array(
+      'title'       => t('Administer DropTime'),
+      'description' => t('Full access to all time entries and projects.'),
+    ),
+    'access droptime' => array(
+      'title'       => t('Access DropTime'),
+      'description' => t('View and log own time entries.'),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Access callbacks
+// ---------------------------------------------------------------------------
+
+/**
+ * Access callback for drop_time_entry entities.
+ */
+function droptime_entry_access($op, $entry = NULL, $account = NULL) {
+  global $user;
+  if (!$account) {
+    $account = $user;
+  }
+  if (user_access('administer droptime', $account)) {
+    return TRUE;
+  }
+  if (!user_access('access droptime', $account)) {
+    return FALSE;
+  }
+  if ($op === 'create') {
+    return TRUE;
+  }
+  // view / update / delete: must own the entry.
+  return $entry && $entry->uid == $account->uid;
+}
+
+// ---------------------------------------------------------------------------
+// Menu loaders
+// ---------------------------------------------------------------------------
+
+/**
+ * Menu loader: load a time entry by eid.
+ */
+function drop_time_entry_load($eid) {
+  $entries = entity_load('drop_time_entry', array($eid));
+  return $entries ? reset($entries) : FALSE;
+}
+
+// ---------------------------------------------------------------------------
+// Menu
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_menu().
+ */
+function droptime_menu() {
+  $items = array();
+
+  // Daily timesheet.
+  $items['admin/drop/time'] = array(
+    'title'            => 'Time Tracker',
+    'page callback'    => 'droptime_daily_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptime'),
+    'file'             => 'droptime.pages.inc',
+    'type'             => MENU_NORMAL_ITEM,
+  );
+  $items['admin/drop/time/today'] = array(
+    'title'  => 'Today',
+    'type'   => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  // Reports tab.
+  $items['admin/drop/time/reports'] = array(
+    'title'            => 'Reports',
+    'page callback'    => 'droptime_reports_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptime'),
+    'file'             => 'droptime.pages.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 5,
+  );
+
+  // Projects — redirect to DropCRM projects page (projects now live in DropCRM).
+  $items['admin/drop/time/projects'] = array(
+    'title'            => 'Projects',
+    'page callback'    => 'backdrop_goto',
+    'page arguments'   => array('admin/drop/crm/projects'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptime'),
+    'type'             => MENU_CALLBACK,
+  );
+
+  // Edit / delete entry. %drop_time_entry at arg 4.
+  $items['admin/drop/time/entry/%drop_time_entry/edit'] = array(
+    'title'            => 'Edit time entry',
+    'page callback'    => 'droptime_entry_edit_page',
+    'page arguments'   => array(4),
+    'access callback'  => 'droptime_entry_access',
+    'access arguments' => array('update', 4),
+    'file'             => 'droptime.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+  $items['admin/drop/time/entry/%drop_time_entry/delete'] = array(
+    'title'            => 'Delete time entry',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('droptime_entry_delete_form', 4),
+    'access callback'  => 'droptime_entry_access',
+    'access arguments' => array('delete', 4),
+    'file'             => 'droptime.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  // Timer start / stop.
+  $items['admin/drop/time/timer/start'] = array(
+    'page callback'    => 'droptime_timer_start',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptime'),
+    'file'             => 'droptime.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+  $items['admin/drop/time/timer/stop'] = array(
+    'page callback'    => 'droptime_timer_stop',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptime'),
+    'file'             => 'droptime.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Formats a duration in minutes as a human-readable string.
+ *
+ * @param int $minutes
+ *   Duration in minutes.
+ *
+ * @return string
+ *   E.g. "1h 30m", "45m", "2h".
+ */
+function droptime_format_duration($minutes) {
+  $minutes = (int) $minutes;
+  if ($minutes <= 0) {
+    return '0m';
+  }
+  $h = (int) floor($minutes / 60);
+  $m = $minutes % 60;
+  if ($h && $m) {
+    return $h . 'h ' . $m . 'm';
+  }
+  return $h ? $h . 'h' : $m . 'm';
+}
+
+/**
+ * Returns the available project color options.
+ *
+ * @return array
+ *   Hex code => label.
+ */
+function droptime_color_options() {
+  return array(
+    '#1565c0' => t('Blue'),
+    '#2e7d32' => t('Green'),
+    '#e65100' => t('Orange'),
+    '#7b1fa2' => t('Purple'),
+    '#c62828' => t('Red'),
+    '#00838f' => t('Teal'),
+    '#f57c00' => t('Amber'),
+    '#37474f' => t('Slate'),
+    '#558b2f' => t('Olive'),
+    '#ad1457' => t('Pink'),
+  );
+}
+
+/**
+ * Returns active projects as pid => name options array.
+ *
+ * Delegates to dropcrm_project_options(). Kept for backward compatibility
+ * with any callers within DropTime.
+ *
+ * @param int $uid
+ *   Optional user ID to filter by owner. Pass 0 for all projects.
+ *
+ * @return array
+ */
+function droptime_project_options($uid = 0) {
+  return dropcrm_project_options($uid);
+}
+
+/**
+ * Implements hook_drop_nav_links().
+ */
+function droptime_drop_nav_links() {
+  return array(
+    array(
+      'title'      => t('Time'),
+      'path'       => 'admin/drop/time',
+      'permission' => 'access droptime',
+      'weight'     => 40,
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DropCRM integration (formerly droptime_crm sub-module)
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_dropcrm_contact_view_alter().
+ *
+ * Adds a Projects section to the CRM contact view page.
+ */
+function droptime_dropcrm_contact_view_alter(&$output, $contact) {
+  $projects = db_select('drop_project', 'p')
+    ->fields('p')
+    ->condition('p.cid', $contact->cid)
+    ->orderBy('p.name', 'ASC')
+    ->execute()
+    ->fetchAll();
+
+  $rows = array();
+  foreach ($projects as $project) {
+    $rows[] = array(
+      l(check_plain($project->name), 'admin/drop/crm/projects/' . $project->pid . '/edit'),
+      $project->active ? t('Active') : t('Inactive'),
+    );
+  }
+
+  $output['projects'] = array(
+    '#type'   => 'container',
+    '#weight' => 25,
+  );
+  $output['projects']['heading'] = array(
+    '#markup' => drop_base_section_header(t('Projects')),
+    '#weight' => -5,
+  );
+  $output['projects']['table'] = array(
+    '#theme'  => 'table',
+    '#header' => array(t('Project'), t('Status')),
+    '#rows'   => $rows,
+    '#empty'  => t('No projects linked to this contact.'),
+  );
+}

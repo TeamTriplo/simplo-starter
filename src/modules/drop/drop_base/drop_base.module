@@ -1,0 +1,304 @@
+<?php
+/**
+ * @file
+ * Drop Base — shared utilities for DropCRM and DropTasks.
+ *
+ * Provides shared CSS variables and utility classes used across the Drop
+ * module family. Neither DropCRM nor DropTasks should duplicate these values —
+ * update here and both modules stay in sync.
+ */
+
+/**
+ * @defgroup drop_nav Drop navigation bar
+ *
+ * Provides a shared top navigation bar across all Drop admin pages.
+ *
+ * Any module can register itself by implementing hook_drop_nav_links(),
+ * returning an array of link definition arrays with keys:
+ *   - title: (string) Human-readable label.
+ *   - path: (string) Backdrop path for the link.
+ *   - permission: (string) Permission required to see the link.
+ *   - weight: (int) Sort order.
+ */
+
+/**
+ * Implements hook_preprocess_layout().
+ *
+ * Suppresses Backdrop's hardcoded $action_links on Drop admin pages so that
+ * layout blocks (page title, nav, etc.) can be freely positioned without the
+ * action links forcing themselves above everything.
+ *
+ * The add-item links from MENU_LOCAL_ACTION are also rendered directly in each
+ * module's page content output, so nothing is lost by removing them here.
+ */
+function drop_base_preprocess_layout(&$variables) {
+  $path = current_path();
+  if ($path === 'admin/drop'
+    || strpos($path, 'admin/drop/') === 0
+    || strpos($path, 'admin/crm') === 0) {
+    $variables['action_links'] = '';
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ *
+ * Exposes the Drop nav bar as a placeable layout block.
+ */
+function drop_base_block_info() {
+  $blocks['drop_nav'] = array(
+    'info'        => t('Drop Navigation'),
+    'description' => t('Primary navigation bar for the Drop module suite (CRM, Tasks, Tickets, Time, Goals).'),
+    'cache'       => BACKDROP_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function drop_base_block_view($delta = '') {
+  if ($delta !== 'drop_nav') {
+    return array();
+  }
+
+  $nav_html = _drop_base_render_nav();
+  if (!$nav_html) {
+    return array();
+  }
+
+  return array(
+    'subject' => NULL,
+    'content' => $nav_html,
+  );
+}
+
+/**
+ * Builds and returns the Drop nav HTML, or FALSE if no links are available.
+ *
+ * @return string|false
+ */
+function _drop_base_render_nav() {
+  $path = current_path();
+
+  // Collect links from all modules, filter by access, sort by weight.
+  $links = module_invoke_all('drop_nav_links');
+  $links = array_filter($links, function($link) {
+    return empty($link['permission']) || user_access($link['permission']);
+  });
+  if (empty($links)) {
+    return FALSE;
+  }
+  uasort($links, 'drupal_sort_weight');
+
+  // Render nav items, marking the active section.
+  $items_html = '';
+  foreach ($links as $link) {
+    $is_active = _drop_base_nav_is_active($link['path'], $path);
+    $class = $is_active ? ' class="drop-nav-active"' : '';
+    $items_html .= '<a href="' . url($link['path']) . '"' . $class . '>' . check_plain($link['title']) . '</a>';
+  }
+
+  // Allow other modules to add content to the right side of the nav.
+  $extras = module_invoke_all('drop_nav_extras');
+  $extras_html = !empty($extras) ? '<span class="drop-nav-extras">' . implode('', $extras) . '</span>' : '';
+
+  return '<nav class="drop-nav">' . $items_html . $extras_html . '</nav>';
+}
+
+/**
+ * Determines whether a nav link's path matches the current page.
+ *
+ * @param string $link_path
+ * @param string $current_path
+ * @return bool
+ */
+function _drop_base_nav_is_active($link_path, $current_path) {
+  // DropBridge lives at admin/drop exactly — don't treat it as a prefix match.
+  if ($link_path === 'admin/drop') {
+    return $current_path === 'admin/drop';
+  }
+  return $current_path === $link_path
+    || strpos($current_path, $link_path . '/') === 0;
+}
+
+/**
+ * Implements hook_library().
+ */
+function drop_base_library() {
+  return array(
+    'drop_base' => array(
+      'title'   => 'Drop Base styles',
+      'website' => '',
+      'version' => '1.x',
+      'css'     => array(
+        backdrop_get_path('module', 'drop_base') . '/drop_base.css' => array(),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_page_build().
+ *
+ * Adds the shared CSS to every page so that DropCRM and DropTasks pages always
+ * have access to the shared variables and utility classes without each page
+ * callback needing to attach them individually.
+ */
+function drop_base_init() {
+  backdrop_add_css(backdrop_get_path('module', 'drop_base') . '/drop_base.css');
+}
+
+/**
+ * Returns the shared priority label array.
+ *
+ * @return array
+ *   Keyed by integer priority value (0=none, 1=low, 2=normal, 3=high, 4=critical).
+ */
+function drop_base_priority_labels() {
+  return array(
+    0 => t('None'),
+    1 => t('Low'),
+    2 => t('Normal'),
+    3 => t('High'),
+    4 => t('Critical'),
+  );
+}
+
+/**
+ * Returns a CSS class suffix for a priority value.
+ *
+ * @param int $priority
+ *   The priority integer value.
+ *
+ * @return string
+ *   One of 'critical', 'high', 'normal', 'low', or 'none'.
+ */
+function drop_base_priority_class($priority) {
+  $map = array(0 => 'none', 1 => 'low', 2 => 'normal', 3 => 'high', 4 => 'critical');
+  return isset($map[$priority]) ? $map[$priority] : 'normal';
+}
+
+/**
+ * Returns a section header markup string for use in render arrays.
+ *
+ * Renders a flex row with the section title on the left and an optional
+ * add-link (or group of add-links) on the right. Intended for entity view
+ * pages across the Drop module family.
+ *
+ * @param string $title
+ *   The section heading text (will be escaped).
+ * @param string|null $add_link
+ *   Optional already-rendered HTML to place on the right (e.g. from l() or a
+ *   <span> of links). Passed through unescaped — callers are responsible for
+ *   sanitising any user-derived values before passing them in.
+ *
+ * @return string
+ *   HTML string for the section header div.
+ */
+function drop_base_section_header($title, $add_link = NULL) {
+  $html = '<div class="drop-section-header"><h2>' . check_plain($title) . '</h2>';
+  if ($add_link) {
+    $html .= $add_link;
+  }
+  $html .= '</div>';
+  return $html;
+}
+
+/**
+ * Returns a page-level action links bar for entity view pages.
+ *
+ * Renders all links as plain anchors inside .drop-page-actions. The CSS
+ * handles their appearance — callers must never add Backdrop button classes
+ * ('button', 'button-secondary', etc.) to these links.
+ *
+ * @param array $links
+ *   Array of already-rendered HTML strings produced by l() or equivalent.
+ *   Empty entries are filtered out automatically.
+ *
+ * @return string
+ *   HTML string for the action bar, or an empty string if no links provided.
+ */
+function drop_base_page_actions(array $links) {
+  $links = array_filter($links);
+  if (empty($links)) {
+    return '';
+  }
+  return '<div class="drop-page-actions">' . implode('', $links) . '</div>';
+}
+
+/**
+ * Implements hook_menu().
+ */
+function drop_base_menu() {
+  $items['admin/drop/team'] = array(
+    'title'            => 'Team',
+    'page callback'    => 'drop_base_team_page',
+    'access arguments' => array('access drop team'),
+    'type'             => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function drop_base_permission() {
+  return array(
+    'access drop team' => array(
+      'title'       => t('Access team directory'),
+      'description' => t('View the team directory showing team members and last online time.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_drop_nav_links().
+ */
+function drop_base_drop_nav_links() {
+  return array(
+    array(
+      'title'      => t('Team'),
+      'path'       => 'admin/drop/team',
+      'permission' => 'access drop team',
+      'weight'     => 90,
+    ),
+  );
+}
+
+/**
+ * Page callback: Team directory.
+ *
+ * Displays all active team members with their last-seen time.
+ */
+function drop_base_team_page() {
+  backdrop_set_title(t('Team'));
+
+  $accounts = db_select('users', 'u')
+    ->fields('u', array('uid', 'name', 'access'))
+    ->condition('u.status', 1)
+    ->condition('u.uid', 0, '>')
+    ->orderBy('u.access', 'DESC')
+    ->execute()
+    ->fetchAll();
+
+  $can_see_tickets = module_exists('droptickets') && user_access('access droptickets');
+
+  $rows = array();
+  foreach ($accounts as $account) {
+    $last_seen = $account->access
+      ? t('@time ago', array('@time' => format_interval(REQUEST_TIME - $account->access)))
+      : t('Never');
+    $name = $can_see_tickets
+      ? l($account->name, 'admin/drop/tickets/member/' . $account->uid)
+      : check_plain($account->name);
+    $rows[] = array($name, $last_seen);
+  }
+
+  return array(
+    '#theme'  => 'table',
+    '#header' => array(t('Name'), t('Last online')),
+    '#rows'   => $rows,
+    '#attributes' => array('class' => array('drop-team-table')),
+  );
+}

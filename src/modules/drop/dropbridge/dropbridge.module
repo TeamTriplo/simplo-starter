@@ -1,0 +1,268 @@
+<?php
+/**
+ * @file
+ * DropBridge — Unified daily to-do list across DropGoals, DropTasks, and DropCRM.
+ */
+
+// ---------------------------------------------------------------------------
+// Permissions
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_permission().
+ */
+function dropbridge_permission() {
+  return array(
+    'access dropbridge' => array(
+      'title'       => t('Access DropBridge daily list'),
+      'description' => t('View and act on the unified daily to-do list.'),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Menu
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_menu().
+ */
+function dropbridge_menu() {
+  $items = array();
+
+  $items['admin/drop'] = array(
+    'title'            => 'Drop Admin',
+    'page callback'    => 'dropbridge_daily_list',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access dropbridge'),
+    'file'             => 'dropbridge.pages.inc',
+    'type'             => MENU_NORMAL_ITEM,
+  );
+
+  // Goal done toggle — only register if dropgoals is enabled.
+  if (module_exists('dropgoals')) {
+    // %drop_goal is at arg position 3.
+    $items['admin/drop/goal/%drop_goal/done'] = array(
+      'page callback'    => 'dropbridge_goal_done',
+      'page arguments'   => array(3),
+      'access callback'  => 'dropgoals_goal_access',
+      'access arguments' => array('update', 3),
+      'file'             => 'dropbridge.pages.inc',
+      'type'             => MENU_CALLBACK,
+    );
+  }
+
+  // Task done toggle — only register if droptasks is enabled.
+  if (module_exists('droptasks')) {
+    // %drop_task is at arg position 3.
+    $items['admin/drop/task/%drop_task/done'] = array(
+      'page callback'    => 'dropbridge_task_done',
+      'page arguments'   => array(3),
+      'access callback'  => 'droptasks_task_access',
+      'access arguments' => array('update', 3),
+      'file'             => 'dropbridge.pages.inc',
+      'type'             => MENU_CALLBACK,
+    );
+  }
+
+  // Ticket done — only register if droptickets is enabled.
+  if (module_exists('droptickets')) {
+    $items['admin/drop/tickets/%drop_ticket/done'] = array(
+      'page callback'    => 'droptickets_ticket_mark_done',
+      'page arguments'   => array(3),
+      'access callback'  => 'droptickets_ticket_access',
+      'access arguments' => array('update', 3),
+      'file'             => 'droptickets.pages.inc',
+      'module'           => 'droptickets',
+      'type'             => MENU_CALLBACK,
+    );
+  }
+
+  // CRM activity done — only register if dropcrm is enabled.
+  if (module_exists('dropcrm')) {
+    // %crm_activity is at arg position 3.
+    $items['admin/drop/activity/%crm_activity/done'] = array(
+      'page callback'    => 'dropbridge_activity_done',
+      'page arguments'   => array(3),
+      'access callback'  => 'dropcrm_activity_access',
+      'access arguments' => array('edit', 3),
+      'file'             => 'dropbridge.pages.inc',
+      'type'             => MENU_CALLBACK,
+    );
+  }
+
+  // Settings page.
+  $items['admin/drop/settings'] = array(
+    'title'            => 'Settings',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('dropbridge_settings_form'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'file'             => 'dropbridge.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 20,
+  );
+
+  return $items;
+}
+
+// ---------------------------------------------------------------------------
+// CRM contact view integration
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_dropcrm_contact_view_alter().
+ *
+ * Appends a Tasks section to the CRM contact view page when droptasks is
+ * enabled and the contact has associated tasks.
+ */
+function dropbridge_dropcrm_contact_view_alter(&$output, $contact) {
+  if (!module_exists('droptasks')) {
+    return;
+  }
+
+  $tasks = db_select('drop_task', 't')
+    ->fields('t', array('tid', 'title', 'status', 'priority', 'due_date'))
+    ->condition('t.contact_id', $contact->cid)
+    ->orderBy('t.status', 'ASC')
+    ->orderBy('t.due_date', 'ASC')
+    ->execute()
+    ->fetchAll();
+
+  $rows = array();
+  foreach ($tasks as $task) {
+    $title_cell = l(check_plain($task->title), 'admin/drop/tasks/' . $task->tid);
+    $priority_class = 'drop-priority-' . drop_base_priority_class($task->priority);
+    $priority_labels = drop_base_priority_labels();
+    $due = $task->due_date ? format_date($task->due_date, 'custom', 'M j, Y') : '—';
+    $status_label = $task->status === 'complete' ? t('Complete') : t('Pending');
+    $rows[] = array(
+      'data'  => array(
+        array('data' => $title_cell),
+        array('data' => isset($priority_labels[$task->priority]) ? $priority_labels[$task->priority] : '', 'class' => array($priority_class)),
+        $due,
+        $status_label,
+      ),
+      'class' => $task->status === 'complete' ? array('drop-task-complete') : array(),
+    );
+  }
+
+  $output['tasks'] = array(
+    '#type'   => 'container',
+    '#weight' => 25,
+  );
+  $output['tasks']['heading'] = array(
+    '#markup' => drop_base_section_header(
+      t('Tasks'),
+      l(t('+ Add task'), 'admin/drop/tasks/add',
+        array('attributes' => array('class' => array('drop-section-add')),
+              'query'      => array('contact' => $contact->cid)))
+    ),
+    '#weight' => -5,
+  );
+  $output['tasks']['table'] = array(
+    '#theme'  => 'table',
+    '#header' => array(t('Task'), t('Priority'), t('Due'), t('Status')),
+    '#rows'   => $rows,
+    '#empty'  => t('No tasks linked to this contact.'),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Theme
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_theme().
+ */
+function dropbridge_theme() {
+  return array(
+    'dropbridge_daily_list' => array(
+      'variables' => array('items' => array(), 'preview_date' => NULL, 'is_past' => FALSE),
+      'file'      => 'dropbridge.pages.inc',
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cron: background calendar fetch
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_cron().
+ *
+ * Fetches all configured ICS feeds in the background and stores raw ICS data
+ * in state so that the dashboard page never has to make an HTTP request.
+ */
+function dropbridge_cron() {
+  _dropbridge_cron_fetch_calendars();
+}
+
+/**
+ * Fetches each configured ICS URL and persists the raw ICS string in state.
+ *
+ * Respects the configured TTL — skips a feed if it was fetched recently enough.
+ * Called from hook_cron(); can also be called directly for an immediate refresh.
+ */
+function _dropbridge_cron_fetch_calendars() {
+  $url_setting = config_get('dropbridge.settings', 'calendar_ics_url');
+  if (empty(trim($url_setting))) {
+    return;
+  }
+
+  $url_lines = array_filter(array_map('trim', explode("\n", $url_setting)));
+  if (empty($url_lines)) {
+    return;
+  }
+
+  $ttl = (int) config_get('dropbridge.settings', 'calendar_cache_seconds') ?: 1800;
+
+  foreach ($url_lines as $url_line) {
+    $parts          = array_map('trim', explode('|', $url_line, 2));
+    $url            = $parts[0];
+    $calendar_label = (isset($parts[1]) && $parts[1] !== '') ? $parts[1] : NULL;
+
+    if (empty($url)) {
+      continue;
+    }
+
+    $state_key = 'dropbridge.ical_' . md5($url);
+    $stored    = state_get($state_key);
+
+    // Skip if still fresh.
+    if (!empty($stored['fetched']) && (REQUEST_TIME - $stored['fetched']) < $ttl) {
+      continue;
+    }
+
+    $response = backdrop_http_request($url, array('timeout' => 15));
+    if ($response->code != 200 || empty($response->data)) {
+      watchdog('dropbridge', 'Failed to fetch ICS feed (HTTP @code): @url',
+        array('@code' => $response->code, '@url' => $url), WATCHDOG_WARNING);
+      continue;
+    }
+
+    state_set($state_key, array(
+      'ics'     => $response->data,
+      'label'   => $calendar_label,
+      'fetched' => REQUEST_TIME,
+    ));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Navigation
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_drop_nav_links().
+ */
+function dropbridge_drop_nav_links() {
+  return array(
+    array(
+      'title'      => t('Dashboard'),
+      'path'       => 'admin/drop',
+      'permission' => 'access dropbridge',
+      'weight'     => 0,
+    ),
+  );
+}

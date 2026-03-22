@@ -1,0 +1,333 @@
+/**
+ * @file
+ * Admin styles for DropCRM.
+ */
+
+/* To Do list — legacy overdue cell style (no longer used) */
+.crm-todo-table td.crm-overdue {
+  color: #c62828;
+  font-weight: bold;
+}
+
+/* Meeting notes indicator badge in activity tables */
+.crm-notes-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.3em;
+  color: #1565c0;
+  opacity: 0.7;
+}
+
+.crm-notes-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Planned activity rows on the contact view page */
+tr.crm-activity-planned td {
+  background-color: #fffbea !important;
+  border-left: 3px solid #f0a500 !important;
+}
+
+/* Meeting notes accordion on activity view page */
+.crm-accordion {
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin: 1em 0;
+}
+
+.crm-accordion-summary {
+  padding: 0.6em 0.9em;
+  font-weight: bold;
+  cursor: pointer;
+  background: #f5f5f5;
+  border-radius: 3px;
+  user-select: none;
+}
+
+.crm-accordion[open] .crm-accordion-summary {
+  border-bottom: 1px solid #ddd;
+  border-radius: 3px 3px 0 0;
+}
+
+.crm-accordion-body {
+  padding: 1em 1.2em;
+}
+
+/* Search form on list pages */
+.crm-search-form {
+  margin-bottom: 1em;
+}
+
+.crm-search-form input[type="text"] {
+  width: 18em;
+  padding: 0.3em 0.5em;
+  margin-right: 0.3em;
+}
+
+.crm-search-form button {
+  padding: 0.3em 0.8em;
+}
+
+/* Outreach badge on activity subject in contact view */
+.crm-outreach-badge {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.1em 0.45em;
+  font-size: 0.75em;
+  border-radius: 3px;
+  background: #1565c0 !important;
+  color: #fff !important;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Contact detail definition list on view pages */
+.crm-contact-details {
+  margin: 0 0 1.5em 0;
+  padding: 0;
+}
+
+.crm-contact-details dt {
+  float: left;
+  clear: left;
+  width: 9em;
+  color: #666;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-top: 0.15em;
+}
+
+.crm-contact-details dd {
+  margin: 0 0 0.6em 9.5em;
+  padding: 0;
+}
+
+/* People list — highlight missing organization */
+.crm-no-org {
+  color: #999;
+  font-style: italic;
+}
+
+/* Activity priority badges — colours from drop_base CSS variables */
+.crm-todo-table td.crm-priority-high,
+.crm-activity-view td.crm-priority-high {
+  background-color: var(--drop-priority-high-bg) !important;
+  color: var(--drop-priority-high-text) !important;
+  font-weight: bold;
+  text-align: center;
+}
+.crm-todo-table td.crm-priority-normal,
+.crm-activity-view td.crm-priority-normal {
+  background-color: var(--drop-priority-normal-bg) !important;
+  color: var(--drop-priority-normal-text) !important;
+  font-weight: bold;
+  text-align: center;
+}
+.crm-todo-table td.crm-priority-low,
+.crm-activity-view td.crm-priority-low {
+  background-color: var(--drop-priority-low-bg) !important;
+  color: var(--drop-priority-low-text) !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Activity due date status colours — colours from drop_base CSS variables */
+.crm-todo-table td.crm-due-future,
+.crm-activity-view td.crm-due-future {
+  background-color: var(--drop-priority-normal-bg) !important;
+  color: var(--drop-priority-normal-text) !important;
+  font-weight: bold;
+  text-align: center;
+}
+.crm-todo-table td.crm-due-soon,
+.crm-activity-view td.crm-due-soon {
+  background-color: var(--drop-due-soon-bg) !important;
+  color: var(--drop-due-soon-color) !important;
+  font-weight: bold;
+  text-align: center;
+}
+.crm-todo-table td.crm-due-overdue,
+.crm-activity-view td.crm-due-overdue {
+  background-color: var(--drop-overdue-color) !important;
+  color: #fff !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Shared add-link style */
+.crm-add-link {
+  margin-bottom: 1em;
+}
+
+/* Outreach goal report */
+.crm-goal-summary {
+  max-width: 480px;
+  margin-bottom: 1.5em;
+}
+
+.crm-goal-ahead {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+.crm-goal-behind {
+  color: #c62828;
+  font-weight: bold;
+}
+
+.crm-goal-bar-wrap {
+  max-width: 480px;
+  height: 18px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.4em;
+}
+
+.crm-goal-bar {
+  height: 100%;
+  background: #1565c0;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  min-width: 2px;
+}
+
+.crm-goal-bar-label {
+  font-size: 0.85em;
+  color: #555;
+  margin-bottom: 1.5em;
+}
+
+/* Prospect rating stars */
+.crm-stars {
+  font-size: 1.1em;
+  white-space: nowrap;
+}
+
+.crm-stars-filled {
+  color: #f0a500;
+}
+
+.crm-stars-empty {
+  color: #ddd;
+}
+
+.crm-rating-cell {
+  white-space: nowrap;
+}
+
+/* Quick-add attendees section on activity form */
+#crm-attendees-wrapper {
+  margin-top: 0.5em;
+  margin-bottom: 1em;
+  padding: 0.75em 1em;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  background: #fafafa;
+}
+
+#crm-attendees-wrapper .form-item {
+  margin-bottom: 0.25em;
+}
+
+.crm-attendees-notice {
+  margin: 0.5em 0 0;
+  color: #666;
+  font-style: italic;
+}
+
+/* Settings activity types table */
+.dropcrm-settings-table {
+  width: 100%;
+  margin-bottom: 1.5em;
+}
+
+.dropcrm-settings-table .checkbox-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.dropcrm-settings-table .form-item {
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Clients report
+   -------------------------------------------------------------------------- */
+
+.dropcrm-report-tabs {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dropcrm-report-tabs a {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 2rem;
+  background: var(--drop-bg-secondary, #f0f0f0);
+  color: var(--drop-text-primary, #333);
+  text-decoration: none;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.dropcrm-report-tabs a:hover {
+  background: var(--drop-border, #ccc);
+}
+
+.dropcrm-report-tabs a.dropcrm-tab-active {
+  background: var(--drop-primary, #1565c0);
+  color: #fff;
+}
+
+.dropcrm-report-count {
+  margin-top: 0.75rem;
+  font-size: 0.85em;
+  color: var(--drop-text-secondary, #888);
+}
+
+.dropcrm-col-status {
+  max-width: 320px;
+}
+
+.dropcrm-status-note {
+  font-size: 0.9em;
+  color: var(--drop-text-primary, #333);
+  line-height: 1.4;
+}
+
+.dropcrm-status-empty {
+  color: var(--drop-text-secondary, #aaa);
+}
+
+/* ---------------------------------------------------------------------------
+   Project view page
+   --------------------------------------------------------------------------- */
+
+.dropcrm-project-meta {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.9rem;
+  background: #f5f5f5;
+  border: 1px solid var(--drop-border, #e0e0e0);
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  font-size: 0.9em;
+}
+
+.dropcrm-project-archived {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.dropcrm-project-actions {
+  font-size: 0.9em;
+  margin-bottom: 1.25rem;
+}

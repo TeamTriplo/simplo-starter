@@ -1,0 +1,305 @@
+/**
+ * @file
+ * Drop Base — shared CSS variables and utility classes.
+ *
+ * This is the single source of truth for colours and patterns shared across
+ * DropCRM and DropTasks. Update values here; both modules inherit the change
+ * automatically via CSS custom properties.
+ *
+ * DO NOT duplicate these values in dropcrm.admin.css or droptasks.css.
+ * Module-specific layout/structure styles belong in the module's own CSS file.
+ */
+
+/* ---------------------------------------------------------------------------
+   Shared colour tokens
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Priority */
+  --drop-priority-high-color:      #c62828;
+  --drop-priority-high-bg:         #c62828;
+  --drop-priority-high-text:       #ffffff;
+  --drop-priority-normal-color:    #1565c0;
+  --drop-priority-normal-bg:       #e3f2fd;
+  --drop-priority-normal-text:     #1565c0;
+  --drop-priority-low-color:       #999999;
+  --drop-priority-low-bg:          #f5f5f5;
+  --drop-priority-low-text:        #999999;
+
+  /* Due date status */
+  --drop-overdue-color:            #c62828;
+  --drop-overdue-bg:               #fff5f5;
+  --drop-due-soon-color:           #e65100;
+  --drop-due-soon-bg:              #ffe082;
+  --drop-due-today-color:          #e65100;
+  --drop-due-today-bg:             #fff8e1;
+}
+
+/* ---------------------------------------------------------------------------
+   Priority — text utilities
+   Used when priority is shown inline as coloured text.
+   --------------------------------------------------------------------------- */
+
+.drop-priority-high {
+  color: var(--drop-priority-high-color);
+  font-weight: bold;
+}
+
+.drop-priority-normal {
+  color: var(--drop-priority-normal-color);
+}
+
+.drop-priority-low {
+  color: var(--drop-priority-low-color);
+}
+
+/* ---------------------------------------------------------------------------
+   Priority — table cell badge utilities
+   Used when priority fills a table cell as a coloured badge.
+   --------------------------------------------------------------------------- */
+
+td.drop-priority-high {
+  background-color: var(--drop-priority-high-bg) !important;
+  color: var(--drop-priority-high-text) !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+td.drop-priority-normal {
+  background-color: var(--drop-priority-normal-bg) !important;
+  color: var(--drop-priority-normal-text) !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+td.drop-priority-low {
+  background-color: var(--drop-priority-low-bg) !important;
+  color: var(--drop-priority-low-text) !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+   Due date status — text utilities
+   --------------------------------------------------------------------------- */
+
+.drop-overdue {
+  color: var(--drop-overdue-color);
+  font-weight: bold;
+}
+
+.drop-due-soon {
+  color: var(--drop-due-soon-color);
+  font-weight: bold;
+}
+
+.drop-due-today {
+  color: var(--drop-due-today-color);
+  font-weight: bold;
+}
+
+/* ---------------------------------------------------------------------------
+   Due date status — row highlight utilities
+   --------------------------------------------------------------------------- */
+
+tr.drop-row-overdue td {
+  background-color: var(--drop-overdue-bg);
+}
+
+tr.drop-row-due-soon td {
+  background-color: var(--drop-due-soon-bg);
+}
+
+/* ---------------------------------------------------------------------------
+   Section headers
+   A flex row with a title on the left and optional add-link(s) on the right.
+   Used on entity view pages across the Drop module family.
+   --------------------------------------------------------------------------- */
+
+.drop-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #ddd;
+  margin: 1.5em 0 0.5em 0;
+  padding-bottom: 0.25em;
+}
+
+.drop-section-header h2 {
+  margin: 0;
+  font-size: 1.1em;
+}
+
+a.drop-section-add {
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.drop-section-add-group {
+  display: flex;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ---------------------------------------------------------------------------
+   Page action links bar
+   --------------------------------------------------------------------------- */
+
+.drop-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-bottom: 1.2em;
+}
+
+.drop-page-actions a {
+  display: inline-block;
+  padding: 0.2em 0.75em;
+  border: 1px solid #aaa;
+  border-radius: 2em;
+  font-size: 0.82em;
+  line-height: 1.6;
+  color: #333;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.drop-page-actions a:hover {
+  background-color: #f0f0f0;
+  border-color: #777;
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Drop nav bar
+   Shared top navigation across all Drop admin pages.
+   --------------------------------------------------------------------------- */
+
+.drop-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--drop-border, #e0e0e0);
+}
+
+.drop-nav a {
+  padding: 0.3rem 0.9rem;
+  border-radius: 2em;
+  font-size: 0.875em;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--drop-text-secondary, #555);
+  border: 1px solid transparent;
+  transition: background 0.1s, color 0.1s;
+}
+
+.drop-nav a:hover {
+  background: var(--drop-border, #eee);
+  color: var(--drop-text, #222);
+}
+
+.drop-nav a.drop-nav-active {
+  background: var(--drop-primary, #1565c0);
+  color: #fff;
+  border-color: var(--drop-primary, #1565c0);
+}
+
+/* ===========================================================================
+   Drop Admin — layout region chrome
+   Applies to the shared header, top, and tab areas used across all Drop pages.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Header region
+   The l-header contains breadcrumb + Drop Navigation block. Remove the nav's
+   standalone border/margin — the header boundary provides the separation.
+   --------------------------------------------------------------------------- */
+
+.l-header {
+  border-bottom: 1px solid #c8c8c8;
+  padding-bottom: 0.1rem;
+}
+
+.l-header .drop-nav {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Top region
+   Contains: page title, local task tabs, local actions, system messages.
+   --------------------------------------------------------------------------- */
+
+.l-top {
+  padding-top: 0.85rem;
+  padding-bottom: 0.25rem;
+}
+
+.l-top h1.page-title {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Local task tabs — lighter than Backdrop's default admin box-tab style */
+.l-top .tabs {
+  margin-bottom: 0.4rem;
+}
+
+.l-top ul.tabs.primary {
+  background: transparent;
+  border-bottom: 1px solid #d0d0d0;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.l-top ul.tabs.primary li a {
+  background: #f2f2f2;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  color: #555;
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.3em 0.8em;
+  text-transform: none;
+}
+
+.l-top ul.tabs.primary li a:hover {
+  background: #e6e6e6;
+  color: #222;
+  text-decoration: none;
+}
+
+.l-top ul.tabs.primary li.active a {
+  background: #fff;
+  border-bottom-color: #fff;
+  color: var(--drop-primary, #1565c0);
+  font-weight: 700;
+}
+
+/* Local actions in top region (+ Add ticket etc.) */
+.l-top ul.action-links {
+  list-style: none;
+  margin: 0 0 0.4rem;
+  padding: 0;
+}
+
+.l-top ul.action-links li {
+  display: inline-block;
+  margin-right: 0.75rem;
+}
+
+.l-top ul.action-links li a {
+  font-size: 0.9em;
+  font-weight: 500;
+}
