@@ -128,13 +128,24 @@ function droptime_menu() {
 
   // Reports tab.
   $items['admin/drop/time/reports'] = array(
-    'title'            => 'Reports',
+    'title'            => 'My Reports',
     'page callback'    => 'droptime_reports_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptime'),
     'file'             => 'droptime.pages.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 5,
+  );
+
+  // Team Reports tab — admin/project manager only.
+  $items['admin/drop/time/team'] = array(
+    'title'            => 'Team Reports',
+    'page callback'    => 'droptime_team_reports_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer droptime'),
+    'file'             => 'droptime.pages.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 10,
   );
 
   // Projects — redirect to DropCRM projects page (projects now live in DropCRM).

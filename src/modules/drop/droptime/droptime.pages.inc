@@ -669,3 +669,382 @@ function droptime_reports_page() {
 
   return $output;
 }
+
+// ---------------------------------------------------------------------------
+// Team Reports
+// ---------------------------------------------------------------------------
+
+/**
+ * Page callback: team-wide time reports for admins/project managers.
+ */
+function droptime_team_reports_page() {
+  backdrop_set_title(t('Team Reports'));
+
+  $site_tz = new DateTimeZone(config_get('system.date', 'default_timezone') ?: date_default_timezone_get());
+  $today   = (new DateTime('now', $site_tz))->format('Y-m-d');
+
+  // Period.
+  $period = (isset($_GET['period']) && in_array($_GET['period'], array('day', 'week', 'month')))
+    ? $_GET['period']
+    : 'week';
+
+  // Anchor date.
+  $date = (isset($_GET['date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date']))
+    ? $_GET['date']
+    : $today;
+
+  // Filters.
+  $filter_uid = (isset($_GET['uid']) && is_numeric($_GET['uid'])) ? (int) $_GET['uid'] : 0;
+  $filter_pid = (isset($_GET['pid']) && is_numeric($_GET['pid'])) ? (int) $_GET['pid'] : 0;
+  $group_by   = (isset($_GET['group']) && $_GET['group'] === 'person') ? 'person' : 'project';
+
+  // Compute date range.
+  $ts = strtotime($date);
+  switch ($period) {
+    case 'day':
+      $range_start = $date;
+      $range_end   = $date;
+      $label       = format_date($ts, 'custom', 'l, F j, Y');
+      $prev_date   = date('Y-m-d', strtotime('-1 day', $ts));
+      $next_date   = date('Y-m-d', strtotime('+1 day', $ts));
+      break;
+
+    case 'month':
+      $range_start = date('Y-m-01', $ts);
+      $range_end   = date('Y-m-t', $ts);
+      $label       = format_date($ts, 'custom', 'F Y');
+      $prev_date   = date('Y-m-d', strtotime('-1 month', $ts));
+      $next_date   = date('Y-m-d', strtotime('+1 month', $ts));
+      break;
+
+    case 'week':
+    default:
+      $period      = 'week';
+      $dow         = (int) date('N', $ts);
+      $range_start = date('Y-m-d', strtotime('-' . ($dow - 1) . ' days', $ts));
+      $range_end   = date('Y-m-d', strtotime('+' . (7 - $dow) . ' days', $ts));
+      $label       = t('Week of @s – @e', array(
+        '@s' => format_date(strtotime($range_start), 'custom', 'M j'),
+        '@e' => format_date(strtotime($range_end),   'custom', 'M j, Y'),
+      ));
+      $prev_date   = date('Y-m-d', strtotime('-7 days', $ts));
+      $next_date   = date('Y-m-d', strtotime('+7 days', $ts));
+      break;
+  }
+
+  // Base query params carried through all nav links.
+  $base_query = array('period' => $period, 'date' => $date, 'uid' => $filter_uid, 'pid' => $filter_pid, 'group' => $group_by);
+
+  // Build output.
+  $output = array(
+    '#attached' => array(
+      'css' => array(backdrop_get_path('module', 'droptime') . '/droptime.css'),
+    ),
+  );
+
+  // Period tabs.
+  $period_links = array();
+  foreach (array('day' => t('Day'), 'week' => t('Week'), 'month' => t('Month')) as $p => $plabel) {
+    $attr = $p === $period ? array('class' => array('droptime-period-active')) : array();
+    $period_links[] = l($plabel, 'admin/drop/time/team', array(
+      'query'      => array('period' => $p, 'date' => $date, 'uid' => $filter_uid, 'pid' => $filter_pid, 'group' => $group_by),
+      'attributes' => $attr,
+    ));
+  }
+  $output['periods'] = array(
+    '#markup' => '<div class="droptime-period-tabs">' . implode(' ', $period_links) . '</div>',
+    '#weight' => -20,
+  );
+
+  // Date nav.
+  $html_nav  = '<div class="droptime-date-nav">';
+  $html_nav .= l('‹', 'admin/drop/time/team', array('query' => array_merge($base_query, array('date' => $prev_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= '<span class="droptime-nav-label">' . check_plain($label) . '</span>';
+  $html_nav .= l('›', 'admin/drop/time/team', array('query' => array_merge($base_query, array('date' => $next_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= '</div>';
+  $output['nav'] = array('#markup' => $html_nav, '#weight' => -15);
+
+  // Filter bar.
+  $output['filters'] = array(
+    '#markup' => _droptime_team_filter_bar($filter_uid, $filter_pid, $group_by, $period, $date),
+    '#weight' => -10,
+  );
+
+  // Load entries.
+  $query = db_select('drop_time_entry', 'e')->fields('e')
+    ->condition('e.entry_date', $range_start, '>=')
+    ->condition('e.entry_date', $range_end,   '<=')
+    ->orderBy('e.entry_date', 'ASC')
+    ->orderBy('e.start_time', 'ASC');
+  if ($filter_uid) {
+    $query->condition('e.uid', $filter_uid);
+  }
+  if ($filter_pid) {
+    $query->condition('e.pid', $filter_pid);
+  }
+  $rows = $query->execute()->fetchAll();
+
+  if (empty($rows)) {
+    $output['empty'] = array(
+      '#markup' => '<p class="droptime-no-entries">' . t('No time logged for this period.') . '</p>',
+      '#weight' => 0,
+    );
+    return $output;
+  }
+
+  // Pre-load all projects and users referenced in entries.
+  $pids     = array_unique(array_column((array) $rows, 'pid'));
+  $uids     = array_unique(array_column((array) $rows, 'uid'));
+  $projects = $pids ? entity_load('drop_project', $pids) : array();
+  $users    = $uids ? user_load_multiple($uids) : array();
+
+  // Group-by toggle.
+  $group_links  = l(t('By Project'), 'admin/drop/time/team', array(
+    'query'      => array_merge($base_query, array('group' => 'project')),
+    'attributes' => $group_by === 'project' ? array('class' => array('droptime-period-active')) : array(),
+  ));
+  $group_links .= ' ';
+  $group_links .= l(t('By Person'), 'admin/drop/time/team', array(
+    'query'      => array_merge($base_query, array('group' => 'person')),
+    'attributes' => $group_by === 'person' ? array('class' => array('droptime-period-active')) : array(),
+  ));
+  $output['group_toggle'] = array(
+    '#markup' => '<div class="droptime-period-tabs droptime-group-toggle">' . $group_links . '</div>',
+    '#weight' => -5,
+  );
+
+  // Render report.
+  if ($group_by === 'person') {
+    $output['report'] = array(
+      '#markup' => _droptime_team_report_by_person($rows, $projects, $users),
+      '#weight' => 0,
+    );
+  }
+  else {
+    $output['report'] = array(
+      '#markup' => _droptime_team_report_by_project($rows, $projects, $users),
+      '#weight' => 0,
+    );
+  }
+
+  return $output;
+}
+
+/**
+ * Renders the filter bar for team reports.
+ */
+function _droptime_team_filter_bar($filter_uid, $filter_pid, $group_by, $period, $date) {
+  // All users who have ever logged time.
+  $uids = db_select('drop_time_entry', 'e')
+    ->fields('e', array('uid'))
+    ->groupBy('e.uid')
+    ->execute()
+    ->fetchCol();
+  $team = $uids ? user_load_multiple($uids) : array();
+
+  // All active projects.
+  $projects = droptime_project_options();
+
+  $member_options = '<option value="0"' . ($filter_uid === 0 ? ' selected' : '') . '>' . t('All members') . '</option>';
+  foreach ($team as $u) {
+    $sel = ($filter_uid === (int) $u->uid) ? ' selected' : '';
+    $member_options .= '<option value="' . (int) $u->uid . '"' . $sel . '>' . check_plain($u->name) . '</option>';
+  }
+
+  $proj_options = '<option value="0"' . ($filter_pid === 0 ? ' selected' : '') . '>' . t('All projects') . '</option>';
+  foreach ($projects as $pid => $name) {
+    $sel = ($filter_pid === (int) $pid) ? ' selected' : '';
+    $proj_options .= '<option value="' . (int) $pid . '"' . $sel . '>' . check_plain($name) . '</option>';
+  }
+
+  $action = url('admin/drop/time/team');
+  $html   = '<form class="droptime-filter-bar" method="get" action="' . $action . '">';
+  $html  .= '<input type="hidden" name="period" value="' . check_plain($period) . '">';
+  $html  .= '<input type="hidden" name="date" value="' . check_plain($date) . '">';
+  $html  .= '<input type="hidden" name="group" value="' . check_plain($group_by) . '">';
+  $html  .= '<label>' . t('Member') . ' <select name="uid" onchange="this.form.submit()">' . $member_options . '</select></label>';
+  $html  .= ' <label>' . t('Project') . ' <select name="pid" onchange="this.form.submit()">' . $proj_options . '</select></label>';
+  $html  .= '<noscript><button type="submit">' . t('Filter') . '</button></noscript>';
+  $html  .= '</form>';
+
+  return $html;
+}
+
+/**
+ * Renders the team report grouped by project.
+ */
+function _droptime_team_report_by_project($rows, $projects, $users) {
+  $groups      = array();
+  $grand_total = 0;
+  $grand_bill  = 0;
+
+  foreach ($rows as $row) {
+    $pid = $row->pid;
+    if (!isset($groups[$pid])) {
+      $groups[$pid] = array('total' => 0, 'billable' => 0, 'entries' => array());
+    }
+    $groups[$pid]['total']    += $row->duration;
+    $groups[$pid]['billable'] += $row->billable ? $row->duration : 0;
+    $groups[$pid]['entries'][] = $row;
+    $grand_total += $row->duration;
+    $grand_bill  += $row->billable ? $row->duration : 0;
+  }
+  uasort($groups, function($a, $b) { return $b['total'] - $a['total']; });
+
+  // Summary table.
+  $table_rows = array();
+  foreach ($groups as $pid => $data) {
+    $project = isset($projects[$pid]) ? $projects[$pid] : NULL;
+    $color   = $project ? check_plain($project->color) : '#ccc';
+    $name    = $project ? check_plain($project->name)  : t('(unknown)');
+    $swatch  = '<span class="droptime-swatch" style="background:' . $color . ';"></span>';
+    $pct     = $grand_total > 0 ? round(($data['total'] / $grand_total) * 100) : 0;
+    $table_rows[] = array(
+      array('data' => $swatch . ' ' . $name, 'class' => array('droptime-report-project')),
+      droptime_format_duration($data['total']),
+      droptime_format_duration($data['billable']),
+      $pct . '%',
+    );
+  }
+  $table_rows[] = array(
+    array('data' => '<strong>' . t('Total') . '</strong>'),
+    array('data' => '<strong>' . droptime_format_duration($grand_total) . '</strong>'),
+    array('data' => '<strong>' . droptime_format_duration($grand_bill) . '</strong>'),
+    '',
+  );
+
+  $html = theme('table', array(
+    'header'     => array(t('Project'), t('Total'), t('Billable'), t('%')),
+    'rows'       => $table_rows,
+    'attributes' => array('class' => array('droptime-report-table')),
+  ));
+
+  // Per-project accordions.
+  foreach ($groups as $pid => $data) {
+    $project = isset($projects[$pid]) ? $projects[$pid] : NULL;
+    $color   = $project ? check_plain($project->color) : '#ccc';
+    $name    = $project ? check_plain($project->name)  : t('(unknown)');
+    $swatch  = '<span class="droptime-swatch" style="background:' . $color . ';"></span>';
+    $count   = count($data['entries']);
+
+    $html .= '<details class="droptime-team-accordion">';
+    $html .= '<summary class="droptime-team-accordion-summary">'
+      . $swatch . ' ' . $name
+      . ' <span class="droptime-team-accordion-count">'
+      . format_plural($count, '1 entry', '@count entries') . ' &middot; ' . droptime_format_duration($data['total'])
+      . '</span></summary>';
+    $html .= _droptime_team_entries_table($data['entries'], $projects, $users, 'person');
+    $html .= '</details>';
+  }
+
+  return $html;
+}
+
+/**
+ * Renders the team report grouped by person.
+ */
+function _droptime_team_report_by_person($rows, $projects, $users) {
+  $groups      = array();
+  $grand_total = 0;
+  $grand_bill  = 0;
+
+  foreach ($rows as $row) {
+    $uid = $row->uid;
+    if (!isset($groups[$uid])) {
+      $groups[$uid] = array('total' => 0, 'billable' => 0, 'entries' => array());
+    }
+    $groups[$uid]['total']    += $row->duration;
+    $groups[$uid]['billable'] += $row->billable ? $row->duration : 0;
+    $groups[$uid]['entries'][] = $row;
+    $grand_total += $row->duration;
+    $grand_bill  += $row->billable ? $row->duration : 0;
+  }
+  uasort($groups, function($a, $b) { return $b['total'] - $a['total']; });
+
+  // Summary table.
+  $table_rows = array();
+  foreach ($groups as $uid => $data) {
+    $name = isset($users[$uid]) ? check_plain($users[$uid]->name) : t('(unknown)');
+    $pct  = $grand_total > 0 ? round(($data['total'] / $grand_total) * 100) : 0;
+    $table_rows[] = array(
+      $name,
+      droptime_format_duration($data['total']),
+      droptime_format_duration($data['billable']),
+      $pct . '%',
+    );
+  }
+  $table_rows[] = array(
+    array('data' => '<strong>' . t('Total') . '</strong>'),
+    array('data' => '<strong>' . droptime_format_duration($grand_total) . '</strong>'),
+    array('data' => '<strong>' . droptime_format_duration($grand_bill) . '</strong>'),
+    '',
+  );
+
+  $html = theme('table', array(
+    'header'     => array(t('Person'), t('Total'), t('Billable'), t('%')),
+    'rows'       => $table_rows,
+    'attributes' => array('class' => array('droptime-report-table')),
+  ));
+
+  // Per-person accordions.
+  foreach ($groups as $uid => $data) {
+    $name  = isset($users[$uid]) ? check_plain($users[$uid]->name) : t('(unknown)');
+    $count = count($data['entries']);
+
+    $html .= '<details class="droptime-team-accordion">';
+    $html .= '<summary class="droptime-team-accordion-summary">'
+      . $name
+      . ' <span class="droptime-team-accordion-count">'
+      . format_plural($count, '1 entry', '@count entries') . ' &middot; ' . droptime_format_duration($data['total'])
+      . '</span></summary>';
+    $html .= _droptime_team_entries_table($data['entries'], $projects, $users, 'project');
+    $html .= '</details>';
+  }
+
+  return $html;
+}
+
+/**
+ * Renders a table of individual entries inside a team accordion.
+ *
+ * @param array $entries
+ *   Time entry rows.
+ * @param array $projects
+ *   Loaded project entities keyed by pid.
+ * @param array $users
+ *   Loaded user objects keyed by uid.
+ * @param string $show_col
+ *   'person' to show the person column, 'project' to show the project column.
+ */
+function _droptime_team_entries_table($entries, $projects, $users, $show_col) {
+  $rows = array();
+  foreach ($entries as $entry) {
+    $project   = isset($projects[$entry->pid]) ? $projects[$entry->pid] : NULL;
+    $color     = $project ? check_plain($project->color) : '#ccc';
+    $swatch    = '<span class="droptime-swatch" style="background:' . $color . ';"></span>';
+    $proj_name = $project ? check_plain($project->name) : t('(unknown)');
+    $person    = isset($users[$entry->uid]) ? check_plain($users[$entry->uid]->name) : t('(unknown)');
+    $bill      = $entry->billable
+      ? '<span class="droptime-bill droptime-bill--yes" title="' . t('Billable') . '">$</span>'
+      : '';
+
+    $row   = array();
+    $row[] = format_date(strtotime($entry->entry_date), 'custom', 'M j');
+    $row[] = check_plain($entry->start_time) . '–' . check_plain($entry->end_time);
+    $row[] = ($show_col === 'project') ? $swatch . ' ' . $proj_name : $person;
+    $row[] = check_plain($entry->notes);
+    $row[] = $bill . ' ' . droptime_format_duration($entry->duration);
+    $rows[] = $row;
+  }
+
+  $header   = array(t('Date'), t('Time'));
+  $header[] = $show_col === 'project' ? t('Project') : t('Person');
+  $header[] = t('Note');
+  $header[] = t('Duration');
+
+  return theme('table', array(
+    'header'     => $header,
+    'rows'       => $rows,
+    'attributes' => array('class' => array('droptime-team-entries-table')),
+  ));
+}

@@ -301,3 +301,85 @@
 .droptime-project-table th {
   padding: 0.4rem 0.75rem;
 }
+
+/* ---------------------------------------------------------------------------
+   Team Reports — filter bar
+   --------------------------------------------------------------------------- */
+
+.droptime-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--drop-bg-subtle, #f5f5f5);
+  border: 1px solid var(--drop-border, #ddd);
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+
+.droptime-filter-bar label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9em;
+  color: var(--drop-text-secondary, #555);
+}
+
+.droptime-filter-bar select {
+  font-size: 0.9em;
+}
+
+/* ---------------------------------------------------------------------------
+   Team Reports — group-by toggle spacing
+   --------------------------------------------------------------------------- */
+
+.droptime-group-toggle {
+  margin-top: 1.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Team Reports — per-group entry accordions
+   --------------------------------------------------------------------------- */
+
+.droptime-team-accordion {
+  border: 1px solid var(--drop-border, #ddd);
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.droptime-team-accordion-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+.droptime-team-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.droptime-team-accordion-count {
+  font-weight: normal;
+  color: var(--drop-text-secondary, #666);
+  font-size: 0.88em;
+  margin-left: auto;
+}
+
+.droptime-team-accordion[open] .droptime-team-accordion-summary {
+  border-bottom: 1px solid var(--drop-border, #ddd);
+}
+
+.droptime-team-entries-table {
+  margin: 0;
+  font-size: 0.88em;
+}
+
+.droptime-team-entries-table td,
+.droptime-team-entries-table th {
+  padding: 0.35rem 0.75rem;
+}
