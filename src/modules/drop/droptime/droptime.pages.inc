@@ -54,7 +54,7 @@ function droptime_daily_page() {
   $output['#attached']['js'][] = backdrop_get_path('module', 'droptime') . '/droptime.js';
 
   // No projects yet? Prompt to create one.
-  $projects = droptime_project_options($user->uid);
+  $projects = droptime_project_options();
   if (empty($projects)) {
     $output['no_projects'] = array(
       '#markup' => '<p class="droptime-notice">'
@@ -250,7 +250,7 @@ function droptime_entry_form($form, &$form_state, $entry = NULL, $date = NULL) {
   // Return URL — redirect back to source after saving (e.g. the activity page).
   $source_return = !$is_edit && !empty($_GET['return']) ? $_GET['return'] : '';
 
-  $projects = droptime_project_options($user->uid);
+  $projects = droptime_project_options();
 
   $form['#attributes'] = array('class' => array('droptime-entry-form'));
 
