@@ -170,7 +170,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
   $form['priority'] = array(
     '#type'          => 'select',
     '#title'         => t('Priority'),
-    '#options'       => drop_base_priority_labels(),
+    '#options'       => array_reverse(drop_base_priority_labels(), TRUE),
     '#default_value' => $is_edit ? $ticket->priority : 2,
     '#weight'        => -16,
   );

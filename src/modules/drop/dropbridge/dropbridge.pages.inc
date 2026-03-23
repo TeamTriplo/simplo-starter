@@ -198,6 +198,7 @@ function dropbridge_daily_list() {
           'label'     => droptickets_ticket_label($ticket) . ': ' . $ticket->title,
           'due'       => $ticket->due_date,
           'overdue'   => $overdue,
+          'status'    => $ticket->status,
           'done_url'  => ($is_preview || !user_access('close droptickets')) ? NULL : 'admin/drop/tickets/' . $tid . '/done',
           'view_url'  => 'admin/drop/tickets/' . $tid,
           'sort_key'  => $overdue ? 0 : ($due_today ? 1 : 2),
@@ -529,6 +530,14 @@ function _dropbridge_render_section($type, $label, array $items, $add_url) {
       else {
         $html .= '<span class="dropbridge-item-meta">' . check_plain($due_label) . '</span>';
       }
+    }
+
+    // Status badge for tickets.
+    if ($type === 'ticket' && !empty($item['status'])) {
+      $status_options = function_exists('droptickets_status_options') ? droptickets_status_options() : array();
+      $status_label = isset($status_options[$item['status']]) ? $status_options[$item['status']] : $item['status'];
+      $html .= '<span class="dropbridge-item-meta dropbridge-item-status dropbridge-ticket-status--' . check_plain($item['status']) . '">'
+        . check_plain($status_label) . '</span>';
     }
 
     // Calendar source chip for events (when multiple calendars are configured).
