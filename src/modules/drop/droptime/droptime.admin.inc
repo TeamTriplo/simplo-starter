@@ -14,15 +14,9 @@ function droptime_reassign_form($form, &$form_state) {
   $uids_with_entries = db_query('SELECT DISTINCT uid FROM {drop_time_entry} ORDER BY uid')
     ->fetchCol();
 
-  // Build full user list for the "to" selector (anyone with droptime access).
+  // Build full user list for the "to" selector (all active non-anonymous users).
   $all_users = db_query(
-    "SELECT u.uid, u.name FROM {users} u
-     INNER JOIN {users_roles} ur ON u.uid = ur.uid
-     INNER JOIN {role} r ON ur.rid = r.rid
-     INNER JOIN {role_permission} rp ON r.rid = rp.rid
-     WHERE rp.permission IN ('access droptime', 'administer droptime')
-       AND u.uid > 0
-     GROUP BY u.uid ORDER BY u.name"
+    "SELECT uid, name FROM {users} WHERE uid > 0 AND status = 1 ORDER BY name"
   )->fetchAllKeyed();
 
   // Build "from" options — only users who actually have entries.
@@ -67,12 +61,18 @@ function droptime_reassign_form($form, &$form_state) {
     '#collapsed'   => TRUE,
   );
   $form['date_range']['date_from'] = array(
-    '#type'  => 'date',
-    '#title' => t('From date'),
+    '#type'        => 'textfield',
+    '#title'       => t('From date'),
+    '#placeholder' => 'YYYY-MM-DD',
+    '#size'        => 12,
+    '#maxlength'   => 10,
   );
   $form['date_range']['date_to'] = array(
-    '#type'  => 'date',
-    '#title' => t('To date'),
+    '#type'        => 'textfield',
+    '#title'       => t('To date'),
+    '#placeholder' => 'YYYY-MM-DD',
+    '#size'        => 12,
+    '#maxlength'   => 10,
   );
 
   $form['actions'] = array('#type' => 'actions');
@@ -98,8 +98,15 @@ function droptime_reassign_form_validate($form, &$form_state) {
     form_set_error('to_uid', t('Source and destination accounts must be different.'));
   }
 
-  $date_from = $form_state['values']['date_from'];
-  $date_to   = $form_state['values']['date_to'];
+  $date_from = trim($form_state['values']['date_from']);
+  $date_to   = trim($form_state['values']['date_to']);
+  $date_pattern = '/^\d{4}-\d{2}-\d{2}$/';
+  if (!empty($date_from) && !preg_match($date_pattern, $date_from)) {
+    form_set_error('date_range][date_from', t('From date must be in YYYY-MM-DD format.'));
+  }
+  if (!empty($date_to) && !preg_match($date_pattern, $date_to)) {
+    form_set_error('date_range][date_to', t('To date must be in YYYY-MM-DD format.'));
+  }
   if (!empty($date_from) && !empty($date_to) && $date_from > $date_to) {
     form_set_error('date_range][date_to', t('"To date" must be on or after "From date".'));
   }
