@@ -220,7 +220,42 @@ class SendGridMailSystem implements MailSystemInterface {
 
               // Parse text and HTML portions
               foreach ($body_parts as $body_part) {
-                if (strpos($body_part, 'multipart/alternative')) {
+                // Check for multipart/related BEFORE multipart/alternative, because
+                // multipart/related parts include type="multipart/alternative" in their
+                // Content-Type and would otherwise be incorrectly matched below.
+                if (strpos($body_part, 'multipart/related')) {
+                  // multipart/related contains multipart/alternative + inline attachments
+                  // (e.g. CID-embedded images). Extract the multipart/alternative part.
+                  $boundary2 = $this->_get_substring($body_part, 'boundary', '"', '"');
+                  $body_part = trim($this->_remove_headers(trim($body_part)));
+                  $body_parts2 = $this->_boundary_split($body_part, $boundary2);
+                  foreach ($body_parts2 as $body_part2) {
+                    if (strpos($body_part2, 'multipart/alternative')) {
+                      // Get the innermost boundary from the multipart/alternative.
+                      $boundary3 = $this->_get_substring($body_part2, 'boundary', '"', '"');
+                      $body_part2 = trim($this->_remove_headers(trim($body_part2)));
+                      $body_parts3 = $this->_boundary_split($body_part2, $boundary3);
+                      foreach ($body_parts3 as $body_part3) {
+                        if (strpos($body_part3, 'text/plain')) {
+                          $body_part3 = trim($this->_remove_headers(trim($body_part3)));
+                          $sendgrid_message->setText(backdrop_wrap_mail(backdrop_html_to_text($body_part3)));
+                        }
+                        elseif (strpos($body_part3, 'text/html')) {
+                          $body_part3_encoding = trim($this->_get_substring($body_part3, 'Content-Transfer-Encoding', ':', "\n"));
+                          $body_part3 = trim($this->_remove_headers(trim($body_part3)));
+                          if (backdrop_strtolower($body_part3_encoding) == 'base64') {
+                            $sendgrid_message->setHtml(base64_decode($body_part3));
+                          }
+                          else {
+                            $sendgrid_message->setHtml($body_part3);
+                          }
+                        }
+                      }
+                    }
+                    // Other sub-parts (inline images) are not forwarded as attachments.
+                  }
+                }
+                elseif (strpos($body_part, 'multipart/alternative')) {
                   // Get the second boundary ID from the Content-Type header.
                   $boundary2 = $this->_get_substring($body_part, 'boundary', '"', '"');
                   // Clean up the text.
