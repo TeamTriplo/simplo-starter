@@ -1,0 +1,19 @@
+.arch-total {
+  font-weight: bold;
+}
+
+.arch-links {
+  margin-top: 1.5em;
+  padding-top: 0.75em;
+  border-top: 1px solid #ddd;
+}
+
+.arch-links li {
+  display: inline;
+  margin-right: 1.5em;
+}
+
+.arch-links .item-list__title {
+  font-weight: bold;
+  margin-right: 0.5em;
+}

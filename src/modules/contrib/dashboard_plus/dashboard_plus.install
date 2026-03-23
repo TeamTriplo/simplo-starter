@@ -1,0 +1,43 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the Dashboard Plus module.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Auto-places the Welcome block in the dashboard layout.
+ */
+function dashboard_plus_install() {
+  // Load the dashboard layout.
+  $layouts = layout_load_multiple_by_path('admin/dashboard');
+  $layout = reset($layouts);
+
+  if (!$layout) {
+    backdrop_set_message(t('Dashboard Plus: Could not find the dashboard layout to place the Welcome block. You can add it manually via the <a href="!url">layout manager</a>.', array(
+      '!url' => url('admin/structure/layouts'),
+    )), 'warning');
+    return;
+  }
+
+  // Place the Welcome block at the top of the 'top' region.
+  // Fall back to 'content' if 'top' is not available.
+  $positions = $layout->positions;
+  if (isset($positions['top'])) {
+    $region = 'top';
+  }
+  elseif (isset($positions['content'])) {
+    $region = 'content';
+  }
+  else {
+    $region = key($positions);
+  }
+
+  $layout->addBlock('dashboard_plus', 'welcome', $region, 0);
+  $layout->save();
+
+  backdrop_set_message(t('Dashboard Plus: A Welcome block has been added to your dashboard. Remove it from the <a href="!url">layout manager</a> when you no longer need it.', array(
+    '!url' => url('admin/structure/layouts'),
+  )));
+}

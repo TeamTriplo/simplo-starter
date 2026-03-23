@@ -1,16 +1,181 @@
 <?php
 
 /**
+ * Implements hook_permission().
+ */
+function dashboard_plus_permission() {
+  return array(
+    'view architecture report' => array(
+      'title' => t('View architecture report'),
+      'description' => t('Access the Architecture tab on the dashboard and the site architecture report.'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function dashboard_plus_menu() {
+  $items['admin/dashboard/architecture'] = array(
+    'title' => 'Architecture',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('dashboard_plus_architecture_form'),
+    'access arguments' => array('view architecture report'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/architecture.inc',
+    'weight' => -50,
+  );
+  $items['admin/reports/site-architect'] = array(
+    'title' => 'Site architecture',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('dashboard_plus_architecture_form'),
+    'access arguments' => array('view architecture report'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/architecture.inc',
+  );
   $items['dashboard-plus/motd-next'] = array(
     'page callback' => 'dashboard_plus_motd_next',
     'access callback' => 'user_access',
     'access arguments' => array('access administration pages'),
     'type' => MENU_CALLBACK,
   );
+  $items['dashboard-plus/remove-block/%'] = array(
+    'page callback' => 'dashboard_plus_remove_dashboard_block',
+    'page arguments' => array(2),
+    'access arguments' => array('administer layouts'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['dashboard-plus/reorder-blocks'] = array(
+    'page callback' => 'dashboard_plus_reorder_blocks',
+    'access arguments' => array('administer layouts'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['dashboard-plus/quick-link/%/remove/%'] = array(
+    'page callback'   => 'dashboard_plus_quick_link_remove',
+    'page arguments'  => array(2, 4),
+    'access arguments' => array('administer layouts'),
+    'type'            => MENU_CALLBACK,
+  );
   return $items;
+}
+
+/**
+ * Page callback: Save reordered block positions for the dashboard layout.
+ *
+ * Accepts a POST with 'token' and 'positions' (JSON-encoded region => [uuid]).
+ */
+function dashboard_plus_reorder_blocks() {
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    backdrop_json_output(array('success' => FALSE, 'message' => 'Invalid request method.'));
+    return;
+  }
+
+  $token = isset($_POST['token']) ? $_POST['token'] : '';
+  if (!backdrop_valid_token($token, 'dashboard-plus-reorder')) {
+    backdrop_json_output(array('success' => FALSE, 'message' => 'Invalid token.'));
+    return;
+  }
+
+  $new_positions = isset($_POST['positions']) ? json_decode($_POST['positions'], TRUE) : NULL;
+  if (!is_array($new_positions)) {
+    backdrop_json_output(array('success' => FALSE, 'message' => 'Invalid positions data.'));
+    return;
+  }
+
+  $layouts = layout_load_multiple_by_path('admin/dashboard');
+  $layout = reset($layouts);
+  if (!$layout) {
+    backdrop_json_output(array('success' => FALSE, 'message' => 'Dashboard layout not found.'));
+    return;
+  }
+
+  // Validate every submitted UUID belongs to this layout.
+  $valid_uuids = array_keys($layout->content);
+  foreach ($new_positions as $region => $uuids) {
+    foreach ((array) $uuids as $uuid) {
+      if (!in_array($uuid, $valid_uuids)) {
+        backdrop_json_output(array('success' => FALSE, 'message' => 'Unknown block UUID.'));
+        return;
+      }
+    }
+  }
+
+  // Apply new positions for each submitted region.
+  foreach ($new_positions as $region => $uuids) {
+    if (array_key_exists($region, $layout->positions)) {
+      $layout->positions[$region] = array_values((array) $uuids);
+    }
+  }
+
+  $layout->save();
+  backdrop_json_output(array('success' => TRUE));
+}
+
+/**
+ * Page callback: Remove a block from the dashboard layout.
+ *
+ * Expects a valid CSRF token in $_GET['token'].
+ */
+function dashboard_plus_remove_dashboard_block($uuid) {
+  if (empty($_GET['token']) || !backdrop_valid_token($_GET['token'], 'dashboard-plus-remove-' . $uuid)) {
+    backdrop_set_message(t('Invalid or expired token. Block was not removed.'), 'error');
+    backdrop_goto('admin/dashboard');
+    return;
+  }
+
+  $layouts = layout_load_multiple_by_path('admin/dashboard');
+  $layout = reset($layouts);
+
+  if (!$layout || !isset($layout->content[$uuid])) {
+    backdrop_set_message(t('Block not found in the dashboard layout.'), 'error');
+    backdrop_goto('admin/dashboard');
+    return;
+  }
+
+  $block = $layout->content[$uuid];
+  $block_info = layout_get_block_info($block->module, $block->delta);
+  $label = is_array($block_info) && isset($block_info['info']) ? $block_info['info'] : $block->delta;
+
+  $layout->removeBlock($uuid);
+  $layout->save();
+
+  backdrop_set_message(t('!block has been removed from the dashboard.', array(
+    '!block' => check_plain($label),
+  )));
+  backdrop_goto('admin/dashboard');
+}
+
+/**
+ * Page callback: remove a single quick link from a Quick Links block.
+ */
+function dashboard_plus_quick_link_remove($uuid, $link_id) {
+  $token = isset($_GET['token']) ? $_GET['token'] : '';
+  if (!backdrop_valid_token($token, 'dashboard-plus-ql-remove-' . $uuid . '-' . $link_id)) {
+    backdrop_set_message(t('Invalid or expired token. Link was not removed.'), 'error');
+    backdrop_goto('admin/dashboard');
+    return;
+  }
+
+  $layouts = layout_load_multiple_by_path('admin/dashboard');
+  $layout  = reset($layouts);
+
+  if (!$layout || !isset($layout->content[$uuid])) {
+    backdrop_set_message(t('Block not found.'), 'error');
+    backdrop_goto('admin/dashboard');
+    return;
+  }
+
+  $block = $layout->content[$uuid];
+  $links = isset($block->settings['links']) ? $block->settings['links'] : array();
+  $links = array_values(array_filter($links, function ($link) use ($link_id) {
+    return $link['id'] !== $link_id;
+  }));
+  $block->settings['links'] = $links;
+  $layout->save();
+
+  backdrop_set_message(t('Link removed.'));
+  backdrop_goto('admin/dashboard');
 }
 
 /**
@@ -96,14 +261,38 @@ function dashboard_plus_block_info() {
     'description' => t('Displays items from any JSON Feed-compliant URL.'),
     'class' => 'DashboardJsonFeedBlock',
   );
+  $blocks['welcome'] = array(
+    'info' => t('Dashboard Plus - Welcome'),
+    'description' => t('Introductory block describing Dashboard Plus and its available blocks. Auto-placed during install; remove when no longer needed.'),
+    'class' => 'DashboardPlusWelcomeBlock',
+  );
+  $blocks['architecture_summary'] = array(
+    'info' => t('Dashboard Plus - Architecture summary'),
+    'description' => t('Compact summary of site architecture: content counts, modules, recipes, and last cron run. Links to the full Architecture tab.'),
+    'class' => 'DashboardPlusArchitectureSummaryBlock',
+  );
+  $blocks['quick_links'] = array(
+    'info' => t('Dashboard Plus - Quick links'),
+    'description' => t('A customizable collection of links to pages, forms, or configuration the site architect uses often. Displays in a responsive multi-column grid.'),
+    'class' => 'DashboardPlusQuickLinksBlock',
+    'multiple instances' => TRUE,
+  );
+  $blocks['existing_content'] = array(
+    'info' => t('Dashboard Plus - Content block'),
+    'description' => t('A flexible content block: find an existing piece of content or create something new, all without leaving the dashboard.'),
+    'class' => 'DashboardPlusExistingContentBlock',
+    'multiple instances' => TRUE,
+  );
   return $blocks;
 }
 
 function dashboard_plus_block_view($delta = '') {
   $block['subject'] = 'Backdrop CMS Resources';
-  $block['content'] = '<li><a target="_blank" href="https://forum.backdropcms.org">Ask A Question</a> - Backdrop CMS Forums</li>';
+  $block['content'] = '<ul class="dashboard-plus-resources-list">';
+  $block['content'] .= '<li><a target="_blank" href="https://forum.backdropcms.org">Ask A Question</a> - Backdrop CMS Forums</li>';
   $block['content'] .= '<li><a target="_blank" href="https://backdropcms.org/user-guide">Learn about Backdrop CMS</a> - User Guide</li>';
   $block['content'] .= '<li><a target="_blank" href="https://github.com/backdrop/backdrop-issues/issues">Report a bug</a> - Backdrop CMS Core Issue Queue</li>';
+  $block['content'] .= '</ul>';
   return $block;
 }
 
@@ -121,22 +310,121 @@ function dashboard_plus_autoload_info() {
     'DashboardModuleOfDayBlock' => 'includes/block.module_of_day.inc',
     'DashboardRecentModulesBlock' => 'includes/block.recent_modules.inc',
     'DashboardManageTaxonomyBlock' => 'includes/block.manage_taxonomy.inc',
-    'DashboardJsonFeedBlock'       => 'includes/block.json_feed.inc',
+    'DashboardJsonFeedBlock'             => 'includes/block.json_feed.inc',
+    'DashboardPlusWelcomeBlock'          => 'includes/block.welcome.inc',
+    'DashboardPlusArchitectureSummaryBlock' => 'includes/block.architecture_summary.inc',
+    'DashboardPlusExistingContentBlock'     => 'includes/block.existing_content.inc',
+    'DashboardPlusQuickLinksBlock'          => 'includes/block.quick_links.inc',
   );
 }
 
 /**
  * Implements hook_init().
- * Attach collapsible dashboard block assets on admin dashboard.
+ * Attach dashboard assets on admin dashboard pages.
  */
 function dashboard_plus_init() {
   if (strpos(current_path(), 'admin/dashboard') === 0) {
+    $module_path = backdrop_get_path('module', 'dashboard_plus');
     $config = config('dashboard_plus.settings');
     if ($config->get('collapsible_blocks') !== NULL ? $config->get('collapsible_blocks') : TRUE) {
-      backdrop_add_js(backdrop_get_path('module', 'dashboard_plus') . '/js/dashboard-block-toggle.js');
-      backdrop_add_css(backdrop_get_path('module', 'dashboard_plus') . '/css/dashboard-block-toggle.css');
+      backdrop_add_js($module_path . '/js/dashboard-block-toggle.js');
+      backdrop_add_css($module_path . '/css/dashboard-block-toggle.css');
+    }
+    // Contextual remove buttons and reorganize UI for layout admins.
+    if (current_path() === 'admin/dashboard' && user_access('administer layouts')) {
+      backdrop_add_css($module_path . '/css/remove-block.css');
+      backdrop_add_js($module_path . '/js/remove-block.js');
+      _dashboard_plus_init_reorganize($module_path);
     }
   }
+}
+
+/**
+ * Loads reorganize assets and passes layout data to JS.
+ */
+function _dashboard_plus_init_reorganize($module_path) {
+  $layouts = layout_load_multiple_by_path('admin/dashboard');
+  $layout = reset($layouts);
+  if (!$layout) {
+    return;
+  }
+
+  $known_labels = _dashboard_plus_region_label_map();
+  $skip = array('title');
+
+  // Regions that should always span the full modal width — they sit alone in
+  // their row, the same way they appear as full-width bands on the dashboard.
+  $full_width = array('header', 'top', 'content', 'bottom', 'footer');
+
+  $regions = array();
+  foreach ($layout->positions as $region_key => $uuids) {
+    if (in_array($region_key, $skip)) {
+      continue;
+    }
+    $label = isset($known_labels[$region_key])
+      ? $known_labels[$region_key]
+      : ucwords(str_replace('_', ' ', $region_key));
+
+    $blocks = array();
+    foreach ($uuids as $uuid) {
+      if (!isset($layout->content[$uuid])) {
+        continue;
+      }
+      $block = $layout->content[$uuid];
+      $info = layout_get_block_info($block->module, $block->delta);
+      $blocks[] = array(
+        'uuid'  => $uuid,
+        'label' => is_array($info) && isset($info['info']) ? $info['info'] : $block->delta,
+      );
+    }
+    $regions[$region_key] = array(
+      'label'      => $label,
+      'blocks'     => $blocks,
+      'full_width' => in_array($region_key, $full_width),
+    );
+  }
+
+  backdrop_add_js(array(
+    'dashboardPlus' => array(
+      'reorganize' => array(
+        'regions'  => $regions,
+        'token'    => backdrop_get_token('dashboard-plus-reorder'),
+        'saveUrl'  => url('dashboard-plus/reorder-blocks'),
+      ),
+    ),
+  ), 'setting');
+
+  backdrop_add_library('system', 'ui.sortable');
+  backdrop_add_library('system', 'ui.dialog');
+  backdrop_add_css($module_path . '/css/reorganize.css');
+  backdrop_add_js($module_path . '/js/reorganize.js');
+}
+
+/**
+ * Returns a map of region machine names to human-readable labels.
+ */
+function _dashboard_plus_region_label_map() {
+  return array(
+    'header'          => t('Header'),
+    'footer'          => t('Footer'),
+    'top'             => t('Top — full width'),
+    'bottom'          => t('Bottom — full width'),
+    'content'         => t('Main content'),
+    'sidebar_first'   => t('Left sidebar'),
+    'sidebar_second'  => t('Right sidebar'),
+    'half1'           => t('Left column'),
+    'half2'           => t('Right column'),
+    'third1'          => t('First third'),
+    'third2'          => t('Second third'),
+    'third3'          => t('Third third'),
+    'quarter1'        => t('First quarter'),
+    'quarter2'        => t('Second quarter'),
+    'quarter3'        => t('Third quarter'),
+    'quarter4'        => t('Fourth quarter'),
+    'left'            => t('Left'),
+    'right'           => t('Right'),
+    'center'          => t('Center'),
+  );
 }
 
 /**
@@ -161,4 +449,56 @@ function dashboard_plus_dashboard_settings_submit($form, &$form_state) {
   $config = config('dashboard_plus.settings');
   $config->set('collapsible_blocks', !empty($form_state['values']['dashboard_plus_collapsible_blocks']));
   $config->save();
+}
+
+/**
+ * Implements hook_block_view_alter().
+ *
+ * Injects a contextual × remove button into each block on the main dashboard
+ * overview for people who can administer layouts.
+ */
+function dashboard_plus_block_view_alter(&$data, $block) {
+  // Only on the main dashboard overview tab, not sub-pages like /architecture.
+  if (current_path() !== 'admin/dashboard') {
+    return;
+  }
+  if (!user_access('administer layouts')) {
+    return;
+  }
+  // The block must have a UUID (i.e. be a layout-placed block).
+  if (empty($block->uuid)) {
+    return;
+  }
+
+  $token = backdrop_get_token('dashboard-plus-remove-' . $block->uuid);
+  $remove_url = url('dashboard-plus/remove-block/' . $block->uuid, array(
+    'query' => array('token' => $token),
+  ));
+
+  // A hidden span carries the remove URL for JS to pick up. JS will inject
+  // "Remove from dashboard" into the contextual links menu if one exists,
+  // or leave the fallback × button visible if there is no contextual menu.
+  $trigger = '<span class="dashboard-plus-remove-trigger" aria-hidden="true"'
+    . ' data-remove-url="' . check_plain($remove_url) . '"></span>';
+
+  // Fallback × button for blocks without a contextual links menu.
+  $fallback = l('&times;', 'dashboard-plus/remove-block/' . $block->uuid, array(
+    'html' => TRUE,
+    'query' => array('token' => $token),
+    'attributes' => array(
+      'class' => array('dashboard-plus-remove-block'),
+      'title' => t('Remove from dashboard'),
+      'aria-label' => t('Remove this block from the dashboard'),
+    ),
+  ));
+
+  $inject = $trigger . $fallback;
+
+  if (is_array($data['content'])) {
+    $existing = isset($data['content']['#prefix']) ? $data['content']['#prefix'] : '';
+    $data['content']['#prefix'] = $inject . $existing;
+  }
+  else {
+    $data['content'] = $inject . (string) $data['content'];
+  }
 }

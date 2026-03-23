@@ -1,0 +1,24 @@
+.dashboard-plus-installer-row {
+  display: grid;
+  /* minmax(0, 1fr) lets selects shrink below their min-content so the button
+     column is not pushed off the right edge of the block. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 1em;
+  align-items: end;
+  margin-bottom: 0.5em;
+}
+
+.dashboard-plus-installer-row .form-item {
+  min-width: 0;
+  margin: 0;
+}
+
+.dashboard-plus-installer-row .form-actions {
+  margin: 0;
+  padding: 0;
+}
+
+/* Remove the theme's bottom margin so align-items: end works correctly. */
+.dashboard-plus-installer-row .form-actions .form-submit {
+  margin-bottom: 0;
+}

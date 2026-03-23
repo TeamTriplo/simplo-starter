@@ -1,0 +1,132 @@
+/* ---- Link grid ---- */
+
+/* auto-fill with a 160px min gives ~2 cols in a narrow half-width block,
+   ~3 cols in a medium region, ~4+ cols in a full-width region. */
+.dashboard-plus-ql-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.4em;
+  margin-bottom: 0.5em;
+}
+
+.dashboard-plus-ql-item {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.dashboard-plus-quick-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.4em 0.65em;
+  background: #f0f4f8;
+  border: 1px solid #c5d3e0;
+  border-radius: 4px 0 0 4px;
+  font-size: 0.88em;
+  font-weight: 500;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2a6496;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+/* When no remove button follows, round all corners. */
+.dashboard-plus-ql-item:last-child .dashboard-plus-quick-link:only-child,
+.dashboard-plus-quick-link:only-child {
+  border-radius: 4px;
+}
+
+.dashboard-plus-quick-link:hover {
+  background: #2a6496;
+  border-color: #2a6496;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* ---- Per-link remove button ---- */
+
+.dashboard-plus-ql-remove {
+  display: flex;
+  align-items: center;
+  padding: 0 0.45em;
+  background: #f0f4f8;
+  border: 1px solid #c5d3e0;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  color: #bbb;
+  font-size: 1em;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.dashboard-plus-ql-item:hover .dashboard-plus-ql-remove {
+  opacity: 1;
+}
+
+/* Keep the remove button visually connected when the link is hovered. */
+.dashboard-plus-ql-item:hover .dashboard-plus-quick-link:hover ~ .dashboard-plus-ql-remove,
+.dashboard-plus-ql-item .dashboard-plus-quick-link:hover + .dashboard-plus-ql-remove {
+  background: #1e4f73;
+  border-color: #1e4f73;
+}
+
+.dashboard-plus-ql-remove:hover {
+  color: #fff;
+  background: #c00;
+  border-color: #c00;
+  text-decoration: none;
+  opacity: 1;
+}
+
+/* ---- "Add a quick link" trigger ---- */
+
+.dashboard-plus-ql-bar {
+  margin: 0.4em 0 0;
+  font-size: 0.9em;
+}
+
+.dashboard-plus-ql-trigger {
+  text-decoration: none;
+}
+
+.dashboard-plus-ql-trigger:hover {
+  text-decoration: underline;
+}
+
+/* ---- Inline add form (hidden until trigger is clicked) ---- */
+
+.dashboard-plus-ql-form-wrapper {
+  display: none;
+  margin-top: 0.5em;
+  padding-top: 0.6em;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Compact 3-column grid: [URL (2fr)] [Label (1fr)] [Add link (auto)] */
+.dashboard-plus-ql-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 1em;
+  align-items: end;
+}
+
+.dashboard-plus-ql-add-row .form-item {
+  min-width: 0;
+  margin: 0;
+}
+
+.dashboard-plus-ql-add-row .form-actions {
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-plus-ql-add-row .form-actions .form-submit {
+  margin-bottom: 0;
+}

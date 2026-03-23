@@ -1,0 +1,42 @@
+/* Make each block a positioning context for the × button. */
+.block {
+  position: relative;
+}
+
+/* The × remove button — hidden until the block is hovered. */
+.dashboard-plus-remove-block {
+  position: absolute;
+  top: 0.4em;
+  right: 0.4em;
+  z-index: 10;
+  width: 1.4em;
+  height: 1.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.15);
+  color: #444;
+  border-radius: 50%;
+  font-size: 1em;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.block:hover .dashboard-plus-remove-block {
+  opacity: 1;
+}
+
+/* When contextual links (gear icon) are present, the JS adds "Remove from
+   dashboard" to the menu instead — hide the × button. JS will unhide it if
+   for any reason the contextual menu isn't found. */
+.contextual-links-region .dashboard-plus-remove-block {
+  display: none;
+}
+
+.dashboard-plus-remove-block:hover {
+  background: #c00;
+  color: #fff;
+  text-decoration: none;
+}
