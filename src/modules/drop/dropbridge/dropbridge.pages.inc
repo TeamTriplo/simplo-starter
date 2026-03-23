@@ -166,7 +166,7 @@ function dropbridge_daily_list() {
           'due'       => $activity->due_date,
           'overdue'   => $overdue,
           'done_url'  => ($is_preview) ? NULL : 'admin/drop/activity/' . $aid . '/done',
-          'view_url'  => 'crm/activities/' . $aid,
+          'view_url'  => 'admin/drop/crm/activities/' . $aid,
           'sort_key'  => $overdue ? 0 : 1,
           'sort_date' => $activity->due_date,
         );
@@ -1102,7 +1102,7 @@ function dropbridge_task_done(DroptTask $task) {
 function dropbridge_activity_done(CrmActivity $activity) {
   $activity->status = 'completed';
   $activity->save();
-  $link = l($activity->subject, 'crm/activities/' . $activity->aid);
+  $link = l($activity->subject, 'admin/drop/crm/activities/' . $activity->aid);
   backdrop_set_message(t('!link marked as done.', array('!link' => $link)));
   backdrop_goto('admin/drop');
 }

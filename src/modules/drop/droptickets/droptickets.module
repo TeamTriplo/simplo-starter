@@ -95,6 +95,10 @@ function droptickets_permission() {
       'title'       => t('Close DropTickets'),
       'description' => t('Mark tickets as done. Intended for Project Managers only.'),
     ),
+    'delete droptickets' => array(
+      'title'       => t('Delete DropTickets'),
+      'description' => t('Permanently delete tickets. Intended for Project Managers only.'),
+    ),
   );
 }
 
@@ -119,8 +123,12 @@ function droptickets_ticket_access($op, $ticket = NULL, $account = NULL) {
   if (in_array($op, array('view', 'create'))) {
     return TRUE;
   }
-  // update / delete: reporter or assignee.
-  if ($ticket) {
+  // delete requires explicit permission.
+  if ($op === 'delete') {
+    return user_access('delete droptickets', $account);
+  }
+  // update: reporter or assignee.
+  if ($op === 'update' && $ticket) {
     return ($ticket->uid == $account->uid || $ticket->assignee_uid == $account->uid);
   }
   return FALSE;
