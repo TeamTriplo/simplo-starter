@@ -360,13 +360,20 @@ function dropbridge_drop_nav_links() {
 // ---------------------------------------------------------------------------
 
 /**
- * Implements hook_page_alter().
+ * Implements hook_preprocess_layout().
  *
- * Injects a dismissible site announcement banner at the top of every page
- * for team members who have not yet dismissed the current message.
+ * Injects a dismissible site announcement banner above the messages area on
+ * every page for team members who have not yet dismissed the current message.
+ *
+ * Runs before layout_preprocess_layout() (weight 60) so that once we set
+ * $variables['messages'], layout will leave it alone.
  */
-function dropbridge_page_alter(&$page) {
+function dropbridge_preprocess_layout(&$variables) {
   global $user;
+
+  if (!backdrop_is_html()) {
+    return;
+  }
 
   if (!$user->uid || !user_access('access dropbridge')) {
     return;
@@ -392,16 +399,12 @@ function dropbridge_page_alter(&$page) {
   $banner .= '<a class="dropbridge-announcement-dismiss" href="' . $dismiss_url . '" title="' . t('Dismiss') . '">&#x2715;</a>';
   $banner .= '</div>';
 
-  // Prepend to the page content region.
-  if (isset($page['content'])) {
-    $page['content']['dropbridge_announcement'] = array(
-      '#markup' => $banner,
-      '#weight' => -1000,
-      '#attached' => array(
-        'css' => array(backdrop_get_path('module', 'dropbridge') . '/dropbridge.css'),
-      ),
-    );
-  }
+  backdrop_add_css(backdrop_get_path('module', 'dropbridge') . '/dropbridge.css');
+
+  // Prepend banner to messages. Setting $variables['messages'] here prevents
+  // layout_preprocess_layout() from overwriting it.
+  $existing_messages = isset($variables['messages']) ? $variables['messages'] : theme('status_messages');
+  $variables['messages'] = $banner . $existing_messages;
 }
 
 /**

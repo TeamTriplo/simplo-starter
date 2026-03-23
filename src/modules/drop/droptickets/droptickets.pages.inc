@@ -234,7 +234,15 @@ function droptickets_list_page() {
   foreach ($tickets as $ticket) {
     $project  = isset($projects[$ticket->pid]) ? $projects[$ticket->pid] : NULL;
     $label    = droptickets_ticket_label($ticket, $project);
-    $proj_name = $project ? l($project->name, 'admin/drop/crm/projects/' . $project->pid) : t('—');
+    if (!$project) {
+      $proj_name = t('—');
+    }
+    elseif (module_exists('dropcrm') && dropcrm_project_access('view', $project)) {
+      $proj_name = l($project->name, 'admin/drop/crm/projects/' . $project->pid);
+    }
+    else {
+      $proj_name = check_plain($project->name);
+    }
     $assignee  = droptickets_assignee_label($ticket, $accounts);
     $owner     = (!empty($ticket->owner_uid) && isset($accounts[$ticket->owner_uid]))
       ? check_plain($accounts[$ticket->owner_uid]->name) : '—';
