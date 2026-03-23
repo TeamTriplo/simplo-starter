@@ -176,10 +176,14 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
   );
 
   if ($is_edit) {
+    $status_options = droptickets_status_options();
+    if (!droptickets_close_access()) {
+      unset($status_options['done']);
+    }
     $form['status'] = array(
       '#type'          => 'select',
       '#title'         => t('Status'),
-      '#options'       => droptickets_status_options(),
+      '#options'       => $status_options,
       '#default_value' => $ticket->status,
       '#weight'        => -15,
     );
@@ -311,6 +315,9 @@ function droptickets_ticket_form_validate($form, &$form_state) {
   $due = trim($form_state['values']['due_date']);
   if ($due && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $due)) {
     form_set_error('due_date', t('Due date must be in YYYY-MM-DD format.'));
+  }
+  if (!empty($form_state['values']['status']) && $form_state['values']['status'] === 'done' && !droptickets_close_access()) {
+    form_set_error('status', t('You do not have permission to mark tickets as done.'));
   }
   field_attach_form_validate('drop_ticket', $form['#ticket'], $form, $form_state);
 }
