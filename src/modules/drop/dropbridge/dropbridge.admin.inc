@@ -39,6 +39,20 @@ function dropbridge_settings_form($form, &$form_state) {
     '#description'   => t('How often to re-fetch each calendar feed.'),
   );
 
+  $form['announcement'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Site Announcement'),
+    '#description' => t('Displays a dismissible banner at the top of every page for all team members. Clear the message to remove the banner. Each new message resets dismissals — everyone will see it again.'),
+  );
+
+  $form['announcement']['announcement_text'] = array(
+    '#type'          => 'textarea',
+    '#title'         => t('Message'),
+    '#default_value' => $config->get('announcement_text'),
+    '#rows'          => 3,
+    '#description'   => t('Leave blank to show no announcement. Plain text only.'),
+  );
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type'  => 'submit',
@@ -60,6 +74,7 @@ function dropbridge_settings_form_submit($form, &$form_state) {
   $config = config('dropbridge.settings');
   $config->set('calendar_ics_url', trim($form_state['values']['calendar_ics_url']));
   $config->set('calendar_cache_seconds', (int) $form_state['values']['calendar_cache_seconds']);
+  $config->set('announcement_text', trim($form_state['values']['announcement_text']));
   $config->save();
 
   cache_clear_all('dropbridge_calendar_', 'cache', TRUE);
@@ -78,4 +93,98 @@ function dropbridge_settings_form_fetch($form, &$form_state) {
   cache_clear_all('dropbridge_calendar_', 'cache', TRUE);
   backdrop_set_message(t('Calendar cache cleared. Fetching fresh data now.'));
   $form_state['redirect'] = 'admin/drop';
+}
+
+/**
+ * Form: permissions for all enabled Drop modules.
+ *
+ * Reuses core's user_admin_permissions theme and save logic, filtered to
+ * modules whose machine name starts with "drop".
+ */
+function dropbridge_permissions_form($form, &$form_state) {
+  $roles = user_roles(FALSE, NULL, TRUE);
+  $form['roles'] = array('#type' => 'value', '#value' => $roles);
+
+  $module_info = system_get_info('module');
+  $options     = array();
+  $status      = array();
+  $idx         = 0;
+
+  // Collect permissions from enabled drop* modules, sorted by display name.
+  $drop_modules = array();
+  foreach (module_implements('permission') as $module) {
+    if ($module === 'dropbridge' || strpos($module, 'drop') === 0) {
+      $drop_modules[$module] = isset($module_info[$module]['name']) ? $module_info[$module]['name'] : $module;
+    }
+  }
+  asort($drop_modules);
+
+  foreach ($drop_modules as $module => $display_name) {
+    $permissions = module_invoke($module, 'permission');
+    if (empty($permissions)) {
+      continue;
+    }
+
+    // Module heading row (numeric key).
+    $form['permission'][$idx] = array(
+      '#markup' => $display_name,
+      '#id'     => $module,
+    );
+    $idx++;
+
+    foreach ($permissions as $perm => $perm_item) {
+      $perm_item += array(
+        'description'     => '',
+        'restrict access' => FALSE,
+        'warning'         => '',
+      );
+      $options[$perm] = '';
+      $form['permission'][$perm] = array(
+        '#type'        => 'item',
+        '#markup'      => $perm_item['title'],
+        '#description' => theme('user_permission_description', array('permission_item' => $perm_item)),
+        '#id'          => drupal_html_id('permission-' . $perm),
+      );
+      foreach ($roles as $role_name => $role) {
+        if (in_array($perm, $role->permissions)) {
+          $status[$role_name][] = $perm;
+        }
+      }
+    }
+  }
+
+  foreach ($roles as $role_name => $role) {
+    $form['checkboxes'][$role_name] = array(
+      '#type'          => 'checkboxes',
+      '#options'       => $options,
+      '#default_value' => isset($status[$role_name]) ? $status[$role_name] : array(),
+      '#attributes'    => array('class' => array('role-' . $role_name)),
+    );
+    $form['role_names'][$role_name] = array(
+      '#markup'      => check_plain($role->label),
+      '#description' => filter_xss_admin($role->description),
+      '#tree'        => TRUE,
+    );
+  }
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type'  => 'submit',
+    '#value' => t('Save permissions'),
+  );
+
+  $form['#theme']    = 'user_admin_permissions';
+  $form['#attached']['js'][] = backdrop_get_path('module', 'user') . '/js/user.permissions.js';
+
+  return $form;
+}
+
+/**
+ * Submit handler for dropbridge_permissions_form().
+ */
+function dropbridge_permissions_form_submit($form, &$form_state) {
+  foreach ($form_state['values']['roles'] as $role_name => $role) {
+    user_role_change_permissions($role->name, $form_state['values'][$role->name]);
+  }
+  backdrop_set_message(t('Permissions saved.'));
 }

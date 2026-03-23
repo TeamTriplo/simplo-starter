@@ -1,5 +1,6 @@
 {
   "_config_name": "dropbridge.settings",
   "calendar_ics_url": "",
-  "calendar_cache_seconds": 1800
+  "calendar_cache_seconds": 1800,
+  "announcement_text": ""
 }

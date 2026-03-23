@@ -91,6 +91,14 @@ function dropbridge_menu() {
     );
   }
 
+  // Dismiss site announcement.
+  $items['admin/drop/announcement/dismiss'] = array(
+    'page callback'    => 'dropbridge_announcement_dismiss',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access dropbridge'),
+    'type'             => MENU_CALLBACK,
+  );
+
   // Settings page.
   $items['admin/drop/settings'] = array(
     'title'            => 'Settings',
@@ -101,6 +109,23 @@ function dropbridge_menu() {
     'file'             => 'dropbridge.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 20,
+  );
+  $items['admin/drop/settings/general'] = array(
+    'title'  => 'General',
+    'type'   => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  // Permissions tab on settings page.
+  $items['admin/drop/settings/permissions'] = array(
+    'title'            => 'Permissions',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('dropbridge_permissions_form'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'file'             => 'dropbridge.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 5,
   );
 
   return $items;
@@ -328,4 +353,67 @@ function dropbridge_drop_nav_links() {
       'weight'     => 0,
     ),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Site announcement banner
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_page_alter().
+ *
+ * Injects a dismissible site announcement banner at the top of every page
+ * for team members who have not yet dismissed the current message.
+ */
+function dropbridge_page_alter(&$page) {
+  global $user;
+
+  if (!$user->uid || !user_access('access dropbridge')) {
+    return;
+  }
+
+  $text = config_get('dropbridge.settings', 'announcement_text');
+  if (empty(trim($text))) {
+    return;
+  }
+
+  $hash = substr(md5($text), 0, 8);
+
+  // Check if this user has already dismissed this announcement.
+  $dismissed = state_get('dropbridge.announcement_dismissed_' . $user->uid, '');
+  if ($dismissed === $hash) {
+    return;
+  }
+
+  $dismiss_url = url('admin/drop/announcement/dismiss', array('query' => array('h' => $hash, 'destination' => current_path())));
+
+  $banner  = '<div class="dropbridge-announcement" id="dropbridge-announcement">';
+  $banner .= '<span class="dropbridge-announcement-text">' . check_plain($text) . '</span>';
+  $banner .= '<a class="dropbridge-announcement-dismiss" href="' . $dismiss_url . '" title="' . t('Dismiss') . '">&#x2715;</a>';
+  $banner .= '</div>';
+
+  // Prepend to the page content region.
+  if (isset($page['content'])) {
+    $page['content']['dropbridge_announcement'] = array(
+      '#markup' => $banner,
+      '#weight' => -1000,
+      '#attached' => array(
+        'css' => array(backdrop_get_path('module', 'dropbridge') . '/dropbridge.css'),
+      ),
+    );
+  }
+}
+
+/**
+ * Page callback: dismiss the current site announcement for the current user.
+ */
+function dropbridge_announcement_dismiss() {
+  global $user;
+
+  $hash = isset($_GET['h']) ? preg_replace('/[^a-f0-9]/', '', $_GET['h']) : '';
+  if ($hash) {
+    state_set('dropbridge.announcement_dismissed_' . $user->uid, $hash);
+  }
+
+  backdrop_goto(isset($_GET['destination']) ? $_GET['destination'] : 'admin/drop');
 }

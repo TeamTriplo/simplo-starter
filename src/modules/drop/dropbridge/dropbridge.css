@@ -357,3 +357,36 @@
 .dropbridge-quicklink .icon {
   flex-shrink: 0;
 }
+
+/* ---------------------------------------------------------------------------
+   Site announcement banner
+   --------------------------------------------------------------------------- */
+
+.dropbridge-announcement {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #1565c0;
+  color: #fff;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.95em;
+  position: relative;
+}
+
+.dropbridge-announcement-text {
+  flex: 1;
+}
+
+.dropbridge-announcement-dismiss {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.1em;
+  line-height: 1;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.dropbridge-announcement-dismiss:hover {
+  opacity: 1;
+}
