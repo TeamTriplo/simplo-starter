@@ -12,8 +12,8 @@ function dropbridge_settings_form($form, &$form_state) {
 
   $form['calendar'] = array(
     '#type'        => 'fieldset',
-    '#title'       => t('Google Calendar (iCal feed)'),
-    '#description' => t('Both private and public iCal URLs are supported. To find a private URL: Google Calendar → Settings → click a calendar name → "Integrate calendar" → "Secret address in iCal format". For a public calendar use "Public address in iCal format" from the same section.'),
+    '#title'       => t('Global Calendars'),
+    '#description' => t('These iCal feeds appear on <strong>everyone\'s</strong> dashboard. For personal calendars that only appear on one person\'s dashboard, each person can add them under their own account settings. Both private and public iCal URLs are supported.'),
   );
 
   $form['calendar']['calendar_ics_url'] = array(

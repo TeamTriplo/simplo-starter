@@ -91,6 +91,10 @@ function droptickets_permission() {
       'title'       => t('Flag DropTickets'),
       'description' => t('Flag and unflag tickets as priority (Project Manager action).'),
     ),
+    'close droptickets' => array(
+      'title'       => t('Close DropTickets'),
+      'description' => t('Mark tickets as done. Intended for Project Managers only.'),
+    ),
   );
 }
 
@@ -120,6 +124,17 @@ function droptickets_ticket_access($op, $ticket = NULL, $account = NULL) {
     return ($ticket->uid == $account->uid || $ticket->assignee_uid == $account->uid);
   }
   return FALSE;
+}
+
+/**
+ * Access callback for closing (marking done) a ticket.
+ */
+function droptickets_close_access($ticket = NULL, $account = NULL) {
+  global $user;
+  if (!$account) {
+    $account = $user;
+  }
+  return user_access('administer droptickets', $account) || user_access('close droptickets', $account);
 }
 
 /**
@@ -317,8 +332,8 @@ function droptickets_menu() {
   $items['admin/drop/tickets/%drop_ticket/done'] = array(
     'page callback'    => 'droptickets_ticket_mark_done',
     'page arguments'   => array(3),
-    'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('update', 3),
+    'access callback'  => 'droptickets_close_access',
+    'access arguments' => array(3),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );

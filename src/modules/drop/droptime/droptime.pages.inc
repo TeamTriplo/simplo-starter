@@ -285,11 +285,19 @@ function droptime_entry_form($form, &$form_state, $entry = NULL, $date = NULL) {
     '#description'   => t('24h format'),
   );
 
-  $form['billable'] = array(
-    '#type'          => 'checkbox',
-    '#title'         => t('Billable'),
-    '#default_value' => $is_edit ? $entry->billable : 1,
-  );
+  if (user_access('choose billable status')) {
+    $form['billable'] = array(
+      '#type'          => 'checkbox',
+      '#title'         => t('Billable'),
+      '#default_value' => $is_edit ? $entry->billable : 1,
+    );
+  }
+  else {
+    $form['billable'] = array(
+      '#type'  => 'hidden',
+      '#value' => 1,
+    );
+  }
 
   $form['notes'] = array(
     '#type'          => 'textfield',
@@ -360,8 +368,14 @@ function droptime_entry_form_validate($form, &$form_state) {
   if (!preg_match('/^\d{2}:\d{2}$/', $start)) {
     form_set_error('start_time', t('Start time must be in HH:MM format (e.g. 09:00).'));
   }
+  elseif ((int) substr($start, 0, 2) > 23 || (int) substr($start, 3, 2) > 59) {
+    form_set_error('start_time', t('Start time is not a valid time (hours 00–23, minutes 00–59).'));
+  }
   if (!preg_match('/^\d{2}:\d{2}$/', $end)) {
     form_set_error('end_time', t('End time must be in HH:MM format (e.g. 17:30).'));
+  }
+  elseif ((int) substr($end, 0, 2) > 23 || (int) substr($end, 3, 2) > 59) {
+    form_set_error('end_time', t('End time is not a valid time (hours 00–23, minutes 00–59).'));
   }
   if (!form_get_errors()) {
     list($sh, $sm) = explode(':', $start);

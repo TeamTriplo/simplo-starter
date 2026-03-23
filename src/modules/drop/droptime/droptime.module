@@ -61,6 +61,10 @@ function droptime_permission() {
       'title'       => t('Access DropTime'),
       'description' => t('View and log own time entries.'),
     ),
+    'choose billable status' => array(
+      'title'       => t('Choose billable status on time entries'),
+      'description' => t('Shows the billable checkbox when logging time. Without this permission, all time is logged as billable automatically.'),
+    ),
   );
 }
 

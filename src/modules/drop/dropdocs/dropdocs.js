@@ -80,32 +80,44 @@
         }
       });
 
-      // Attach click handlers (once per element).
+      // Shared toggle logic — called by both the caret button and the label.
+      function toggleItem($li) {
+        var nid   = $li.data('nid');
+        var $btn  = $li.find('> .dropdocs-tree-item > .dropdocs-toggle');
+        var saved = loadExpanded();
+        var idx   = saved.indexOf(nid);
+
+        if ($li.hasClass('dropdocs-collapsed')) {
+          $li.removeClass('dropdocs-collapsed');
+          $btn.attr('aria-expanded', 'true');
+          if (idx === -1) {
+            saved.push(nid);
+          }
+        }
+        else {
+          $li.addClass('dropdocs-collapsed');
+          $btn.attr('aria-expanded', 'false');
+          if (idx !== -1) {
+            saved.splice(idx, 1);
+          }
+        }
+
+        saveExpanded(saved);
+      }
+
+      // Caret button.
       $items.find('> .dropdocs-tree-item > .dropdocs-toggle')
         .once('dropdocs-toggle')
         .on('click', function () {
-          var $btn  = $(this);
-          var $li   = $btn.closest('li.dropdocs-has-children');
-          var nid   = $li.data('nid');
-          var saved = loadExpanded();
-          var idx   = saved.indexOf(nid);
+          toggleItem($(this).closest('li.dropdocs-has-children'));
+        });
 
-          if ($li.hasClass('dropdocs-collapsed')) {
-            $li.removeClass('dropdocs-collapsed');
-            $btn.attr('aria-expanded', 'true');
-            if (idx === -1) {
-              saved.push(nid);
-            }
-          }
-          else {
-            $li.addClass('dropdocs-collapsed');
-            $btn.attr('aria-expanded', 'false');
-            if (idx !== -1) {
-              saved.splice(idx, 1);
-            }
-          }
-
-          saveExpanded(saved);
+      // Label — clicking it also toggles instead of navigating.
+      $items.find('> .dropdocs-tree-item > a')
+        .once('dropdocs-label-toggle')
+        .on('click', function (e) {
+          e.preventDefault();
+          toggleItem($(this).closest('li.dropdocs-has-children'));
         });
     }
   };

@@ -201,35 +201,43 @@ function dropbridge_cron() {
 /**
  * Fetches each configured ICS URL and persists the raw ICS string in state.
  *
- * Respects the configured TTL — skips a feed if it was fetched recently enough.
- * Called from hook_cron(); can also be called directly for an immediate refresh.
+ * Fetches both global calendars (from config) and personal calendars (from
+ * user data). Respects the configured TTL. Called from hook_cron().
  */
 function _dropbridge_cron_fetch_calendars() {
-  $url_setting = config_get('dropbridge.settings', 'calendar_ics_url');
-  if (empty(trim($url_setting))) {
-    return;
-  }
-
-  $url_lines = array_filter(array_map('trim', explode("\n", $url_setting)));
-  if (empty($url_lines)) {
-    return;
-  }
-
   $ttl = (int) config_get('dropbridge.settings', 'calendar_cache_seconds') ?: 1800;
 
-  foreach ($url_lines as $url_line) {
-    $parts          = array_map('trim', explode('|', $url_line, 2));
-    $url            = $parts[0];
-    $calendar_label = (isset($parts[1]) && $parts[1] !== '') ? $parts[1] : NULL;
+  // Build a combined list of URL lines: global first, then all personal.
+  $url_lines = array();
 
-    if (empty($url)) {
+  $global = config_get('dropbridge.settings', 'calendar_ics_url');
+  if (!empty(trim($global))) {
+    $url_lines = array_merge($url_lines, array_filter(array_map('trim', explode("\n", $global))));
+  }
+
+  // Personal calendars: stored as uid => url_string in state.
+  $personal_map = state_get('dropbridge.personal_calendars', array());
+  foreach ($personal_map as $uid => $url_string) {
+    if (!empty(trim($url_string))) {
+      $url_lines = array_merge($url_lines, array_filter(array_map('trim', explode("\n", $url_string))));
+    }
+  }
+
+  // Deduplicate by URL (first part before |).
+  $seen = array();
+  foreach ($url_lines as $url_line) {
+    $url = trim(explode('|', $url_line, 2)[0]);
+    if (empty($url) || isset($seen[$url])) {
       continue;
     }
+    $seen[$url] = TRUE;
+
+    $parts          = array_map('trim', explode('|', $url_line, 2));
+    $calendar_label = (isset($parts[1]) && $parts[1] !== '') ? $parts[1] : NULL;
 
     $state_key = 'dropbridge.ical_' . md5($url);
     $stored    = state_get($state_key);
 
-    // Skip if still fresh.
     if (!empty($stored['fetched']) && (REQUEST_TIME - $stored['fetched']) < $ttl) {
       continue;
     }
@@ -247,6 +255,61 @@ function _dropbridge_cron_fetch_calendars() {
       'fetched' => REQUEST_TIME,
     ));
   }
+}
+
+// ---------------------------------------------------------------------------
+// Personal calendar settings — user profile form
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_form_user_profile_form_alter().
+ *
+ * Adds a "My Calendars" tab to the user profile edit form.
+ */
+function dropbridge_form_user_profile_form_alter(&$form, &$form_state) {
+  $account = $form['#user'];
+
+  $form['dropbridge_calendars'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('My Calendars'),
+    '#collapsible' => TRUE,
+    '#collapsed'   => TRUE,
+    '#group'       => 'additional_settings',
+    '#weight'      => 10,
+    '#description' => t('Personal iCal feeds that appear only on your dashboard. One URL per line. Optionally add a label: <code>URL | Label</code>.'),
+  );
+
+  $personal_map = state_get('dropbridge.personal_calendars', array());
+  $current = isset($personal_map[$account->uid]) ? $personal_map[$account->uid] : '';
+
+  $form['dropbridge_calendars']['dropbridge_personal_ical'] = array(
+    '#type'          => 'textarea',
+    '#title'         => t('Personal iCal URL(s)'),
+    '#default_value' => $current,
+    '#rows'          => 4,
+    '#description'   => t('Find your private URL in Google Calendar: Settings → click a calendar → "Integrate calendar" → "Secret address in iCal format".'),
+  );
+
+  $form['#submit'][] = 'dropbridge_user_profile_form_submit';
+}
+
+/**
+ * Submit handler: saves personal calendar URLs for this user.
+ */
+function dropbridge_user_profile_form_submit($form, &$form_state) {
+  $account  = $form['#user'];
+  $url_text = trim($form_state['values']['dropbridge_personal_ical']);
+
+  $personal_map = state_get('dropbridge.personal_calendars', array());
+
+  if ($url_text === '') {
+    unset($personal_map[$account->uid]);
+  }
+  else {
+    $personal_map[$account->uid] = $url_text;
+  }
+
+  state_set('dropbridge.personal_calendars', $personal_map);
 }
 
 // ---------------------------------------------------------------------------

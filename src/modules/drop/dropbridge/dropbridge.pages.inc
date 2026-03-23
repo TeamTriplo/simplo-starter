@@ -198,7 +198,7 @@ function dropbridge_daily_list() {
           'label'     => droptickets_ticket_label($ticket) . ': ' . $ticket->title,
           'due'       => $ticket->due_date,
           'overdue'   => $overdue,
-          'done_url'  => ($is_preview) ? NULL : 'admin/drop/tickets/' . $tid . '/done',
+          'done_url'  => ($is_preview || !user_access('close droptickets')) ? NULL : 'admin/drop/tickets/' . $tid . '/done',
           'view_url'  => 'admin/drop/tickets/' . $tid,
           'sort_key'  => $overdue ? 0 : ($due_today ? 1 : 2),
           'sort_date' => $ticket->due_date ?: PHP_INT_MAX,
@@ -388,6 +388,7 @@ function theme_dropbridge_daily_list($variables) {
       'goal'     => array('label' => t('Goals'),      'add_url' => 'admin/drop/goals/manage/add'),
       'task'     => array('label' => t('Tasks'),      'add_url' => 'admin/drop/tasks/add'),
       'activity' => array('label' => t('Activities'), 'add_url' => 'admin/drop/crm/activities/add'),
+      'ticket'   => array('label' => t('Tickets'),    'add_url' => 'admin/drop/tickets/add'),
     );
     foreach ($groups as $type => $info) {
       $groups[$type]['items'] = array();
@@ -405,7 +406,7 @@ function theme_dropbridge_daily_list($variables) {
     }
 
     // Actionable sections: responsive grid.
-    $action_types = array('goal', 'task', 'activity');
+    $action_types = array('goal', 'task', 'activity', 'ticket');
     $action_html  = '';
     foreach ($action_types as $type) {
       if (!empty($groups[$type]['items'])) {
@@ -445,9 +446,13 @@ function theme_dropbridge_daily_list($variables) {
   if ($module_links) {
     $html .= '<p class="dropbridge-module-links">' . implode(' &nbsp;·&nbsp; ', $module_links) . '</p>';
   }
+  global $user;
+  $footer_links = array();
+  $footer_links[] = l(t('My Account'), 'user/' . $user->uid . '/edit');
   if (user_access('administer site configuration')) {
-    $html .= '<p class="dropbridge-settings-link">' . l(t('Settings'), 'admin/drop/settings') . '</p>';
+    $footer_links[] = l(t('Settings'), 'admin/drop/settings');
   }
+  $html .= '<p class="dropbridge-settings-link">' . implode(' &nbsp;·&nbsp; ', $footer_links) . '</p>';
 
   return $html;
 }
@@ -572,38 +577,46 @@ function _dropbridge_render_section($type, $label, array $items, $add_url) {
  *   Array of item arrays ready for the unified daily list.
  */
 function _dropbridge_fetch_calendar_events($today_str) {
-  $url_setting = config_get('dropbridge.settings', 'calendar_ics_url');
-  if (empty(trim($url_setting))) {
-    return array();
+  global $user;
+
+  // Collect URL lines: global feeds + current user's personal feeds.
+  $url_lines = array();
+
+  $global = config_get('dropbridge.settings', 'calendar_ics_url');
+  if (!empty(trim($global))) {
+    $url_lines = array_merge($url_lines, array_filter(array_map('trim', explode("\n", $global))));
   }
 
-  // Support multiple URLs, one per line. Format: "URL" or "URL | Label".
-  $url_lines = array_filter(array_map('trim', explode("\n", $url_setting)));
+  $personal_map = state_get('dropbridge.personal_calendars', array());
+  if (!empty($personal_map[$user->uid])) {
+    $url_lines = array_merge($url_lines, array_filter(array_map('trim', explode("\n", $personal_map[$user->uid]))));
+  }
+
   if (empty($url_lines)) {
     return array();
   }
 
   $all_events = array();
+  $seen       = array();
 
   foreach ($url_lines as $url_line) {
     $parts          = array_map('trim', explode('|', $url_line, 2));
     $url            = $parts[0];
     $calendar_label = (isset($parts[1]) && $parts[1] !== '') ? $parts[1] : NULL;
 
-    if (empty($url)) {
+    if (empty($url) || isset($seen[$url])) {
       continue;
     }
+    $seen[$url] = TRUE;
 
-    // Read raw ICS from state — populated by hook_cron() in dropbridge.module.
-    // If cron hasn't run yet there is simply no data; never block page load.
+    // Read raw ICS from state — populated by hook_cron().
     $stored = state_get('dropbridge.ical_' . md5($url));
     if (empty($stored['ics'])) {
       continue;
     }
 
-    // Use the stored label if none was specified in the URL line.
-    $label  = $calendar_label ?: (isset($stored['label']) ? $stored['label'] : NULL);
-    $events = _dropbridge_parse_ics($stored['ics'], $today_str, $label);
+    $label      = $calendar_label ?: (isset($stored['label']) ? $stored['label'] : NULL);
+    $events     = _dropbridge_parse_ics($stored['ics'], $today_str, $label);
     $all_events = array_merge($all_events, $events);
   }
 
