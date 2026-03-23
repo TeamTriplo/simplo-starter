@@ -198,6 +198,19 @@ function dropgoals_goal_form($form, &$form_state, $goal = NULL) {
   );
 
   $is_new = empty($goal->gid);
+
+  // Owner — admin only, shown when editing an existing goal.
+  if (!$is_new && user_access('administer goals')) {
+    $all_users = db_query("SELECT uid, name FROM {users} WHERE uid > 0 AND status = 1 ORDER BY name")->fetchAllKeyed();
+    $form['uid'] = array(
+      '#type'          => 'select',
+      '#title'         => t('Owner'),
+      '#options'       => $all_users,
+      '#default_value' => $goal->uid,
+      '#description'   => t('Reassign this goal to a different person.'),
+    );
+  }
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type'  => 'submit',
@@ -242,6 +255,10 @@ function dropgoals_goal_form_submit($form, &$form_state) {
   if (!empty($cd) && is_array($cd)) {
     $date_str = sprintf('%04d-%02d-%02d', $cd['year'], $cd['month'], $cd['day']);
     $goal->created = strtotime($date_str . ' midnight');
+  }
+
+  if (isset($form_state['values']['uid']) && user_access('administer goals')) {
+    $goal->uid = (int) $form_state['values']['uid'];
   }
 
   $goal->save();

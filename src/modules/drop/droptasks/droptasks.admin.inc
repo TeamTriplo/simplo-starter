@@ -113,6 +113,19 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
     '#required'      => FALSE,
   );
 
+  // Owner — admin only, shown when editing an existing task.
+  if (!$is_new && user_access('administer tasks')) {
+    $all_users = db_query("SELECT uid, name FROM {users} WHERE uid > 0 AND status = 1 ORDER BY name")->fetchAllKeyed();
+    $form['uid'] = array(
+      '#type'          => 'select',
+      '#title'         => t('Owner'),
+      '#options'       => $all_users,
+      '#default_value' => $task->uid,
+      '#description'   => t('Reassign this task to a different person.'),
+      '#weight'        => 45,
+    );
+  }
+
   // Attach field widgets (includes field_drop_tags taxonomy autocomplete).
   field_attach_form('drop_task', $task, $form, $form_state);
 
@@ -139,7 +152,7 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
   // "Back to activity" link when creating a follow-up from an activity view.
   if ($is_new && $activity_id) {
     $form['actions']['back'] = array(
-      '#markup' => ' ' . l(t('← Back to activity'), 'crm/activities/' . $activity_id),
+      '#markup' => ' ' . l(t('← Back to activity'), 'admin/drop/crm/activity/' . $activity_id),
     );
   }
 
@@ -179,6 +192,10 @@ function droptasks_task_form_submit($form, &$form_state) {
   $aid = $form_state['values']['source_activity_id'];
   $task->source_activity_id = ($aid !== '') ? (int) $aid : NULL;
 
+  if (isset($form_state['values']['uid']) && user_access('administer tasks')) {
+    $task->uid = (int) $form_state['values']['uid'];
+  }
+
   // Copy field widget values (tags etc.) onto the entity before saving.
   field_attach_submit('drop_task', $task, $form, $form_state);
 
@@ -187,7 +204,7 @@ function droptasks_task_form_submit($form, &$form_state) {
   backdrop_set_message(t('Task saved.'));
   // Return to the source activity so follow-up tasks can be added easily.
   if (!empty($task->source_activity_id)) {
-    $form_state['redirect'] = 'crm/activities/' . $task->source_activity_id;
+    $form_state['redirect'] = 'admin/drop/crm/activity/' . $task->source_activity_id;
   }
   else {
     $form_state['redirect'] = 'admin/drop/tasks';
