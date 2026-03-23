@@ -185,6 +185,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
       '#title'         => t('Status'),
       '#options'       => $status_options,
       '#default_value' => $ticket->status,
+      '#description'   => t('Not everyone can close tickets.'),
       '#weight'        => -15,
     );
   }
