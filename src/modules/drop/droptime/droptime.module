@@ -152,6 +152,26 @@ function droptime_menu() {
     'weight'           => 10,
   );
 
+  // Reassign entries — admin only.
+  $items['admin/drop/time/reassign'] = array(
+    'title'            => 'Reassign Entries',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('droptime_reassign_form'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer droptime'),
+    'file'             => 'droptime.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 20,
+  );
+  $items['admin/drop/time/reassign/confirm'] = array(
+    'title'            => 'Confirm reassignment',
+    'page callback'    => 'droptime_reassign_confirm_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer droptime'),
+    'file'             => 'droptime.admin.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
   // Projects — redirect to DropCRM projects page (projects now live in DropCRM).
   $items['admin/drop/time/projects'] = array(
     'title'            => 'Projects',
