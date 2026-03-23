@@ -113,6 +113,8 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
     '#required'      => FALSE,
   );
 
+  $is_new = empty($task->tid);
+
   // Owner — admin only, shown when editing an existing task.
   if (!$is_new && user_access('administer tasks')) {
     $all_users = db_query("SELECT uid, name FROM {users} WHERE uid > 0 AND status = 1 ORDER BY name")->fetchAllKeyed();
@@ -134,7 +136,6 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
     $form['field_drop_tags']['#weight'] = 50;
   }
 
-  $is_new = empty($task->tid);
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type'  => 'submit',
