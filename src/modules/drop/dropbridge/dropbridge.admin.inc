@@ -39,6 +39,28 @@ function dropbridge_settings_form($form, &$form_state) {
     '#description'   => t('How often to re-fetch each calendar feed.'),
   );
 
+  $form['slack'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Slack Integration'),
+    '#description' => t('Used for direct-message notifications to individual team members. Create a Slack app at <a href="https://api.slack.com/apps" target="_blank">api.slack.com/apps</a>, add the <code>chat:write</code> scope under Bot Token Scopes, install it to your workspace, and paste the bot token here. Each person sets their own Slack member ID in their account settings.'),
+  );
+
+  $form['slack']['slack_bot_token'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Bot token'),
+    '#default_value' => $config->get('slack_bot_token'),
+    '#description'   => t('Starts with <code>xoxb-</code>. Leave blank to disable all Slack notifications.'),
+    '#placeholder'   => 'xoxb-…',
+    '#attributes'    => array('autocomplete' => 'off'),
+  );
+
+  $form['slack']['slack_debug_mode'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Debug mode'),
+    '#default_value' => $config->get('slack_debug_mode'),
+    '#description'   => t('When enabled, reminder checks ignore the scheduled time window and the "already sent today" guard — every cron run (or the test button below) will fire if no time has been logged. Disable when done testing.'),
+  );
+
   $form['announcement'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Site Announcement'),
@@ -63,6 +85,11 @@ function dropbridge_settings_form($form, &$form_state) {
     '#value'  => t('Clear cache & fetch now'),
     '#submit' => array('dropbridge_settings_form_fetch'),
   );
+  $form['actions']['test_reminder'] = array(
+    '#type'   => 'submit',
+    '#value'  => t('Send test reminder now'),
+    '#submit' => array('dropbridge_settings_form_test_reminder'),
+  );
 
   return $form;
 }
@@ -75,12 +102,27 @@ function dropbridge_settings_form_submit($form, &$form_state) {
   $config->set('calendar_ics_url', trim($form_state['values']['calendar_ics_url']));
   $config->set('calendar_cache_seconds', (int) $form_state['values']['calendar_cache_seconds']);
   $config->set('announcement_text', trim($form_state['values']['announcement_text']));
+  $config->set('slack_bot_token', trim($form_state['values']['slack_bot_token']));
+  $config->set('slack_debug_mode', !empty($form_state['values']['slack_debug_mode']));
   $config->save();
 
   cache_clear_all('dropbridge_calendar_', 'cache', TRUE);
 
   backdrop_set_message(t('Settings saved.'));
   $form_state['redirect'] = 'admin/drop';
+}
+
+/**
+ * Submit handler for the "Send test reminder now" button.
+ *
+ * Runs the time reminder check immediately for the current user, forcing
+ * debug mode on regardless of the saved setting. Does not save form values.
+ */
+function dropbridge_settings_form_test_reminder($form, &$form_state) {
+  global $user;
+  _dropbridge_cron_time_reminders(TRUE);
+  backdrop_set_message(t('Test reminder check complete. Check watchdog for details, and your Slack DM if a reminder was sent.'));
+  $form_state['redirect'] = 'admin/drop/settings';
 }
 
 /**
