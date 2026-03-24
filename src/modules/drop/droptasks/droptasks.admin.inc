@@ -197,10 +197,10 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
   // Assignees — admin/PM only.
   if (user_access('administer tasks')) {
     $team_members = db_query(
-      "SELECT u.uid, u.name FROM {users} u
+      "SELECT DISTINCT u.uid, u.name FROM {users} u
        INNER JOIN {users_roles} ur ON ur.uid = u.uid
-       INNER JOIN {role} r ON r.name = ur.role AND r.name IN ('team_member', 'administrator')
-       WHERE u.status = 1 AND u.uid > 0
+       WHERE ur.role IN ('team_member', 'administrator')
+       AND u.status = 1 AND u.uid > 0
        ORDER BY u.name"
     )->fetchAllKeyed();
 
