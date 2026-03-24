@@ -42,6 +42,21 @@ class DroptTask extends Entity {
   /** @var int|null Optional CRM activity ID that spawned this task. */
   public $source_activity_id = NULL;
 
+  /** @var string Recurrence: '', 'daily', 'weekly', 'monthly'. */
+  public $recurrence = '';
+
+  /** @var string Comma-separated day numbers for weekly recurrence (e.g. '2,4'). */
+  public $recurrence_days = '';
+
+  /** @var string Monthly type: 'day_of_month' or 'nth_weekday'. */
+  public $recurrence_month_type = 'day_of_month';
+
+  /** @var int Which week of month (1–4 or -1 for last) for nth_weekday. */
+  public $recurrence_month_week = 1;
+
+  /** @var int Day of week (0=Sun…6=Sat) for nth_weekday monthly recurrence. */
+  public $recurrence_month_weekday = 1;
+
   /**
    * {@inheritdoc}
    */

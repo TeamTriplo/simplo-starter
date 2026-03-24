@@ -65,3 +65,9 @@
   font-size: 1.1em;
   margin-bottom: 0.4em;
 }
+
+/* Recurrence indicator */
+.droptasks-recurrence {
+  font-size: 0.85em;
+  color: #666;
+}

@@ -105,6 +105,85 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
   $form['#attached']['css'][] = 'core/misc/ui/jquery.ui.theme.css';
   $form['#attached']['js'][]  = backdrop_get_path('module', 'droptasks') . '/droptasks.datepicker.js';
 
+  // Recurrence.
+  $day_names = array(
+    0 => t('Sun'), 1 => t('Mon'), 2 => t('Tue'), 3 => t('Wed'),
+    4 => t('Thu'), 5 => t('Fri'), 6 => t('Sat'),
+  );
+  $recurrence_days_default = array();
+  if (!empty($task->recurrence_days)) {
+    $recurrence_days_default = array_map('intval', explode(',', $task->recurrence_days));
+  }
+
+  $form['recurrence_fieldset'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Recurrence'),
+    '#collapsible' => TRUE,
+    '#collapsed'   => empty($task->recurrence),
+  );
+  $form['recurrence_fieldset']['recurrence'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Repeat'),
+    '#options'       => array(
+      ''        => t('None'),
+      'daily'   => t('Daily'),
+      'weekly'  => t('Weekly'),
+      'monthly' => t('Monthly'),
+    ),
+    '#default_value' => $task->recurrence,
+  );
+  $form['recurrence_fieldset']['recurrence_days'] = array(
+    '#type'          => 'checkboxes',
+    '#title'         => t('Repeat on'),
+    '#options'       => $day_names,
+    '#default_value' => $recurrence_days_default,
+    '#states'        => array(
+      'visible' => array(':input[name="recurrence"]' => array('value' => 'weekly')),
+    ),
+  );
+  $form['recurrence_fieldset']['recurrence_month_type'] = array(
+    '#type'          => 'radios',
+    '#title'         => t('Monthly repeat'),
+    '#options'       => array(
+      'day_of_month' => t('On the same day of the month as the due date'),
+      'nth_weekday'  => t('On the Nth weekday of the month'),
+    ),
+    '#default_value' => $task->recurrence_month_type ?: 'day_of_month',
+    '#states'        => array(
+      'visible' => array(':input[name="recurrence"]' => array('value' => 'monthly')),
+    ),
+  );
+  $form['recurrence_fieldset']['recurrence_month_week'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Which week'),
+    '#options'       => array(
+      1  => t('1st'),
+      2  => t('2nd'),
+      3  => t('3rd'),
+      4  => t('4th'),
+      -1 => t('Last'),
+    ),
+    '#default_value' => $task->recurrence_month_week ?: 1,
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="recurrence"]'            => array('value' => 'monthly'),
+        ':input[name="recurrence_month_type"]' => array('value' => 'nth_weekday'),
+      ),
+    ),
+  );
+  $form['recurrence_fieldset']['recurrence_month_weekday'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Day of week'),
+    '#options'       => $day_names,
+    '#default_value' => $task->recurrence_month_weekday,
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="recurrence"]'            => array('value' => 'monthly'),
+        ':input[name="recurrence_month_type"]' => array('value' => 'nth_weekday'),
+      ),
+    ),
+  );
+
   $form['notes'] = array(
     '#type'          => 'textarea',
     '#title'         => t('Notes'),
@@ -114,6 +193,36 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
   );
 
   $is_new = empty($task->tid);
+
+  // Assignees — admin/PM only.
+  if (user_access('administer tasks')) {
+    $team_members = db_query(
+      "SELECT u.uid, u.name FROM {users} u
+       INNER JOIN {users_roles} ur ON ur.uid = u.uid
+       INNER JOIN {role} r ON r.name = ur.role AND r.name IN ('team_member', 'administrator')
+       WHERE u.status = 1 AND u.uid > 0
+       ORDER BY u.name"
+    )->fetchAllKeyed();
+
+    $current_assignees = array();
+    if (!empty($task->tid)) {
+      $current_assignees = db_select('drop_task_assignee', 'a')
+        ->fields('a', array('uid'))
+        ->condition('a.tid', $task->tid)
+        ->execute()
+        ->fetchCol();
+      $current_assignees = array_map('intval', $current_assignees);
+    }
+
+    $form['assignees'] = array(
+      '#type'          => 'checkboxes',
+      '#title'         => t('Assignees'),
+      '#options'       => $team_members,
+      '#default_value' => $current_assignees,
+      '#description'   => t('This task will appear on each selected person\'s task list.'),
+      '#weight'        => 44,
+    );
+  }
 
   // Owner — admin only, shown when editing an existing task.
   if (!$is_new && user_access('administer tasks')) {
@@ -171,6 +280,19 @@ function droptasks_task_form_validate($form, &$form_state) {
       form_set_error('due_date', t('Due date must be in YYYY-MM-DD format.'));
     }
   }
+
+  $recurrence = $form_state['values']['recurrence'];
+  if ($recurrence === 'weekly') {
+    $days = array_filter($form_state['values']['recurrence_days']);
+    if (empty($days)) {
+      form_set_error('recurrence_days', t('Please select at least one day for weekly recurrence.'));
+    }
+  }
+  if ($recurrence === 'monthly'
+    && $form_state['values']['recurrence_month_type'] === 'day_of_month'
+    && $due === '') {
+    form_set_error('due_date', t('A due date is required to determine which day of the month to repeat on.'));
+  }
 }
 
 /**
@@ -197,10 +319,45 @@ function droptasks_task_form_submit($form, &$form_state) {
     $task->uid = (int) $form_state['values']['uid'];
   }
 
+  // Recurrence.
+  $task->recurrence = $form_state['values']['recurrence'];
+  if ($task->recurrence === 'weekly') {
+    $checked = array_keys(array_filter($form_state['values']['recurrence_days']));
+    sort($checked);
+    $task->recurrence_days = implode(',', $checked);
+  }
+  else {
+    $task->recurrence_days = '';
+  }
+  if ($task->recurrence === 'monthly') {
+    $task->recurrence_month_type    = $form_state['values']['recurrence_month_type'];
+    $task->recurrence_month_week    = (int) $form_state['values']['recurrence_month_week'];
+    $task->recurrence_month_weekday = (int) $form_state['values']['recurrence_month_weekday'];
+  }
+  else {
+    $task->recurrence_month_type    = 'day_of_month';
+    $task->recurrence_month_week    = 1;
+    $task->recurrence_month_weekday = 1;
+  }
+
   // Copy field widget values (tags etc.) onto the entity before saving.
   field_attach_submit('drop_task', $task, $form, $form_state);
 
   $task->save();
+
+  // Save assignees (delete + re-insert).
+  if (user_access('administer tasks') && isset($form_state['values']['assignees'])) {
+    $checked_uids = array_keys(array_filter($form_state['values']['assignees']));
+    if (!empty($task->tid)) {
+      db_delete('drop_task_assignee')->condition('tid', $task->tid)->execute();
+      foreach ($checked_uids as $auid) {
+        db_insert('drop_task_assignee')->fields(array(
+          'tid' => $task->tid,
+          'uid' => (int) $auid,
+        ))->execute();
+      }
+    }
+  }
 
   backdrop_set_message(t('Task saved.'));
   // Return to the source activity so follow-up tasks can be added easily.
@@ -238,6 +395,8 @@ function droptasks_task_delete_form($form, &$form_state, DroptTask $task) {
  */
 function droptasks_task_delete_form_submit($form, &$form_state) {
   $task = $form_state['task'];
+  db_delete('drop_task_assignee')->condition('tid', $task->tid)->execute();
+  db_delete('drop_task_completion')->condition('tid', $task->tid)->execute();
   $task->delete();
   backdrop_set_message(t('Task %title deleted.', array('%title' => $task->title)));
   $form_state['redirect'] = 'admin/drop/tasks';

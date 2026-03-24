@@ -25,9 +25,15 @@ function droptasks_task_list($filter = 'active') {
   // Optional tag filter via ?tag=name query parameter.
   $tag_filter = isset($_GET['tag']) ? trim($_GET['tag']) : '';
 
+  // Show tasks the user owns OR is assigned to.
   $query = db_select('drop_task', 't')
-    ->fields('t')
-    ->condition('t.uid', $user->uid);
+    ->fields('t');
+  $query->leftJoin('drop_task_assignee', 'ta', 'ta.tid = t.tid AND ta.uid = :uid', array(':uid' => $user->uid));
+  $or = db_or()
+    ->condition('t.uid', $user->uid)
+    ->isNotNull('ta.uid');
+  $query->condition($or)
+    ->distinct();
 
   if ($tag_filter !== '') {
     $query->join('field_data_field_drop_tags', 'ft', "ft.entity_id = t.tid AND ft.entity_type = 'drop_task'");
@@ -146,11 +152,19 @@ function theme_droptasks_task_list($variables) {
     $priority_label = isset($priority_labels[$task->priority]) ? $priority_labels[$task->priority] : '';
     $priority_class = 'drop-priority-' . drop_base_priority_class($task->priority);
 
-    // Title + tag chips stacked in the first cell.
-    $tags_html  = _droptasks_render_tags($task);
+    // Title + recurrence indicator + tag chips stacked in the first cell.
+    $tags_html       = _droptasks_render_tags($task);
+    $recurrence_html = _droptasks_recurrence_label($task);
     $title_cell = l(check_plain($task->title), 'admin/drop/tasks/' . $task->tid);
+    $sub = array();
+    if ($recurrence_html) {
+      $sub[] = '<span class="droptasks-recurrence">' . check_plain($recurrence_html) . '</span>';
+    }
     if ($tags_html) {
-      $title_cell .= '<br>' . $tags_html;
+      $sub[] = $tags_html;
+    }
+    if ($sub) {
+      $title_cell .= '<br>' . implode(' ', $sub);
     }
 
     $complete_label = ($task->status === 'complete') ? t('Reopen') : t('Complete');
@@ -255,6 +269,26 @@ function droptasks_task_view(DroptTask $task) {
     $rows[] = array(t('Due'), $due);
   }
 
+  $recurrence_label = _droptasks_recurrence_label($task);
+  if ($recurrence_label) {
+    $rows[] = array(t('Recurrence'), check_plain($recurrence_label));
+  }
+
+  // Assignees.
+  $assignee_uids = db_select('drop_task_assignee', 'a')
+    ->fields('a', array('uid'))
+    ->condition('a.tid', $task->tid)
+    ->execute()
+    ->fetchCol();
+  if ($assignee_uids) {
+    $assignee_accounts = user_load_multiple($assignee_uids);
+    $names = array();
+    foreach ($assignee_accounts as $acc) {
+      $names[] = check_plain($acc->name);
+    }
+    $rows[] = array(t('Assignees'), implode(', ', $names));
+  }
+
   $rows[] = array(t('Created'), format_date($task->created, 'custom', 'M j, Y'));
 
   // Tags.
@@ -292,6 +326,48 @@ function droptasks_task_view(DroptTask $task) {
     '#weight'     => 1,
   );
 
+  // Completion history for recurring tasks.
+  if (!empty($task->recurrence)) {
+    $completions = db_select('drop_task_completion', 'c')
+      ->fields('c', array('uid', 'completed'))
+      ->condition('c.tid', $task->tid)
+      ->orderBy('c.completed', 'DESC')
+      ->range(0, 20)
+      ->execute()
+      ->fetchAll();
+
+    $output['completion_heading'] = array(
+      '#markup' => drop_base_section_header(t('Completion History')),
+      '#weight' => 8,
+    );
+
+    if ($completions) {
+      $uids     = array_unique(array_column((array) $completions, 'uid'));
+      $accounts = user_load_multiple($uids);
+      $comp_rows = array();
+      foreach ($completions as $c) {
+        $name = isset($accounts[$c->uid]) ? check_plain($accounts[$c->uid]->name) : t('Unknown');
+        $comp_rows[] = array(
+          format_date($c->completed, 'custom', 'M j, Y g:ia'),
+          $name,
+        );
+      }
+      $output['completion_history'] = array(
+        '#theme'      => 'table',
+        '#header'     => array(t('Completed'), t('By')),
+        '#rows'       => $comp_rows,
+        '#attributes' => array('class' => array('droptasks-detail-table')),
+        '#weight'     => 9,
+      );
+    }
+    else {
+      $output['completion_history'] = array(
+        '#markup' => '<p>' . t('No completions recorded yet.') . '</p>',
+        '#weight' => 9,
+      );
+    }
+  }
+
   if (!empty($task->notes)) {
     $output['notes_heading'] = array(
       '#markup' => drop_base_section_header(t('Notes')),
@@ -309,17 +385,186 @@ function droptasks_task_view(DroptTask $task) {
 /**
  * Page callback: toggle task complete/pending.
  *
+ * For recurring tasks, completing advances the due date instead of marking done.
+ *
  * @param DroptTask $task
  *   The task entity.
  */
 function droptasks_task_toggle_complete(DroptTask $task) {
-  $task->status = ($task->status === 'complete') ? 'pending' : 'complete';
-  $task->save();
+  global $user;
 
-  $label = ($task->status === 'complete') ? t('marked complete') : t('reopened');
-  backdrop_set_message(t('Task %title @label.', array('%title' => $task->title, '@label' => $label)));
+  if (!empty($task->recurrence) && $task->status === 'pending') {
+    // Log the completion before advancing.
+    db_insert('drop_task_completion')->fields(array(
+      'tid'       => $task->tid,
+      'uid'       => $user->uid,
+      'completed' => REQUEST_TIME,
+    ))->execute();
+
+    // Advance to next occurrence rather than marking complete.
+    $next_ts = _droptasks_next_occurrence($task);
+    if ($next_ts) {
+      $task->due_date = $next_ts;
+      $task->save();
+      $next_label = format_date($next_ts, 'custom', 'M j, Y');
+      backdrop_set_message(t('Task %title done — next due @date.', array(
+        '%title' => $task->title,
+        '@date'  => $next_label,
+      )));
+    }
+    else {
+      backdrop_set_message(t('Could not calculate next recurrence for %title.', array('%title' => $task->title)), 'warning');
+    }
+  }
+  else {
+    $task->status = ($task->status === 'complete') ? 'pending' : 'complete';
+    $task->save();
+    $label = ($task->status === 'complete') ? t('marked complete') : t('reopened');
+    backdrop_set_message(t('Task %title @label.', array('%title' => $task->title, '@label' => $label)));
+  }
 
   backdrop_goto('admin/drop/tasks');
+}
+
+/**
+ * Calculate the next occurrence timestamp for a recurring task.
+ *
+ * Always advances forward from tomorrow, so completing a task today will
+ * never reschedule it for today again.
+ *
+ * @param DroptTask $task
+ *
+ * @return int|null
+ *   Unix timestamp of next due date, or NULL on failure.
+ */
+function _droptasks_next_occurrence(DroptTask $task) {
+  // Base: tomorrow midnight (we always move forward).
+  $base = new DateTime('tomorrow midnight');
+
+  switch ($task->recurrence) {
+    case 'daily':
+      return $base->getTimestamp();
+
+    case 'weekly':
+      $days = array_map('intval', array_filter(explode(',', $task->recurrence_days)));
+      if (empty($days)) {
+        return NULL;
+      }
+      sort($days);
+      // Find the next matching day of week starting from tomorrow.
+      for ($i = 0; $i < 8; $i++) {
+        $check = clone $base;
+        if ($i > 0) {
+          $check->modify("+{$i} days");
+        }
+        $dow = (int) $check->format('w'); // 0=Sun…6=Sat
+        if (in_array($dow, $days)) {
+          return $check->getTimestamp();
+        }
+      }
+      return NULL;
+
+    case 'monthly':
+      if ($task->recurrence_month_type === 'nth_weekday') {
+        return _droptasks_next_nth_weekday($base, $task->recurrence_month_week, $task->recurrence_month_weekday);
+      }
+      else {
+        // day_of_month: use the day number from the task's current due_date.
+        $day = (int) format_date($task->due_date, 'custom', 'j');
+        return _droptasks_next_day_of_month($base, $day);
+      }
+  }
+
+  return NULL;
+}
+
+/**
+ * Returns the next timestamp for a given day-of-month, starting from $base.
+ *
+ * @param DateTime $base  Starting point (typically tomorrow midnight).
+ * @param int      $day   Day of month (1–31).
+ *
+ * @return int  Unix timestamp.
+ */
+function _droptasks_next_day_of_month(DateTime $base, $day) {
+  $year  = (int) $base->format('Y');
+  $month = (int) $base->format('n');
+  $today = (int) $base->format('j');
+
+  // If the target day is still ahead this month, use this month; else next.
+  if ($today <= $day) {
+    $target_year  = $year;
+    $target_month = $month;
+  }
+  else {
+    $next = clone $base;
+    $next->modify('first day of next month');
+    $target_year  = (int) $next->format('Y');
+    $target_month = (int) $next->format('n');
+  }
+
+  // Clamp to the last day of the target month (e.g. Jan 31 → Feb 28).
+  $max_day = (int) (new DateTime("{$target_year}-{$target_month}-01"))->format('t');
+  $day     = min($day, $max_day);
+
+  $dt = new DateTime("{$target_year}-{$target_month}-{$day} 00:00:00");
+  return $dt->getTimestamp();
+}
+
+/**
+ * Returns the next timestamp for the Nth weekday of a month, from $base.
+ *
+ * @param DateTime $base     Starting point (typically tomorrow midnight).
+ * @param int      $week     1–4 or -1 for last.
+ * @param int      $weekday  0=Sun…6=Sat.
+ *
+ * @return int|null  Unix timestamp, or NULL if the Nth weekday doesn't exist.
+ */
+function _droptasks_next_nth_weekday(DateTime $base, $week, $weekday) {
+  // Try this month first; if already past, try next month.
+  $base_year  = (int) $base->format('Y');
+  $base_month = (int) $base->format('n');
+
+  foreach (array(0, 1) as $offset) {
+    $dt = clone $base;
+    if ($offset === 0) {
+      $dt->modify('first day of this month');
+    }
+    else {
+      $dt->modify('first day of next month');
+    }
+    $year  = (int) $dt->format('Y');
+    $month = (int) $dt->format('n');
+
+    if ($week === -1) {
+      // Last weekday: start from end of month, walk backward.
+      $dt->modify('last day of this month');
+      while ((int) $dt->format('w') !== $weekday) {
+        $dt->modify('-1 day');
+      }
+    }
+    else {
+      // Find the first occurrence of $weekday in this month.
+      while ((int) $dt->format('w') !== $weekday) {
+        $dt->modify('+1 day');
+      }
+      // Advance to the Nth occurrence.
+      if ($week > 1) {
+        $dt->modify('+' . (($week - 1) * 7) . ' days');
+      }
+      // If we've overshot into the next month, this Nth weekday doesn't exist.
+      if ((int) $dt->format('n') !== $month) {
+        continue;
+      }
+    }
+
+    // Only return if this date is >= our base (tomorrow).
+    if ($dt->getTimestamp() >= $base->getTimestamp()) {
+      return $dt->getTimestamp();
+    }
+  }
+
+  return NULL;
 }
 
 // Priority labels and CSS class helpers are provided by drop_base:
@@ -328,6 +573,59 @@ function droptasks_task_toggle_complete(DroptTask $task) {
 // ---------------------------------------------------------------------------
 // Tag helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Returns a human-readable recurrence label for a task, or empty string.
+ *
+ * @param DroptTask $task
+ *
+ * @return string
+ */
+function _droptasks_recurrence_label(DroptTask $task) {
+  if (empty($task->recurrence)) {
+    return '';
+  }
+
+  $day_names = array(
+    0 => t('Sun'), 1 => t('Mon'), 2 => t('Tue'), 3 => t('Wed'),
+    4 => t('Thu'), 5 => t('Fri'), 6 => t('Sat'),
+  );
+  $week_labels = array(1 => t('1st'), 2 => t('2nd'), 3 => t('3rd'), 4 => t('4th'), -1 => t('Last'));
+
+  switch ($task->recurrence) {
+    case 'daily':
+      return t('↻ Daily');
+
+    case 'weekly':
+      if (!empty($task->recurrence_days)) {
+        $days = array_map('intval', explode(',', $task->recurrence_days));
+        $names = array();
+        foreach ($days as $d) {
+          if (isset($day_names[$d])) {
+            $names[] = $day_names[$d];
+          }
+        }
+        return t('↻ Weekly') . ' (' . implode(', ', $names) . ')';
+      }
+      return t('↻ Weekly');
+
+    case 'monthly':
+      if ($task->recurrence_month_type === 'nth_weekday') {
+        $week    = isset($week_labels[$task->recurrence_month_week]) ? $week_labels[$task->recurrence_month_week] : '';
+        $weekday = isset($day_names[$task->recurrence_month_weekday]) ? $day_names[$task->recurrence_month_weekday] : '';
+        return t('↻ Monthly') . ' (' . $week . ' ' . $weekday . ')';
+      }
+      else {
+        if (!empty($task->due_date)) {
+          $day = format_date($task->due_date, 'custom', 'jS');
+          return t('↻ Monthly') . ' (' . t('the @day', array('@day' => $day)) . ')';
+        }
+        return t('↻ Monthly');
+      }
+  }
+
+  return '';
+}
 
 /**
  * Returns rendered tag chips HTML for a task, or an empty string.

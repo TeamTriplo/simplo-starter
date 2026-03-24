@@ -146,6 +146,41 @@ function droptasks_schema() {
         'not null'    => FALSE,
         'default'     => NULL,
       ),
+      'recurrence' => array(
+        'description' => 'Recurrence frequency: empty, daily, weekly, or monthly.',
+        'type'        => 'varchar',
+        'length'      => 20,
+        'not null'    => TRUE,
+        'default'     => '',
+      ),
+      'recurrence_days' => array(
+        'description' => 'Comma-separated day numbers (0=Sun…6=Sat) for weekly recurrence.',
+        'type'        => 'varchar',
+        'length'      => 20,
+        'not null'    => TRUE,
+        'default'     => '',
+      ),
+      'recurrence_month_type' => array(
+        'description' => 'Monthly recurrence type: day_of_month or nth_weekday.',
+        'type'        => 'varchar',
+        'length'      => 20,
+        'not null'    => TRUE,
+        'default'     => 'day_of_month',
+      ),
+      'recurrence_month_week' => array(
+        'description' => 'Which week of the month (1–4 or -1 for last) for nth_weekday monthly.',
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'not null'    => TRUE,
+        'default'     => 1,
+      ),
+      'recurrence_month_weekday' => array(
+        'description' => 'Day of week (0=Sun…6=Sat) for nth_weekday monthly recurrence.',
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'not null'    => TRUE,
+        'default'     => 1,
+      ),
     ),
     'primary key' => array('tid'),
     'indexes' => array(
@@ -153,6 +188,67 @@ function droptasks_schema() {
       'status'     => array('status'),
       'due_date'   => array('due_date'),
       'contact_id' => array('contact_id'),
+    ),
+  );
+
+  $schema['drop_task_completion'] = array(
+    'description' => 'Logs each completion of a recurring task.',
+    'fields' => array(
+      'cid' => array(
+        'description' => 'Primary key.',
+        'type'        => 'serial',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+      ),
+      'tid' => array(
+        'description' => 'The {drop_task}.tid that was completed.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid who completed the task.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+      'completed' => array(
+        'description' => 'Unix timestamp when the task was completed.',
+        'type'        => 'int',
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+    ),
+    'primary key' => array('cid'),
+    'indexes' => array(
+      'tid' => array('tid'),
+      'uid' => array('uid'),
+    ),
+  );
+
+  $schema['drop_task_assignee'] = array(
+    'description' => 'Stores per-user assignments for drop_task entities.',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The {drop_task}.tid.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid of the assignee.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+    ),
+    'primary key' => array('tid', 'uid'),
+    'indexes' => array(
+      'uid' => array('uid'),
     ),
   );
 
@@ -164,6 +260,118 @@ function droptasks_schema() {
  */
 function droptasks_update_1001() {
   _droptasks_ensure_drop_tags_field();
+}
+
+/**
+ * Create the drop_task_assignee table.
+ */
+function droptasks_update_1004() {
+  db_create_table('drop_task_assignee', array(
+    'description' => 'Stores per-user assignments for drop_task entities.',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The {drop_task}.tid.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid of the assignee.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+    ),
+    'primary key' => array('tid', 'uid'),
+    'indexes' => array(
+      'uid' => array('uid'),
+    ),
+  ));
+}
+
+/**
+ * Create the drop_task_completion log table.
+ */
+function droptasks_update_1003() {
+  db_create_table('drop_task_completion', array(
+    'description' => 'Logs each completion of a recurring task.',
+    'fields' => array(
+      'cid' => array(
+        'description' => 'Primary key.',
+        'type'        => 'serial',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+      ),
+      'tid' => array(
+        'description' => 'The {drop_task}.tid that was completed.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid who completed the task.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+      'completed' => array(
+        'description' => 'Unix timestamp when the task was completed.',
+        'type'        => 'int',
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+    ),
+    'primary key' => array('cid'),
+    'indexes' => array(
+      'tid' => array('tid'),
+      'uid' => array('uid'),
+    ),
+  ));
+}
+
+/**
+ * Add recurrence columns to drop_task.
+ */
+function droptasks_update_1002() {
+  db_add_field('drop_task', 'recurrence', array(
+    'description' => 'Recurrence frequency: empty, daily, weekly, or monthly.',
+    'type'        => 'varchar',
+    'length'      => 20,
+    'not null'    => TRUE,
+    'default'     => '',
+  ));
+  db_add_field('drop_task', 'recurrence_days', array(
+    'description' => 'Comma-separated day numbers (0=Sun…6=Sat) for weekly recurrence.',
+    'type'        => 'varchar',
+    'length'      => 20,
+    'not null'    => TRUE,
+    'default'     => '',
+  ));
+  db_add_field('drop_task', 'recurrence_month_type', array(
+    'description' => 'Monthly recurrence type: day_of_month or nth_weekday.',
+    'type'        => 'varchar',
+    'length'      => 20,
+    'not null'    => TRUE,
+    'default'     => 'day_of_month',
+  ));
+  db_add_field('drop_task', 'recurrence_month_week', array(
+    'description' => 'Which week of the month (1–4 or -1 for last) for nth_weekday monthly.',
+    'type'        => 'int',
+    'size'        => 'tiny',
+    'not null'    => TRUE,
+    'default'     => 1,
+  ));
+  db_add_field('drop_task', 'recurrence_month_weekday', array(
+    'description' => 'Day of week (0=Sun…6=Sat) for nth_weekday monthly recurrence.',
+    'type'        => 'int',
+    'size'        => 'tiny',
+    'not null'    => TRUE,
+    'default'     => 1,
+  ));
 }
 
 /**
