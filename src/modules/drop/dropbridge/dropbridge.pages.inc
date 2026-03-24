@@ -103,10 +103,15 @@ function dropbridge_daily_list() {
   if (module_exists('droptasks')) {
     $task_q = db_select('drop_task', 't')
       ->fields('t')
-      ->condition('t.uid', $user->uid)
       ->condition('t.status', 'pending')
       ->isNotNull('t.due_date')
-      ->orderBy('t.due_date', 'ASC');
+      ->orderBy('t.due_date', 'ASC')
+      ->distinct();
+    $task_q->leftJoin('drop_task_assignee', 'ta', 'ta.tid = t.tid AND ta.uid = :tuid', array(':tuid' => $user->uid));
+    $or = db_or()
+      ->condition('t.uid', $user->uid)
+      ->isNotNull('ta.uid');
+    $task_q->condition($or);
 
     if ($is_preview) {
       // Preview: only tasks due specifically on this date.

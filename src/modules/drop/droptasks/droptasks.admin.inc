@@ -196,13 +196,22 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
 
   // Assignees — admin/PM only.
   if (user_access('administer tasks')) {
-    $team_members = db_query(
-      "SELECT DISTINCT u.uid, u.name FROM {users} u
-       INNER JOIN {users_roles} ur ON ur.uid = u.uid
-       WHERE ur.role IN ('team_member', 'administrator')
-       AND u.status = 1 AND u.uid > 0
-       ORDER BY u.name"
-    )->fetchAllKeyed();
+    // Find roles that have 'access tasks' permission.
+    $roles_with_access = array();
+    foreach (user_roles(TRUE, 'access tasks') as $role_name => $role_label) {
+      $roles_with_access[] = $role_name;
+    }
+    // Load users who have at least one of those roles.
+    $team_members = array();
+    if ($roles_with_access) {
+      $team_members = db_query(
+        "SELECT DISTINCT u.uid, u.name FROM {users} u
+         INNER JOIN {users_roles} ur ON ur.uid = u.uid
+         WHERE ur.role IN (:roles) AND u.status = 1 AND u.uid > 0
+         ORDER BY u.name",
+        array(':roles' => $roles_with_access)
+      )->fetchAllKeyed();
+    }
 
     $current_assignees = array();
     if (!empty($task->tid)) {
