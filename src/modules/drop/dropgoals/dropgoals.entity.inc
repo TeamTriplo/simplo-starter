@@ -61,14 +61,14 @@ class DropGoal extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/goals/manage/' . $this->gid);
+    return array('path' => 'admin/drop/goals/manage/' . $this->gid, 'options' => array());
   }
 
   /**
    * {@inheritdoc}
    */
   protected function defaultUri() {
-    return array('path' => 'admin/drop/goals/manage/' . $this->gid);
+    return array('path' => 'admin/drop/goals/manage/' . $this->gid, 'options' => array());
   }
 
 }

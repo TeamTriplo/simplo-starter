@@ -43,7 +43,7 @@ class DropTimeEntry extends Entity {
 
   /** {@inheritdoc} */
   public function uri() {
-    return array('path' => 'admin/drop/time');
+    return array('path' => 'admin/drop/time', 'options' => array());
   }
 
   /** {@inheritdoc} */

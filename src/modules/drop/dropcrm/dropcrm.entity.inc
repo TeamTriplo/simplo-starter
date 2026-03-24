@@ -44,7 +44,7 @@ class CrmContact extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/crm/contact/' . $this->id());
+    return array('path' => 'admin/drop/crm/contact/' . $this->id(), 'options' => array());
   }
 
 }
@@ -91,7 +91,7 @@ class CrmContactMethod extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/crm/contact-method/' . $this->id());
+    return array('path' => 'admin/drop/crm/contact-method/' . $this->id(), 'options' => array());
   }
 
   /**
@@ -167,7 +167,7 @@ class CrmActivity extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/crm/activity/' . $this->id());
+    return array('path' => 'admin/drop/crm/activity/' . $this->id(), 'options' => array());
   }
 
 }
@@ -383,7 +383,7 @@ class DropProject extends Entity {
 
   /** {@inheritdoc} */
   public function uri() {
-    return array('path' => 'admin/drop/crm/projects/' . $this->pid . '/edit');
+    return array('path' => 'admin/drop/crm/projects/' . $this->pid . '/edit', 'options' => array());
   }
 
   /** {@inheritdoc} */
