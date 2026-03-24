@@ -711,10 +711,18 @@ function droptickets_ticket_view(DropTicket $ticket) {
   // Field API fields (rendered separately and appended below).
   // field_attach_prepare_view() must be called first so taxonomy formatters
   // have $item['taxonomy_term'] populated before field_attach_view() runs.
-  // field_drop_tags is then removed from output — tags are in the sidebar.
+  // field_drop_tags is removed — tags are in the sidebar.
+  // field_ticket_files is removed — rendered inline below the body.
   field_attach_prepare_view('drop_ticket', array($ticket->tid => $ticket), 'full');
   $field_output = field_attach_view('drop_ticket', $ticket, 'full');
   unset($field_output['field_drop_tags']);
+
+  // Render file attachments inline, right after the body card.
+  if (!empty($field_output['field_ticket_files'])) {
+    $attachments_html = backdrop_render($field_output['field_ticket_files']);
+    unset($field_output['field_ticket_files']);
+    $main .= '<div class="droptickets-card droptickets-attachments">' . $attachments_html . '</div>';
+  }
   $has_fields = element_children($field_output);
 
   // Related tickets.
