@@ -223,14 +223,12 @@ function droptickets_list_page() {
   $ticket_tids = array_column((array) $tickets, 'tid');
   $comment_counts = array();
   if ($ticket_tids) {
-    $count_rows = db_select('drop_ticket_comment', 'c')
+    $count_query = db_select('drop_ticket_comment', 'c')
       ->fields('c', array('tid'))
-      ->addExpression('COUNT(*)', 'cnt')
       ->condition('c.tid', $ticket_tids, 'IN')
-      ->groupBy('c.tid')
-      ->execute()
-      ->fetchAll();
-    foreach ($count_rows as $cr) {
+      ->groupBy('c.tid');
+    $count_query->addExpression('COUNT(*)', 'cnt');
+    foreach ($count_query->execute()->fetchAll() as $cr) {
       $comment_counts[$cr->tid] = (int) $cr->cnt;
     }
   }
