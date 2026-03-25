@@ -1,0 +1,12 @@
+name = Image Tools
+description = Visual crop, resize, and download tool for image files. Adds Crop and Resize operations to the file management page.
+type = module
+backdrop = 1.x
+version = 1.x-1.0.0
+
+dependencies[] = image
+
+; Bundled third-party library (unmodified):
+; Cropper.js 1.6.2 — https://github.com/fengyuanchen/cropperjs
+; To update: curl -sL https://unpkg.com/cropperjs@X.X.X/dist/cropper.min.js -o js/cropper.min.js
+;            curl -sL https://unpkg.com/cropperjs@X.X.X/dist/cropper.min.css -o css/cropper.min.css

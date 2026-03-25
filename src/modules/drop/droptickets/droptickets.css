@@ -908,3 +908,9 @@ a.droptickets-flag-on svg,
 .droptickets-flagged-indicator:hover {
   text-decoration: underline;
 }
+
+/* Resize/download link below image attachments */
+.droptickets-attachment-resize {
+  margin-top: 0.4em;
+  font-size: 0.8em;
+}

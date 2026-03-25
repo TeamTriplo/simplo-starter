@@ -1,0 +1,45 @@
+/* Image Tools module styles */
+
+/* Header bar above the crop/resize tool */
+.image-tools-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.image-tools-back {
+  font-size: 0.85rem;
+}
+
+/* Crop container — max-height bounds the initial layout; JS trims to image size */
+.image-tools-crop-wrapper {
+  max-height: 75vh;
+  overflow: hidden;
+  background: #222;
+  border-radius: 3px;
+}
+
+.image-tools-crop-wrapper img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Live crop dimensions readout */
+.image-tools-crop-info {
+  margin: 0.4rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: #555;
+  min-height: 1.2em;
+}
+
+/* Options panel below the crop/resize controls */
+.image-tools-options {
+  margin-top: 1rem;
+}
+
+.image-tools-options .form-type-checkbox {
+  margin-bottom: 0.5rem;
+}

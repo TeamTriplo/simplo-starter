@@ -1,0 +1,310 @@
+<?php
+/**
+ * @file
+ * Image Tools — visual crop, resize, and download for image files.
+ *
+ * Provides per-file Crop and Resize pages accessible from:
+ *   - The file entity page (file/{fid}) as local task tabs
+ *   - The Images view at admin/content/files/images
+ *   - Any file-based View using the Image Tools links field
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function image_tools_permission() {
+  return array(
+    'use image tools' => array(
+      'title'       => t('Use Image Tools'),
+      'description' => t('Crop, resize, and download image files. Also allows saving processed images back to the media library.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function image_tools_menu() {
+  $items = array();
+
+  // Internal routes used by all entry points (file list, file page, tickets).
+  $items['admin/files/%file/crop'] = array(
+    'title'            => 'Crop Image',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('image_tools_crop_form', 2),
+    'access callback'  => 'image_tools_file_access',
+    'access arguments' => array(2),
+    'file'             => 'image_tools.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  $items['admin/files/%file/resize'] = array(
+    'title'            => 'Resize Image',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('image_tools_resize_form', 2),
+    'access callback'  => 'image_tools_file_access',
+    'access arguments' => array(2),
+    'file'             => 'image_tools.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  $items['admin/files/%file/download-ready'] = array(
+    'title'            => 'Download',
+    'page callback'    => 'image_tools_download_ready',
+    'page arguments'   => array(2),
+    'access callback'  => 'image_tools_file_access',
+    'access arguments' => array(2),
+    'file'             => 'image_tools.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  // Tab structure under admin/content/files.
+  // Backdrop needs a MENU_DEFAULT_LOCAL_TASK before sibling tabs can attach.
+  // This creates an "All files" tab that mirrors the existing files page.
+  $items['admin/content/files/list'] = array(
+    'title'  => 'All files',
+    'type'   => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  // Images tab — renders our default view.
+  $items['admin/content/files/images'] = array(
+    'title'            => 'Images',
+    'page callback'    => 'image_tools_images_page',
+    'access arguments' => array('use image tools'),
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 10,
+  );
+
+  // Local task tabs on the file entity page (file/{fid}).
+  // These appear alongside the Manage, Usage, and Delete tabs.
+  $items['file/%file/crop'] = array(
+    'title'            => 'Crop',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('image_tools_crop_form', 1),
+    'access callback'  => 'image_tools_file_access',
+    'access arguments' => array(1),
+    'file'             => 'image_tools.pages.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 10,
+  );
+
+  $items['file/%file/resize'] = array(
+    'title'            => 'Resize',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('image_tools_resize_form', 1),
+    'access callback'  => 'image_tools_file_access',
+    'access arguments' => array(1),
+    'file'             => 'image_tools.pages.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 11,
+  );
+
+  return $items;
+}
+
+/**
+ * Access callback: user has permission AND file is an image.
+ *
+ * @param object $file
+ *   A file entity object.
+ *
+ * @return bool
+ */
+function image_tools_file_access($file) {
+  if (!is_object($file) || !isset($file->filemime)) {
+    return FALSE;
+  }
+  return user_access('use image tools') && image_tools_is_image($file);
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function image_tools_autoload_info() {
+  return array(
+    'ImageToolsViewsHandlerFieldLinks'     => 'image_tools.views.inc',
+    'ImageToolsViewsHandlerFieldThumbnail' => 'image_tools.views.inc',
+  );
+}
+
+/**
+ * Implements hook_views_data().
+ */
+function image_tools_views_data() {
+  $data = array();
+
+  $data['file_managed']['image_tools_thumbnail'] = array(
+    'title' => t('Image thumbnail'),
+    'help'  => t('Small preview thumbnail for image files.'),
+    'field' => array(
+      'handler'        => 'ImageToolsViewsHandlerFieldThumbnail',
+      'click sortable' => FALSE,
+    ),
+  );
+
+  $data['file_managed']['image_tools_links'] = array(
+    'title' => t('Image Tools links'),
+    'help'  => t('Crop and Resize links for image files (requires "use image tools" permission).'),
+    'field' => array(
+      'handler'        => 'ImageToolsViewsHandlerFieldLinks',
+      'click sortable' => FALSE,
+    ),
+  );
+
+  return $data;
+}
+
+/**
+ * Implements hook_views_default_views().
+ *
+ * NOTE: This view is not used for the Images tab page (which is rendered
+ * directly by image_tools_images_page()). It is provided here as an
+ * exportable view for sites that want a customisable Views-based image
+ * browser. Import it via the Views UI if needed.
+ *
+ * @codeCoverageIgnore
+ */
+function image_tools_views_default_views() {
+  $views = array();
+
+  $view = new view();
+  $view->name        = 'image_tools_image_files';
+  $view->description = 'Image files with thumbnails and Image Tools links. Appears as a tab at admin/content/files/images.';
+  $view->tag         = 'image_tools';
+  $view->base_table  = 'file_managed';
+  $view->human_name  = 'Image Files';
+  $view->core        = 1;
+  $view->api_version = '3.0';
+  $view->disabled    = FALSE;
+
+  // --- Default display ---
+  $handler = $view->new_display('default', 'Default', 'default');
+  $handler->display->display_options['title']            = 'Image Files';
+  $handler->display->display_options['use_more_always']  = FALSE;
+  $handler->display->display_options['access']['type']   = 'perm';
+  $handler->display->display_options['access']['perm']   = 'use image tools';
+  $handler->display->display_options['cache']['type']    = 'none';
+  $handler->display->display_options['query']['type']    = 'views_query';
+  $handler->display->display_options['pager']['type']    = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = 50;
+  $handler->display->display_options['style_plugin']     = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'image_tools_thumbnail' => 'image_tools_thumbnail',
+    'filename'              => 'filename',
+    'filesize'              => 'filesize',
+    'image_tools_links'     => 'image_tools_links',
+  );
+  $handler->display->display_options['style_options']['default'] = 'filename';
+
+  // Thumbnail field.
+  $handler->display->display_options['fields']['image_tools_thumbnail'] = array(
+    'id'                   => 'image_tools_thumbnail',
+    'table'                => 'file_managed',
+    'field'                => 'image_tools_thumbnail',
+    'label'                => '',
+    'element_label_colon'  => FALSE,
+  );
+
+  // Filename field — links to the file entity page.
+  $handler->display->display_options['fields']['filename'] = array(
+    'id'           => 'filename',
+    'table'        => 'file_managed',
+    'field'        => 'filename',
+    'label'        => 'File',
+    'link_to_file' => TRUE,
+  );
+
+  // File size field.
+  $handler->display->display_options['fields']['filesize'] = array(
+    'id'    => 'filesize',
+    'table' => 'file_managed',
+    'field' => 'filesize',
+    'label' => 'Size',
+  );
+
+  // Image Tools links field.
+  $handler->display->display_options['fields']['image_tools_links'] = array(
+    'id'    => 'image_tools_links',
+    'table' => 'file_managed',
+    'field' => 'image_tools_links',
+    'label' => 'Tools',
+  );
+
+  // Sort: filename ascending.
+  $handler->display->display_options['sorts']['filename'] = array(
+    'id'    => 'filename',
+    'table' => 'file_managed',
+    'field' => 'filename',
+    'order' => 'ASC',
+  );
+
+  // Filter: only image MIME types.
+  $handler->display->display_options['filters']['filemime'] = array(
+    'id'       => 'filemime',
+    'table'    => 'file_managed',
+    'field'    => 'filemime',
+    'operator' => 'contains',
+    'value'    => 'image/',
+  );
+
+  // --- Page display ---
+  // Path and tab registration are handled by hook_menu(); the view just
+  // provides the content when embedded via views_embed_view().
+  $handler = $view->new_display('page', 'Images tab', 'page');
+  $handler->display->display_options['path'] = 'admin/content/files/images';
+
+  $views[$view->name] = $view;
+  return $views;
+}
+
+/**
+ * Page callback for admin/content/files/images.
+ *
+ * Renders a table of image files with thumbnails and Image Tools links.
+ */
+function image_tools_images_page() {
+  backdrop_set_title(t('Image Files'));
+
+  $query = db_select('file_managed', 'f')
+    ->fields('f', array('fid', 'filename', 'uri', 'filemime', 'filesize'))
+    ->condition('f.filemime', 'image/%', 'LIKE')
+    ->orderBy('f.filename')
+    ->execute();
+
+  $back = array('query' => array('back' => current_path()));
+  $rows = array();
+
+  foreach ($query as $f) {
+    $img_url = check_plain(file_create_url($f->uri));
+    $thumb   = '<img src="' . $img_url . '" style="max-width:80px;max-height:80px;display:block;" alt="">';
+    $tools   = l(t('Crop'), 'admin/files/' . $f->fid . '/crop', $back)
+      . ' &middot; '
+      . l(t('Resize'), 'admin/files/' . $f->fid . '/resize', $back);
+    $rows[] = array(
+      $thumb,
+      l($f->filename, 'file/' . $f->fid),
+      format_size($f->filesize),
+      $tools,
+    );
+  }
+
+  return array(
+    '#theme'  => 'table',
+    '#header' => array(t(''), t('File'), t('Size'), t('Tools')),
+    '#rows'   => $rows,
+    '#empty'  => t('No image files found.'),
+  );
+}
+
+/**
+ * Returns TRUE if the given file entity is an image.
+ *
+ * @param object $file
+ *   A file entity object.
+ *
+ * @return bool
+ */
+function image_tools_is_image($file) {
+  return isset($file->filemime) && strpos($file->filemime, 'image/') === 0;
+}

@@ -721,7 +721,32 @@ function droptickets_ticket_view(DropTicket $ticket) {
   if (!empty($field_output['field_ticket_files'])) {
     $attachments_html = backdrop_render($field_output['field_ticket_files']);
     unset($field_output['field_ticket_files']);
-    $main .= '<div class="droptickets-card droptickets-attachments">' . $attachments_html . '</div>';
+
+    // Append a small "Download" link for image attachments (admins only).
+    // Links to the resize/download page where original download is also available.
+    $resize_links = '';
+    if (user_access('administer droptickets')) {
+      $file_items = field_get_items('drop_ticket', $ticket, 'field_ticket_files');
+      if ($file_items) {
+        $back_param = array('query' => array('back' => current_path()));
+        foreach ($file_items as $item) {
+          $f = file_load($item['fid']);
+          if ($f && strpos($f->filemime, 'image/') === 0) {
+            $resize_links .= '<div class="droptickets-attachment-resize">'
+              . l(t('Crop'), 'admin/files/' . $f->fid . '/crop', $back_param)
+              . ' &middot; '
+              . l(t('Resize'), 'admin/files/' . $f->fid . '/resize', $back_param)
+              . ' — ' . check_plain($f->filename)
+              . '</div>';
+          }
+        }
+      }
+    }
+
+    $main .= '<div class="droptickets-card droptickets-attachments">'
+      . $attachments_html
+      . $resize_links
+      . '</div>';
   }
   $has_fields = element_children($field_output);
 
@@ -1484,3 +1509,4 @@ function droptickets_stale_report_page() {
 
   return $output;
 }
+

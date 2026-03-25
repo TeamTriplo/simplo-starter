@@ -1141,3 +1141,4 @@ function droptickets_import_delete_form_submit($form, &$form_state) {
 
   $form_state['redirect'] = 'admin/drop/tickets/import';
 }
+
