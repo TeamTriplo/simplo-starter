@@ -1161,7 +1161,7 @@ function droptickets_notifications_page() {
       'commented' => t('@actor added a comment', array('@actor' => $actor)),
       'updated'   => t('@actor updated this ticket', array('@actor' => $actor)),
       'created'   => t('@actor created this ticket', array('@actor' => $actor)),
-      'reacted'   => t('@actor reacted to this ticket', array('@actor' => $actor)),
+      'reacted'   => t('@actor reacted to a comment on this ticket', array('@actor' => $actor)),
     );
     $message = isset($type_messages[$n->type]) ? $type_messages[$n->type] : check_plain($n->type);
 
