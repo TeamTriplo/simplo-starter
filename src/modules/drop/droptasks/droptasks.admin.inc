@@ -115,6 +115,13 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
     $recurrence_days_default = array_map('intval', explode(',', $task->recurrence_days));
   }
 
+  $form['completion_mode'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Individual completion — each assignee marks done for themselves'),
+    '#description'   => t('When checked, each assignee must mark this task complete separately. When unchecked, one person completing it marks it done for everyone.'),
+    '#default_value' => !empty($task->completion_mode) ? 1 : 0,
+  );
+
   $form['recurrence_fieldset'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Recurrence'),
@@ -329,6 +336,8 @@ function droptasks_task_form_submit($form, &$form_state) {
   }
 
   // Recurrence.
+  $task->completion_mode = empty($form_state['values']['completion_mode']) ? 0 : 1;
+
   $task->recurrence = $form_state['values']['recurrence'];
   if ($task->recurrence === 'weekly') {
     $checked = array_keys(array_filter($form_state['values']['recurrence_days']));

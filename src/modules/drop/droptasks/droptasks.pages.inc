@@ -26,9 +26,11 @@ function droptasks_task_list($filter = 'active') {
   $tag_filter = isset($_GET['tag']) ? trim($_GET['tag']) : '';
 
   // Show tasks the user owns OR is assigned to.
+  // For individual-completion tasks, exclude ones the current user has already completed.
   $query = db_select('drop_task', 't')
     ->fields('t');
   $query->leftJoin('drop_task_assignee', 'ta', 'ta.tid = t.tid AND ta.uid = :uid', array(':uid' => $user->uid));
+  $query->leftJoin('drop_task_completion', 'tc', 'tc.tid = t.tid AND tc.uid = :cuid', array(':cuid' => $user->uid));
   $or = db_or()
     ->condition('t.uid', $user->uid)
     ->isNotNull('ta.uid');
@@ -43,28 +45,44 @@ function droptasks_task_list($filter = 'active') {
 
   switch ($filter) {
     case 'today':
-      // Overdue + due today.
+      // Overdue + due today (pending, not yet completed by this user).
       $query->condition('t.status', 'pending');
       $query->condition('t.due_date', $today_end, '<');
       $query->isNotNull('t.due_date');
+      $query->condition(db_or()
+        ->condition('t.completion_mode', 0)
+        ->isNull('tc.cid')
+      );
       break;
 
     case 'upcoming':
-      // Pending, due within the next 7 days (excludes overdue).
+      // Pending within next 7 days, not yet completed by this user.
       $query->condition('t.status', 'pending');
       $query->condition('t.due_date', $today_start, '>=');
       $query->condition('t.due_date', $upcoming_end, '<');
+      $query->condition(db_or()
+        ->condition('t.completion_mode', 0)
+        ->isNull('tc.cid')
+      );
       break;
 
     case 'completed':
-      $query->condition('t.status', 'complete');
+      // Shared: status = complete. Individual: current user has a completion record.
+      $query->condition(db_or()
+        ->condition(db_and()->condition('t.status', 'complete')->condition('t.completion_mode', 0))
+        ->isNotNull('tc.cid')
+      );
       $query->orderBy('t.changed', 'DESC');
       break;
 
     case 'active':
     default:
       $filter = 'active';
-      $query->condition('t.status', 'pending');
+      // Shared: status = pending. Individual: pending AND not yet completed by this user.
+      $query->condition(db_or()
+        ->condition(db_and()->condition('t.status', 'pending')->condition('t.completion_mode', 0))
+        ->condition(db_and()->condition('t.status', 'pending')->condition('t.completion_mode', 1)->isNull('tc.cid'))
+      );
       break;
   }
 
@@ -393,15 +411,36 @@ function droptasks_task_view(DroptTask $task) {
 function droptasks_task_toggle_complete(DroptTask $task) {
   global $user;
 
-  if (!empty($task->recurrence) && $task->status === 'pending') {
-    // Log the completion before advancing.
+  if (!empty($task->completion_mode)) {
+    // Individual mode: track per-user in drop_task_completion.
+    $existing_cid = db_select('drop_task_completion', 'c')
+      ->fields('c', array('cid'))
+      ->condition('tid', $task->tid)
+      ->condition('uid', $user->uid)
+      ->execute()
+      ->fetchField();
+
+    if ($existing_cid) {
+      db_delete('drop_task_completion')->condition('cid', $existing_cid)->execute();
+      backdrop_set_message(t('Task %title reopened for you.', array('%title' => $task->title)));
+    }
+    else {
+      db_insert('drop_task_completion')->fields(array(
+        'tid'       => $task->tid,
+        'uid'       => $user->uid,
+        'completed' => REQUEST_TIME,
+      ))->execute();
+      backdrop_set_message(t('Task %title marked complete for you.', array('%title' => $task->title)));
+    }
+  }
+  elseif (!empty($task->recurrence) && $task->status === 'pending') {
+    // Recurring shared task: log completion and advance to next occurrence.
     db_insert('drop_task_completion')->fields(array(
       'tid'       => $task->tid,
       'uid'       => $user->uid,
       'completed' => REQUEST_TIME,
     ))->execute();
 
-    // Advance to next occurrence rather than marking complete.
     $next_ts = _droptasks_next_occurrence($task);
     if ($next_ts) {
       $task->due_date = $next_ts;
@@ -417,6 +456,7 @@ function droptasks_task_toggle_complete(DroptTask $task) {
     }
   }
   else {
+    // Shared non-recurring: flip task status for everyone.
     $task->status = ($task->status === 'complete') ? 'pending' : 'complete';
     $task->save();
     $label = ($task->status === 'complete') ? t('marked complete') : t('reopened');

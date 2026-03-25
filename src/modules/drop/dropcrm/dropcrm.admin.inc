@@ -2184,7 +2184,7 @@ function dropcrm_project_view($project) {
   if (!empty($project->prefix)) {
     $meta .= '<span>' . t('Prefix: <code>@p</code>', array('@p' => $project->prefix)) . '</span>';
   }
-  $meta .= '<span>' . t('Contact: @c', array('@c' => $contact_html)) . '</span>';
+  $meta .= '<span>' . t('Contact: !c', array('!c' => $contact_html)) . '</span>';
   if (!$project->active) {
     $meta .= '<span class="dropcrm-project-archived">' . t('Archived') . '</span>';
   }

@@ -126,6 +126,22 @@ function droptasks_task_access($op, $task = NULL, $account = NULL) {
     case 'delete':
       return user_access('manage tasks', $account)
         && $task && $task->uid == $account->uid;
+
+    case 'complete':
+      // Owner or any assignee can mark a task complete.
+      if (!$task || !user_access('access tasks', $account)) {
+        return FALSE;
+      }
+      if ($task->uid == $account->uid) {
+        return TRUE;
+      }
+      return (bool) db_select('drop_task_assignee', 'a')
+        ->fields('a', array('tid'))
+        ->condition('a.tid', $task->tid)
+        ->condition('a.uid', $account->uid)
+        ->range(0, 1)
+        ->execute()
+        ->fetchField();
   }
 
   return FALSE;
@@ -268,7 +284,7 @@ function droptasks_menu() {
     'page callback'    => 'droptasks_task_toggle_complete',
     'page arguments'   => array(3),
     'access callback'  => 'droptasks_task_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('complete', 3),
     'file'             => 'droptasks.pages.inc',
     'type'             => MENU_CALLBACK,
   );

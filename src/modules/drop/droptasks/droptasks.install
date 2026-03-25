@@ -181,6 +181,13 @@ function droptasks_schema() {
         'not null'    => TRUE,
         'default'     => 1,
       ),
+      'completion_mode' => array(
+        'description' => 'Completion mode: 0=shared (one completion marks done for all), 1=individual (each assignee completes for themselves).',
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
     ),
     'primary key' => array('tid'),
     'indexes' => array(
@@ -253,6 +260,19 @@ function droptasks_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * Add completion_mode column to drop_task.
+ */
+function droptasks_update_1005() {
+  db_add_field('drop_task', 'completion_mode', array(
+    'description' => 'Completion mode: 0=shared, 1=individual.',
+    'type'        => 'int',
+    'size'        => 'tiny',
+    'not null'    => TRUE,
+    'default'     => 0,
+  ));
 }
 
 /**

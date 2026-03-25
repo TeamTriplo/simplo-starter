@@ -42,6 +42,9 @@ class DroptTask extends Entity {
   /** @var int|null Optional CRM activity ID that spawned this task. */
   public $source_activity_id = NULL;
 
+  /** @var int Completion mode: 0=shared, 1=individual per-assignee. */
+  public $completion_mode = 0;
+
   /** @var string Recurrence: '', 'daily', 'weekly', 'monthly'. */
   public $recurrence = '';
 
