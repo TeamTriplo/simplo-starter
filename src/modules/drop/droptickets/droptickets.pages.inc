@@ -1343,6 +1343,7 @@ function droptickets_recent_page() {
   $last_comment_subquery->groupBy('c.tid');
   $query->leftJoin($last_comment_subquery, 'lc', 'lc.tid = t.tid');
   $query->addExpression('GREATEST(t.changed, COALESCE(lc.last_comment, 0))', 'last_activity');
+  $query->addExpression('lc.last_comment', 'last_comment_ts');
   $query->isNull('t.import_id');
   $query->orderBy('last_activity', 'DESC');
   $query->range(0, 50);
@@ -1364,6 +1365,23 @@ function droptickets_recent_page() {
   $tickets  = entity_load('drop_ticket', $tids);
   $projects = $pids ? entity_load('drop_project', $pids) : array();
   $accounts = $uids ? user_load_multiple($uids) : array();
+
+  // Get the uid of the most recent commenter per ticket.
+  $max_comment_sub = db_select('drop_ticket_comment', 'ci')
+    ->fields('ci', array('tid'))
+    ->condition('ci.tid', $tids, 'IN');
+  $max_comment_sub->addExpression('MAX(ci.created)', 'mc');
+  $max_comment_sub->groupBy('ci.tid');
+  $recent_comment_query = db_select('drop_ticket_comment', 'co');
+  $recent_comment_query->fields('co', array('tid', 'uid', 'created'));
+  $recent_comment_query->join($max_comment_sub, 'mx', 'co.tid = mx.tid AND co.created = mx.mc');
+  $recent_comment_query->condition('co.tid', $tids, 'IN');
+  $recent_commenters = $recent_comment_query->execute()->fetchAllAssoc('tid');
+
+  // Collect commenter uids to load.
+  $commenter_uids = array_filter(array_unique(array_map(function($c) { return $c->uid; }, (array) $recent_commenters)));
+  $commenter_accounts = $commenter_uids ? user_load_multiple($commenter_uids) : array();
+  $accounts = $accounts + $commenter_accounts;
 
   $status_options   = droptickets_status_options();
   $priority_labels  = drop_base_priority_labels();
@@ -1392,6 +1410,16 @@ function droptickets_recent_page() {
       ? icon('flag-fill', array('attributes' => array('width' => 16, 'height' => 16, 'class' => array('droptickets-flag-on'))))
       : '';
 
+    // Determine who made the most recent activity.
+    $activity_by = '—';
+    if (!empty($row->last_comment_ts) && $row->last_comment_ts >= $row->ticket_changed) {
+      // Most recent activity was a comment.
+      if (isset($recent_commenters[$row->tid])) {
+        $cuid = $recent_commenters[$row->tid]->uid;
+        $activity_by = isset($accounts[$cuid]) ? check_plain($accounts[$cuid]->name) : '—';
+      }
+    }
+
     $rows[] = array(
       'data' => array(
         array('data' => $flag_icon,       'class' => array('droptickets-col-flag')),
@@ -1402,6 +1430,7 @@ function droptickets_recent_page() {
         array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($row->status) . '">' . check_plain($status_label) . '</span>'),
         array('data' => $assignee),
         array('data' => format_date($row->last_activity, 'custom', 'M j, Y g:ia')),
+        array('data' => $activity_by),
       ),
       'class' => array($priority_class),
     );
@@ -1409,7 +1438,7 @@ function droptickets_recent_page() {
 
   $output['table'] = array(
     '#theme'  => 'table',
-    '#header' => array('', t('ID'), t('Project'), t('Title'), t('P'), t('Status'), t('Assignee'), t('Last activity')),
+    '#header' => array('', t('ID'), t('Project'), t('Title'), t('P'), t('Status'), t('Assignee'), t('Last activity'), t('By')),
     '#rows'   => $rows,
     '#attributes' => array('class' => array('droptickets-list')),
   );
