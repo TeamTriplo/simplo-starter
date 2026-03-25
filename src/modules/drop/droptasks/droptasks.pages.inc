@@ -356,7 +356,7 @@ function droptasks_task_view(DroptTask $task) {
 
     $output['completion_heading'] = array(
       '#markup' => drop_base_section_header(t('Completion History')),
-      '#weight' => 8,
+      '#weight' => 12,
     );
 
     if ($completions) {
@@ -375,13 +375,13 @@ function droptasks_task_view(DroptTask $task) {
         '#header'     => array(t('Completed'), t('By')),
         '#rows'       => $comp_rows,
         '#attributes' => array('class' => array('droptasks-detail-table')),
-        '#weight'     => 9,
+        '#weight'     => 13,
       );
     }
     else {
       $output['completion_history'] = array(
         '#markup' => '<p>' . t('No completions recorded yet.') . '</p>',
-        '#weight' => 9,
+        '#weight' => 13,
       );
     }
   }

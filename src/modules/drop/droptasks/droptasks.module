@@ -116,8 +116,20 @@ function droptasks_task_access($op, $task = NULL, $account = NULL) {
 
   switch ($op) {
     case 'view':
-      return user_access('access tasks', $account)
-        && (!$task || $task->uid == $account->uid);
+      if (!user_access('access tasks', $account)) {
+        return FALSE;
+      }
+      if (!$task || $task->uid == $account->uid) {
+        return TRUE;
+      }
+      // Assignees can also view.
+      return (bool) db_select('drop_task_assignee', 'a')
+        ->fields('a', array('tid'))
+        ->condition('a.tid', $task->tid)
+        ->condition('a.uid', $account->uid)
+        ->range(0, 1)
+        ->execute()
+        ->fetchField();
 
     case 'create':
       return user_access('manage tasks', $account);
