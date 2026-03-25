@@ -421,6 +421,16 @@ function droptickets_menu() {
     'weight'           => 3,
   );
 
+  // AJAX endpoint: update ticket status from Kanban drag-and-drop.
+  $items['admin/drop/tickets/%drop_ticket/set-status'] = array(
+    'page callback'    => 'droptickets_kanban_set_status',
+    'page arguments'   => array(3),
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
   // Per-member ticket page (linked from team directory).
   $items['admin/drop/tickets/member/%user'] = array(
     'title'            => 'Member tickets',

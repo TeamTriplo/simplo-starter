@@ -811,6 +811,21 @@ a.droptickets-flag-on svg,
   text-align: center;
 }
 
+/* Drag-and-drop states */
+.droptickets-kanban-card[draggable="true"] {
+  cursor: grab;
+}
+.droptickets-kanban-card.dt-kanban-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+.droptickets-kanban-col.dt-kanban-over .droptickets-kanban-cards {
+  background: #e3f2fd;
+  border-radius: 4px;
+  outline: 2px dashed #1976d2;
+  outline-offset: -2px;
+}
+
 /* ---------------------------------------------------------------------------
    Ticket list action bar (Kanban shortcut + flagged indicator)
    --------------------------------------------------------------------------- */

@@ -621,6 +621,17 @@ function droptickets_update_1008() {
  * Old 0 (Low) → New 1 (Low)
  * Must update in descending order to avoid value collisions.
  */
+/**
+ * Grant flag/close/delete droptickets permissions to the administrator role.
+ */
+function droptickets_update_1017() {
+  user_role_grant_permissions('administrator', array(
+    'flag droptickets',
+    'close droptickets',
+    'delete droptickets',
+  ));
+}
+
 function droptickets_update_1016() {
   db_update('drop_ticket')->fields(array('priority' => 3))->condition('priority', 2)->execute();
   db_update('drop_ticket')->fields(array('priority' => 2))->condition('priority', 1)->execute();

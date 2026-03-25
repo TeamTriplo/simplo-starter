@@ -20,11 +20,15 @@ function droptickets_list_page() {
     ),
   );
 
-  // Status filter. 'all' and 'imported' are special values.
-  $valid_statuses = array_merge(array('all', 'imported'), array_keys(droptickets_status_options()));
+  // Status filter.
+  // 'all'         = all non-done tickets (default)
+  // 'all_tickets' = truly everything including done
+  // 'imported'    = imported tickets only
+  // anything else = a specific status value
+  $valid_statuses = array_merge(array('all', 'all_tickets', 'imported'), array_keys(droptickets_status_options()));
   $status = (isset($_GET['status']) && in_array($_GET['status'], $valid_statuses))
     ? $_GET['status']
-    : 'open';
+    : 'all';
 
   // Search query.
   $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -38,8 +42,8 @@ function droptickets_list_page() {
   // Tag filter.
   $tag_filter = (!empty($_GET['tag']) && is_numeric($_GET['tag'])) ? (int) $_GET['tag'] : 0;
 
-  // Build filter tabs — All, each status, then Imported at the end.
-  $tab_options = array('all' => t('All')) + droptickets_status_options() + array('imported' => t('Imported'));
+  // Build filter tabs — All (active), each status, Imported, All Tickets.
+  $tab_options = array('all' => t('All')) + droptickets_status_options() + array('imported' => t('Imported'), 'all_tickets' => t('All tickets'));
   $tabs = '';
   foreach ($tab_options as $key => $label) {
     $active = ($key === $status) ? ' class="droptickets-tab-active"' : '';
@@ -110,7 +114,7 @@ function droptickets_list_page() {
 
     // Build a self-submitting select. Preserve other filters via hidden inputs.
     $hidden = '';
-    if ($status !== 'open') { $hidden .= '<input type="hidden" name="status" value="' . check_plain($status) . '">'; }
+    if ($status !== 'all') { $hidden .= '<input type="hidden" name="status" value="' . check_plain($status) . '">'; }
     if ($assignee_filter)   { $hidden .= '<input type="hidden" name="assignee" value="' . (int) $assignee_filter . '">'; }
     if ($tag_filter)        { $hidden .= '<input type="hidden" name="tag" value="' . (int) $tag_filter . '">'; }
 
@@ -177,7 +181,12 @@ function droptickets_list_page() {
     // All normal views exclude imported tickets.
     $query->isNull('t.import_id');
 
-    if ($status !== 'all') {
+    if ($status === 'all') {
+      // Default: all non-done tickets.
+      $query->condition('t.status', 'done', '<>');
+    }
+    elseif ($status !== 'all_tickets') {
+      // Specific status filter; 'all_tickets' applies no condition.
       $query->condition('t.status', $status);
     }
   }
@@ -255,9 +264,11 @@ function droptickets_list_page() {
       $flag_icon = $is_flagged
         ? icon('flag-fill', array('attributes' => array('width' => 16, 'height' => 16)))
         : icon('flag', array('attributes' => array('width' => 16, 'height' => 16)));
+      $dest_query = array_diff_key($_GET, array('q' => 1));
+      $destination = current_path() . ($dest_query ? '?' . http_build_query($dest_query) : '');
       $flag_cell = l($flag_icon, 'admin/drop/tickets/' . $ticket->tid . '/flag', array(
         'html'       => TRUE,
-        'query'      => array('destination' => current_path()),
+        'query'      => array('destination' => $destination),
         'attributes' => array(
           'class' => array($is_flagged ? 'droptickets-flag-on' : 'droptickets-flag-off'),
           'title' => $is_flagged ? t('Remove flag') : t('Flag as priority'),
@@ -432,9 +443,20 @@ function droptickets_member_page($account) {
 function droptickets_kanban_page() {
   backdrop_set_title(t('Kanban'));
 
+  $module_path = backdrop_get_path('module', 'droptickets');
   $output = array(
     '#attached' => array(
-      'css' => array(backdrop_get_path('module', 'droptickets') . '/droptickets.css'),
+      'css' => array($module_path . '/droptickets.css'),
+      'js'  => array(
+        $module_path . '/droptickets.kanban.js',
+        array(
+          'data' => array('droptickets' => array(
+            'kanbanStatusUrl' => url('admin/drop/tickets/'),
+            'kanbanToken'     => backdrop_get_token('droptickets_kanban'),
+          )),
+          'type' => 'setting',
+        ),
+      ),
     ),
   );
 
@@ -495,7 +517,7 @@ function droptickets_kanban_page() {
     $col_tickets = $by_status[$status_key];
     $count       = count($col_tickets);
 
-    $board .= '<div class="droptickets-kanban-col droptickets-kanban-col--' . check_plain($status_key) . '">';
+    $board .= '<div class="droptickets-kanban-col droptickets-kanban-col--' . check_plain($status_key) . '" data-status="' . check_plain($status_key) . '">';
     $board .= '<div class="droptickets-kanban-col-header">';
     $board .= '<span class="droptickets-status droptickets-status--' . check_plain($status_key) . ' droptickets-kanban-status-label">' . check_plain($status_label) . '</span>';
     $board .= '<span class="droptickets-kanban-col-count">' . $count . '</span>';
@@ -530,7 +552,7 @@ function droptickets_kanban_page() {
           ? ' <span class="droptickets-kanban-flag">' . icon('flag-fill', array('attributes' => array('width' => 11, 'height' => 11))) . '</span>'
           : '';
 
-        $board .= '<div class="droptickets-kanban-card ' . $priority_class . '">';
+        $board .= '<div class="droptickets-kanban-card ' . $priority_class . '" draggable="true" data-tid="' . (int) $ticket->tid . '">';
         $board .= '<div class="droptickets-kanban-card-id"><span class="droptickets-ticket-id">' . check_plain($label) . '</span>' . $flag_html . '</div>';
         $board .= '<div class="droptickets-kanban-card-title">' . l($ticket->title, 'admin/drop/tickets/' . $ticket->tid) . '</div>';
         $board .= '<div class="droptickets-kanban-card-meta">';
@@ -548,6 +570,36 @@ function droptickets_kanban_page() {
 
   $output['board'] = array('#markup' => $board, '#weight' => 0);
   return $output;
+}
+
+/**
+ * AJAX callback: update a ticket's status from the Kanban drag-and-drop.
+ *
+ * Expects POST fields: status, token.
+ * Returns JSON: {ok: true} or {ok: false, message: '...'}.
+ */
+function droptickets_kanban_set_status(DropTicket $ticket) {
+  backdrop_add_http_header('Content-Type', 'application/json');
+
+  $status = isset($_POST['status']) ? check_plain($_POST['status']) : '';
+  $token  = isset($_POST['token'])  ? $_POST['token'] : '';
+
+  if (!backdrop_valid_token($token, 'droptickets_kanban')) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid token.'));
+    exit();
+  }
+
+  $valid_statuses = array_keys(droptickets_kanban_statuses());
+  if (!in_array($status, $valid_statuses)) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid status.'));
+    exit();
+  }
+
+  $ticket->status = $status;
+  $ticket->save();
+
+  print backdrop_json_encode(array('ok' => TRUE));
+  exit();
 }
 
 // ---------------------------------------------------------------------------
