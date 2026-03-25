@@ -742,7 +742,7 @@ function dropbridge_preprocess_layout(&$variables) {
     return;
   }
 
-  $text = config_get('dropbridge.settings', 'announcement_text');
+  $text = (string) config_get('dropbridge.settings', 'announcement_text');
   if (empty(trim($text))) {
     return;
   }

@@ -617,14 +617,26 @@ function droptickets_comment_form($form, &$form_state, DropTicket $ticket, $comm
 
   $form['#ticket'] = $ticket;
 
+  // Plain textarea so jquery.textcomplete @mention autocomplete works.
+  // Format is locked to drop_comment (mentions filter, URL linking, no TinyMCE).
   $form['body'] = array(
-    '#type'          => 'text_format',
+    '#type'          => 'textarea',
     '#title'         => $is_edit ? t('Edit comment') : t('Add comment'),
     '#default_value' => $is_edit ? $comment->body : '',
-    '#format'        => $is_edit ? $comment->body_format : 'filtered_html',
     '#rows'          => 6,
     '#required'      => TRUE,
+    '#attributes'    => array('class' => array('droptickets-comment-body')),
+    '#description'   => t('Type @username to mention a team member.'),
   );
+  $form['body_format'] = array('#type' => 'hidden', '#value' => 'drop_comment');
+
+  // Attach mentions autocomplete library and behaviour.
+  if (module_exists('mentions')) {
+    $mentions_path = backdrop_get_path('module', 'mentions');
+    $form['#attached']['css'][] = $mentions_path . '/textcomplete/dist/jquery.textcomplete.css';
+    $form['#attached']['js'][]  = $mentions_path . '/textcomplete/dist/jquery.textcomplete.min.js';
+    $form['#attached']['js'][]  = backdrop_get_path('module', 'droptickets') . '/droptickets.mentions.js';
+  }
 
   if ($is_edit) {
     $form['tcid'] = array('#type' => 'hidden', '#value' => $comment->tcid);
@@ -658,13 +670,29 @@ function droptickets_comment_form_submit($form, &$form_state) {
   }
 
   $comment->tid         = (int) $values['tid'];
-  $comment->body        = $values['body']['value'];
-  $comment->body_format = $values['body']['format'];
+  $comment->body        = $values['body'];
+  $comment->body_format = $values['body_format'];
   $comment->save();
 
-  // Notify watchers of the new comment.
   global $user;
+
+  // Notify watchers of the new comment.
   droptickets_notify_watchers($comment->tid, 'commented', $user->uid, $comment->tcid);
+
+  // Notify any @mentioned team members and add them as watchers.
+  if (module_exists('mentions')) {
+    $mentions = mentions_get_mentions($comment->body);
+    $already_notified = array();
+    foreach ($mentions as $mention) {
+      $mentioned_uid = (int) $mention['user']->uid;
+      if ($mentioned_uid === (int) $user->uid || in_array($mentioned_uid, $already_notified)) {
+        continue;
+      }
+      droptickets_watcher_add($comment->tid, $mentioned_uid);
+      droptickets_notify_create($mentioned_uid, $comment->tid, $comment->tcid, 'mentioned', $user->uid);
+      $already_notified[] = $mentioned_uid;
+    }
+  }
 
   backdrop_set_message(t('Comment saved.'));
   $form_state['redirect'] = 'admin/drop/tickets/' . $values['tid'];
