@@ -127,9 +127,9 @@ function droptickets_ticket_access($op, $ticket = NULL, $account = NULL) {
   if ($op === 'delete') {
     return user_access('delete droptickets', $account);
   }
-  // update: reporter or assignee.
-  if ($op === 'update' && $ticket) {
-    return ($ticket->uid == $account->uid || $ticket->assignee_uid == $account->uid);
+  // update: any authenticated team member with access.
+  if ($op === 'update') {
+    return TRUE;
   }
   return FALSE;
 }
