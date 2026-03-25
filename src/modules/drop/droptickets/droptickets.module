@@ -295,6 +295,16 @@ function droptickets_menu() {
     'weight'           => 5,
   );
 
+  $items['admin/drop/tickets/recent'] = array(
+    'title'            => 'Recent',
+    'page callback'    => 'droptickets_recent_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 6,
+  );
+
   // Projects tab — links to the CRM projects list.
   $items['admin/drop/tickets/projects'] = array(
     'title'            => 'Projects (CRM)',

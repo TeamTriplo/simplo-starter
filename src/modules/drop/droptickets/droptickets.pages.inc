@@ -1317,6 +1317,110 @@ function droptickets_ticket_flag_toggle(DropTicket $ticket) {
 /**
  * Page callback: show all currently flagged tickets.
  */
+// ---------------------------------------------------------------------------
+// Recent activity
+// ---------------------------------------------------------------------------
+
+/**
+ * Page callback: tickets sorted by most recent edit or comment.
+ */
+function droptickets_recent_page() {
+  backdrop_set_title(t('Recent tickets'));
+
+  $output = array(
+    '#attached' => array(
+      'css' => array(backdrop_get_path('module', 'droptickets') . '/droptickets.css'),
+    ),
+  );
+
+  // Join with the most recent comment per ticket, sort by whichever is later.
+  $query = db_select('drop_ticket', 't');
+  $query->fields('t', array('tid', 'title', 'status', 'pid', 'assignee_uid', 'owner_uid', 'priority', 'type'));
+  $query->addExpression('t.changed', 'ticket_changed');
+  $last_comment_subquery = db_select('drop_ticket_comment', 'c');
+  $last_comment_subquery->fields('c', array('tid'));
+  $last_comment_subquery->addExpression('MAX(c.created)', 'last_comment');
+  $last_comment_subquery->groupBy('c.tid');
+  $query->leftJoin($last_comment_subquery, 'lc', 'lc.tid = t.tid');
+  $query->addExpression('GREATEST(t.changed, COALESCE(lc.last_comment, 0))', 'last_activity');
+  $query->isNull('t.import_id');
+  $query->orderBy('last_activity', 'DESC');
+  $query->range(0, 50);
+
+  $results = $query->execute()->fetchAll();
+
+  if (empty($results)) {
+    $output['empty'] = array('#markup' => '<p>' . t('No tickets found.') . '</p>');
+    return $output;
+  }
+
+  // Load supporting data.
+  $tids     = array_column((array) $results, 'tid');
+  $pids     = array_filter(array_unique(array_column((array) $results, 'pid')));
+  $uids     = array_filter(array_unique(array_merge(
+    array_column((array) $results, 'assignee_uid'),
+    array_column((array) $results, 'owner_uid')
+  )));
+  $tickets  = entity_load('drop_ticket', $tids);
+  $projects = $pids ? entity_load('drop_project', $pids) : array();
+  $accounts = $uids ? user_load_multiple($uids) : array();
+
+  $status_options   = droptickets_status_options();
+  $priority_labels  = drop_base_priority_labels();
+  $flagged_tids     = db_select('drop_ticket_flag', 'f')->fields('f', array('tid'))->execute()->fetchCol();
+  $flagged_tids     = array_flip($flagged_tids);
+
+  $rows = array();
+  foreach ($results as $row) {
+    $ticket = isset($tickets[$row->tid]) ? $tickets[$row->tid] : NULL;
+    if (!$ticket) { continue; }
+    $project  = ($row->pid && isset($projects[$row->pid])) ? $projects[$row->pid] : NULL;
+    $label    = droptickets_ticket_label($ticket, $project);
+
+    $proj_name = '—';
+    if ($project) {
+      $proj_name = module_exists('dropcrm') && dropcrm_project_access('view', $project)
+        ? l($project->name, 'admin/drop/crm/projects/' . $project->pid)
+        : check_plain($project->name);
+    }
+
+    $assignee = droptickets_assignee_label($ticket, $accounts);
+    $status_label = isset($status_options[$row->status]) ? $status_options[$row->status] : $row->status;
+    $priority_class = 'drop-priority-' . drop_base_priority_class($ticket->priority);
+    $priority_dot = '<span class="droptickets-priority-dot ' . $priority_class . '" title="' . check_plain(isset($priority_labels[$ticket->priority]) ? $priority_labels[$ticket->priority] : '') . '"></span>';
+    $flag_icon = isset($flagged_tids[$row->tid])
+      ? icon('flag-fill', array('attributes' => array('width' => 16, 'height' => 16, 'class' => array('droptickets-flag-on'))))
+      : '';
+
+    $rows[] = array(
+      'data' => array(
+        array('data' => $flag_icon,       'class' => array('droptickets-col-flag')),
+        array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>', 'class' => array('droptickets-col-id')),
+        array('data' => $proj_name,       'class' => array('droptickets-col-project')),
+        array('data' => l($row->title, 'admin/drop/tickets/' . $row->tid), 'class' => array('droptickets-col-title')),
+        array('data' => $priority_dot,    'class' => array('droptickets-col-priority')),
+        array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($row->status) . '">' . check_plain($status_label) . '</span>'),
+        array('data' => $assignee),
+        array('data' => format_date($row->last_activity, 'custom', 'M j, Y g:ia')),
+      ),
+      'class' => array($priority_class),
+    );
+  }
+
+  $output['table'] = array(
+    '#theme'  => 'table',
+    '#header' => array('', t('ID'), t('Project'), t('Title'), t('P'), t('Status'), t('Assignee'), t('Last activity')),
+    '#rows'   => $rows,
+    '#attributes' => array('class' => array('droptickets-list')),
+  );
+
+  return $output;
+}
+
+// ---------------------------------------------------------------------------
+// Flagged tickets
+// ---------------------------------------------------------------------------
+
 function droptickets_flagged_page() {
   backdrop_set_title(t('Flagged tickets'));
 
