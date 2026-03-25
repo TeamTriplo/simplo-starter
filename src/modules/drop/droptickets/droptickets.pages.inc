@@ -219,6 +219,22 @@ function droptickets_list_page() {
     return $output;
   }
 
+  // Load comment counts in bulk for all tickets on this page.
+  $ticket_tids = array_column((array) $tickets, 'tid');
+  $comment_counts = array();
+  if ($ticket_tids) {
+    $count_rows = db_select('drop_ticket_comment', 'c')
+      ->fields('c', array('tid'))
+      ->addExpression('COUNT(*)', 'cnt')
+      ->condition('c.tid', $ticket_tids, 'IN')
+      ->groupBy('c.tid')
+      ->execute()
+      ->fetchAll();
+    foreach ($count_rows as $cr) {
+      $comment_counts[$cr->tid] = (int) $cr->cnt;
+    }
+  }
+
   // Load projects and users in bulk.
   $pids     = array_unique(array_column((array) $tickets, 'pid'));
   $projects = entity_load('drop_project', $pids);
@@ -292,8 +308,14 @@ function droptickets_list_page() {
       array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
     );
 
+    $comment_count = isset($comment_counts[$ticket->tid]) ? $comment_counts[$ticket->tid] : 0;
+    $comment_cell = $comment_count > 0
+      ? '<span class="droptickets-comment-count">' . $comment_count . '</span>'
+      : '<span class="droptickets-comment-count droptickets-comment-count--none">—</span>';
+
     $row_data[] = array('data' => $owner);
     $row_data[] = array('data' => $assignee);
+    $row_data[] = array('data' => $comment_cell, 'class' => array('droptickets-col-comments'));
     $row_data[] = array('data' => l(t('Edit'), 'admin/drop/tickets/' . $ticket->tid . '/edit'));
 
     $rows[] = array(
@@ -305,6 +327,7 @@ function droptickets_list_page() {
   $header = array('', t('ID'), t('Project'), t('Title'), t('P'), t('Status'));
   $header[] = t('Owner');
   $header[] = t('Assignee');
+  $header[] = icon('chat-circle', array('attributes' => array('width' => 14, 'height' => 14, 'title' => t('Comments'))));
   $header[] = t('Actions');
 
   $output['table'] = array(

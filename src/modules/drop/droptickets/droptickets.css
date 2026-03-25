@@ -94,6 +94,29 @@
   width: 40%;
 }
 
+.droptickets-col-comments {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.droptickets-comment-count {
+  display: inline-block;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #1565c0;
+  background: #e3f2fd;
+  border-radius: 10px;
+  padding: 1px 7px;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+.droptickets-comment-count--none {
+  background: none;
+  color: var(--drop-text-secondary, #aaa);
+  font-weight: normal;
+}
+
 .droptickets-empty {
   color: var(--drop-text-secondary, #888);
   font-style: italic;
