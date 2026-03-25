@@ -346,6 +346,16 @@ function droptickets_menu() {
     'type'             => MENU_CALLBACK,
   );
 
+  // Close a ticket (move to closed status).
+  $items['admin/drop/tickets/%drop_ticket/close'] = array(
+    'page callback'    => 'droptickets_ticket_close',
+    'page arguments'   => array(3),
+    'access callback'  => 'droptickets_ticket_access',
+    'access arguments' => array('update', 3),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
   // Mark ticket done (for DropBridge).
   $items['admin/drop/tickets/%drop_ticket/done'] = array(
     'page callback'    => 'droptickets_ticket_mark_done',
@@ -561,14 +571,36 @@ function droptickets_assignee_label($ticket, $accounts = array()) {
  * Purges old notifications based on the configured lifetime.
  */
 function droptickets_cron() {
+  // Purge old notifications.
   $days = (int) config_get('droptickets.settings', 'notification_lifetime');
-  if ($days <= 0) {
-    return;
+  if ($days > 0) {
+    $cutoff = REQUEST_TIME - ($days * 86400);
+    db_delete('drop_notification')
+      ->condition('created', $cutoff, '<')
+      ->execute();
   }
-  $cutoff = REQUEST_TIME - ($days * 86400);
-  db_delete('drop_notification')
-    ->condition('created', $cutoff, '<')
-    ->execute();
+
+  // Auto-close Done tickets after the configured number of days.
+  $auto_close_days = (int) config_get('droptickets.settings', 'auto_close_days');
+  if ($auto_close_days > 0) {
+    $cutoff = REQUEST_TIME - ($auto_close_days * 86400);
+    $tids = db_select('drop_ticket', 't')
+      ->fields('t', array('tid'))
+      ->condition('t.status', 'done')
+      ->condition('t.changed', $cutoff, '<')
+      ->execute()
+      ->fetchCol();
+    if ($tids) {
+      db_update('drop_ticket')
+        ->fields(array('status' => 'closed', 'changed' => REQUEST_TIME))
+        ->condition('tid', $tids, 'IN')
+        ->execute();
+      watchdog('droptickets', 'Auto-closed @count Done tickets older than @days days.', array(
+        '@count' => count($tids),
+        '@days'  => $auto_close_days,
+      ), WATCHDOG_INFO);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1185,6 +1217,7 @@ function droptickets_status_options() {
     'in_review'   => t('In Review'),
     'blocked'     => t('Blocked'),
     'done'        => t('Done'),
+    'closed'      => t('Closed'),
   );
 }
 

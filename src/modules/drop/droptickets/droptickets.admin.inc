@@ -819,6 +819,22 @@ function droptickets_settings_form($form, &$form_state) {
     '#placeholder'   => 'https://hooks.slack.com/services/…',
   );
 
+  $form['auto_close_days'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Auto-close Done tickets after'),
+    '#description'   => t('Done tickets that have not been updated within this period will be automatically moved to Closed during cron. Choose "Never" to disable auto-closing.'),
+    '#options'       => array(
+      0   => t('Never'),
+      7   => t('7 days'),
+      14  => t('14 days'),
+      30  => t('30 days'),
+      60  => t('60 days'),
+      90  => t('90 days'),
+      180 => t('180 days'),
+    ),
+    '#default_value' => $config->get('auto_close_days') ?: 0,
+  );
+
   $form['stale_days'] = array(
     '#type'          => 'select',
     '#title'         => t('Stale ticket threshold'),
@@ -852,6 +868,38 @@ function droptickets_settings_form($form, &$form_state) {
     '#default_value' => $config->get('flag_soft_limit'),
   );
 
+  // Kanban column soft limits.
+  $kanban_limits = $config->get('kanban_limits') ?: array();
+  $form['kanban_limits_fieldset'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Kanban column soft limits'),
+    '#description' => t('Show a warning on the Kanban board when a column exceeds this number of tickets. Set to 0 for no limit.'),
+    '#collapsible' => TRUE,
+    '#collapsed'   => TRUE,
+    '#tree'        => TRUE,
+  );
+  foreach (droptickets_kanban_statuses() as $status_key => $status_label) {
+    $form['kanban_limits_fieldset'][$status_key] = array(
+      '#type'          => 'number',
+      '#title'         => $status_label,
+      '#default_value' => isset($kanban_limits[$status_key]) ? (int) $kanban_limits[$status_key] : 0,
+      '#min'           => 0,
+      '#max'           => 999,
+      '#size'          => 4,
+    );
+  }
+
+  $form['comment_order'] = array(
+    '#type'          => 'radios',
+    '#title'         => t('Comment order'),
+    '#description'   => t('The order in which comments are displayed on ticket pages.'),
+    '#options'       => array(
+      'asc'  => t('Oldest first'),
+      'desc' => t('Newest first'),
+    ),
+    '#default_value' => $config->get('comment_order') ?: 'asc',
+  );
+
   $form['reactions_enabled'] = array(
     '#type'          => 'checkbox',
     '#title'         => t('Enable emoji reactions'),
@@ -875,6 +923,8 @@ function droptickets_settings_form($form, &$form_state) {
   $form = system_settings_form($form);
   // Normalize checkboxes to a plain array of selected UIDs before saving.
   $form['#submit'][] = 'droptickets_settings_form_normalize_watchers';
+  // Save kanban limits separately (tree-structured, not auto-saved).
+  $form['#submit'][] = 'droptickets_settings_form_save_kanban_limits';
   return $form;
 }
 
@@ -889,6 +939,19 @@ function droptickets_settings_form_normalize_watchers($form, &$form_state) {
     $form_state['values']['default_watchers'] = array_values(
       array_keys(array_filter($form_state['values']['default_watchers']))
     );
+  }
+}
+
+/**
+ * Submit handler: save kanban column soft limits to config.
+ */
+function droptickets_settings_form_save_kanban_limits($form, &$form_state) {
+  if (isset($form_state['values']['kanban_limits_fieldset'])) {
+    $limits = array();
+    foreach ($form_state['values']['kanban_limits_fieldset'] as $key => $value) {
+      $limits[$key] = max(0, (int) $value);
+    }
+    config_set('droptickets.settings', 'kanban_limits', $limits);
   }
 }
 

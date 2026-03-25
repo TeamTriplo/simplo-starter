@@ -511,17 +511,25 @@ function droptickets_kanban_page() {
     }
   }
 
+  // Load per-column soft limits.
+  $kanban_limits = config_get('droptickets.settings', 'kanban_limits') ?: array();
+
   // Render board.
   $board = '<div class="droptickets-kanban">';
   foreach ($kanban_statuses as $status_key => $status_label) {
     $col_tickets = $by_status[$status_key];
     $count       = count($col_tickets);
+    $limit       = isset($kanban_limits[$status_key]) ? (int) $kanban_limits[$status_key] : 0;
+    $over_limit  = $limit > 0 && $count > $limit;
 
     $board .= '<div class="droptickets-kanban-col droptickets-kanban-col--' . check_plain($status_key) . '" data-status="' . check_plain($status_key) . '">';
     $board .= '<div class="droptickets-kanban-col-header">';
     $board .= '<span class="droptickets-status droptickets-status--' . check_plain($status_key) . ' droptickets-kanban-status-label">' . check_plain($status_label) . '</span>';
-    $board .= '<span class="droptickets-kanban-col-count">' . $count . '</span>';
+    $board .= '<span class="droptickets-kanban-col-count' . ($over_limit ? ' droptickets-kanban-col-count--over' : '') . '">' . $count . ($limit ? '/' . $limit : '') . '</span>';
     $board .= '</div>';
+    if ($over_limit) {
+      $board .= '<div class="droptickets-kanban-limit-warning">' . icon('warning', array('attributes' => array('width' => 13, 'height' => 13))) . ' ' . t('Limit exceeded') . '</div>';
+    }
     $board .= '<div class="droptickets-kanban-cards">';
 
     if (empty($col_tickets)) {
@@ -673,6 +681,9 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $sidebar .= l(t('Edit ticket'), 'admin/drop/tickets/' . $ticket->tid . '/edit', array('attributes' => array('class' => array('droptickets-sidebar-edit'))));
     if (!empty($ticket->import_id)) {
       $sidebar .= l(t('Activate'), 'admin/drop/tickets/' . $ticket->tid . '/activate', array('attributes' => array('class' => array('droptickets-sidebar-activate'))));
+    }
+    if ($ticket->status !== 'closed') {
+      $sidebar .= l(t('Close'), 'admin/drop/tickets/' . $ticket->tid . '/close', array('attributes' => array('class' => array('droptickets-sidebar-close'))));
     }
     if (droptickets_ticket_access('delete', $ticket)) {
       $sidebar .= l(t('Delete'), 'admin/drop/tickets/' . $ticket->tid . '/delete', array('attributes' => array('class' => array('droptickets-sidebar-delete'))));
@@ -844,10 +855,11 @@ function droptickets_ticket_view(DropTicket $ticket) {
   $main .= '</div>';
 
   // Comments.
+  $comment_order = config_get('droptickets.settings', 'comment_order') ?: 'asc';
   $comments = db_select('drop_ticket_comment', 'c')
     ->fields('c')
     ->condition('c.tid', $ticket->tid)
-    ->orderBy('c.created', 'ASC')
+    ->orderBy('c.created', strtoupper($comment_order))
     ->execute()
     ->fetchAll();
 
@@ -1096,6 +1108,16 @@ function droptickets_ticket_mark_done(DropTicket $ticket) {
   $ticket->save();
   backdrop_set_message(t('Ticket %label marked as done.', array('%label' => droptickets_ticket_label($ticket))));
   backdrop_goto('admin/drop');
+}
+
+/**
+ * Page callback: manually close a ticket.
+ */
+function droptickets_ticket_close(DropTicket $ticket) {
+  $ticket->status = 'closed';
+  $ticket->save();
+  backdrop_set_message(t('Ticket %label has been closed.', array('%label' => droptickets_ticket_label($ticket))));
+  backdrop_goto('admin/drop/tickets/' . $ticket->tid);
 }
 
 // ---------------------------------------------------------------------------
