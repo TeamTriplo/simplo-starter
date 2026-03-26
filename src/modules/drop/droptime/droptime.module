@@ -292,7 +292,7 @@ function droptime_preprocess_layout(&$variables) {
     . '<button type="button" class="drop-time-reminder-dismiss" title="' . t('Dismiss for 1 hour') . '">&#x2715;</button>'
     . '</div>';
 
-  $variables['content'] = $banner . $variables['content'];
+  $variables['content']['content'] = $banner . $variables['content']['content'];
 }
 
 // ---------------------------------------------------------------------------
