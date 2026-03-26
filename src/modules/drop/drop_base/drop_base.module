@@ -89,7 +89,7 @@ function _drop_base_report_pin_action($path) {
 
   $pins      = drop_base_get_pinned_reports($user->uid);
   $is_pinned = in_array($report_id, $pins);
-  $at_limit  = (count($pins) >= 3);
+  $at_limit  = (count($pins) >= 8);
 
   if ($is_pinned) {
     $icon  = icon('push-pin-slash', array('attributes' => array('width' => 14, 'height' => 14)));
@@ -98,7 +98,7 @@ function _drop_base_report_pin_action($path) {
   }
   elseif ($at_limit) {
     $icon  = icon('push-pin', array('attributes' => array('width' => 14, 'height' => 14)));
-    $label = t('Pin limit reached (3)');
+    $label = t('Pin limit reached (8)');
     $class = 'drop-pin-link drop-pin-disabled';
     return '<ul class="action-links drop-pin-action-list"><li>'
       . '<span class="' . $class . '">' . $icon . $label . '</span>'
@@ -413,7 +413,7 @@ function drop_base_get_all_reports() {
  * Returns the pinned report IDs for a user.
  *
  * For users with no saved preferences, applies module-declared defaults
- * (up to the 3-pin limit). Once preferences are saved for a user, defaults
+ * (up to the 8-pin limit). Once preferences are saved for a user, defaults
  * no longer apply.
  *
  * @param int $uid
@@ -430,7 +430,7 @@ function drop_base_get_pinned_reports($uid) {
     foreach ($all as $id => $report) {
       if (!empty($report['default_pin'])) {
         $pins[] = $id;
-        if (count($pins) >= 3) {
+        if (count($pins) >= 8) {
           break;
         }
       }
@@ -449,14 +449,14 @@ function drop_base_get_pinned_reports($uid) {
  *   TRUE to pin, FALSE to unpin.
  *
  * @return bool
- *   FALSE if the pin limit (3) was reached and the report could not be pinned.
+ *   FALSE if the pin limit (8) was reached and the report could not be pinned.
  */
 function drop_base_set_pinned_report($uid, $report_id, $pinned) {
   $all_prefs = state_get('drop_base.pinned_reports', array());
   $pins = array_key_exists($uid, $all_prefs) ? $all_prefs[$uid] : drop_base_get_pinned_reports($uid);
   if ($pinned) {
     if (!in_array($report_id, $pins)) {
-      if (count($pins) >= 3) {
+      if (count($pins) >= 8) {
         return FALSE;
       }
       $pins[] = $report_id;
