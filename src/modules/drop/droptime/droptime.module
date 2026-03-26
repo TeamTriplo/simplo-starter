@@ -264,17 +264,26 @@ function droptime_preprocess_layout(&$variables) {
     }
   }
 
-  // Check if user has created any time entries in the last 24 hours.
-  $since = REQUEST_TIME - 86400;
-  $recent = db_select('drop_time_entry', 't')
+  // Find the most recent time entry created by this user.
+  $last_created = db_select('drop_time_entry', 't')
+    ->fields('t', array('created'))
     ->condition('t.uid', $user->uid)
-    ->condition('t.created', $since, '>=')
-    ->countQuery()
+    ->orderBy('t.created', 'DESC')
+    ->range(0, 1)
     ->execute()
     ->fetchField();
 
-  if ($recent > 0) {
+  // Only show if no entry in the last 24 hours.
+  if ($last_created && $last_created >= REQUEST_TIME - 86400) {
     return;
+  }
+
+  // Calculate how many hours it has been since the last entry.
+  if ($last_created) {
+    $hours = (int) round((REQUEST_TIME - $last_created) / 3600);
+  }
+  else {
+    $hours = NULL; // No entries at all.
   }
 
   // Attach CSS and JS.
@@ -284,10 +293,16 @@ function droptime_preprocess_layout(&$variables) {
   // Build the banner and prepend it to the layout content.
   $log_link = l(t('Log time now'), 'admin/drop/time');
   $icon     = icon('clock-countdown', array('attributes' => array('width' => 18, 'height' => 18)));
+  if ($hours !== NULL) {
+    $msg = t('You have not logged any time in the last @hours hours.', array('@hours' => $hours));
+  }
+  else {
+    $msg = t('You have not logged any time yet.');
+  }
   $banner   = '<div class="drop-time-reminder" id="drop-time-reminder">'
     . '<span class="drop-time-reminder-icon">' . $icon . '</span>'
     . '<span class="drop-time-reminder-msg">'
-    . t('No time logged in the past 24 hours.') . ' ' . $log_link
+    . $msg . ' ' . $log_link
     . '</span>'
     . '<button type="button" class="drop-time-reminder-dismiss" title="' . t('Dismiss for 1 hour') . '">&#x2715;</button>'
     . '</div>';
