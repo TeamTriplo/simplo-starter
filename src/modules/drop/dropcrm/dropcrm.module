@@ -431,6 +431,10 @@ function dropcrm_permission() {
       'title'       => t('Access CRM'),
       'description' => t('View contacts, activities, and contact methods.'),
     ),
+    'access crm projects' => array(
+      'title'       => t('Access CRM Projects'),
+      'description' => t('View the project list and individual project pages (without full CRM access). Useful for team members who only need to see which tickets belong to a project.'),
+    ),
     'create crm contacts' => array(
       'title'       => t('Create CRM contacts'),
     ),
@@ -627,6 +631,17 @@ function drop_project_load($pid) {
 }
 
 /**
+ * Access callback: view/list project pages.
+ *
+ * Grants access to users with either 'access crm' or 'access crm projects'.
+ */
+function dropcrm_project_view_access() {
+  return user_access('administer crm')
+    || user_access('access crm')
+    || user_access('access crm projects');
+}
+
+/**
  * Access callback for drop_project entities.
  */
 function dropcrm_project_access($op, $project = NULL, $account = NULL) {
@@ -637,10 +652,15 @@ function dropcrm_project_access($op, $project = NULL, $account = NULL) {
   if (user_access('administer crm', $account)) {
     return TRUE;
   }
+  // View access: either full CRM access or the lighter projects-only permission.
+  if ($op === 'view') {
+    return user_access('access crm', $account)
+      || user_access('access crm projects', $account);
+  }
   if (!user_access('access crm', $account)) {
     return FALSE;
   }
-  if (in_array($op, array('view', 'create'))) {
+  if ($op === 'create') {
     return TRUE;
   }
   return $project && $project->uid == $account->uid;
@@ -1063,8 +1083,8 @@ function dropcrm_menu() {
   $items['admin/drop/crm/projects'] = array(
     'title'            => 'Projects',
     'page callback'    => 'dropcrm_project_list',
-    'access callback'  => 'user_access',
-    'access arguments' => array('access crm'),
+    'access callback'  => 'dropcrm_project_view_access',
+    'access arguments' => array(),
     'file'             => 'dropcrm.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 15,
@@ -1102,8 +1122,8 @@ function dropcrm_menu() {
     'title'            => 'Project',
     'page callback'    => 'dropcrm_project_view',
     'page arguments'   => array(4),
-    'access callback'  => 'user_access',
-    'access arguments' => array('access crm'),
+    'access callback'  => 'dropcrm_project_view_access',
+    'access arguments' => array(),
     'file'             => 'dropcrm.admin.inc',
     'type'             => MENU_CALLBACK,
   );
