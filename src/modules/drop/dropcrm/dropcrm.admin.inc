@@ -338,10 +338,10 @@ function dropcrm_report_last_contact() {
  *   A render array.
  */
 function dropcrm_activity_list_page() {
-  $type_options   = _dropcrm_activity_type_options();
-  $status_options = _dropcrm_activity_status_options();
+  $type_options = _dropcrm_activity_type_options();
 
-  $type_filter = isset($_GET['type']) && isset($type_options[$_GET['type']]) ? $_GET['type'] : '';
+  $type_filter    = isset($_GET['type']) && isset($type_options[$_GET['type']]) ? $_GET['type'] : '';
+  $contact_filter = isset($_GET['contact']) ? trim($_GET['contact']) : '';
 
   // Build filter form.
   $select_options = array('' => t('— All types —')) + $type_options;
@@ -352,21 +352,55 @@ function dropcrm_activity_list_page() {
   }
   $select_html .= '</select>';
 
+  $contact_input = '<input type="text" name="contact" value="' . check_plain($contact_filter) . '" placeholder="' . t('Filter by contact…') . '" />';
+
   $filter_form = '<form method="get" class="crm-search-form">'
+    . $contact_input . ' '
     . $select_html
     . ' <button type="submit">' . t('Filter') . '</button>';
-  if ($type_filter) {
+  if ($type_filter || $contact_filter) {
     $filter_form .= ' ' . l(t('Clear'), 'admin/drop/crm/activities');
   }
   $filter_form .= '</form>';
 
+  // Sortable headers — default sort is created DESC (most recently entered first).
+  $header = array(
+    array('data' => t('Subject'), 'field' => 'a.subject'),
+    t('Type'),
+    t('Contacts'),
+    array('data' => t('Activity Date'), 'field' => 'a.activity_date'),
+    array('data' => t('Created'), 'field' => 'a.created', 'sort' => 'desc'),
+    t('Operations'),
+  );
+
   $query = db_select('crm_activity', 'a')
-    ->fields('a', array('aid', 'subject', 'type', 'status', 'activity_date'))
-    ->orderBy('activity_date', 'DESC');
+    ->fields('a', array('aid', 'subject', 'type', 'status', 'activity_date', 'created'));
+
   if ($type_filter !== '') {
     $query->condition('a.type', $type_filter);
   }
-  $activities = $query->execute()->fetchAll();
+
+  if ($contact_filter !== '') {
+    $sub = db_select('field_data_field_crm_contacts', 'f');
+    $sub->innerJoin('crm_contact', 'c', 'c.cid = f.field_crm_contacts_target_id');
+    $sub->fields('f', array('entity_id'))
+      ->condition('f.entity_type', 'crm_activity')
+      ->condition('c.name', '%' . db_like($contact_filter) . '%', 'LIKE');
+    $matching_aids = $sub->execute()->fetchCol();
+    if ($matching_aids) {
+      $query->condition('a.aid', $matching_aids, 'IN');
+    }
+    else {
+      // No contacts match — force empty result.
+      $query->condition('a.aid', array(0), 'IN');
+    }
+  }
+
+  $activities = $query
+    ->extend('TableSort')
+    ->orderByHeader($header)
+    ->execute()
+    ->fetchAll();
 
   // Pre-load all contact links keyed by activity id.
   $aids = array_column((array) $activities, 'aid');
@@ -394,19 +428,13 @@ function dropcrm_activity_list_page() {
     $rows[] = array(
       $subject_cell,
       isset($type_options[$activity->type]) ? $type_options[$activity->type] : $activity->type,
-      isset($status_options[$activity->status]) ? $status_options[$activity->status] : $activity->status,
       isset($contact_links[$activity->aid]) ? implode(', ', $contact_links[$activity->aid]) : '',
       format_date($activity->activity_date, 'custom', 'M j, Y'),
+      format_date($activity->created, 'custom', 'M j, Y'),
       l(t('Edit'), 'admin/drop/crm/activities/manage/' . $activity->aid . '/edit')
         . ' · ' . l(t('Delete'), 'admin/drop/crm/activities/manage/' . $activity->aid . '/delete'),
     );
   }
-
-  $output['add_link'] = array(
-    '#markup' => l(t('+ Add activity'), 'admin/drop/crm/activities/add'),
-    '#prefix' => '<p class="crm-add-link">',
-    '#suffix' => '</p>',
-  );
 
   $output['filter'] = array(
     '#markup' => $filter_form,
@@ -414,16 +442,9 @@ function dropcrm_activity_list_page() {
 
   $output['table'] = array(
     '#theme'  => 'table',
-    '#header' => array(
-      t('Subject'),
-      t('Type'),
-      t('Status'),
-      t('Contacts'),
-      t('Date'),
-      t('Operations'),
-    ),
-    '#rows'  => $rows,
-    '#empty' => t('No activities recorded yet.'),
+    '#header' => $header,
+    '#rows'   => $rows,
+    '#empty'  => t('No activities recorded yet.'),
   );
 
   return $output;
@@ -2244,7 +2265,7 @@ function dropcrm_project_view($project) {
       $rows[] = array(
         'data' => array(
           array('data' => '<span class="droptickets-ticket-id">' . check_plain($tlabel) . '</span>'),
-          array('data' => l(check_plain($ticket->title), 'admin/drop/tickets/' . $ticket->tid)),
+          array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid)),
           array('data' => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>'),
           array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
           array('data' => $assignee),

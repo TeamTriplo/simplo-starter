@@ -54,19 +54,33 @@ tr.crm-activity-planned td {
   padding: 1em 1.2em;
 }
 
-/* Search form on list pages */
+/* Search/filter form on list pages */
 .crm-search-form {
-  margin-bottom: 1em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.crm-search-form input[type="text"],
+.crm-search-form select {
+  font-size: 0.875em;
+  padding: 0.28rem 0.5rem;
+  border: 1px solid var(--drop-border, #ccc);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--drop-text, #333);
 }
 
 .crm-search-form input[type="text"] {
-  width: 18em;
-  padding: 0.3em 0.5em;
-  margin-right: 0.3em;
+  width: 14em;
 }
 
 .crm-search-form button {
-  padding: 0.3em 0.8em;
+  font-size: 0.875em;
+  padding: 0.28rem 0.7rem;
+  border-radius: 4px;
 }
 
 /* Outreach badge on activity subject in contact view */
