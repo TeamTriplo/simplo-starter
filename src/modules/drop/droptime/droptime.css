@@ -4,6 +4,50 @@
  */
 
 /* ---------------------------------------------------------------------------
+   Time-log reminder banner
+   --------------------------------------------------------------------------- */
+
+.drop-time-reminder {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-left: 4px solid #f9a825;
+  border-radius: 5px;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9em;
+}
+
+.drop-time-reminder-icon {
+  flex-shrink: 0;
+  color: #f57f17;
+  line-height: 1;
+}
+
+.drop-time-reminder-msg {
+  flex: 1 1 auto;
+  color: var(--drop-text, #333);
+}
+
+.drop-time-reminder-dismiss {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em;
+  color: #999;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.drop-time-reminder-dismiss:hover {
+  color: #333;
+}
+
+/* ---------------------------------------------------------------------------
    Date navigation
    --------------------------------------------------------------------------- */
 

@@ -231,6 +231,74 @@ function droptime_menu() {
 }
 
 // ---------------------------------------------------------------------------
+// Time-log reminder banner
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_page_alter().
+ *
+ * Injects a dismissible reminder banner at the top of every Drop admin page
+ * when the current user has not created any time entries in the last 24 hours.
+ * The banner can be dismissed for 1 hour via a cookie.
+ */
+function droptime_page_alter(&$page) {
+  global $user;
+
+  // Only for logged-in users with time access.
+  if (!$user->uid || !user_access('access droptime')) {
+    return;
+  }
+
+  // Only on Drop admin pages.
+  $path = current_path();
+  if (strpos($path, 'admin/drop') !== 0) {
+    return;
+  }
+
+  // Check the 1-hour dismiss cookie.
+  $cookie = 'drop_time_reminder_dismissed';
+  if (isset($_COOKIE[$cookie])) {
+    $dismissed_at = (int) $_COOKIE[$cookie];
+    if ($dismissed_at > (REQUEST_TIME - 3600)) {
+      return;
+    }
+  }
+
+  // Check if user has created any time entries in the last 24 hours.
+  $since = REQUEST_TIME - 86400;
+  $recent = db_select('drop_time_entry', 't')
+    ->condition('t.uid', $user->uid)
+    ->condition('t.created', $since, '>=')
+    ->countQuery()
+    ->execute()
+    ->fetchField();
+
+  if ($recent > 0) {
+    return;
+  }
+
+  // Build the banner and inject it above the page content.
+  $log_link = l(t('Log time now'), 'admin/drop/time');
+  $icon     = icon('clock-countdown', array('attributes' => array('width' => 18, 'height' => 18)));
+  $banner   = '<div class="drop-time-reminder" id="drop-time-reminder">'
+    . '<span class="drop-time-reminder-icon">' . $icon . '</span>'
+    . '<span class="drop-time-reminder-msg">'
+    . t('No time logged in the past 24 hours.') . ' ' . $log_link
+    . '</span>'
+    . '<button type="button" class="drop-time-reminder-dismiss" title="' . t('Dismiss for 1 hour') . '">&#x2715;</button>'
+    . '</div>';
+
+  $page['content']['drop_time_reminder'] = array(
+    '#markup'   => $banner,
+    '#weight'   => -200,
+    '#attached' => array(
+      'css' => array(backdrop_get_path('module', 'droptime') . '/droptime.css'),
+      'js'  => array(backdrop_get_path('module', 'droptime') . '/droptime.js'),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

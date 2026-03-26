@@ -65,6 +65,24 @@
   };
 
   /**
+   * Time-log reminder banner dismiss.
+   *
+   * Sets a cookie with the current Unix timestamp so the server can suppress
+   * the banner for the next hour without a flash on page load.
+   */
+  Backdrop.behaviors.droptimeReminder = {
+    attach: function (context, settings) {
+      $('.drop-time-reminder-dismiss', context).once('droptime-reminder').on('click', function () {
+        // Set a 1-hour cookie keyed by the current timestamp.
+        var expires = new Date(Date.now() + 60 * 60 * 1000).toUTCString();
+        document.cookie = 'drop_time_reminder_dismissed=' + Math.floor(Date.now() / 1000)
+          + '; expires=' + expires + '; path=/';
+        $('#drop-time-reminder').slideUp(200, function () { $(this).remove(); });
+      });
+    }
+  };
+
+  /**
    * Datepicker for the edit entry form.
    */
   Backdrop.behaviors.droptimeDatepicker = {
