@@ -55,12 +55,15 @@ tr.crm-activity-planned td {
 }
 
 /* Search/filter form on list pages */
+.crm-filter-row {
+  margin-bottom: 1rem;
+}
+
 .crm-search-form {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
 }
 
 .crm-search-form input[type="text"],

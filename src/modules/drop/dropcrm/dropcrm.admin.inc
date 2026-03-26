@@ -190,6 +190,8 @@ function dropcrm_contact_list_page($bundle) {
       . '<button type="submit">' . t('Search') . '</button>'
       . $clear_link
       . '</form>',
+    '#prefix' => '<div class="crm-filter-row">',
+    '#suffix' => '</div>',
     '#weight' => -1,
   );
 
@@ -438,6 +440,8 @@ function dropcrm_activity_list_page() {
 
   $output['filter'] = array(
     '#markup' => $filter_form,
+    '#prefix' => '<div class="crm-filter-row">',
+    '#suffix' => '</div>',
   );
 
   $output['table'] = array(
