@@ -24,20 +24,90 @@
 /**
  * Implements hook_preprocess_layout().
  *
- * Suppresses Backdrop's hardcoded $action_links on Drop admin pages so that
- * layout blocks (page title, nav, etc.) can be freely positioned without the
- * action links forcing themselves above everything.
- *
- * The add-item links from MENU_LOCAL_ACTION are also rendered directly in each
- * module's page content output, so nothing is lost by removing them here.
+ * On most Drop admin pages: suppresses Backdrop's hardcoded $action_links
+ * because modules render their own inline action bars. On report sub-tab pages:
+ * replaces action_links with a pin/unpin button instead.
  */
 function drop_base_preprocess_layout(&$variables) {
   $path = current_path();
-  if ($path === 'admin/drop'
-    || strpos($path, 'admin/drop/') === 0
-    || strpos($path, 'admin/crm') === 0) {
-    $variables['action_links'] = '';
+  if ($path !== 'admin/drop'
+    && strpos($path, 'admin/drop/') !== 0
+    && strpos($path, 'admin/crm') !== 0) {
+    return;
   }
+
+  $pin_html = _drop_base_report_pin_action($path);
+  $variables['action_links'] = $pin_html ? $pin_html : '';
+}
+
+/**
+ * Returns a rendered pin/unpin action link for report pages, or empty string.
+ *
+ * @param string $path
+ *   The current page path.
+ *
+ * @return string
+ *   Rendered HTML, or empty string if not on a known report page.
+ */
+function _drop_base_report_pin_action($path) {
+  global $user;
+
+  $all_reports = drop_base_get_all_reports();
+  if (empty($all_reports)) {
+    return '';
+  }
+
+  // Build a path → report_id lookup.
+  $report_by_path = array();
+  foreach ($all_reports as $id => $report) {
+    $report_by_path[$report['path']] = $id;
+  }
+  if (!isset($report_by_path[$path])) {
+    return '';
+  }
+
+  $report_id = $report_by_path[$path];
+  $report    = $all_reports[$report_id];
+
+  // Access check.
+  if (!empty($report['access callback'])) {
+    $args = !empty($report['access arguments']) ? $report['access arguments'] : array();
+    if (!call_user_func_array($report['access callback'], $args)) {
+      return '';
+    }
+  }
+
+  $pins      = drop_base_get_pinned_reports($user->uid);
+  $is_pinned = in_array($report_id, $pins);
+  $at_limit  = (count($pins) >= 3);
+
+  if ($is_pinned) {
+    $icon  = icon('push-pin-slash', array('attributes' => array('width' => 14, 'height' => 14)));
+    $label = t('Unpin report');
+    $class = 'drop-pin-link drop-pin-active';
+  }
+  elseif ($at_limit) {
+    $icon  = icon('push-pin', array('attributes' => array('width' => 14, 'height' => 14)));
+    $label = t('Pin limit reached (3)');
+    $class = 'drop-pin-link drop-pin-disabled';
+    return '<ul class="action-links drop-pin-action-list"><li>'
+      . '<span class="' . $class . '">' . $icon . $label . '</span>'
+      . '</li></ul>';
+  }
+  else {
+    $icon  = icon('push-pin', array('attributes' => array('width' => 14, 'height' => 14)));
+    $label = t('Pin report');
+    $class = 'drop-pin-link';
+  }
+
+  $href = 'drop-base/pin-report/' . $report_id;
+  $link = l($icon . $label, $href, array(
+    'html'       => TRUE,
+    'query'      => backdrop_get_destination(),
+    'attributes' => array('class' => array($class)),
+  ));
+
+  return '<ul class="action-links drop-pin-action-list"><li>' . $link . '</li></ul>';
 }
 
 /**
@@ -237,7 +307,190 @@ function drop_base_menu() {
     'access arguments' => array('access drop team'),
     'type'             => MENU_NORMAL_ITEM,
   );
+  // Pin/unpin report toggle endpoint.
+  $items['drop-base/pin-report/%'] = array(
+    'page callback'   => 'drop_base_pin_report_toggle',
+    'page arguments'  => array(2),
+    'access callback' => 'user_is_logged_in',
+    'type'            => MENU_CALLBACK,
+  );
   return $items;
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ *
+ * Injects each user's pinned reports as top-level primary tabs on the module
+ * root page where the report lives.
+ */
+function drop_base_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  global $user;
+
+  if (empty($data['tabs'][0]['output'])) {
+    return;
+  }
+
+  $all_reports = drop_base_get_all_reports();
+  if (empty($all_reports)) {
+    return;
+  }
+
+  $pinned = drop_base_get_pinned_reports($user->uid);
+  if (empty($pinned)) {
+    return;
+  }
+
+  $current_path = current_path();
+  $weight = 10;
+
+  foreach ($pinned as $report_id) {
+    if (!isset($all_reports[$report_id])) {
+      continue;
+    }
+    $report = $all_reports[$report_id];
+    if (empty($report['root_path']) || $report['root_path'] !== $root_path) {
+      continue;
+    }
+    // Access check.
+    if (!empty($report['access callback'])) {
+      $args = !empty($report['access arguments']) ? $report['access arguments'] : array();
+      if (!call_user_func_array($report['access callback'], $args)) {
+        continue;
+      }
+    }
+    $data['tabs'][0]['output'][] = array(
+      '#theme'  => 'menu_local_task',
+      '#link'   => array(
+        'title'             => $report['title'],
+        'href'              => $report['path'],
+        'localized_options' => array(),
+      ),
+      '#active' => ($current_path === $report['path']),
+      '#weight' => $weight++,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Report registry
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns all reports declared via hook_drop_reports() by enabled modules.
+ *
+ * Each module implementing this hook returns an associative array keyed by
+ * a flat report ID (e.g. 'droptickets_stale'). Each value is an array with:
+ *   - title: (string) Human-readable label.
+ *   - path: (string) Backdrop path to the report page.
+ *   - root_path: (string) Module root path where pinned tabs are injected.
+ *   - module: (string) Module machine name (for display grouping).
+ *   - default_pin: (bool) Whether to pin for new users with no saved preferences.
+ *   - access callback: (string, optional) Access callback (default: open to all).
+ *   - access arguments: (array, optional) Arguments for the access callback.
+ *
+ * @return array
+ */
+function drop_base_get_all_reports() {
+  $reports = &backdrop_static(__FUNCTION__);
+  if (!isset($reports)) {
+    $reports = module_invoke_all('drop_reports');
+  }
+  return $reports;
+}
+
+/**
+ * Returns the pinned report IDs for a user.
+ *
+ * For users with no saved preferences, applies module-declared defaults
+ * (up to the 3-pin limit). Once preferences are saved for a user, defaults
+ * no longer apply.
+ *
+ * @param int $uid
+ *
+ * @return array
+ *   Ordered array of report ID strings.
+ */
+function drop_base_get_pinned_reports($uid) {
+  $pins = user_data_get('drop_base', $uid, 'pinned_reports');
+  if ($pins === NULL) {
+    $all  = drop_base_get_all_reports();
+    $pins = array();
+    foreach ($all as $id => $report) {
+      if (!empty($report['default_pin'])) {
+        $pins[] = $id;
+        if (count($pins) >= 3) {
+          break;
+        }
+      }
+    }
+  }
+  return is_array($pins) ? $pins : array();
+}
+
+/**
+ * Pins or unpins a report for a user.
+ *
+ * @param int $uid
+ * @param string $report_id
+ * @param bool $pinned
+ *   TRUE to pin, FALSE to unpin.
+ *
+ * @return bool
+ *   FALSE if the pin limit (3) was reached and the report could not be pinned.
+ */
+function drop_base_set_pinned_report($uid, $report_id, $pinned) {
+  $pins = drop_base_get_pinned_reports($uid);
+  if ($pinned) {
+    if (!in_array($report_id, $pins)) {
+      if (count($pins) >= 3) {
+        return FALSE;
+      }
+      $pins[] = $report_id;
+    }
+  }
+  else {
+    $pins = array_values(array_filter($pins, function ($id) use ($report_id) {
+      return $id !== $report_id;
+    }));
+  }
+  user_data_set('drop_base', $uid, 'pinned_reports', $pins);
+  return TRUE;
+}
+
+/**
+ * Page callback: Toggle a report pin for the current user.
+ *
+ * @param string $report_id
+ */
+function drop_base_pin_report_toggle($report_id) {
+  global $user;
+
+  $all = drop_base_get_all_reports();
+  if (!isset($all[$report_id])) {
+    backdrop_access_denied();
+    return;
+  }
+
+  $report    = $all[$report_id];
+  $pins      = drop_base_get_pinned_reports($user->uid);
+  $is_pinned = in_array($report_id, $pins);
+
+  if ($is_pinned) {
+    drop_base_set_pinned_report($user->uid, $report_id, FALSE);
+    backdrop_set_message(t('%title unpinned from your tab bar.', array('%title' => $report['title'])));
+  }
+  else {
+    $result = drop_base_set_pinned_report($user->uid, $report_id, TRUE);
+    if ($result) {
+      backdrop_set_message(t('%title pinned to your tab bar.', array('%title' => $report['title'])));
+    }
+    else {
+      backdrop_set_message(t('You already have 3 pinned reports. Unpin one before adding another.'), 'warning');
+    }
+  }
+
+  $destination = isset($_GET['destination']) ? $_GET['destination'] : $report['path'];
+  backdrop_goto($destination);
 }
 
 /**

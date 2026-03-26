@@ -1600,6 +1600,42 @@ function dropcrm_menu_local_tasks_alter(&$data, $router_item, $root_path) {
 }
 
 /**
+ * Implements hook_drop_reports().
+ */
+function dropcrm_drop_reports() {
+  return array(
+    'dropcrm_last_contact' => array(
+      'title'       => t('Last Contact'),
+      'path'        => 'admin/drop/crm/reports/last-contact',
+      'root_path'   => 'admin/drop/crm',
+      'module'      => 'dropcrm',
+      'default_pin' => TRUE,
+    ),
+    'dropcrm_outreach_goal' => array(
+      'title'       => t('Outreach Goal'),
+      'path'        => 'admin/drop/crm/reports/outreach-goal',
+      'root_path'   => 'admin/drop/crm',
+      'module'      => 'dropcrm',
+      'default_pin' => FALSE,
+    ),
+    'dropcrm_clients' => array(
+      'title'       => t('Clients'),
+      'path'        => 'admin/drop/crm/reports/clients',
+      'root_path'   => 'admin/drop/crm',
+      'module'      => 'dropcrm',
+      'default_pin' => FALSE,
+    ),
+    'dropcrm_tag_filter' => array(
+      'title'       => t('Tag Filter'),
+      'path'        => 'admin/drop/crm/reports/tag-filter',
+      'root_path'   => 'admin/drop/crm',
+      'module'      => 'dropcrm',
+      'default_pin' => FALSE,
+    ),
+  );
+}
+
+/**
  * Implements hook_drop_nav_links().
  */
 function dropcrm_drop_nav_links() {

@@ -287,6 +287,56 @@ a.drop-section-add {
   font-weight: 700;
 }
 
+/* ---------------------------------------------------------------------------
+   Report pin/unpin action
+   Renders in the action-links area on report sub-tab pages.
+   --------------------------------------------------------------------------- */
+
+ul.drop-pin-action-list {
+  list-style: none;
+  margin: 0 0 0.4rem;
+  padding: 0;
+}
+
+a.drop-pin-link,
+span.drop-pin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: 0.82em;
+  font-weight: 500;
+  color: #666;
+  text-decoration: none;
+  padding: 0.2em 0.65em;
+  border-radius: 2em;
+  border: 1px solid #d4d4d4;
+  background: #f7f7f7;
+  white-space: nowrap;
+}
+
+a.drop-pin-link:hover {
+  background: #ebebeb;
+  color: #333;
+  text-decoration: none;
+}
+
+a.drop-pin-link.drop-pin-active {
+  color: var(--drop-primary, #1565c0);
+  border-color: var(--drop-primary, #1565c0);
+  background: #e8f0fe;
+}
+
+a.drop-pin-link.drop-pin-active:hover {
+  background: #d2e3fc;
+}
+
+span.drop-pin-link.drop-pin-disabled {
+  color: #aaa;
+  border-color: #e0e0e0;
+  background: #fafafa;
+  cursor: default;
+}
+
 /* Local actions in top region (+ Add ticket etc.) */
 .l-top ul.action-links {
   list-style: none;

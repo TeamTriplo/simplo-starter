@@ -1651,6 +1651,13 @@ function droptickets_ticket_activate(DropTicket $ticket) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Page callback: Reports parent tab — delegates to stale report.
+ */
+function droptickets_reports_page() {
+  return droptickets_stale_report_page();
+}
+
+/**
  * Page callback: tickets not done and not updated in N+ days, oldest first.
  */
 function droptickets_stale_report_page() {

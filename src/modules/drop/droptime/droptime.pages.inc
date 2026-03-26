@@ -528,9 +528,16 @@ function _droptime_timer_banner($timer) {
 // ---------------------------------------------------------------------------
 
 /**
- * Page callback: time reports.
+ * Page callback: Reports parent tab — delegates to personal reports.
  */
 function droptime_reports_page() {
+  return droptime_report_personal();
+}
+
+/**
+ * Page callback: personal time reports.
+ */
+function droptime_report_personal() {
   global $user;
 
   backdrop_set_title(t('Time Reports'));
@@ -760,7 +767,7 @@ function droptime_team_reports_page() {
   $period_links = array();
   foreach (array('day' => t('Day'), 'week' => t('Week'), 'month' => t('Month')) as $p => $plabel) {
     $attr = $p === $period ? array('class' => array('droptime-period-active')) : array();
-    $period_links[] = l($plabel, 'admin/drop/time/team', array(
+    $period_links[] = l($plabel, 'admin/drop/time/reports/team', array(
       'query'      => array('period' => $p, 'date' => $date, 'uid' => $filter_uid, 'pid' => $filter_pid, 'group' => $group_by),
       'attributes' => $attr,
     ));
@@ -772,9 +779,9 @@ function droptime_team_reports_page() {
 
   // Date nav.
   $html_nav  = '<div class="droptime-date-nav">';
-  $html_nav .= l('‹', 'admin/drop/time/team', array('query' => array_merge($base_query, array('date' => $prev_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= l('‹', 'admin/drop/time/reports/team', array('query' => array_merge($base_query, array('date' => $prev_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
   $html_nav .= '<span class="droptime-nav-label">' . check_plain($label) . '</span>';
-  $html_nav .= l('›', 'admin/drop/time/team', array('query' => array_merge($base_query, array('date' => $next_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= l('›', 'admin/drop/time/reports/team', array('query' => array_merge($base_query, array('date' => $next_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
   $html_nav .= '</div>';
   $output['nav'] = array('#markup' => $html_nav, '#weight' => -15);
 
@@ -813,12 +820,12 @@ function droptime_team_reports_page() {
   $users    = $uids ? user_load_multiple($uids) : array();
 
   // Group-by toggle.
-  $group_links  = l(t('By Project'), 'admin/drop/time/team', array(
+  $group_links  = l(t('By Project'), 'admin/drop/time/reports/team', array(
     'query'      => array_merge($base_query, array('group' => 'project')),
     'attributes' => $group_by === 'project' ? array('class' => array('droptime-period-active')) : array(),
   ));
   $group_links .= ' ';
-  $group_links .= l(t('By Person'), 'admin/drop/time/team', array(
+  $group_links .= l(t('By Person'), 'admin/drop/time/reports/team', array(
     'query'      => array_merge($base_query, array('group' => 'person')),
     'attributes' => $group_by === 'person' ? array('class' => array('droptime-period-active')) : array(),
   ));
@@ -871,7 +878,7 @@ function _droptime_team_filter_bar($filter_uid, $filter_pid, $group_by, $period,
     $proj_options .= '<option value="' . (int) $pid . '"' . $sel . '>' . check_plain($name) . '</option>';
   }
 
-  $action = url('admin/drop/time/team');
+  $action = url('admin/drop/time/reports/team');
   $html   = '<form class="droptime-filter-bar" method="get" action="' . $action . '">';
   $html  .= '<input type="hidden" name="period" value="' . check_plain($period) . '">';
   $html  .= '<input type="hidden" name="date" value="' . check_plain($date) . '">';
