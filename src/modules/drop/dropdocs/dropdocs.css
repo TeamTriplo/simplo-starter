@@ -2,6 +2,14 @@
  * DropDocs — documentation page styles.
  */
 
+/* Prevent viewport-width jump when a scrollbar appears or disappears.
+   Without this, navigating between short and long doc pages briefly changes
+   the viewport width, which triggers Backdrop's responsive-tabs JS to
+   recalculate the tab bar — causing the visible flash/jump under the tabs. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* ---------------------------------------------------------------------------
    Index page tree
    --------------------------------------------------------------------------- */
@@ -92,10 +100,17 @@
   margin-bottom: 0.1rem;
 }
 
-/* Collapsed: hide children. */
-.dropdocs-has-children.dropdocs-collapsed > .dropdocs-tree {
+/* Nested trees are hidden by default — before JS runs, nothing is expanded.
+   This prevents the FOUC/jump caused by collapsing items after paint. */
+.dropdocs-tree .dropdocs-tree {
   display: none;
 }
+
+/* JS marks expanded items with dropdocs-open; reveal their children. */
+.dropdocs-has-children.dropdocs-open > .dropdocs-tree {
+  display: block;
+}
+
 
 /* Row wrapper for items that have children (toggle + link side by side). */
 .dropdocs-tree-item {

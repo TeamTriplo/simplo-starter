@@ -41,14 +41,20 @@
   }
 
   /**
-   * Returns the nids of all ancestor <li> items of the active tree item.
-   * These must remain expanded regardless of saved state.
+   * Returns the nids that must stay expanded regardless of saved state:
+   * all ancestor <li> items of the active item, plus the active item itself
+   * if it is also a parent (i.e. you are currently reading a parent doc).
    *
    * @return {Array.<number>}
    */
   function activeAncestorNids() {
     var nids = [];
     $('.dropdocs-tree-active').parents('li.dropdocs-has-children').each(function () {
+      nids.push($(this).data('nid'));
+    });
+    // When viewing a parent doc, the active <li> has both classes.
+    // .parents() doesn't include the element itself, so add it explicitly.
+    $('li.dropdocs-has-children.dropdocs-tree-active').each(function () {
       nids.push($(this).data('nid'));
     });
     return nids;
@@ -64,18 +70,17 @@
       var expanded  = loadExpanded();
       var ancestors = activeAncestorNids();
 
-      // Collapse all parent items by default; expand only those that are
-      // active ancestors or have been manually expanded.
+      // All nested trees start hidden by default (CSS). Mark only the items
+      // that should be open — active ancestors and manually expanded items.
       $items.each(function () {
         var $li  = $(this);
         var nid  = $li.data('nid');
         var $btn = $li.find('> .dropdocs-tree-item > .dropdocs-toggle');
         if (ancestors.indexOf(nid) !== -1 || expanded.indexOf(nid) !== -1) {
-          // Keep expanded.
+          $li.addClass('dropdocs-open');
           $btn.attr('aria-expanded', 'true');
         }
         else {
-          $li.addClass('dropdocs-collapsed');
           $btn.attr('aria-expanded', 'false');
         }
       });
@@ -87,18 +92,18 @@
         var saved = loadExpanded();
         var idx   = saved.indexOf(nid);
 
-        if ($li.hasClass('dropdocs-collapsed')) {
-          $li.removeClass('dropdocs-collapsed');
-          $btn.attr('aria-expanded', 'true');
-          if (idx === -1) {
-            saved.push(nid);
-          }
-        }
-        else {
-          $li.addClass('dropdocs-collapsed');
+        if ($li.hasClass('dropdocs-open')) {
+          $li.removeClass('dropdocs-open');
           $btn.attr('aria-expanded', 'false');
           if (idx !== -1) {
             saved.splice(idx, 1);
+          }
+        }
+        else {
+          $li.addClass('dropdocs-open');
+          $btn.attr('aria-expanded', 'true');
+          if (idx === -1) {
+            saved.push(nid);
           }
         }
 
@@ -112,12 +117,18 @@
           toggleItem($(this).closest('li.dropdocs-has-children'));
         });
 
-      // Label — clicking it also toggles instead of navigating.
+      // Label click: first click on a collapsed parent expands it (without
+      // navigating); once already expanded a click navigates to the doc page.
+      // This gives a clear two-step: reveal children, then go to the page.
       $items.find('> .dropdocs-tree-item > a')
-        .once('dropdocs-label-toggle')
+        .once('dropdocs-label-click')
         .on('click', function (e) {
-          e.preventDefault();
-          toggleItem($(this).closest('li.dropdocs-has-children'));
+          var $li = $(this).closest('li.dropdocs-has-children');
+          if (!$li.hasClass('dropdocs-open')) {
+            e.preventDefault();
+            toggleItem($li);
+          }
+          // Already expanded — let the link navigate normally.
         });
     }
   };
