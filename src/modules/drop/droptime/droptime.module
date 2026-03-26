@@ -298,11 +298,12 @@ function droptime_project_options($uid = 0) {
 function droptime_drop_reports() {
   return array(
     'droptime_personal' => array(
-      'title'       => t('My Time Reports'),
-      'path'        => 'admin/drop/time/reports/personal',
-      'root_path'   => 'admin/drop/time',
-      'module'      => 'droptime',
-      'default_pin' => TRUE,
+      'title'              => t('My Time Reports'),
+      'path'               => 'admin/drop/time/reports/personal',
+      'root_path'          => 'admin/drop/time',
+      'module'             => 'droptime',
+      'default_pin'        => TRUE,
+      'is_default_subtask' => TRUE,
     ),
     'droptime_team' => array(
       'title'            => t('Team Reports'),

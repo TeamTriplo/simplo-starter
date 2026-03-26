@@ -58,9 +58,19 @@ function _drop_base_report_pin_action($path) {
   }
 
   // Build a path → report_id lookup.
+  // For reports marked as the default sub-task, also map their parent path
+  // (e.g. admin/drop/tickets/reports → droptickets_stale), since Backdrop
+  // renders the default sub-task at the parent URL without redirecting.
   $report_by_path = array();
   foreach ($all_reports as $id => $report) {
     $report_by_path[$report['path']] = $id;
+    if (!empty($report['is_default_subtask'])) {
+      $parts  = explode('/', $report['path']);
+      $parent = implode('/', array_slice($parts, 0, count($parts) - 1));
+      if ($parent && !isset($report_by_path[$parent])) {
+        $report_by_path[$parent] = $id;
+      }
+    }
   }
   if (!isset($report_by_path[$path])) {
     return '';
@@ -365,7 +375,8 @@ function drop_base_menu_local_tasks_alter(&$data, $router_item, $root_path) {
         'href'              => $report['path'],
         'localized_options' => array(),
       ),
-      '#active' => ($current_path === $report['path']),
+      '#active' => ($current_path === $report['path'])
+        || (!empty($report['is_default_subtask']) && $current_path === implode('/', array_slice(explode('/', $report['path']), 0, -1))),
       '#weight' => $weight++,
     );
   }

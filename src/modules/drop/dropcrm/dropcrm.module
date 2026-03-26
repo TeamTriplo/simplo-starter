@@ -1605,11 +1605,12 @@ function dropcrm_menu_local_tasks_alter(&$data, $router_item, $root_path) {
 function dropcrm_drop_reports() {
   return array(
     'dropcrm_last_contact' => array(
-      'title'       => t('Last Contact'),
-      'path'        => 'admin/drop/crm/reports/last-contact',
-      'root_path'   => 'admin/drop/crm',
-      'module'      => 'dropcrm',
-      'default_pin' => TRUE,
+      'title'              => t('Last Contact'),
+      'path'               => 'admin/drop/crm/reports/last-contact',
+      'root_path'          => 'admin/drop/crm',
+      'module'             => 'dropcrm',
+      'default_pin'        => TRUE,
+      'is_default_subtask' => TRUE,
     ),
     'dropcrm_outreach_goal' => array(
       'title'       => t('Outreach Goal'),

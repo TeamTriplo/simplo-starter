@@ -551,11 +551,12 @@ function droptickets_menu_alter(&$items) {
 function droptickets_drop_reports() {
   return array(
     'droptickets_stale' => array(
-      'title'     => t('Stale Tickets'),
-      'path'      => 'admin/drop/tickets/reports/stale',
-      'root_path' => 'admin/drop/tickets',
-      'module'    => 'droptickets',
-      'default_pin' => TRUE,
+      'title'              => t('Stale Tickets'),
+      'path'               => 'admin/drop/tickets/reports/stale',
+      'root_path'          => 'admin/drop/tickets',
+      'module'             => 'droptickets',
+      'default_pin'        => TRUE,
+      'is_default_subtask' => TRUE,
     ),
     'droptickets_recent' => array(
       'title'     => t('Recent Tickets'),

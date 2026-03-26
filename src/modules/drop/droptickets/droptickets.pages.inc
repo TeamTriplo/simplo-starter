@@ -655,7 +655,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
   }
 
   $due       = $ticket->due_date ? format_date($ticket->due_date, 'custom', 'M j, Y') : '—';
-  $proj_name = $project ? check_plain($project->name) : '—';
+  $proj_name = $project ? l($project->name, 'admin/drop/crm/projects/' . $project->pid . '/edit') : '—';
   $type_label   = isset($type_options[$ticket->type]) ? $type_options[$ticket->type] : $ticket->type;
   $status_label = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
   $priority_label = isset($priority_labels[$ticket->priority]) ? $priority_labels[$ticket->priority] : '—';
