@@ -411,8 +411,9 @@ function drop_base_get_all_reports() {
  *   Ordered array of report ID strings.
  */
 function drop_base_get_pinned_reports($uid) {
-  $pins = user_data_get('drop_base', $uid, 'pinned_reports');
-  if ($pins === NULL) {
+  $all_prefs = state_get('drop_base.pinned_reports', array());
+  if (!array_key_exists($uid, $all_prefs)) {
+    // First visit: apply module-declared defaults.
     $all  = drop_base_get_all_reports();
     $pins = array();
     foreach ($all as $id => $report) {
@@ -423,8 +424,9 @@ function drop_base_get_pinned_reports($uid) {
         }
       }
     }
+    return $pins;
   }
-  return is_array($pins) ? $pins : array();
+  return is_array($all_prefs[$uid]) ? $all_prefs[$uid] : array();
 }
 
 /**
@@ -439,7 +441,8 @@ function drop_base_get_pinned_reports($uid) {
  *   FALSE if the pin limit (3) was reached and the report could not be pinned.
  */
 function drop_base_set_pinned_report($uid, $report_id, $pinned) {
-  $pins = drop_base_get_pinned_reports($uid);
+  $all_prefs = state_get('drop_base.pinned_reports', array());
+  $pins = array_key_exists($uid, $all_prefs) ? $all_prefs[$uid] : drop_base_get_pinned_reports($uid);
   if ($pinned) {
     if (!in_array($report_id, $pins)) {
       if (count($pins) >= 3) {
@@ -453,7 +456,8 @@ function drop_base_set_pinned_report($uid, $report_id, $pinned) {
       return $id !== $report_id;
     }));
   }
-  user_data_set('drop_base', $uid, 'pinned_reports', $pins);
+  $all_prefs[$uid] = $pins;
+  state_set('drop_base.pinned_reports', $all_prefs);
   return TRUE;
 }
 
