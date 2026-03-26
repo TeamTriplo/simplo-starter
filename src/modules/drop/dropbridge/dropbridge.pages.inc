@@ -561,7 +561,7 @@ function _dropbridge_render_section($type, $label, array $items, $add_url) {
 
     // Done link (omitted for read-only items like calendar events).
     if (!empty($item['done_url'])) {
-      $html .= l(t('Done'), $item['done_url'], array(
+      $html .= l(t('Mark done'), $item['done_url'], array(
         'attributes' => array('class' => array('dropbridge-done-link')),
       ));
     }

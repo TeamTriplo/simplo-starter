@@ -350,8 +350,8 @@ function droptickets_menu() {
   $items['admin/drop/tickets/%drop_ticket/close'] = array(
     'page callback'    => 'droptickets_ticket_close',
     'page arguments'   => array(3),
-    'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('update', 3),
+    'access callback'  => 'droptickets_close_access',
+    'access arguments' => array(3),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
@@ -439,6 +439,16 @@ function droptickets_menu() {
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 3,
+  );
+
+  // AJAX endpoint: inline status update from the ticket view page.
+  $items['admin/drop/tickets/%drop_ticket/inline-status'] = array(
+    'page callback'    => 'droptickets_inline_set_status',
+    'page arguments'   => array(3),
+    'access callback'  => 'droptickets_ticket_access',
+    'access arguments' => array('update', 3),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
   );
 
   // AJAX endpoint: update ticket status from Kanban drag-and-drop.

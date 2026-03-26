@@ -374,7 +374,7 @@ function dropcrm_activity_list_page() {
 
   // Single query: which activities have meeting notes?
   $aids_with_notes = array();
-  if ($aids) {
+  if ($aids && db_table_exists('field_data_field_crm_meeting_notes')) {
     $notes_result = db_select('field_data_field_crm_meeting_notes', 'n')
       ->fields('n', array('entity_id'))
       ->condition('entity_id', $aids, 'IN')
@@ -785,19 +785,14 @@ function crm_contact_form_submit($form, &$form_state) {
   backdrop_set_message(t('Contact !link saved.', array('!link' => $link)));
 
   // If a destination was embedded in the form (e.g. from the Clients report),
-  // redirect there instead of the default bundle list page.
+  // redirect there instead of the contact view page.
   if (!empty($form_state['values']['crm_destination'])) {
     $form_state['redirect'] = $form_state['values']['crm_destination'];
     return;
   }
 
-  $bundle_paths = array(
-    'crm_person'       => 'admin/drop/crm/people',
-    'crm_organization' => 'admin/drop/crm/organizations',
-    'crm_household'    => 'admin/drop/crm/households',
-  );
-  $bundle = $entity->bundle();
-  $form_state['redirect'] = isset($bundle_paths[$bundle]) ? $bundle_paths[$bundle] : 'admin/drop/crm/people';
+  // Redirect to the contact's own view page so the person can confirm the save.
+  $form_state['redirect'] = 'admin/drop/crm/contact/' . $entity->cid;
 }
 
 // ---------------------------------------------------------------------------
@@ -2212,7 +2207,7 @@ function dropcrm_project_view($project) {
     // Status filter.
     $valid_statuses = array_merge(array('all'), array_keys($status_options));
     $status_filter  = (isset($_GET['status']) && in_array($_GET['status'], $valid_statuses))
-      ? $_GET['status'] : 'open';
+      ? $_GET['status'] : 'all';
 
     // Filter tabs.
     $tab_options = array('all' => t('All')) + $status_options;

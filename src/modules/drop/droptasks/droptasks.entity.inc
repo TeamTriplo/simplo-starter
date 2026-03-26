@@ -18,8 +18,8 @@ class DroptTask extends Entity {
   /** @var string Status: 'pending' or 'complete'. */
   public $status = 'pending';
 
-  /** @var int Priority: 0=low, 1=normal, 2=high. */
-  public $priority = 1;
+  /** @var int Priority: 0=none, 1=low, 2=normal, 3=high, 4=critical (matches drop_base_priority_labels()). */
+  public $priority = 2;
 
   /** @var int|null Unix timestamp due date, or NULL. */
   public $due_date = NULL;

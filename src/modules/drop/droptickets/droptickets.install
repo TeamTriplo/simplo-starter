@@ -320,7 +320,81 @@ function droptickets_schema() {
     'primary key' => array('tid'),
   );
 
+  $schema['drop_ticket_reaction'] = array(
+    'description' => 'Emoji reactions on tickets and comments.',
+    'fields' => array(
+      'rid'     => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+      'tid'     => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'tcid'    => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'uid'     => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'emoji'   => array('type' => 'varchar', 'length' => 16, 'not null' => TRUE, 'default' => ''),
+      'created' => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
+    ),
+    'primary key' => array('rid'),
+    'unique keys' => array(
+      'uid_entity_emoji' => array('uid', 'tid', 'tcid', 'emoji'),
+    ),
+    'indexes' => array(
+      'tid' => array('tid'),
+    ),
+  );
+
   return $schema;
+}
+
+/**
+ * Ensures the shared drop_tags vocabulary, field base, and drop_ticket
+ * field instance all exist. Safe to call on fresh installs and updates.
+ */
+function _droptickets_ensure_tags_field() {
+  // Vocabulary.
+  $vocab = taxonomy_vocabulary_machine_name_load('drop_tags');
+  if (!$vocab) {
+    $vocab = new TaxonomyVocabulary(array(
+      'name'         => 'Drop Tags',
+      'machine_name' => 'drop_tags',
+      'description'  => 'Shared tags used across Drop Suite entities.',
+    ));
+    taxonomy_vocabulary_save($vocab);
+  }
+
+  // Base field (shared with droptasks, dropcrm, etc.).
+  if (!field_info_field('field_drop_tags')) {
+    field_create_field(array(
+      'field_name'  => 'field_drop_tags',
+      'type'        => 'taxonomy_term_reference',
+      'settings'    => array(
+        'allowed_values' => array(
+          array('vocabulary' => 'drop_tags', 'parent' => 0),
+        ),
+      ),
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    ));
+  }
+
+  // Instance on drop_ticket.
+  if (!field_info_instance('drop_ticket', 'field_drop_tags', 'drop_ticket')) {
+    field_create_instance(array(
+      'field_name'  => 'field_drop_tags',
+      'entity_type' => 'drop_ticket',
+      'bundle'      => 'drop_ticket',
+      'label'       => 'Tags',
+      'required'    => FALSE,
+      'description' => 'Optional tags. Separate multiple tags with commas.',
+      'widget'      => array(
+        'type'     => 'taxonomy_autocomplete',
+        'settings' => array('size' => 60),
+        'weight'   => 21,
+      ),
+      'display' => array(
+        'default' => array(
+          'label'  => 'above',
+          'type'   => 'taxonomy_term_reference_plain',
+          'weight' => 21,
+        ),
+      ),
+    ));
+  }
 }
 
 /**
@@ -330,23 +404,31 @@ function droptickets_schema() {
  * Team Member role.
  */
 function droptickets_install() {
-  // Add prefix column to drop_project.
-  db_add_field('drop_project', 'prefix', array(
-    'description' => 'Short prefix for ticket numbers, e.g. TRIP for TRIP-42.',
-    'type'        => 'varchar',
-    'length'      => 10,
-    'not null'    => FALSE,
-    'default'     => NULL,
-  ));
+  // Add prefix column to drop_project (may already exist if dropcrm installed).
+  if (!db_field_exists('drop_project', 'prefix')) {
+    db_add_field('drop_project', 'prefix', array(
+      'description' => 'Short prefix for ticket numbers, e.g. TRIP for TRIP-42.',
+      'type'        => 'varchar',
+      'length'      => 10,
+      'not null'    => FALSE,
+      'default'     => NULL,
+    ));
+  }
 
   // Add ticket_counter column to drop_project.
-  db_add_field('drop_project', 'ticket_counter', array(
-    'description' => 'Last ticket number issued for this project.',
-    'type'        => 'int',
-    'unsigned'    => TRUE,
-    'not null'    => TRUE,
-    'default'     => 0,
-  ));
+  if (!db_field_exists('drop_project', 'ticket_counter')) {
+    db_add_field('drop_project', 'ticket_counter', array(
+      'description' => 'Last ticket number issued for this project.',
+      'type'        => 'int',
+      'unsigned'    => TRUE,
+      'not null'    => TRUE,
+      'default'     => 0,
+    ));
+  }
+
+  // Ensure the shared drop_tags vocabulary and field_drop_tags field exist,
+  // then attach the field to drop_ticket entities.
+  _droptickets_ensure_tags_field();
 
   // Create the Team Member role if it doesn't already exist.
   $role = user_role_load_by_name('team_member');

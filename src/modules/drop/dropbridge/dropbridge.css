@@ -209,14 +209,20 @@
 
 .dropbridge-done-link {
   flex: 0 0 auto;
-  font-size: 0.8em;
-  font-weight: 600;
-  color: var(--drop-success, #388e3c);
+  font-size: 0.75em;
+  font-weight: 500;
+  color: #666;
   white-space: nowrap;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 1px 7px;
+  line-height: 1.6;
 }
 
 .dropbridge-done-link:hover {
-  text-decoration: underline;
+  color: var(--drop-success, #388e3c);
+  border-color: var(--drop-success, #388e3c);
+  text-decoration: none;
 }
 
 /* ---------------------------------------------------------------------------

@@ -182,8 +182,8 @@ function droptickets_list_page() {
     $query->isNull('t.import_id');
 
     if ($status === 'all') {
-      // Default: all non-done tickets.
-      $query->condition('t.status', 'done', '<>');
+      // Default: all active tickets — excludes done and closed.
+      $query->condition('t.status', array('done', 'closed'), 'NOT IN');
     }
     elseif ($status !== 'all_tickets') {
       // Specific status filter; 'all_tickets' applies no condition.
@@ -602,6 +602,46 @@ function droptickets_kanban_page() {
 }
 
 /**
+ * AJAX callback: inline status update from the ticket view page.
+ *
+ * Expects POST fields: status, token.
+ * Returns JSON: {ok: true, status: 'new_status'} or {ok: false, message: '...'}.
+ */
+function droptickets_inline_set_status(DropTicket $ticket) {
+  backdrop_add_http_header('Content-Type', 'application/json');
+
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'POST required.'));
+    exit();
+  }
+
+  $status = isset($_POST['status']) ? check_plain($_POST['status']) : '';
+  $token  = isset($_POST['token'])  ? $_POST['token'] : '';
+
+  if (!backdrop_valid_token($token, 'droptickets_inline_status')) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid token.'));
+    exit();
+  }
+
+  $valid_statuses = array_keys(droptickets_status_options());
+  if (!in_array($status, $valid_statuses)) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid status.'));
+    exit();
+  }
+
+  if ($status === 'done' && !droptickets_close_access($ticket)) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'You do not have permission to mark tickets as done.'));
+    exit();
+  }
+
+  $ticket->status = $status;
+  $ticket->save();
+
+  print backdrop_json_encode(array('ok' => TRUE, 'status' => $status));
+  exit();
+}
+
+/**
  * AJAX callback: update a ticket's status from the Kanban drag-and-drop.
  *
  * Expects POST fields: status, token.
@@ -621,6 +661,12 @@ function droptickets_kanban_set_status(DropTicket $ticket) {
   $valid_statuses = array_keys(droptickets_kanban_statuses());
   if (!in_array($status, $valid_statuses)) {
     print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid status.'));
+    exit();
+  }
+
+  // Only users with close permission may drag a ticket into the Done column.
+  if ($status === 'done' && !droptickets_close_access($ticket)) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'You do not have permission to mark tickets as done.'));
     exit();
   }
 
@@ -703,7 +749,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
     if (!empty($ticket->import_id)) {
       $sidebar .= l(t('Activate'), 'admin/drop/tickets/' . $ticket->tid . '/activate', array('attributes' => array('class' => array('droptickets-sidebar-activate'))));
     }
-    if ($ticket->status !== 'closed') {
+    if ($ticket->status !== 'closed' && droptickets_close_access($ticket)) {
       $sidebar .= l(t('Close'), 'admin/drop/tickets/' . $ticket->tid . '/close', array('attributes' => array('class' => array('droptickets-sidebar-close'))));
     }
     if (droptickets_ticket_access('delete', $ticket)) {
@@ -712,9 +758,29 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $sidebar .= '</div>';
   }
 
+  // Build status field: inline select for editors, static badge for viewers.
+  if (droptickets_ticket_access('update', $ticket)) {
+    $status_options_all = droptickets_status_options();
+    if (!droptickets_close_access($ticket)) {
+      unset($status_options_all['done']);
+    }
+    $status_select = '<select class="droptickets-status-select droptickets-status--' . check_plain($ticket->status) . '"'
+      . ' data-tid="' . (int) $ticket->tid . '"'
+      . ' data-token="' . backdrop_get_token('droptickets_inline_status') . '"'
+      . ' data-endpoint="' . url('admin/drop/tickets/' . $ticket->tid . '/inline-status') . '">';
+    foreach ($status_options_all as $key => $label) {
+      $status_select .= '<option value="' . check_plain($key) . '"' . ($key === $ticket->status ? ' selected' : '') . '>' . check_plain($label) . '</option>';
+    }
+    $status_select .= '</select>';
+    $status_field = $status_select;
+  }
+  else {
+    $status_field = '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>';
+  }
+
   $meta_items = array(
     t('Project')  => $proj_name,
-    t('Status')   => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>',
+    t('Status')   => $status_field,
     t('Type')     => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>',
     t('Priority') => check_plain($priority_label),
     t('Owner')    => $owner_name,

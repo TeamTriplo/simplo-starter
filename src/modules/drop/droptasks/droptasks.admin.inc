@@ -80,11 +80,7 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
   $form['priority'] = array(
     '#type'          => 'select',
     '#title'         => t('Priority'),
-    '#options'       => array(
-      2 => t('High'),
-      1 => t('Normal'),
-      0 => t('Low'),
-    ),
+    '#options'       => array_reverse(drop_base_priority_labels(), TRUE),
     '#default_value' => $task->priority,
   );
 

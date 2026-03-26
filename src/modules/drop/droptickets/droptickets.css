@@ -162,6 +162,26 @@
 .droptickets-status--done        { background: #e8f5e9; color: #2e7d32; }
 .droptickets-status--closed      { background: #f5f5f5; color: #757575; }
 
+/* Inline status select — shares badge color classes, styled to look interactive */
+.droptickets-status-select {
+  appearance: auto;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+.droptickets-status-select:focus {
+  outline: 2px solid #90caf9;
+  outline-offset: 1px;
+}
+.droptickets-status-select.droptickets-status-saving {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 /* ---------------------------------------------------------------------------
    Ticket view — page wrapper, two-column layout, cards
    --------------------------------------------------------------------------- */

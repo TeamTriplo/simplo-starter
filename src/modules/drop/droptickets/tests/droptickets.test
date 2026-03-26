@@ -1,0 +1,1206 @@
+<?php
+/**
+ * @file
+ * Tests for the DropTickets module.
+ */
+
+/**
+ * Shared base class: helpers for creating test projects, tickets, comments.
+ */
+abstract class DropTicketsTestBase extends BackdropWebTestCase {
+
+  /** @var object Admin user account. */
+  protected $adminUser;
+
+  /** @var object Team member account (access but no delete). */
+  protected $teamMember;
+
+  /** @var object User with explicit delete permission. */
+  protected $deleter;
+
+  /**
+   * Creates and saves a test project entity.
+   *
+   * @param string $name
+   *   Project name.
+   *
+   * @return DropProject
+   */
+  protected function createTestProject($name = 'Test Project') {
+    $project = entity_create('drop_project', array(
+      'name'   => $name,
+      'active' => 1,
+    ));
+    $project->save();
+    return $project;
+  }
+
+  /**
+   * Creates and saves a test ticket entity.
+   *
+   * @param DropProject $project
+   *   Parent project.
+   * @param array $values
+   *   Field overrides.
+   *
+   * @return DropTicket
+   */
+  protected function createTestTicket(DropProject $project, array $values = array()) {
+    $values += array(
+      'pid'    => $project->pid,
+      'title'  => 'Test ticket',
+      'body'   => 'Test ticket body.',
+      'status' => 'open',
+      'type'   => 'task',
+    );
+    $ticket = entity_create('drop_ticket', $values);
+    $ticket->save();
+    return $ticket;
+  }
+
+  /**
+   * Creates and saves a test comment on a ticket.
+   *
+   * @param DropTicket $ticket
+   *   Parent ticket.
+   * @param int $uid
+   *   Author UID.
+   * @param string $body
+   *   Comment text.
+   *
+   * @return DropTicketComment
+   */
+  protected function createTestComment(DropTicket $ticket, $uid, $body = 'Test comment.') {
+    $comment = new DropTicketComment();
+    $comment->tid         = $ticket->tid;
+    $comment->uid         = $uid;
+    $comment->body        = $body;
+    $comment->body_format = 'plain_text';
+    $comment->save();
+    return $comment;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CRUD tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests basic create, view, edit, delete operations on tickets.
+ *
+ * Note: the ticket add form uses a two-step AJAX client/project picker, so
+ * create tests use the programmatic helper. Edit, delete, and close are
+ * tested via the web UI to verify form handling and access checks end-to-end.
+ */
+class DropTicketsCRUDTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets CRUD',
+      'description' => 'Create, view, edit, and delete tickets via entity API and UI.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+      'delete droptickets',
+    ));
+  }
+
+  /**
+   * Tests that a ticket created programmatically appears in the list page.
+   */
+  public function testCreateTicketAppearsInList() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'My new ticket'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets')));
+    $this->assertResponse(200, 'Ticket list page is accessible.');
+    $this->assertText('My new ticket', 'Newly created ticket title appears in the list.');
+
+    // Confirm the entity was persisted.
+    $loaded = entity_load('drop_ticket', array($ticket->tid), array(), TRUE);
+    $this->assertFalse(empty($loaded), 'Ticket entity exists in the database.');
+  }
+
+  /**
+   * Tests that the add ticket page is accessible.
+   */
+  public function testAddTicketPageAccessible() {
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('admin/drop/tickets/add');
+    $this->assertResponse(200, 'Add ticket page returns 200.');
+    $this->assertField('title', 'Title field exists on the add form.');
+  }
+
+  /**
+   * Tests that a ticket view page renders the expected fields.
+   */
+  public function testViewTicket() {
+    $project = $this->createTestProject('View Project');
+    $ticket  = $this->createTestTicket($project, array('title' => 'Viewable ticket'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $this->assertResponse(200, 'Ticket view page returns 200.');
+    $this->assertText('Viewable ticket', 'Ticket title is displayed on the view page.');
+    $this->assertText('View Project', 'Project name is displayed in the sidebar.');
+    $this->assertText(t('Open'), 'Default status "Open" is displayed.');
+  }
+
+  /**
+   * Tests editing a ticket's status via the edit form.
+   */
+  public function testEditTicketStatus() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Original title'));
+    $this->backdropLogin($this->adminUser);
+
+    // The status field only appears on the edit form (not the add form).
+    $edit = array('status' => 'in_progress');
+    $this->backdropPost('admin/drop/tickets/' . $ticket->tid . '/edit', $edit, t('Update ticket'));
+    $this->verbose('After POST, URL: ' . $this->getUrl() . '<br>TID: ' . $ticket->tid);
+
+    $status = db_select('drop_ticket', 't')
+      ->fields('t', array('status'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->verbose('DB status after POST: ' . $status);
+    $this->assertEqual('in_progress', $status, 'Status was saved to "in_progress" in the database.');
+  }
+
+  /**
+   * Tests editing a ticket's title via the edit form.
+   */
+  public function testEditTicketTitle() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Original title'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropPost('admin/drop/tickets/' . $ticket->tid . '/edit', array(
+      'title' => 'Updated title',
+    ), t('Update ticket'));
+
+    $updated = entity_load('drop_ticket', array($ticket->tid), array(), TRUE);
+    $updated = reset($updated);
+    $this->assertEqual('Updated title', $updated->title, 'Title change was persisted to the database.');
+  }
+
+  /**
+   * Tests that an admin can delete a ticket via the confirmation form.
+   */
+  public function testDeleteTicket() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'To be deleted'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/delete',
+      array(),
+      t('Delete')
+    );
+    $this->assertResponse(200, 'Delete form submitted without errors.');
+
+    $gone = entity_load('drop_ticket', array($ticket->tid), array(), TRUE);
+    $this->assertTrue(empty($gone), 'Ticket no longer exists in the database after deletion.');
+  }
+
+  /**
+   * Tests that comment counts appear on the ticket list page.
+   */
+  public function testCommentCountOnList() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Comment count ticket'));
+    $this->createTestComment($ticket, $this->adminUser->uid, 'First comment.');
+    $this->createTestComment($ticket, $this->adminUser->uid, 'Second comment.');
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets')));
+
+    $this->assertText('Comment count ticket', 'Ticket appears in the list.');
+    $this->assertRaw('droptickets-comment-count', 'Comment count badge element is present in the HTML.');
+  }
+
+  /**
+   * Tests that the 'closed' status exists and is available as an option.
+   */
+  public function testClosedStatusExists() {
+    $options = droptickets_status_options();
+    $this->assertTrue(isset($options['closed']), '"closed" key exists in droptickets_status_options().');
+    $this->assertTrue(isset($options['done']), '"done" key exists in droptickets_status_options().');
+  }
+
+  /**
+   * Tests that 'closed' is not shown on the Kanban board.
+   */
+  public function testClosedNotOnKanban() {
+    $kanban = droptickets_kanban_statuses();
+    $this->assertFalse(isset($kanban['closed']), '"closed" status is not included in Kanban columns.');
+  }
+
+  /**
+   * Tests the manual Close button route changes status to closed.
+   */
+  public function testCloseTicketRoute() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'done'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/close');
+    $this->assertResponse(200, 'Close route returns 200.');
+
+    $updated = entity_load('drop_ticket', array($ticket->tid), array(), TRUE);
+    $updated = reset($updated);
+    $this->assertEqual('closed', $updated->status, 'Ticket status is "closed" after hitting the close route.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Access / permission tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests that the correct permissions gate ticket view, edit, and delete.
+ */
+class DropTicketsAccessTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Access Control',
+      'description' => 'Verifies that permissions gate ticket view, edit, and delete.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+
+    // A regular team member: can view and edit any ticket, cannot delete.
+    $this->teamMember = $this->backdropCreateUser(array(
+      'access droptickets',
+    ));
+
+    // A user with explicit delete permission.
+    $this->deleter = $this->backdropCreateUser(array(
+      'access droptickets',
+      'delete droptickets',
+    ));
+
+    // Full administrator.
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+    ));
+  }
+
+  /**
+   * Tests that anonymous people are denied access to the ticket list.
+   */
+  public function testAnonymousBlocked() {
+    $this->backdropGet('admin/drop/tickets');
+    $this->assertResponse(403, 'Anonymous user is denied access to the ticket list.');
+  }
+
+  /**
+   * Tests that a team member can view the ticket list and a ticket page.
+   */
+  public function testTeamMemberCanView() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Visible ticket'));
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets');
+    $this->assertResponse(200, 'Team member can access the ticket list.');
+    $this->assertText('Visible ticket', 'Ticket title appears in the list for a team member.');
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $this->assertResponse(200, 'Team member can view the individual ticket page.');
+  }
+
+  /**
+   * Tests that a team member can access the edit form for any ticket.
+   */
+  public function testTeamMemberCanAccessEditForm() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Editable ticket'));
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/edit');
+    $this->assertResponse(200, 'Team member can access the edit form.');
+    $this->assertField('title', 'Title field is present on the edit form.');
+  }
+
+  /**
+   * Tests that a team member can submit a title change on the edit form.
+   */
+  public function testTeamMemberCanEdit() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Editable ticket'));
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropPost('admin/drop/tickets/' . $ticket->tid . '/edit', array(
+      'title' => 'Team-edited title',
+    ), t('Update ticket'));
+
+    $updated = entity_load('drop_ticket', array($ticket->tid), array(), TRUE);
+    $updated = reset($updated);
+    $this->assertEqual('Team-edited title', $updated->title, 'Team member title edit was saved to the database.');
+  }
+
+  /**
+   * Tests that a team member is denied access to the delete route.
+   */
+  public function testTeamMemberCannotDelete() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/delete');
+    $this->assertResponse(403, 'Team member is denied access to the delete confirmation page.');
+  }
+
+  /**
+   * Tests that the Delete link is absent from the sidebar for a team member.
+   */
+  public function testTeamMemberHasNoDeleteLink() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $delete_path = 'admin/drop/tickets/' . $ticket->tid . '/delete';
+    $this->assertNoLinkByHref($delete_path,
+      'Delete link does not appear in the sidebar for a team member.');
+  }
+
+  /**
+   * Tests that the Delete link is present in the sidebar for an admin.
+   */
+  public function testAdminHasDeleteLink() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $delete_path = 'admin/drop/tickets/' . $ticket->tid . '/delete';
+    $this->assertResponse(200, 'Admin can view the ticket page.');
+    $this->assertRaw($ticket->tid . '/delete', 'Delete path appears in page source.');
+    $this->assertLinkByHref($delete_path, 0, 'Delete link is present in the sidebar for an admin.');
+  }
+
+  /**
+   * Tests that a user with 'delete droptickets' + 'access droptickets' can delete.
+   */
+  public function testExplicitDeletePermission() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'To be deleted'));
+    $this->backdropLogin($this->deleter);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/delete');
+    $this->assertResponse(200, 'User with "delete droptickets" can reach the delete page.');
+
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/delete',
+      array(),
+      t('Delete')
+    );
+
+    $gone = entity_load('drop_ticket', array($ticket->tid), array(), TRUE);
+    $this->assertTrue(empty($gone), 'Ticket was deleted by user with explicit "delete droptickets" permission.');
+  }
+
+  /**
+   * Tests that plain 'access droptickets' alone cannot delete — guards the bug
+   * we fixed where team members needed 'administer droptickets' to edit, which
+   * also granted them delete access.
+   */
+  public function testAccessAloneCannotDelete() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/delete');
+    $this->assertResponse(403,
+      '"access droptickets" alone cannot reach the delete page — guards regression from permission fix.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Comment tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests comment creation, display, editing, ordering, and access.
+ */
+class DropTicketsCommentsTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Comments',
+      'description' => 'Comment creation, display, editing, ordering, and per-author access.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+    ));
+    $this->teamMember = $this->backdropCreateUser(array(
+      'access droptickets',
+    ));
+  }
+
+  /**
+   * Tests that a programmatically created comment appears on the ticket view page.
+   */
+  public function testCommentAppearsOnViewPage() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $this->createTestComment($ticket, $this->adminUser->uid, 'Visible comment body.');
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $this->assertResponse(200, 'Ticket view page loads.');
+    $this->assertText('Visible comment body.', 'Comment body appears on the ticket view page.');
+  }
+
+  /**
+   * Tests that submitting the comment form saves the comment to the database.
+   */
+  public function testPostCommentViaForm() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/comment',
+      array('body' => 'Posted via the comment form.'),
+      t('Post comment')
+    );
+
+    $count = db_select('drop_ticket_comment', 'c')
+      ->condition('c.tid', $ticket->tid)
+      ->condition('c.body', 'Posted via the comment form.')
+      ->countQuery()->execute()->fetchField();
+    $this->assertEqual(1, (int) $count, 'Comment submitted via form is saved to the database.');
+  }
+
+  /**
+   * Tests that the comment section heading shows the correct count.
+   */
+  public function testCommentCountHeading() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $this->createTestComment($ticket, $this->adminUser->uid, 'First.');
+    $this->createTestComment($ticket, $this->adminUser->uid, 'Second.');
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $this->assertText('Comments (2)', 'Section heading reflects the correct number of comments.');
+  }
+
+  /**
+   * Tests editing a comment via the edit form.
+   */
+  public function testEditCommentViaForm() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $comment = $this->createTestComment($ticket, $this->adminUser->uid, 'Original text.');
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit',
+      array('body' => 'Edited text.'),
+      t('Update comment')
+    );
+
+    $updated = entity_load('drop_ticket_comment', array($comment->tcid), array(), TRUE);
+    $updated = reset($updated);
+    $this->assertEqual('Edited text.', $updated->body, 'Comment body is updated in the database after editing.');
+  }
+
+  /**
+   * Tests that comments are displayed oldest-first when order is set to ascending.
+   */
+  public function testCommentOrderAscending() {
+    config_set('droptickets.settings', 'comment_order', 'asc');
+
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+
+    $older          = new DropTicketComment();
+    $older->tid     = $ticket->tid;
+    $older->uid     = $this->adminUser->uid;
+    $older->body    = 'Older comment text.';
+    $older->body_format = 'plain_text';
+    $older->created = REQUEST_TIME - 3600;
+    $older->save();
+
+    $newer          = new DropTicketComment();
+    $newer->tid     = $ticket->tid;
+    $newer->uid     = $this->adminUser->uid;
+    $newer->body    = 'Newer comment text.';
+    $newer->body_format = 'plain_text';
+    $newer->created = REQUEST_TIME;
+    $newer->save();
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+
+    $content   = $this->backdropGetContent();
+    $pos_older = strpos($content, 'Older comment text.');
+    $pos_newer = strpos($content, 'Newer comment text.');
+    $this->assertTrue($pos_older !== FALSE && $pos_newer !== FALSE, 'Both comments appear on the page.');
+    $this->assertTrue($pos_older < $pos_newer, 'Older comment appears before newer comment in ascending order.');
+  }
+
+  /**
+   * Tests that comments are displayed newest-first when order is set to descending.
+   */
+  public function testCommentOrderDescending() {
+    config_set('droptickets.settings', 'comment_order', 'desc');
+
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+
+    $older          = new DropTicketComment();
+    $older->tid     = $ticket->tid;
+    $older->uid     = $this->adminUser->uid;
+    $older->body    = 'Older comment text.';
+    $older->body_format = 'plain_text';
+    $older->created = REQUEST_TIME - 3600;
+    $older->save();
+
+    $newer          = new DropTicketComment();
+    $newer->tid     = $ticket->tid;
+    $newer->uid     = $this->adminUser->uid;
+    $newer->body    = 'Newer comment text.';
+    $newer->body_format = 'plain_text';
+    $newer->created = REQUEST_TIME;
+    $newer->save();
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+
+    $content   = $this->backdropGetContent();
+    $pos_older = strpos($content, 'Older comment text.');
+    $pos_newer = strpos($content, 'Newer comment text.');
+    $this->assertTrue($pos_older !== FALSE && $pos_newer !== FALSE, 'Both comments appear on the page.');
+    $this->assertTrue($pos_newer < $pos_older, 'Newer comment appears before older comment in descending order.');
+  }
+
+  /**
+   * Tests that a comment author sees Edit and Delete links on their own comment.
+   */
+  public function testAuthorSeesEditDeleteLinks() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $comment = $this->createTestComment($ticket, $this->teamMember->uid, 'My comment.');
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $edit_path = 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit';
+    $this->assertLinkByHref($edit_path, 0, 'Comment author sees the Edit link for their own comment.');
+  }
+
+  /**
+   * Tests that a team member does not see Edit/Delete links on another user's comment.
+   */
+  public function testNonAuthorCannotEditOthersComment() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $comment = $this->createTestComment($ticket, $this->adminUser->uid, 'Admin comment.');
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $edit_path = 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit';
+    $this->assertNoLinkByHref($edit_path, 'Team member does not see Edit link for another user\'s comment.');
+  }
+
+  /**
+   * Tests that an admin sees Edit links on any comment, regardless of authorship.
+   */
+  public function testAdminSeesEditLinksOnAnyComment() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $comment = $this->createTestComment($ticket, $this->teamMember->uid, 'Team member comment.');
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $edit_path = 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit';
+    $this->assertLinkByHref($edit_path, 0, 'Admin sees the Edit link on a comment they did not author.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Workflow tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests status transitions, the close route, Kanban visibility, and cron auto-close.
+ */
+class DropTicketsWorkflowTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Workflow',
+      'description' => 'Status transitions, close route, Kanban column rules, and cron auto-close.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    // Admin needs 'close droptickets' to set status to 'done' via the edit form.
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+      'close droptickets',
+    ));
+    $this->teamMember = $this->backdropCreateUser(array(
+      'access droptickets',
+    ));
+  }
+
+  /**
+   * Tests that each valid status value can be saved via the edit form.
+   */
+  public function testStatusTransitionsViaEditForm() {
+    $project  = $this->createTestProject();
+    $statuses = array('icebox', 'open', 'todo', 'in_progress', 'in_review', 'blocked', 'done');
+    $this->backdropLogin($this->adminUser);
+
+    foreach ($statuses as $status) {
+      $ticket = $this->createTestTicket($project, array('status' => 'open'));
+      $this->backdropPost(
+        'admin/drop/tickets/' . $ticket->tid . '/edit',
+        array('status' => $status),
+        t('Update ticket')
+      );
+      $saved = db_select('drop_ticket', 't')
+        ->fields('t', array('status'))
+        ->condition('t.tid', $ticket->tid)
+        ->execute()->fetchField();
+      $this->assertEqual($status, $saved, 'Status "' . $status . '" is persisted correctly after editing.');
+    }
+  }
+
+  /**
+   * Tests that the 'done' option is not rendered for users without 'close droptickets'.
+   */
+  public function testDoneOptionHiddenWithoutClosePermission() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'open'));
+    $this->backdropLogin($this->teamMember);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/edit');
+    $this->assertResponse(200, 'Team member can access the edit form.');
+
+    $done_option = $this->xpath('//select[@name="status"]/option[@value="done"]');
+    $this->assertTrue(empty($done_option), '"done" is not an option in the status select for users without "close droptickets".');
+  }
+
+  /**
+   * Tests that the /close route sets a ticket's status to "closed".
+   */
+  public function testCloseRouteSetsClosed() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'done'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/close');
+    $this->assertResponse(200, 'Close route returns 200.');
+
+    $saved = db_select('drop_ticket', 't')
+      ->fields('t', array('status'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->assertEqual('closed', $saved, 'Ticket status is "closed" after hitting the close route.');
+  }
+
+  /**
+   * Tests that the close route works from any non-closed status.
+   */
+  public function testCloseRouteFromOpenStatus() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'open'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid . '/close');
+    $saved = db_select('drop_ticket', 't')
+      ->fields('t', array('status'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->assertEqual('closed', $saved, 'Close route sets status to "closed" from any starting status.');
+  }
+
+  /**
+   * Tests that "closed" is not included in the Kanban board statuses.
+   */
+  public function testClosedExcludedFromKanban() {
+    $kanban = droptickets_kanban_statuses();
+    $this->assertFalse(isset($kanban['closed']), '"closed" status is not a Kanban column.');
+  }
+
+  /**
+   * Tests that "icebox" is not included in the Kanban board statuses.
+   */
+  public function testIceboxExcludedFromKanban() {
+    $kanban = droptickets_kanban_statuses();
+    $this->assertFalse(isset($kanban['icebox']), '"icebox" status is not a Kanban column.');
+  }
+
+  /**
+   * Tests that all expected statuses are present in droptickets_status_options().
+   */
+  public function testAllStatusOptionsPresent() {
+    $options  = droptickets_status_options();
+    $expected = array('icebox', 'open', 'todo', 'in_progress', 'in_review', 'blocked', 'done', 'closed');
+    foreach ($expected as $key) {
+      $this->assertTrue(isset($options[$key]), '"' . $key . '" is present in droptickets_status_options().');
+    }
+  }
+
+  /**
+   * Tests that cron auto-closes Done tickets older than the configured threshold.
+   */
+  public function testCronAutoClosesOldDoneTickets() {
+    config_set('droptickets.settings', 'auto_close_days', 7);
+
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'done'));
+
+    // Back-date the ticket's changed time to beyond the threshold.
+    $old_time = REQUEST_TIME - (8 * 86400);
+    db_update('drop_ticket')
+      ->fields(array('changed' => $old_time))
+      ->condition('tid', $ticket->tid)
+      ->execute();
+
+    droptickets_cron();
+
+    $saved = db_select('drop_ticket', 't')
+      ->fields('t', array('status'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->assertEqual('closed', $saved, 'Cron auto-closes a Done ticket whose changed time is beyond the threshold.');
+  }
+
+  /**
+   * Tests that cron does NOT auto-close Done tickets newer than the threshold.
+   */
+  public function testCronDoesNotCloseRecentDoneTickets() {
+    config_set('droptickets.settings', 'auto_close_days', 7);
+
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'done'));
+
+    // The ticket's changed time defaults to REQUEST_TIME — well within 7 days.
+    droptickets_cron();
+
+    $saved = db_select('drop_ticket', 't')
+      ->fields('t', array('status'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->assertEqual('done', $saved, 'Cron does not auto-close a Done ticket that is newer than the threshold.');
+  }
+
+  /**
+   * Tests that cron does not touch tickets that are already closed.
+   */
+  public function testCronDoesNotRecloseClosedTickets() {
+    config_set('droptickets.settings', 'auto_close_days', 7);
+
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'closed'));
+
+    // Back-date to confirm cron only targets 'done', not 'closed'.
+    db_update('drop_ticket')
+      ->fields(array('changed' => REQUEST_TIME - (30 * 86400)))
+      ->condition('tid', $ticket->tid)
+      ->execute();
+
+    droptickets_cron();
+
+    $saved = db_select('drop_ticket', 't')
+      ->fields('t', array('status'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->assertEqual('closed', $saved, 'Cron does not alter tickets that are already closed.');
+  }
+
+  /**
+   * Tests that cron does nothing when auto_close_days is set to 0 (disabled).
+   */
+  public function testCronDisabledWhenZero() {
+    config_set('droptickets.settings', 'auto_close_days', 0);
+
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'done'));
+
+    db_update('drop_ticket')
+      ->fields(array('changed' => REQUEST_TIME - (30 * 86400)))
+      ->condition('tid', $ticket->tid)
+      ->execute();
+
+    droptickets_cron();
+
+    $saved = db_select('drop_ticket', 't')
+      ->fields('t', array('status'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->assertEqual('done', $saved, 'Cron does not auto-close tickets when auto_close_days is 0 (feature disabled).');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// List filtering / search tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests the ticket list page filters: status, project, and text search.
+ */
+class DropTicketsListFilterTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets List Filters',
+      'description' => 'Status tabs, project filter, and text search on the ticket list.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+    ));
+  }
+
+  /**
+   * Tests that the default "All" view excludes tickets with status "done".
+   */
+  public function testDefaultViewExcludesDone() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Active ticket', 'status' => 'open'));
+    $this->createTestTicket($project, array('title' => 'Done ticket', 'status' => 'done'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets');
+    $this->assertText('Active ticket', 'Open ticket appears in the default list.');
+    $this->assertNoText('Done ticket', 'Done ticket is excluded from the default list.');
+  }
+
+  /**
+   * Tests that the default "All" view excludes tickets with status "closed".
+   */
+  public function testDefaultViewExcludesClosed() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Active ticket', 'status' => 'open'));
+    $this->createTestTicket($project, array('title' => 'Closed ticket', 'status' => 'closed'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets');
+    $this->assertText('Active ticket', 'Open ticket appears in the default list.');
+    $this->assertNoText('Closed ticket', 'Closed ticket is excluded from the default list.');
+  }
+
+  /**
+   * Tests that the "All tickets" view includes done and closed tickets.
+   */
+  public function testAllTicketsViewIncludesDoneAndClosed() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Open ticket',   'status' => 'open'));
+    $this->createTestTicket($project, array('title' => 'Done ticket',   'status' => 'done'));
+    $this->createTestTicket($project, array('title' => 'Closed ticket', 'status' => 'closed'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets')));
+    $this->assertText('Open ticket',   'Open ticket appears in the "All tickets" view.');
+    $this->assertText('Done ticket',   'Done ticket appears in the "All tickets" view.');
+    $this->assertText('Closed ticket', 'Closed ticket appears in the "All tickets" view.');
+  }
+
+  /**
+   * Tests that filtering by a specific status shows only tickets with that status.
+   */
+  public function testStatusFilterShowsOnlyMatchingTickets() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'In progress ticket', 'status' => 'in_progress'));
+    $this->createTestTicket($project, array('title' => 'Open ticket',        'status' => 'open'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'in_progress')));
+    $this->assertText('In progress ticket', 'Ticket matching the status filter appears.');
+    $this->assertNoText('Open ticket', 'Ticket not matching the status filter is excluded.');
+  }
+
+  /**
+   * Tests that the project filter shows only tickets belonging to the selected project.
+   */
+  public function testProjectFilterShowsOnlyThatProjectsTickets() {
+    $project_a = $this->createTestProject('Project Alpha');
+    $project_b = $this->createTestProject('Project Beta');
+    $this->createTestTicket($project_a, array('title' => 'Alpha ticket'));
+    $this->createTestTicket($project_b, array('title' => 'Beta ticket'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets', 'pid' => $project_a->pid)));
+    $this->assertText('Alpha ticket', 'Ticket from the selected project appears.');
+    $this->assertNoText('Beta ticket', 'Ticket from another project is excluded.');
+  }
+
+  /**
+   * Tests that text search matches tickets by title.
+   */
+  public function testSearchByTitle() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Fix the login bug', 'status' => 'open'));
+    $this->createTestTicket($project, array('title' => 'Update the readme', 'status' => 'open'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('search' => 'login')));
+    $this->assertText('Fix the login bug', 'Ticket matching the search term appears.');
+    $this->assertNoText('Update the readme', 'Ticket not matching the search term is excluded.');
+  }
+
+  /**
+   * Tests that text search matches tickets by body text.
+   */
+  public function testSearchByBody() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Ticket One', 'body' => 'Contains the word elephant.', 'status' => 'open'));
+    $this->createTestTicket($project, array('title' => 'Ticket Two', 'body' => 'Does not contain it.',        'status' => 'open'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('search' => 'elephant')));
+    $this->assertText('Ticket One', 'Ticket whose body matches the search term appears.');
+    $this->assertNoText('Ticket Two', 'Ticket whose body does not match is excluded.');
+  }
+
+  /**
+   * Tests that a search with no matches shows the empty state message.
+   */
+  public function testSearchWithNoMatchesShowsEmptyMessage() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Regular ticket', 'status' => 'open'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('search' => 'xyzzy_no_match')));
+    $this->assertText('No tickets matched', 'Empty-state message appears when no tickets match the search.');
+    $this->assertNoText('Regular ticket', 'Non-matching ticket does not appear in results.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Comment count badge, ticket labels, and priority tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests comment count badges, ticket label/prefix formatting, and priority ordering.
+ */
+class DropTicketsDisplayTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Display',
+      'description' => 'Comment count badges, ticket label formatting, and priority ordering.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+    ));
+  }
+
+  // -------------------------------------------------------------------------
+  // Comment count badge
+  // -------------------------------------------------------------------------
+
+  /**
+   * Tests that a ticket with no comments shows the "—" dash badge.
+   */
+  public function testCommentCountBadgeZero() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'No comments ticket', 'status' => 'open'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets')));
+    $this->assertRaw('droptickets-comment-count--none', 'Zero-comment badge element is present on the list.');
+  }
+
+  /**
+   * Tests that a ticket with comments shows the correct count in the badge.
+   */
+  public function testCommentCountBadgeShowsCount() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Commented ticket', 'status' => 'open'));
+    $this->createTestComment($ticket, $this->adminUser->uid, 'First comment.');
+    $this->createTestComment($ticket, $this->adminUser->uid, 'Second comment.');
+    $this->createTestComment($ticket, $this->adminUser->uid, 'Third comment.');
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets')));
+    $this->assertRaw('<span class="droptickets-comment-count">3</span>', 'Comment count badge shows "3" for a ticket with three comments.');
+  }
+
+  /**
+   * Tests that adding a comment updates the count shown on the list.
+   */
+  public function testCommentCountUpdatesAfterAdd() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Count update ticket', 'status' => 'open'));
+    $this->createTestComment($ticket, $this->adminUser->uid, 'Initial comment.');
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets')));
+    $this->assertRaw('<span class="droptickets-comment-count">1</span>', 'Count shows 1 before adding second comment.');
+
+    $this->createTestComment($ticket, $this->adminUser->uid, 'Second comment.');
+    $this->backdropGet('admin/drop/tickets', array('query' => array('status' => 'all_tickets')));
+    $this->assertRaw('<span class="droptickets-comment-count">2</span>', 'Count shows 2 after adding second comment.');
+  }
+
+  // -------------------------------------------------------------------------
+  // Ticket label / prefix formatting
+  // -------------------------------------------------------------------------
+
+  /**
+   * Tests that a project with a prefix produces PREFIX-N style labels.
+   */
+  public function testTicketLabelWithPrefix() {
+    $project = entity_create('drop_project', array(
+      'name'   => 'Prefixed Project',
+      'prefix' => 'PROJ',
+      'active' => 1,
+    ));
+    $project->save();
+
+    $ticket = $this->createTestTicket($project);
+    $label  = droptickets_ticket_label($ticket, $project);
+
+    $this->assertTrue((bool) preg_match('/^PROJ-\d+$/', $label), 'Label with prefix follows PREFIX-N format (got: ' . $label . ').');
+  }
+
+  /**
+   * Tests that a project without a prefix produces #N style labels.
+   */
+  public function testTicketLabelWithoutPrefix() {
+    $project = entity_create('drop_project', array(
+      'name'   => 'No Prefix Project',
+      'prefix' => '',
+      'active' => 1,
+    ));
+    $project->save();
+
+    $ticket = $this->createTestTicket($project);
+    $label  = droptickets_ticket_label($ticket, $project);
+
+    $this->assertTrue((bool) preg_match('/^#\d+$/', $label), 'Label without prefix follows #N format (got: ' . $label . ').');
+  }
+
+  /**
+   * Tests that the ticket label appears on the ticket view page.
+   */
+  public function testTicketLabelAppearsOnViewPage() {
+    $project = entity_create('drop_project', array(
+      'name'   => 'Label Project',
+      'prefix' => 'LBL',
+      'active' => 1,
+    ));
+    $project->save();
+
+    $ticket = $this->createTestTicket($project, array('title' => 'Label test ticket'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+    $label = droptickets_ticket_label($ticket, $project);
+    $this->assertText($label, 'Ticket label "' . $label . '" appears on the view page.');
+  }
+
+  /**
+   * Tests that the ticket label appears on the list page.
+   */
+  public function testTicketLabelAppearsOnListPage() {
+    $project = entity_create('drop_project', array(
+      'name'   => 'List Label Project',
+      'prefix' => 'LST',
+      'active' => 1,
+    ));
+    $project->save();
+
+    $ticket = $this->createTestTicket($project, array('title' => 'List label ticket', 'status' => 'open'));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets');
+    $label = droptickets_ticket_label($ticket, $project);
+    $this->assertText($label, 'Ticket label "' . $label . '" appears on the list page.');
+  }
+
+  // -------------------------------------------------------------------------
+  // Priority ordering and persistence
+  // -------------------------------------------------------------------------
+
+  /**
+   * Tests that a critical priority ticket appears before a low priority ticket on the list.
+   */
+  public function testHighPriorityTicketAppearsFirst() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Low priority ticket',      'status' => 'open', 'priority' => 1));
+    $this->createTestTicket($project, array('title' => 'Critical priority ticket', 'status' => 'open', 'priority' => 4));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets');
+    $content  = $this->backdropGetContent();
+    $pos_low  = strpos($content, 'Low priority ticket');
+    $pos_high = strpos($content, 'Critical priority ticket');
+    $this->assertTrue($pos_low !== FALSE && $pos_high !== FALSE, 'Both tickets appear on the list.');
+    $this->assertTrue($pos_high < $pos_low, 'Critical priority ticket appears before low priority ticket.');
+  }
+
+  /**
+   * Tests that a priority change via the edit form is persisted correctly.
+   */
+  public function testPriorityChangePersistedViaForm() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('priority' => 1));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/edit',
+      array('priority' => 4),
+      t('Update ticket')
+    );
+
+    $saved = db_select('drop_ticket', 't')
+      ->fields('t', array('priority'))
+      ->condition('t.tid', $ticket->tid)
+      ->execute()->fetchField();
+    $this->assertEqual(4, (int) $saved, 'Priority change to "critical" (4) is persisted after editing.');
+  }
+
+  /**
+   * Tests that the priority dot indicator is present on the list page.
+   */
+  public function testPriorityDotAppearsOnList() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array('title' => 'Priority dot ticket', 'status' => 'open', 'priority' => 3));
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tickets');
+    $this->assertRaw('drop-priority-high', 'High priority dot class is present on the list page.');
+  }
+}

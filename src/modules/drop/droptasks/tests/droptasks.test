@@ -1,0 +1,640 @@
+<?php
+/**
+ * @file
+ * Tests for the DropTasks module.
+ */
+
+/**
+ * Shared base class: helpers for creating test tasks and accounts.
+ */
+abstract class DropTasksTestBase extends BackdropWebTestCase {
+
+  /** @var object Admin user with 'administer tasks'. */
+  protected $adminUser;
+
+  /** @var object Regular user with 'access tasks' + 'manage tasks'. */
+  protected $regularUser;
+
+  /**
+   * Creates and saves a test task entity owned by the given uid.
+   *
+   * @param int $uid
+   *   Owner UID.
+   * @param array $values
+   *   Field overrides.
+   *
+   * @return DroptTask
+   */
+  protected function createTestTask($uid, array $values = array()) {
+    $values += array(
+      'title'    => 'Test task',
+      'status'   => 'pending',
+      'priority' => 2,
+      'uid'      => $uid,
+    );
+    $task = new DroptTask();
+    foreach ($values as $key => $val) {
+      $task->$key = $val;
+    }
+    $task->save();
+    return $task;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CRUD tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests basic create, view, edit, delete, and complete operations on tasks.
+ */
+class DropTasksCRUDTest extends DropTasksTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTasks CRUD',
+      'description' => 'Create, view, edit, delete, and complete tasks via entity API and UI.',
+      'group'       => 'DropTasks',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('drop_base', 'droptasks');
+
+    $this->adminUser = $this->backdropCreateUser(array(
+      'administer tasks',
+      'access tasks',
+      'manage tasks',
+    ));
+    $this->regularUser = $this->backdropCreateUser(array(
+      'access tasks',
+      'manage tasks',
+    ));
+  }
+
+  /**
+   * A newly created task appears on the active list.
+   */
+  public function testTaskAppearsInList() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'My listed task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks');
+
+    $this->assertResponse(200);
+    $this->assertText('My listed task');
+  }
+
+  /**
+   * The task view page renders the task title.
+   */
+  public function testTaskViewPage() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'View page task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+
+    $this->assertResponse(200);
+    $this->assertText('View page task');
+  }
+
+  /**
+   * Task view page shows status and priority in the detail table.
+   */
+  public function testTaskViewShowsDetails() {
+    // drop_base_priority_labels() maps 2 => 'Normal'.
+    $task = $this->createTestTask($this->regularUser->uid, array(
+      'title'    => 'Detail task',
+      'priority' => 2,
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+
+    $this->assertText('Pending');
+    $this->assertText('Normal');
+  }
+
+  /**
+   * Editing a task updates its title.
+   */
+  public function testEditTaskTitle() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Original title'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropPost('admin/drop/tasks/' . $task->tid . '/edit', array(
+      'title' => 'Updated title',
+    ), t('Save task'));
+
+    $this->assertText('Task saved.');
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->assertText('Updated title');
+  }
+
+  /**
+   * Deleting a task removes it from the list.
+   */
+  public function testDeleteTask() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Task to delete'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropPost('admin/drop/tasks/' . $task->tid . '/delete', array(), t('Delete'));
+
+    $this->assertText('deleted');
+    $this->backdropGet('admin/drop/tasks');
+    $this->assertNoText('Task to delete');
+  }
+
+  /**
+   * The add task form creates a task that shows on the list.
+   */
+  public function testAddTaskViaForm() {
+    $this->backdropLogin($this->regularUser);
+    $this->backdropPost('admin/drop/tasks/add', array(
+      'title' => 'New task via form',
+    ), t('Add task'));
+
+    $this->assertText('Task saved.');
+    $this->assertText('New task via form');
+  }
+
+  /**
+   * Toggling complete on a pending shared task marks it complete.
+   */
+  public function testCompleteTogglePendingToComplete() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Toggle task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+
+    $this->assertText('marked complete');
+    // Task should now appear in the Completed tab.
+    $this->backdropGet('admin/drop/tasks/completed');
+    $this->assertText('Toggle task');
+  }
+
+  /**
+   * Toggling complete on a complete task reopens it.
+   */
+  public function testCompleteToggleCompleteToReopen() {
+    $task = $this->createTestTask($this->regularUser->uid, array(
+      'title'  => 'Reopen task',
+      'status' => 'complete',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+
+    $this->assertText('reopened');
+    // Task should now appear in the Active tab.
+    $this->backdropGet('admin/drop/tasks');
+    $this->assertText('Reopen task');
+  }
+
+  /**
+   * A task with notes shows the notes section on the view page.
+   */
+  public function testTaskViewShowsNotes() {
+    $task = $this->createTestTask($this->regularUser->uid, array(
+      'title' => 'Notes task',
+      'notes' => 'These are my important notes.',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+
+    $this->assertText('Notes');
+    $this->assertText('These are my important notes.');
+  }
+
+  /**
+   * A due date set via the form persists and shows on the view page.
+   */
+  public function testDueDatePersistsViaForm() {
+    $this->backdropLogin($this->regularUser);
+    $this->backdropPost('admin/drop/tasks/add', array(
+      'title'    => 'Due date task',
+      'due_date' => '2030-06-15',
+    ), t('Add task'));
+
+    $this->assertText('Task saved.');
+    // Find the task and check the view page.
+    $tid = db_select('drop_task', 't')
+      ->fields('t', array('tid'))
+      ->condition('title', 'Due date task')
+      ->execute()
+      ->fetchField();
+
+    $this->backdropGet('admin/drop/tasks/' . $tid);
+    $this->assertText('Jun 15, 2030');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Access control tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests that permissions correctly gate task operations.
+ */
+class DropTasksAccessTest extends DropTasksTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTasks Access Control',
+      'description' => 'Verifies that permissions gate task view, edit, delete, and complete.',
+      'group'       => 'DropTasks',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('drop_base', 'droptasks');
+
+    $this->adminUser = $this->backdropCreateUser(array(
+      'administer tasks',
+      'access tasks',
+      'manage tasks',
+    ));
+    $this->regularUser = $this->backdropCreateUser(array(
+      'access tasks',
+      'manage tasks',
+    ));
+  }
+
+  /**
+   * Anonymous users cannot access the task list.
+   */
+  public function testAnonymousCannotAccessList() {
+    $this->backdropGet('admin/drop/tasks');
+    $this->assertResponse(403);
+  }
+
+  /**
+   * A user without 'access tasks' is denied the task list.
+   */
+  public function testUserWithoutPermissionDeniedList() {
+    $noAccess = $this->backdropCreateUser(array());
+    $this->backdropLogin($noAccess);
+    $this->backdropGet('admin/drop/tasks');
+    $this->assertResponse(403);
+  }
+
+  /**
+   * A user with 'access tasks' can view their own task.
+   */
+  public function testOwnerCanViewTask() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Own task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->assertResponse(200);
+    $this->assertText('Own task');
+  }
+
+  /**
+   * A user without 'access tasks' cannot view a task.
+   */
+  public function testUserWithoutPermissionDeniedTaskView() {
+    $task = $this->createTestTask($this->adminUser->uid, array('title' => 'Admin task'));
+    $noAccess = $this->backdropCreateUser(array());
+
+    $this->backdropLogin($noAccess);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->assertResponse(403);
+  }
+
+  /**
+   * A non-owner cannot view another user's task.
+   */
+  public function testNonOwnerCannotViewTask() {
+    $other = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $task  = $this->createTestTask($other->uid, array('title' => 'Other task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->assertResponse(403);
+  }
+
+  /**
+   * Owner can edit their own task.
+   */
+  public function testOwnerCanEditTask() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Editable task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/edit');
+    $this->assertResponse(200);
+  }
+
+  /**
+   * Non-owner with manage tasks cannot edit someone else's task.
+   */
+  public function testNonOwnerCannotEditTask() {
+    $other = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $task  = $this->createTestTask($other->uid, array('title' => 'Other editable task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/edit');
+    $this->assertResponse(403);
+  }
+
+  /**
+   * Owner can delete their own task.
+   */
+  public function testOwnerCanDeleteTask() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Deletable task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/delete');
+    $this->assertResponse(200);
+  }
+
+  /**
+   * Non-owner with manage tasks cannot delete someone else's task.
+   */
+  public function testNonOwnerCannotDeleteTask() {
+    $other = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $task  = $this->createTestTask($other->uid, array('title' => 'Other deletable task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/delete');
+    $this->assertResponse(403);
+  }
+
+  /**
+   * Admin bypasses ownership and can view, edit, and delete any task.
+   */
+  public function testAdminBypassesOwnership() {
+    $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Admin bypass task'));
+
+    $this->backdropLogin($this->adminUser);
+
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->assertResponse(200);
+
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/edit');
+    $this->assertResponse(200);
+
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/delete');
+    $this->assertResponse(200);
+  }
+
+  /**
+   * An assignee can view a task they don't own.
+   */
+  public function testAssigneeCanViewTask() {
+    $owner    = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $assignee = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $task     = $this->createTestTask($owner->uid, array('title' => 'Assigned task'));
+
+    // Insert assignee record directly.
+    db_insert('drop_task_assignee')->fields(array(
+      'tid' => $task->tid,
+      'uid' => $assignee->uid,
+    ))->execute();
+
+    $this->backdropLogin($assignee);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->assertResponse(200);
+    $this->assertText('Assigned task');
+  }
+
+  /**
+   * An assignee can toggle complete on a task they don't own.
+   */
+  public function testAssigneeCanCompleteTask() {
+    $owner    = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $assignee = $this->backdropCreateUser(array('access tasks'));
+    $task     = $this->createTestTask($owner->uid, array('title' => 'Assignee complete task'));
+
+    db_insert('drop_task_assignee')->fields(array(
+      'tid' => $task->tid,
+      'uid' => $assignee->uid,
+    ))->execute();
+
+    $this->backdropLogin($assignee);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+
+    // Should redirect (not 403) and set a success message.
+    $this->assertNoText('Access denied');
+    $this->assertText('marked complete');
+  }
+
+  /**
+   * A non-owner, non-assignee cannot complete a task.
+   */
+  public function testNonAssigneeCannotCompleteTask() {
+    $owner     = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $bystander = $this->backdropCreateUser(array('access tasks'));
+    $task      = $this->createTestTask($owner->uid, array('title' => 'Stranger task'));
+
+    $this->backdropLogin($bystander);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->assertResponse(403);
+  }
+
+  /**
+   * A user without 'manage tasks' cannot access the add task form.
+   */
+  public function testUserWithoutManageCannotCreate() {
+    $viewOnly = $this->backdropCreateUser(array('access tasks'));
+
+    $this->backdropLogin($viewOnly);
+    $this->backdropGet('admin/drop/tasks/add');
+    $this->assertResponse(403);
+  }
+
+}
+
+// ---------------------------------------------------------------------------
+// List filter tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests that the tab filters show the right tasks.
+ */
+class DropTasksListFilterTest extends DropTasksTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTasks List Filters',
+      'description' => 'Active, Today, Upcoming, and Completed tabs filter tasks correctly.',
+      'group'       => 'DropTasks',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('drop_base', 'droptasks');
+
+    $this->adminUser = $this->backdropCreateUser(array(
+      'administer tasks',
+      'access tasks',
+      'manage tasks',
+    ));
+    $this->regularUser = $this->backdropCreateUser(array(
+      'access tasks',
+      'manage tasks',
+    ));
+  }
+
+  /**
+   * Active tab shows pending tasks.
+   */
+  public function testActiveTabShowsPendingTasks() {
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'  => 'Active task',
+      'status' => 'pending',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/active');
+    $this->assertText('Active task');
+  }
+
+  /**
+   * Active tab does not show completed tasks.
+   */
+  public function testActiveTabExcludesCompleteTasks() {
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'  => 'Complete task',
+      'status' => 'complete',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/active');
+    $this->assertNoText('Complete task');
+  }
+
+  /**
+   * Completed tab shows tasks with status = complete.
+   */
+  public function testCompletedTabShowsCompleteTasks() {
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'  => 'Done task',
+      'status' => 'complete',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/completed');
+    $this->assertText('Done task');
+  }
+
+  /**
+   * Completed tab does not show pending tasks.
+   */
+  public function testCompletedTabExcludesPendingTasks() {
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'  => 'Pending task',
+      'status' => 'pending',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/completed');
+    $this->assertNoText('Pending task');
+  }
+
+  /**
+   * Today tab shows tasks with due date today or overdue.
+   */
+  public function testTodayTabShowsTasksDueToday() {
+    $today = strtotime('today midnight');
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'    => 'Due today task',
+      'status'   => 'pending',
+      'due_date' => $today,
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/today');
+    $this->assertText('Due today task');
+  }
+
+  /**
+   * Today tab does not show tasks due in the future.
+   */
+  public function testTodayTabExcludesFutureTasks() {
+    $future = strtotime('+30 days midnight');
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'    => 'Future task',
+      'status'   => 'pending',
+      'due_date' => $future,
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/today');
+    $this->assertNoText('Future task');
+  }
+
+  /**
+   * Upcoming tab shows tasks due within the next 7 days.
+   */
+  public function testUpcomingTabShowsTasksDueSoon() {
+    $soon = strtotime('+3 days midnight');
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'    => 'Soon due task',
+      'status'   => 'pending',
+      'due_date' => $soon,
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/upcoming');
+    $this->assertText('Soon due task');
+  }
+
+  /**
+   * Upcoming tab does not show tasks due further than 7 days out.
+   */
+  public function testUpcomingTabExcludesFarFutureTasks() {
+    $far = strtotime('+30 days midnight');
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'    => 'Far future task',
+      'status'   => 'pending',
+      'due_date' => $far,
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/upcoming');
+    $this->assertNoText('Far future task');
+  }
+
+  /**
+   * Active tab shows an empty message when no tasks exist.
+   */
+  public function testActiveTabEmptyMessage() {
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/active');
+    $this->assertText('No active tasks');
+  }
+
+  /**
+   * A user only sees their own tasks, not another user's tasks.
+   */
+  public function testUserOnlySeesOwnTasks() {
+    $other = $this->backdropCreateUser(array('access tasks', 'manage tasks'));
+    $this->createTestTask($other->uid, array('title' => 'Other user task'));
+    $this->createTestTask($this->regularUser->uid, array('title' => 'Own task'));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/active');
+
+    $this->assertText('Own task');
+    $this->assertNoText('Other user task');
+  }
+
+  /**
+   * An overdue task appears in the Today tab.
+   */
+  public function testOverdueTaskAppearsInToday() {
+    $yesterday = strtotime('-1 day midnight');
+    $this->createTestTask($this->regularUser->uid, array(
+      'title'    => 'Overdue task',
+      'status'   => 'pending',
+      'due_date' => $yesterday,
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/today');
+    $this->assertText('Overdue task');
+    $this->assertText('overdue');
+  }
+}

@@ -1,6 +1,6 @@
 /**
  * @file
- * DropTickets — datepicker, body toggle, emoji reactions.
+ * DropTickets — datepicker, body toggle, emoji reactions, inline status.
  */
 (function ($) {
   Backdrop.behaviors.dropticketsDatpicker = {
@@ -86,6 +86,64 @@
               $btn.removeClass('is-loading');
             }
           });
+        });
+      });
+    }
+  };
+}(jQuery));
+
+(function ($) {
+  /**
+   * Inline status select on the ticket view page.
+   *
+   * On change, POSTs the new status to the inline-status endpoint.
+   * Updates the select's color class on success; reverts on failure.
+   */
+  Backdrop.behaviors.dropticketsInlineStatus = {
+    attach: function (context, settings) {
+      $('.droptickets-status-select', context).once('droptickets-inline-status').on('change', function () {
+        var $select   = $(this);
+        var newStatus = $select.val();
+        var oldStatus = $select.data('current-status') || $select.find('option[selected]').val();
+        var endpoint  = $select.data('endpoint');
+        var token     = $select.data('token');
+
+        // Track the previous value for revert.
+        if (!$select.data('current-status')) {
+          $select.data('current-status', $select.find('option:selected').val());
+        }
+        var prevStatus = $select.data('current-status');
+
+        $select.prop('disabled', true).addClass('droptickets-status-saving');
+
+        $.ajax({
+          url:  endpoint,
+          type: 'POST',
+          data: { status: newStatus, token: token },
+          dataType: 'json',
+          success: function (resp) {
+            if (resp.ok) {
+              // Update color class to match new status.
+              $select.removeClass(function (i, cls) {
+                return (cls.match(/droptickets-status--\S+/) || []).join(' ');
+              });
+              $select.addClass('droptickets-status--' + newStatus);
+              $select.data('current-status', newStatus);
+            }
+            else {
+              // Revert to previous value.
+              $select.val(prevStatus);
+              if (resp.message) {
+                alert(resp.message);
+              }
+            }
+          },
+          error: function () {
+            $select.val(prevStatus);
+          },
+          complete: function () {
+            $select.prop('disabled', false).removeClass('droptickets-status-saving');
+          }
         });
       });
     }
