@@ -440,6 +440,14 @@ function droptickets_menu() {
     'type'             => MENU_CALLBACK,
   );
 
+  $items['admin/drop/notifications/mark-all-read'] = array(
+    'title'            => 'Mark all notifications read',
+    'page callback'    => 'droptickets_mark_all_read',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'type'             => MENU_CALLBACK,
+  );
+
   // Delete an import batch.
   $items['admin/drop/tickets/import/%/delete'] = array(
     'title'            => 'Delete import',
@@ -816,6 +824,23 @@ function droptickets_unread_count($uid) {
     ->countQuery()
     ->execute()
     ->fetchField();
+}
+
+/**
+ * Page callback: marks all of the current user's notifications as read.
+ */
+function droptickets_mark_all_read() {
+  global $user;
+  if (!backdrop_valid_token($_GET['token'], 'mark-all-read')) {
+    return MENU_ACCESS_DENIED;
+  }
+  db_update('drop_notification')
+    ->fields(array('is_read' => 1))
+    ->condition('uid', $user->uid)
+    ->condition('is_read', 0)
+    ->execute();
+  backdrop_set_message(t('All notifications marked as read.'));
+  backdrop_goto('admin/drop/notifications');
 }
 
 /**

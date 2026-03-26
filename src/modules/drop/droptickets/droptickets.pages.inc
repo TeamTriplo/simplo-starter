@@ -1180,6 +1180,21 @@ function droptickets_notifications_page() {
     return $output;
   }
 
+  // Show "Mark all as read" link when there are unread notifications.
+  $unread_count = droptickets_unread_count($user->uid);
+  if ($unread_count > 0) {
+    $token = backdrop_get_token('mark-all-read');
+    $output['mark_read'] = array(
+      '#markup' => l(
+        t('Mark all as read'),
+        'admin/drop/notifications/mark-all-read',
+        array('query' => array('token' => $token))
+      ),
+      '#prefix' => '<p class="droptickets-mark-all-read">',
+      '#suffix' => '</p>',
+    );
+  }
+
   // Bulk-load tickets and actors.
   $tids = array_unique(array_column((array) $notifications, 'tid'));
   $tickets = entity_load('drop_ticket', $tids);
