@@ -235,13 +235,13 @@ function droptime_menu() {
 // ---------------------------------------------------------------------------
 
 /**
- * Implements hook_page_alter().
+ * Implements hook_preprocess_layout().
  *
  * Injects a dismissible reminder banner at the top of every Drop admin page
  * when the current user has not created any time entries in the last 24 hours.
  * The banner can be dismissed for 1 hour via a cookie.
  */
-function droptime_page_alter(&$page) {
+function droptime_preprocess_layout(&$variables) {
   global $user;
 
   // Only for logged-in users with time access.
@@ -277,7 +277,11 @@ function droptime_page_alter(&$page) {
     return;
   }
 
-  // Build the banner and inject it above the page content.
+  // Attach CSS and JS.
+  backdrop_add_css(backdrop_get_path('module', 'droptime') . '/droptime.css');
+  backdrop_add_js(backdrop_get_path('module', 'droptime') . '/droptime.js');
+
+  // Build the banner and prepend it to the layout content.
   $log_link = l(t('Log time now'), 'admin/drop/time');
   $icon     = icon('clock-countdown', array('attributes' => array('width' => 18, 'height' => 18)));
   $banner   = '<div class="drop-time-reminder" id="drop-time-reminder">'
@@ -288,14 +292,7 @@ function droptime_page_alter(&$page) {
     . '<button type="button" class="drop-time-reminder-dismiss" title="' . t('Dismiss for 1 hour') . '">&#x2715;</button>'
     . '</div>';
 
-  $page['content']['drop_time_reminder'] = array(
-    '#markup'   => $banner,
-    '#weight'   => -200,
-    '#attached' => array(
-      'css' => array(backdrop_get_path('module', 'droptime') . '/droptime.css'),
-      'js'  => array(backdrop_get_path('module', 'droptime') . '/droptime.js'),
-    ),
-  );
+  $variables['content'] = $banner . $variables['content'];
 }
 
 // ---------------------------------------------------------------------------
