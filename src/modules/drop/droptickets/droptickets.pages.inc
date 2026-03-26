@@ -42,130 +42,69 @@ function droptickets_list_page() {
   // Tag filter.
   $tag_filter = (!empty($_GET['tag']) && is_numeric($_GET['tag'])) ? (int) $_GET['tag'] : 0;
 
-  // Build filter tabs — All (active), each status, Imported, All Tickets.
-  $tab_options = array('all' => t('All')) + droptickets_status_options() + array('imported' => t('Imported'), 'all_tickets' => t('All tickets'));
-  $tabs = '';
-  foreach ($tab_options as $key => $label) {
-    $active = ($key === $status) ? ' class="droptickets-tab-active"' : '';
-    $query = array('status' => $key);
-    if ($pid_filter) { $query['pid'] = $pid_filter; }
-    if ($assignee_filter) { $query['assignee'] = $assignee_filter; }
-    if ($tag_filter) { $query['tag'] = $tag_filter; }
-    if ($search !== '') { $query['search'] = $search; }
-    $tabs .= '<a href="' . url('admin/drop/tickets', array('query' => $query)) . '"' . $active . '>' . check_plain($label) . '</a> ';
+  // Combined filter row: status dropdown + project dropdown + search + add link.
+
+  // Status select — "Active" (non-done/non-closed) first, then individual
+  // statuses grouped, then "All tickets" and "Imported" at the bottom.
+  $status_opts_html = '<option value="all"' . ($status === 'all' ? ' selected' : '') . '>' . t('Active') . '</option>';
+  $status_opts_html .= '<optgroup label="' . t('By status') . '">';
+  foreach (droptickets_status_options() as $skey => $slabel) {
+    $status_opts_html .= '<option value="' . check_plain($skey) . '"' . ($status === $skey ? ' selected' : '') . '>' . check_plain($slabel) . '</option>';
   }
-  $output['tabs'] = array('#markup' => '<div class="droptickets-status-tabs">' . $tabs . '</div>', '#weight' => -20);
+  $status_opts_html .= '</optgroup>';
+  $status_opts_html .= '<optgroup label="' . t('Other') . '">';
+  $status_opts_html .= '<option value="all_tickets"' . ($status === 'all_tickets' ? ' selected' : '') . '>' . t('All tickets') . '</option>';
+  $status_opts_html .= '<option value="imported"' . ($status === 'imported' ? ' selected' : '') . '>' . t('Imported') . '</option>';
+  $status_opts_html .= '</optgroup>';
 
-  // Action bar: Kanban button + flagged indicator.
-  if (user_access('access droptickets')) {
-    $kanban_link = l(
-      icon('kanban', array('attributes' => array('width' => 15, 'height' => 15))) . ' ' . t('Kanban'),
-      'admin/drop/tickets/kanban',
-      array('html' => TRUE, 'attributes' => array('class' => array('droptickets-kanban-shortcut')))
-    );
-
-    $flagged_count = db_select('drop_ticket_flag', 'f')->countQuery()->execute()->fetchField();
-    $flag_link = '';
-    if ($flagged_count > 0) {
-      $flag_label = format_plural($flagged_count, '1 flagged', '@count flagged');
-      $flag_link  = l(
-        icon('flag-fill', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . $flag_label,
-        'admin/drop/tickets/flagged',
-        array('html' => TRUE, 'attributes' => array('class' => array('droptickets-flagged-indicator')))
-      );
-    }
-
-    $output['action_bar'] = array(
-      '#markup' => '<div class="droptickets-action-bar">' . $kanban_link . $flag_link . '</div>',
-      '#weight' => -18,
-    );
-  }
-
-  // Search box.
-  $clear_search = $search !== ''
-    ? ' <a href="' . url('admin/drop/tickets', array('query' => array('status' => $status))) . '" class="droptickets-search-clear" title="' . t('Clear search') . '">×</a>'
-    : '';
-  $output['search'] = array(
-    '#markup' => '<form method="get" action="' . url('admin/drop/tickets') . '" class="droptickets-search-form">'
-      . '<input type="hidden" name="status" value="' . check_plain($status) . '">'
-      . ($pid_filter ? '<input type="hidden" name="pid" value="' . (int) $pid_filter . '">' : '')
-      . '<input type="search" name="search" value="' . check_plain($search) . '" placeholder="' . t('Search tickets…') . '" class="droptickets-search-input">'
-      . '<button type="submit" class="droptickets-search-btn">' . icon('magnifying-glass', array('attributes' => array('width' => 15, 'height' => 15))) . '</button>'
-      . $clear_search
-      . '</form>',
-    '#weight' => -16,
-  );
-
-  // Project filter dropdown — all projects that have tickets.
+  // Project select — only projects that have non-imported tickets.
   $project_pids = db_select('drop_ticket', 't')
     ->fields('t', array('pid'))
     ->isNull('t.import_id')
     ->distinct()
     ->execute()->fetchCol();
 
+  $proj_opts_html = '<option value="0"' . (!$pid_filter ? ' selected' : '') . '>' . t('— All projects —') . '</option>';
+  $show_proj_select = FALSE;
   if (!empty($project_pids)) {
     $all_projects = entity_load('drop_project', $project_pids);
     uasort($all_projects, function($a, $b) { return strcasecmp($a->name, $b->name); });
-
-    $select_options = array(0 => t('— All projects —'));
     foreach ($all_projects as $proj) {
-      $select_options[$proj->pid] = $proj->name;
+      $proj_opts_html .= '<option value="' . (int) $proj->pid . '"' . ($pid_filter === (int) $proj->pid ? ' selected' : '') . '>' . check_plain($proj->name) . '</option>';
     }
-
-    // Build a self-submitting select. Preserve other filters via hidden inputs.
-    $hidden = '';
-    if ($status !== 'all') { $hidden .= '<input type="hidden" name="status" value="' . check_plain($status) . '">'; }
-    if ($assignee_filter)   { $hidden .= '<input type="hidden" name="assignee" value="' . (int) $assignee_filter . '">'; }
-    if ($tag_filter)        { $hidden .= '<input type="hidden" name="tag" value="' . (int) $tag_filter . '">'; }
-
-    $options_html = '';
-    foreach ($select_options as $val => $label) {
-      $selected = ($pid_filter === (int) $val) ? ' selected' : '';
-      $options_html .= '<option value="' . (int) $val . '"' . $selected . '>' . check_plain($label) . '</option>';
-    }
-
-    $proj_select = '<form method="get" action="' . url('admin/drop/tickets') . '" class="droptickets-proj-form">'
-      . $hidden
-      . '<select name="pid" class="droptickets-proj-select" onchange="this.form.submit()">'
-      . $options_html
-      . '</select>'
-      . '</form>';
-
-    $output['project_filter'] = array(
-      '#markup' => $proj_select,
-      '#weight' => -17,
-    );
+    $show_proj_select = TRUE;
   }
 
-  // Tag filter pills — all tags used on tickets.
-  $used_tags = db_select('field_data_field_drop_tags', 'ft')
-    ->fields('ft', array('field_drop_tags_tid'))
-    ->condition('ft.entity_type', 'drop_ticket')
-    ->condition('ft.deleted', 0)
-    ->distinct()
-    ->execute()->fetchCol();
-
-  if (!empty($used_tags)) {
-    $tag_terms = entity_load('taxonomy_term', $used_tags);
-    $tag_pills = '';
-    $clear_query = array('status' => $status);
-    if ($pid_filter) { $clear_query['pid'] = $pid_filter; }
-    if ($assignee_filter) { $clear_query['assignee'] = $assignee_filter; }
-
-    if ($tag_filter) {
-      $tag_pills .= '<a href="' . url('admin/drop/tickets', array('query' => $clear_query)) . '" class="droptickets-tag-pill droptickets-tag-active">' . t('All tags') . ' ×</a> ';
+  // Active tag badge — shown inline when a tag filter is in use.
+  $tag_badge = '';
+  if ($tag_filter) {
+    $term = entity_load_single('taxonomy_term', $tag_filter);
+    if ($term) {
+      $clear_q = array('status' => $status);
+      if ($pid_filter) { $clear_q['pid'] = $pid_filter; }
+      if ($search !== '') { $clear_q['search'] = $search; }
+      $tag_badge = ' <a href="' . url('admin/drop/tickets', array('query' => $clear_q)) . '" class="droptickets-tag-badge">'
+        . check_plain($term->name) . ' ×</a>';
     }
-
-    foreach ($tag_terms as $term) {
-      $tq = $clear_query + array('tag' => $term->tid);
-      $active_class = ($tag_filter === (int) $term->tid) ? ' droptickets-tag-active' : '';
-      $tag_pills .= '<a href="' . url('admin/drop/tickets', array('query' => $tq)) . '" class="droptickets-tag-pill' . $active_class . '">' . check_plain($term->name) . '</a> ';
-    }
-    $output['tag_filter'] = array(
-      '#markup' => '<div class="droptickets-tag-filter">' . $tag_pills . '</div>',
-      '#weight' => -19,
-    );
   }
+
+  // Assemble the single combined form.
+  $filter_form = '<form method="get" action="' . url('admin/drop/tickets') . '" class="droptickets-filter-form">'
+    . ($tag_filter ? '<input type="hidden" name="tag" value="' . (int) $tag_filter . '">' : '')
+    . '<select name="status" class="droptickets-filter-select" onchange="this.form.submit()">' . $status_opts_html . '</select>';
+
+  if ($show_proj_select) {
+    $filter_form .= '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $proj_opts_html . '</select>';
+  }
+
+  $filter_form .= '<input type="search" name="search" value="' . check_plain($search) . '" placeholder="' . t('Search tickets…') . '" class="droptickets-search-input">'
+    . '<button type="submit" class="droptickets-search-btn">' . icon('magnifying-glass', array('attributes' => array('width' => 15, 'height' => 15))) . '</button>'
+    . '</form>';
+
+  $output['filters'] = array(
+    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $tag_badge . '</div>',
+    '#weight' => -18,
+  );
 
   // Build query.
   $query = db_select('drop_ticket', 't')
