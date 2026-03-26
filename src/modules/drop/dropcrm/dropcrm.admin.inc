@@ -438,6 +438,8 @@ function dropcrm_activity_list_page() {
     );
   }
 
+  $output['#attached']['css'][] = backdrop_get_path('module', 'dropcrm') . '/dropcrm.admin.css';
+
   $output['filter'] = array(
     '#markup' => $filter_form,
     '#prefix' => '<div class="crm-filter-row">',
