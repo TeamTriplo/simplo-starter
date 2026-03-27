@@ -21,6 +21,11 @@
             $item.removeClass('dropstrategic-kr-item--done');
             $check.prop('checked', false);
           }
+          if (typeof data.progress !== 'undefined') {
+            var pct = data.progress;
+            $('.dropstrategic-progress-fill').css('width', pct + '%');
+            $('.dropstrategic-progress-label').text(pct + '%');
+          }
         });
       });
     }

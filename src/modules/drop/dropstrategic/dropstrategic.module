@@ -244,6 +244,36 @@ function dropstrategic_key_results_save($gid, array $key_results) {
   }
 }
 
+/**
+ * Calculates overall progress percentage from an array of key result objects.
+ *
+ * For KRs with a numeric target, progress = min(100, current/target * 100).
+ * For checkbox-only KRs, progress = 100 if done, 0 if not.
+ * Returns the average across all KRs, or 0 if there are none.
+ *
+ * @param array $key_results
+ *   Array of key result objects from dropstrategic_key_results_load().
+ * @return int
+ *   Progress percentage 0–100.
+ */
+function dropstrategic_calculate_progress(array $key_results) {
+  if (empty($key_results)) {
+    return 0;
+  }
+  $total = 0;
+  foreach ($key_results as $kr) {
+    if (!empty($kr->target) && is_numeric($kr->target) && (float) $kr->target > 0) {
+      $current = !empty($kr->current_value) && is_numeric($kr->current_value)
+        ? (float) $kr->current_value : 0;
+      $total += min(100, round($current / (float) $kr->target * 100));
+    }
+    else {
+      $total += $kr->done ? 100 : 0;
+    }
+  }
+  return (int) round($total / count($key_results));
+}
+
 // ---------------------------------------------------------------------------
 // Status / type / horizon helpers
 // ---------------------------------------------------------------------------
@@ -322,7 +352,11 @@ function dropstrategic_kr_toggle($krid) {
     ->condition('krid', $krid)
     ->execute();
 
-  print backdrop_json_encode(array('krid' => $krid, 'done' => $new_done));
+  // Recalculate progress so the JS can update the bar without a page reload.
+  $key_results = dropstrategic_key_results_load($kr->gid);
+  $progress = dropstrategic_calculate_progress($key_results);
+
+  print backdrop_json_encode(array('krid' => $krid, 'done' => $new_done, 'progress' => $progress));
   exit();
 }
 
