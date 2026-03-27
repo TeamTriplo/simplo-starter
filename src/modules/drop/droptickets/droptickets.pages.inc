@@ -1180,12 +1180,26 @@ function droptickets_ticket_view(DropTicket $ticket) {
   $comment_count = count($comments);
   $has_events    = !empty($events);
 
+  // Pre-render the comment form so it can be embedded inline with the timeline.
+  // Position: after the last comment for asc order, before the first for desc.
+  $comment_form_html = '';
+  if (user_access('access droptickets')) {
+    module_load_include('inc', 'droptickets', 'droptickets.admin');
+    $comment_form_renderable = backdrop_get_form('droptickets_comment_form', $ticket, NULL);
+    $comment_form_html = '<div class="droptickets-reply-form">' . backdrop_render($comment_form_renderable) . '</div>';
+  }
+
   $main .= '<div class="droptickets-timeline-header">';
   $main .= '<h3 class="droptickets-section-heading">' . t('Comments (@count)', array('@count' => $comment_count)) . '</h3>';
   if ($has_events) {
     $main .= '<button type="button" class="droptickets-toggle-events" data-label-show="' . t('Show activity') . '" data-label-hide="' . t('Hide activity') . '">' . t('Hide activity') . '</button>';
   }
   $main .= '</div>';
+
+  // Newest-first: reply form appears above the first (most recent) comment.
+  if ($comment_order === 'desc' && $comment_form_html) {
+    $main .= $comment_form_html;
+  }
 
   foreach ($timeline as $item) {
     $account = isset($all_accounts[$item['data']->uid]) ? $all_accounts[$item['data']->uid] : NULL;
@@ -1232,6 +1246,11 @@ function droptickets_ticket_view(DropTicket $ticket) {
       $main .= '</div>'; // close droptickets-comment-content
       $main .= '</div>'; // close droptickets-comment
     }
+  }
+
+  // Oldest-first: reply form appears below the last (most recent) comment.
+  if ($comment_order !== 'desc' && $comment_form_html) {
+    $main .= $comment_form_html;
   }
 
   $main .= '</div>'; // close droptickets-view-main
@@ -1285,13 +1304,6 @@ function droptickets_ticket_view(DropTicket $ticket) {
   if ($has_fields) {
     $output['fields'] = $field_output;
     $output['fields']['#weight'] = 5;
-  }
-
-  // Comment form.
-  if (user_access('access droptickets')) {
-    module_load_include('inc', 'droptickets', 'droptickets.admin');
-    $output['comment_form'] = backdrop_get_form('droptickets_comment_form', $ticket, NULL);
-    $output['comment_form']['#weight'] = 10;
   }
 
   return $output;

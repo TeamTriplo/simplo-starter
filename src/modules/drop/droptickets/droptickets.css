@@ -428,6 +428,15 @@
   display: none;
 }
 
+/* Reply / new comment form embedded in the timeline */
+.droptickets-reply-form {
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+  background: #faf9f7;
+  border: 1px solid #e0ddd8;
+  border-radius: 6px;
+}
+
 @media (max-width: 700px) {
   .droptickets-view-layout {
     flex-direction: column;

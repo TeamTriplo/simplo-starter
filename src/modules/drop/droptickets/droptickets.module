@@ -996,6 +996,9 @@ function droptickets_review_mode_clear($uid) {
  *   Pre-formatted action string, e.g. "changed status from Open to Closed".
  */
 function droptickets_event_write($tid, $uid, $message) {
+  if (!db_table_exists('drop_ticket_event')) {
+    return;
+  }
   db_insert('drop_ticket_event')->fields(array(
     'tid'     => (int) $tid,
     'uid'     => (int) $uid,
@@ -1011,6 +1014,9 @@ function droptickets_event_write($tid, $uid, $message) {
  * @return array
  */
 function droptickets_events_load($tid) {
+  if (!db_table_exists('drop_ticket_event')) {
+    return array();
+  }
   return db_select('drop_ticket_event', 'e')
     ->fields('e')
     ->condition('e.tid', $tid)

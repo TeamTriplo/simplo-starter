@@ -638,3 +638,277 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     $this->assertText('overdue');
   }
 }
+
+// ---------------------------------------------------------------------------
+// Recurrence helper unit tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests the _droptasks_next_day_of_month() and _droptasks_next_nth_weekday()
+ * helpers, plus the functional behavior of completing a recurring task.
+ *
+ * Anchor date for nth-weekday tests: January 1, 2024 is a Monday (w=1).
+ */
+class DropTasksRecurrenceTest extends DropTasksTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTasks Recurrence',
+      'description' => 'Verifies next-occurrence helpers and that completing a recurring task advances its due date.',
+      'group'       => 'DropTasks',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('drop_base', 'droptasks');
+    // Load the pages file so the private helper functions are available.
+    module_load_include('inc', 'droptasks', 'droptasks.pages');
+
+    $this->regularUser = $this->backdropCreateUser(array(
+      'access tasks',
+      'manage tasks',
+    ));
+  }
+
+  // -------------------------------------------------------------------------
+  // _droptasks_next_day_of_month() tests
+  // -------------------------------------------------------------------------
+
+  /**
+   * Day still ahead this month: returns that day in the current month.
+   */
+  public function testDayOfMonthStillAheadReturnsThisMonth() {
+    $base   = new DateTime('2030-01-10 00:00:00');
+    $result = _droptasks_next_day_of_month($base, 15);
+    $this->assertEqual('2030-01-15', date('Y-m-d', $result),
+      'Day 15 from Jan 10 base returns Jan 15.');
+  }
+
+  /**
+   * Day already past this month: moves to the same day next month.
+   */
+  public function testDayOfMonthAlreadyPastMovesToNextMonth() {
+    $base   = new DateTime('2030-01-20 00:00:00');
+    $result = _droptasks_next_day_of_month($base, 15);
+    $this->assertEqual('2030-02-15', date('Y-m-d', $result),
+      'Day 15 from Jan 20 base returns Feb 15.');
+  }
+
+  /**
+   * Target day equals today: treated as "still ahead", returns same day.
+   */
+  public function testDayOfMonthMatchingTodayReturnsThisMonth() {
+    $base   = new DateTime('2030-03-15 00:00:00');
+    $result = _droptasks_next_day_of_month($base, 15);
+    $this->assertEqual('2030-03-15', date('Y-m-d', $result),
+      'Day 15 from Mar 15 base returns Mar 15 (not moved forward).');
+  }
+
+  /**
+   * Day 31 in February (non-leap year) is clamped to Feb 28.
+   */
+  public function testDayOfMonthClampedToFebruaryEnd() {
+    // 2030 is not a leap year.
+    $base   = new DateTime('2030-02-01 00:00:00');
+    $result = _droptasks_next_day_of_month($base, 31);
+    $this->assertEqual('2030-02-28', date('Y-m-d', $result),
+      'Day 31 in February 2030 (non-leap) is clamped to Feb 28.');
+  }
+
+  /**
+   * Day 31 in April (30-day month) is clamped to Apr 30.
+   */
+  public function testDayOfMonthClampedToThirtyDayMonth() {
+    $base   = new DateTime('2030-04-01 00:00:00');
+    $result = _droptasks_next_day_of_month($base, 31);
+    $this->assertEqual('2030-04-30', date('Y-m-d', $result),
+      'Day 31 in April is clamped to Apr 30.');
+  }
+
+  /**
+   * Day 15 from December 20 wraps to January 15 of the next year.
+   */
+  public function testDayOfMonthWrapsToNextYear() {
+    $base   = new DateTime('2030-12-20 00:00:00');
+    $result = _droptasks_next_day_of_month($base, 15);
+    $this->assertEqual('2031-01-15', date('Y-m-d', $result),
+      'Day 15 from Dec 20 wraps to Jan 15 of the next year.');
+  }
+
+  // -------------------------------------------------------------------------
+  // _droptasks_next_nth_weekday() tests
+  //
+  // Anchor: Jan 1, 2024 is a Monday (PHP w=1, 0=Sun…6=Sat).
+  //   Mondays in Jan 2024: 1, 8, 15, 22, 29.
+  //   Feb 2024 (leap year, Feb 1 = Thu): 1st Mon = Feb 5, last Mon = Feb 26.
+  //   May 2024 (May 1 = Wed): 1st Mon = May 6; 5th Mon = Jun 3 (not in May).
+  //   Jun 2024 (Jun 1 = Sat): 1st Mon = Jun 3; 5th Mon = Jul 1 (not in Jun).
+  // -------------------------------------------------------------------------
+
+  /**
+   * 1st Monday of Jan 2024 = Jan 1; base = Jan 1 → returns Jan 1.
+   */
+  public function testNthWeekdayFirstOccurrenceThisMonth() {
+    $base   = new DateTime('2024-01-01 00:00:00');
+    $result = _droptasks_next_nth_weekday($base, 1, 1);
+    $this->assertEqual('2024-01-01', date('Y-m-d', $result),
+      '1st Monday of Jan 2024 is Jan 1; base = Jan 1 returns Jan 1.');
+  }
+
+  /**
+   * 1st Monday of Jan (Jan 1) is past; base = Jan 2 → moves to Feb 5.
+   */
+  public function testNthWeekdayPastInCurrentMonthMovesToNextMonth() {
+    $base   = new DateTime('2024-01-02 00:00:00');
+    $result = _droptasks_next_nth_weekday($base, 1, 1);
+    $this->assertEqual('2024-02-05', date('Y-m-d', $result),
+      '1st Monday past Jan 1; base = Jan 2 → Feb 5.');
+  }
+
+  /**
+   * 2nd Monday of Jan 2024 = Jan 8; base = Jan 1 → returns Jan 8.
+   */
+  public function testNthWeekdaySecondOccurrence() {
+    $base   = new DateTime('2024-01-01 00:00:00');
+    $result = _droptasks_next_nth_weekday($base, 2, 1);
+    $this->assertEqual('2024-01-08', date('Y-m-d', $result),
+      '2nd Monday of Jan 2024 = Jan 8.');
+  }
+
+  /**
+   * 4th Monday of Jan 2024 = Jan 22; base = Jan 1 → returns Jan 22.
+   */
+  public function testNthWeekdayFourthOccurrence() {
+    $base   = new DateTime('2024-01-01 00:00:00');
+    $result = _droptasks_next_nth_weekday($base, 4, 1);
+    $this->assertEqual('2024-01-22', date('Y-m-d', $result),
+      '4th Monday of Jan 2024 = Jan 22.');
+  }
+
+  /**
+   * Last Monday of Jan 2024 = Jan 29 (5 Mondays exist); base = Jan 1 → Jan 29.
+   */
+  public function testNthWeekdayLastOccurrenceInMonth() {
+    $base   = new DateTime('2024-01-01 00:00:00');
+    $result = _droptasks_next_nth_weekday($base, -1, 1);
+    $this->assertEqual('2024-01-29', date('Y-m-d', $result),
+      'Last Monday of Jan 2024 = Jan 29.');
+  }
+
+  /**
+   * Last Monday of Jan (Jan 29) is past; base = Jan 30 → moves to Feb.
+   * Last Monday of Feb 2024 = Feb 26.
+   */
+  public function testNthWeekdayLastMovesToNextMonth() {
+    $base   = new DateTime('2024-01-30 00:00:00');
+    $result = _droptasks_next_nth_weekday($base, -1, 1);
+    $this->assertEqual('2024-02-26', date('Y-m-d', $result),
+      'Last Monday past Jan 29; base = Jan 30 → Feb 26.');
+  }
+
+  /**
+   * 5th Monday doesn't exist in May or June 2024: returns NULL.
+   *
+   * May 2024: 1st Mon = May 6; 5th Mon = Jun 3 (overflows).
+   * Jun 2024: 1st Mon = Jun 3; 5th Mon = Jul 1 (overflows).
+   */
+  public function testNthWeekdayFifthOccurrenceDoesNotExistReturnsNull() {
+    $base   = new DateTime('2024-05-01 00:00:00');
+    $result = _droptasks_next_nth_weekday($base, 5, 1);
+    $this->assertNull($result,
+      '5th Monday does not exist in May or June 2024; returns NULL.');
+  }
+
+  // -------------------------------------------------------------------------
+  // Functional: completing a recurring task advances its due date
+  // -------------------------------------------------------------------------
+
+  /**
+   * Completing a daily recurring task advances the due date to tomorrow.
+   */
+  public function testCompletingDailyTaskAdvancesDueDate() {
+    $today    = strtotime('today midnight');
+    $tomorrow = strtotime('tomorrow midnight');
+
+    $task = $this->createTestTask($this->regularUser->uid, array(
+      'title'      => 'Daily recurring task',
+      'due_date'   => $today,
+      'recurrence' => 'daily',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+
+    $this->assertText('next due');
+
+    $due_after = (int) db_select('drop_task', 't')
+      ->fields('t', array('due_date'))
+      ->condition('tid', $task->tid)
+      ->execute()->fetchField();
+    // Due date should have moved forward (at least past today, within 2 days).
+    $this->assertTrue(
+      $due_after > $today && $due_after <= $today + 2 * 86400,
+      'Completing a daily recurring task advances due date to tomorrow.'
+    );
+  }
+
+  /**
+   * Completing a weekly recurring task (all days selected) advances to tomorrow.
+   */
+  public function testCompletingWeeklyTaskAdvancesDueDate() {
+    $today = strtotime('today midnight');
+
+    $task = $this->createTestTask($this->regularUser->uid, array(
+      'title'           => 'Weekly all-days recurring task',
+      'due_date'        => $today,
+      'recurrence'      => 'weekly',
+      'recurrence_days' => '0,1,2,3,4,5,6',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+
+    $this->assertText('next due');
+
+    $due_after = (int) db_select('drop_task', 't')
+      ->fields('t', array('due_date'))
+      ->condition('tid', $task->tid)
+      ->execute()->fetchField();
+    // Due date should have moved forward (at least past today, within 2 days).
+    $this->assertTrue(
+      $due_after > $today && $due_after <= $today + 2 * 86400,
+      'Completing a weekly recurring task (all days) advances due date to tomorrow.'
+    );
+  }
+
+  /**
+   * Completing a monthly day-of-month recurring task advances to next month's
+   * same day and keeps the task in pending state (not marked complete).
+   */
+  public function testCompletingMonthlyTaskAdvancesDueDateAndRemainsOpen() {
+    // Day 15 of a known month.
+    $due = strtotime('2030-01-15 00:00:00');
+
+    $task = $this->createTestTask($this->regularUser->uid, array(
+      'title'                => 'Monthly recurring task',
+      'due_date'             => $due,
+      'recurrence'           => 'monthly',
+      'recurrence_month_type' => 'day_of_month',
+    ));
+
+    $this->backdropLogin($this->regularUser);
+    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+
+    $this->assertText('next due');
+
+    // Task should still be pending (not complete) since it's recurring.
+    $row = db_select('drop_task', 't')
+      ->fields('t', array('status', 'due_date'))
+      ->condition('tid', $task->tid)
+      ->execute()->fetchObject();
+    $this->assertEqual('pending', $row->status,
+      'Recurring task remains in pending status after completion.');
+    $this->assertNotEqual($due, (int) $row->due_date,
+      'Monthly recurring task due date was advanced after completion.');
+  }
+}

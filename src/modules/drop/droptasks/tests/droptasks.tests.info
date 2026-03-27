@@ -15,3 +15,9 @@ name = DropTasks List Filters
 description = Active, Today, Upcoming, and Completed tabs filter tasks correctly.
 group = DropTasks
 file = droptasks.test
+
+[DropTasksRecurrenceTest]
+name = DropTasks Recurrence
+description = Verifies next-occurrence helpers and that completing a recurring task advances its due date.
+group = DropTasks
+file = droptasks.test

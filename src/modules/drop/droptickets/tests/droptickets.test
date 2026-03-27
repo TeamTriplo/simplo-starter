@@ -1208,3 +1208,238 @@ class DropTicketsDisplayTest extends DropTicketsTestBase {
     $this->assertRaw('drop-priority-high', 'High priority dot class is present on the list page.');
   }
 }
+
+// ---------------------------------------------------------------------------
+// Activity log tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests the ticket activity log: events written on create and field changes.
+ */
+class DropTicketsActivityLogTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Activity Log',
+      'description' => 'Verifies that activity events are recorded on ticket create and field changes.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('drop_base', 'dropcrm', 'entity_plus', 'droptickets');
+
+    $this->adminUser = $this->backdropCreateUser(array(
+      'administer droptickets',
+      'access droptickets',
+    ));
+    $this->teamMember = $this->backdropCreateUser(array(
+      'access droptickets',
+    ));
+    $this->deleter = $this->backdropCreateUser(array(
+      'access droptickets',
+      'delete own droptickets',
+    ));
+  }
+
+  /**
+   * A "created this ticket" event is written when a ticket is inserted.
+   */
+  public function testCreatedEventWrittenOnInsert() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Event insert ticket'));
+
+    $count = db_select('drop_ticket_event', 'e')
+      ->condition('e.tid', $ticket->tid)
+      ->condition('e.message', 'created this ticket')
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(1, (int) $count, 'Created event is written when a ticket is inserted.');
+  }
+
+  /**
+   * A status change via the edit form writes an event with old and new values.
+   */
+  public function testStatusChangeWritesEvent() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('status' => 'open'));
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/edit',
+      array('status' => 'done'),
+      t('Update ticket')
+    );
+
+    $count = db_select('drop_ticket_event', 'e')
+      ->condition('e.tid', $ticket->tid)
+      ->condition('e.message', '%changed status%', 'LIKE')
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(1, (int) $count, 'Status change event is written after editing ticket status.');
+  }
+
+  /**
+   * A priority change via the edit form writes an event with old and new values.
+   */
+  public function testPriorityChangeWritesEvent() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('priority' => 1));
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/edit',
+      array('priority' => 4),
+      t('Update ticket')
+    );
+
+    $count = db_select('drop_ticket_event', 'e')
+      ->condition('e.tid', $ticket->tid)
+      ->condition('e.message', '%changed priority%', 'LIKE')
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(1, (int) $count, 'Priority change event is written after editing ticket priority.');
+  }
+
+  /**
+   * Events appear on the ticket view page mixed in with the timeline.
+   */
+  public function testEventsAppearOnViewPage() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Timeline ticket'));
+
+    // Directly insert a known event.
+    db_insert('drop_ticket_event')->fields(array(
+      'tid'     => $ticket->tid,
+      'uid'     => $this->adminUser->uid,
+      'message' => 'changed status from Open to Done',
+      'created' => REQUEST_TIME - 60,
+    ))->execute();
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+
+    $this->assertText('changed status from Open to Done', 'Activity event message appears on ticket view page.');
+  }
+
+  /**
+   * No event is written when an edit saves without changing status or priority.
+   */
+  public function testNoEventWrittenWhenNothingChanged() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project, array('title' => 'Unchanged ticket', 'status' => 'open', 'priority' => 2));
+
+    // Count events before (just the 'created' event from insert).
+    $before = (int) db_select('drop_ticket_event', 'e')
+      ->condition('e.tid', $ticket->tid)
+      ->countQuery()->execute()->fetchField();
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropPost(
+      'admin/drop/tickets/' . $ticket->tid . '/edit',
+      array('title' => 'Unchanged ticket', 'status' => 'open', 'priority' => 2),
+      t('Update ticket')
+    );
+
+    $after = (int) db_select('drop_ticket_event', 'e')
+      ->condition('e.tid', $ticket->tid)
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual($before, $after, 'No new event is written when status and priority are unchanged.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Read / unread comment tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests that unread comments are highlighted with a "New" badge.
+ */
+class DropTicketsReadUnreadTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Read/Unread Comments',
+      'description' => 'Verifies that comments posted after a user\'s last visit are marked as unread.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('drop_base', 'dropcrm', 'entity_plus', 'droptickets');
+
+    $this->adminUser = $this->backdropCreateUser(array(
+      'administer droptickets',
+      'access droptickets',
+    ));
+    $this->teamMember = $this->backdropCreateUser(array(
+      'access droptickets',
+    ));
+    $this->deleter = $this->backdropCreateUser(array(
+      'access droptickets',
+      'delete own droptickets',
+    ));
+  }
+
+  /**
+   * A comment posted after the user's last visit gets the "New" badge.
+   */
+  public function testUnreadCommentShowsNewBadge() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $reader  = $this->backdropCreateUser(array('access droptickets'));
+    $past    = REQUEST_TIME - 3600;
+
+    // Simulate that the reader last visited the ticket one hour ago.
+    db_merge('droptickets_comment_read')
+      ->keys(array('uid' => $reader->uid, 'tid' => $ticket->tid))
+      ->fields(array('last_read' => $past))
+      ->execute();
+
+    // Insert a comment whose timestamp is after the last_read.
+    $comment = new DropTicketComment();
+    $comment->tid         = $ticket->tid;
+    $comment->uid         = $this->adminUser->uid;
+    $comment->body        = 'This comment is brand new.';
+    $comment->body_format = 'plain_text';
+    $comment->created     = $past + 60;
+    $comment->save();
+
+    $this->backdropLogin($reader);
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+
+    $this->assertRaw('droptickets-comment--unread', 'Unread comment has the unread CSS class.');
+    $this->assertText('New', '"New" badge appears for the unread comment.');
+  }
+
+  /**
+   * A comment posted before the user's last visit does not get the "New" badge.
+   */
+  public function testReadCommentHasNoNewBadge() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $reader  = $this->backdropCreateUser(array('access droptickets'));
+    $past    = REQUEST_TIME - 3600;
+
+    // Insert a comment from one hour ago.
+    $comment = new DropTicketComment();
+    $comment->tid         = $ticket->tid;
+    $comment->uid         = $this->adminUser->uid;
+    $comment->body        = 'An old comment.';
+    $comment->body_format = 'plain_text';
+    $comment->created     = $past;
+    $comment->save();
+
+    // Simulate that the reader last visited 30 minutes ago (after the comment).
+    db_merge('droptickets_comment_read')
+      ->keys(array('uid' => $reader->uid, 'tid' => $ticket->tid))
+      ->fields(array('last_read' => $past + 1800))
+      ->execute();
+
+    $this->backdropLogin($reader);
+    $this->backdropGet('admin/drop/tickets/' . $ticket->tid);
+
+    $this->assertNoRaw('droptickets-comment--unread', 'Comment read before last visit has no unread class.');
+  }
+}

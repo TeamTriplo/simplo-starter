@@ -223,6 +223,10 @@ function theme_dropdocs_reorder_form($variables) {
   $form   = &$variables['form'];
   $output = '';
 
+  if (empty($form['groups'])) {
+    return backdrop_render_children($form);
+  }
+
   foreach (element_children($form['groups']) as $parent_nid) {
     $group    = &$form['groups'][$parent_nid];
     $label    = $group['#parent_label'];
