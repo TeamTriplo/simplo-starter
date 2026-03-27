@@ -1059,8 +1059,12 @@ function droptickets_track_inline_images($entity) {
     return;
   }
 
-  // Build the public files URL prefix (e.g. "https://example.com/files/").
+  // Build both the absolute URL and root-relative path prefixes.
+  // CKEditor writes root-relative paths (e.g. /files/inline-images/...)
+  // so we must handle both forms.
   $public_url = rtrim(file_create_url('public://'), '/') . '/';
+  $wrapper = file_stream_wrapper_get_instance_by_scheme('public');
+  $public_path = '/' . rtrim($wrapper->getDirectoryPath(), '/') . '/';
 
   // Extract all img src values from the body HTML.
   preg_match_all('/<img[^>]+src="([^"]+)"/i', $entity->body, $matches);
@@ -1070,6 +1074,9 @@ function droptickets_track_inline_images($entity) {
   foreach ($src_list as $src) {
     if (strpos($src, $public_url) === 0) {
       $uris[] = 'public://' . substr($src, strlen($public_url));
+    }
+    elseif (strpos($src, $public_path) === 0) {
+      $uris[] = 'public://' . substr($src, strlen($public_path));
     }
   }
 
