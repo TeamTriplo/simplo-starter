@@ -4,3 +4,4 @@ type = module
 backdrop = 1.x
 version = 1.x-1.0.0
 dependencies[] = drop_base
+package = Drop Suite

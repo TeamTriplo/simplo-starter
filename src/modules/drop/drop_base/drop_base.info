@@ -3,3 +3,4 @@ description = Shared utilities, CSS variables, and base styles for DropCRM and D
 type = module
 backdrop = 1.x
 version = 1.x-1.0-dev
+package = Drop Suite
