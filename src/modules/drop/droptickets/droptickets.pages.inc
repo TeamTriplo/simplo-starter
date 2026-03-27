@@ -953,9 +953,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
     t('Assignee') => droptickets_assignee_label($ticket),
     t('Due')      => $due,
   );
-  if ($parent_item) {
-    $meta_items[t('Parent')] = $parent_item;
-  }
+  // Parent ticket is shown in the main content column near child tickets.
   if ($tag_html) {
     $meta_items[t('Tags')] = $tag_html;
   }
@@ -972,7 +970,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $sidebar .= '</div>';
   }
 
-  // Sub-tickets section (shown when this ticket has children).
+  // Child tickets — loaded here, rendered in main content below description.
   $children = db_select('drop_ticket', 'c')
     ->fields('c', array('tid', 'title', 'status', 'pid', 'ticket_number'))
     ->condition('c.parent_tid', $ticket->tid)
@@ -980,37 +978,6 @@ function droptickets_ticket_view(DropTicket $ticket) {
     ->orderBy('c.tid', 'ASC')
     ->execute()->fetchAll();
 
-  if (!empty($children)) {
-    $child_pids      = array_unique(array_filter(array_column($children, 'pid')));
-    $child_projects  = $child_pids ? entity_load('drop_project', $child_pids) : array();
-    $done_statuses   = array('done', 'closed');
-    $done_count      = count(array_filter($children, function($c) use ($done_statuses) {
-      return in_array($c->status, $done_statuses);
-    }));
-    $total_count     = count($children);
-    $progress_pct    = $total_count ? round($done_count / $total_count * 100) : 0;
-
-    $sidebar .= '<div class="droptickets-sidebar-section-label">'
-      . t('Sub-tickets')
-      . ' <span class="droptickets-children-progress">' . $done_count . '/' . $total_count . '</span>'
-      . '</div>';
-    $sidebar .= '<div class="droptickets-children-bar"><div class="droptickets-children-bar-fill" style="width:' . $progress_pct . '%"></div></div>';
-    $sidebar .= '<ul class="droptickets-children-list">';
-    foreach ($children as $child) {
-      $child_proj  = isset($child_projects[$child->pid]) ? $child_projects[$child->pid] : NULL;
-      $child_label = droptickets_ticket_label($child, $child_proj);
-      $is_done     = in_array($child->status, $done_statuses);
-      $sidebar .= '<li class="droptickets-child-item' . ($is_done ? ' droptickets-child-item--done' : '') . '">'
-        . l($child_label . ': ' . $child->title, 'admin/drop/tickets/' . $child->tid)
-        . '</li>';
-    }
-    $sidebar .= '</ul>';
-    if (droptickets_ticket_access('create')) {
-      $sidebar .= '<div class="droptickets-child-add">'
-        . l(t('+ Add sub-ticket'), 'admin/drop/tickets/add', array('query' => array('parent_tid' => $ticket->tid)))
-        . '</div>';
-    }
-  }
 
   // Watchers section.
   module_load_include('inc', 'droptickets', 'droptickets.admin');
@@ -1108,15 +1075,69 @@ function droptickets_ticket_view(DropTicket $ticket) {
   }
   $has_fields = element_children($field_output);
 
-  // Related tickets.
+  // Parent ticket indicator — shown when this ticket is a child.
+  if ($parent_item) {
+    $main .= '<div class="droptickets-card droptickets-parent-ticket">';
+    $main .= '<span class="droptickets-parent-ticket-label">' . t('Parent Ticket') . '</span>';
+    $main .= $parent_item;
+    $main .= '</div>';
+  }
+
+  // Child tickets — collapsible, open by default when children exist.
+  $done_statuses = array('done', 'closed');
+  if (!empty($children)) {
+    $child_pids     = array_unique(array_filter(array_column($children, 'pid')));
+    $child_projects = $child_pids ? entity_load('drop_project', $child_pids) : array();
+    $done_count     = count(array_filter($children, function($c) use ($done_statuses) {
+      return in_array($c->status, $done_statuses);
+    }));
+    $total_count    = count($children);
+    $progress_pct   = $total_count ? round($done_count / $total_count * 100) : 0;
+
+    $main .= '<details class="droptickets-card droptickets-children" open>';
+    $main .= '<summary class="droptickets-section-heading">'
+      . t('Child Tickets')
+      . ' <span class="droptickets-children-progress">' . $done_count . '/' . $total_count . ' ' . t('done') . '</span>'
+      . '</summary>';
+    $main .= '<div class="droptickets-children-bar"><div class="droptickets-children-bar-fill" style="width:' . $progress_pct . '%"></div></div>';
+    $main .= '<ul class="droptickets-children-list">';
+    foreach ($children as $child) {
+      $child_proj  = isset($child_projects[$child->pid]) ? $child_projects[$child->pid] : NULL;
+      $child_label = droptickets_ticket_label($child, $child_proj);
+      $is_done     = in_array($child->status, $done_statuses);
+      $main .= '<li class="droptickets-child-item' . ($is_done ? ' droptickets-child-item--done' : '') . '">'
+        . '<span class="droptickets-ticket-id">' . check_plain($child_label) . '</span> '
+        . l($child->title, 'admin/drop/tickets/' . $child->tid)
+        . '</li>';
+    }
+    $main .= '</ul>';
+    if (droptickets_ticket_access('create')) {
+      $main .= '<p class="droptickets-child-add">'
+        . l(t('+ Add child ticket'), 'admin/drop/tickets/add', array('query' => array('parent_tid' => $ticket->tid)))
+        . '</p>';
+    }
+    $main .= '</details>';
+  }
+  elseif (droptickets_ticket_access('create')) {
+    $main .= '<details class="droptickets-card droptickets-children droptickets-children--empty">';
+    $main .= '<summary class="droptickets-section-heading">' . t('Child Tickets') . '</summary>';
+    $main .= '<p class="droptickets-empty">' . t('No child tickets.') . '</p>';
+    $main .= '<p class="droptickets-child-add">'
+      . l(t('+ Add child ticket'), 'admin/drop/tickets/add', array('query' => array('parent_tid' => $ticket->tid)))
+      . '</p>';
+    $main .= '</details>';
+  }
+
+  // Related tickets — collapsible, open by default when relations exist.
   $related = droptickets_get_related($ticket->tid);
-  $main .= '<div class="droptickets-card droptickets-related">';
-  $main .= '<h3 class="droptickets-section-heading">' . t('Related Tickets') . '</h3>';
+  $related_open = $related ? ' open' : '';
+  $main .= '<details class="droptickets-card droptickets-related"' . $related_open . '>';
+  $main .= '<summary class="droptickets-section-heading">' . t('Related Tickets') . '</summary>';
 
   if ($related) {
-    $related_tids    = array_map(function($r) { return $r->related_tid; }, $related);
-    $related_tickets = entity_load('drop_ticket', $related_tids);
-    $related_pids    = array_unique(array_map(function($t) { return $t->pid; }, $related_tickets));
+    $related_tids     = array_map(function($r) { return $r->related_tid; }, $related);
+    $related_tickets  = entity_load('drop_ticket', $related_tids);
+    $related_pids     = array_unique(array_map(function($t) { return $t->pid; }, $related_tickets));
     $related_projects = entity_load('drop_project', $related_pids);
 
     $main .= '<table class="droptickets-related-list">';
@@ -1147,7 +1168,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
   if (droptickets_ticket_access('update', $ticket)) {
     $main .= '<p class="droptickets-related-add">' . l(t('+ Add relation'), 'admin/drop/tickets/' . $ticket->tid . '/relate') . '</p>';
   }
-  $main .= '</div>';
+  $main .= '</details>';
 
   // Comments + activity events — unified timeline.
   $comment_order = config_get('droptickets.settings', 'comment_order') ?: 'asc';
