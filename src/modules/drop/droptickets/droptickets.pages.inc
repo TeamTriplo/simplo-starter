@@ -931,6 +931,30 @@ function droptickets_ticket_view(DropTicket $ticket) {
     ),
   );
 
+  // Review Mode: show "Back to Review" bar when the user is in review mode.
+  $review_mode = droptickets_review_mode_get($user->uid);
+  if ($review_mode) {
+    $back_query = array_filter(array(
+      'pid'    => !empty($review_mode['pid']) ? $review_mode['pid'] : NULL,
+      'tag'    => !empty($review_mode['tag']) ? $review_mode['tag'] : NULL,
+      'status' => !empty($review_mode['status']) ? $review_mode['status'] : NULL,
+    ));
+    $back_url = url('admin/drop/tickets/review', $back_query ? array('query' => $back_query) : array());
+    $exit_url  = url('admin/drop/tickets/review', array('query' => array('exit_mode' => 1) + $back_query));
+    $output['review_bar'] = array(
+      '#markup' => '<div class="droptickets-review-back-bar">'
+        . l(
+            icon('arrow-left', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . t('Back to Review'),
+            'admin/drop/tickets/review',
+            array('query' => $back_query ?: array(), 'html' => TRUE, 'attributes' => array('class' => array('droptickets-review-back-link')))
+          )
+        . '<span class="droptickets-review-back-mode">' . t('Review Mode') . '</span>'
+        . '<a href="' . $exit_url . '" class="droptickets-review-back-exit">' . t('Exit') . '</a>'
+        . '</div>',
+      '#weight' => -10,
+    );
+  }
+
   $output['layout'] = array(
     '#markup' => '<div class="droptickets-view-layout">' . $main . $sidebar . '</div>',
     '#weight' => 0,
@@ -1789,15 +1813,138 @@ function droptickets_review_page() {
     ),
   );
 
-  // Load all active tickets (everything except icebox and closed).
-  $active_statuses = array('open', 'todo', 'in_progress', 'in_review', 'blocked', 'done');
-  $tickets_raw = db_select('drop_ticket', 't')
+  // --- Review mode + filter handling ---
+
+  $review_mode = droptickets_review_mode_get($user->uid);
+
+  // Parse filter params from URL.
+  $active_status_keys = array_keys(droptickets_status_options());
+  $pid_filter    = (!empty($_GET['pid']) && is_numeric($_GET['pid'])) ? (int) $_GET['pid'] : 0;
+  $tag_filter    = (!empty($_GET['tag']) && is_numeric($_GET['tag'])) ? (int) $_GET['tag'] : 0;
+  $status_filter = (isset($_GET['status']) && in_array($_GET['status'], $active_status_keys))
+    ? $_GET['status'] : '';
+
+  // Handle mode toggle actions (GET params trigger a state change + redirect).
+  if (isset($_GET['enter_mode'])) {
+    droptickets_review_mode_set($user->uid, $pid_filter, $tag_filter, $status_filter);
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'status' => $status_filter ?: NULL));
+    backdrop_goto('admin/drop/tickets/review', array('query' => $rq));
+    return;
+  }
+  if (isset($_GET['exit_mode'])) {
+    droptickets_review_mode_clear($user->uid);
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'status' => $status_filter ?: NULL));
+    backdrop_goto('admin/drop/tickets/review', array('query' => $rq));
+    return;
+  }
+
+  // If in review mode and no URL filter params, load saved filter values.
+  if ($review_mode && !isset($_GET['pid']) && !isset($_GET['tag']) && !isset($_GET['status'])) {
+    $pid_filter    = $review_mode['pid'];
+    $tag_filter    = $review_mode['tag'];
+    $status_filter = isset($review_mode['status']) ? $review_mode['status'] : '';
+  }
+  // If in review mode and user changed filters via URL, save updated values.
+  elseif ($review_mode && (isset($_GET['pid']) || isset($_GET['tag']) || isset($_GET['status']))) {
+    droptickets_review_mode_set($user->uid, $pid_filter, $tag_filter, $status_filter);
+    $review_mode = droptickets_review_mode_get($user->uid);
+  }
+
+  // Build project dropdown (all projects that have tickets).
+  $all_project_pids = db_select('drop_ticket', 't')
+    ->fields('t', array('pid'))
+    ->distinct()
+    ->execute()->fetchCol();
+  $proj_opts_html = '<option value="0"' . (!$pid_filter ? ' selected' : '') . '>' . t('— All projects —') . '</option>';
+  if (!empty($all_project_pids)) {
+    $all_projects = entity_load('drop_project', $all_project_pids);
+    uasort($all_projects, function($a, $b) { return strcasecmp($a->name, $b->name); });
+    foreach ($all_projects as $proj) {
+      $proj_opts_html .= '<option value="' . (int) $proj->pid . '"'
+        . ($pid_filter === (int) $proj->pid ? ' selected' : '') . '>'
+        . check_plain($proj->name) . '</option>';
+    }
+  }
+
+  // Build tag dropdown.
+  $tag_opts_html = '<option value="0"' . (!$tag_filter ? ' selected' : '') . '>' . t('— All tags —') . '</option>';
+  $tags_vocab = taxonomy_vocabulary_load('drop_tags');
+  if ($tags_vocab) {
+    $all_terms = db_select('taxonomy_term_data', 'd')
+      ->fields('d', array('tid', 'name'))
+      ->condition('d.vocabulary', 'drop_tags')
+      ->orderBy('d.name')
+      ->execute()->fetchAllKeyed();
+    foreach ($all_terms as $tid => $tname) {
+      $tag_opts_html .= '<option value="' . (int) $tid . '"'
+        . ($tag_filter === (int) $tid ? ' selected' : '') . '>'
+        . check_plain($tname) . '</option>';
+    }
+  }
+
+  // Build status dropdown.
+  $status_opts_html = '<option value=""' . (!$status_filter ? ' selected' : '') . '>' . t('— All active —') . '</option>';
+  foreach (droptickets_status_options() as $skey => $slabel) {
+    $status_opts_html .= '<option value="' . check_plain($skey) . '"'
+      . ($status_filter === $skey ? ' selected' : '') . '>'
+      . check_plain($slabel) . '</option>';
+  }
+
+  // Mode button — Enter or Exit.
+  $mode_query = array_filter(array(
+    'pid'    => $pid_filter ?: NULL,
+    'tag'    => $tag_filter ?: NULL,
+    'status' => $status_filter ?: NULL,
+  ));
+  if ($review_mode) {
+    $exit_url = url('admin/drop/tickets/review', array('query' => array('exit_mode' => 1) + $mode_query));
+    $mode_btn = '<a href="' . $exit_url . '" class="droptickets-review-mode-btn droptickets-review-mode-btn--active">'
+      . icon('x-circle', array('attributes' => array('width' => 14, 'height' => 14)))
+      . ' ' . t('Exit Review Mode') . '</a>';
+  }
+  else {
+    $enter_url = url('admin/drop/tickets/review', array('query' => array('enter_mode' => 1) + $mode_query));
+    $mode_btn = '<a href="' . $enter_url . '" class="droptickets-review-mode-btn">'
+      . icon('play-circle', array('attributes' => array('width' => 14, 'height' => 14)))
+      . ' ' . t('Enter Review Mode') . '</a>';
+  }
+
+  // Filter form.
+  $filter_form = '<form method="get" action="' . url('admin/drop/tickets/review') . '" class="droptickets-filter-form">'
+    . '<select name="status" class="droptickets-filter-select" onchange="this.form.submit()">' . $status_opts_html . '</select>'
+    . '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $proj_opts_html . '</select>'
+    . '<select name="tag" class="droptickets-filter-select" onchange="this.form.submit()">' . $tag_opts_html . '</select>'
+    . '</form>';
+
+  $output['filters'] = array(
+    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $mode_btn . '</div>',
+    '#weight' => -20,
+  );
+
+  // Load active tickets, applying any filters.
+  $all_active_statuses = array('open', 'todo', 'in_progress', 'in_review', 'blocked', 'done');
+  $query = db_select('drop_ticket', 't')
     ->fields('t', array('tid', 'title', 'status', 'pid', 'assignee_uid', 'priority'))
-    ->condition('t.status', $active_statuses, 'IN')
     ->orderBy('t.priority', 'DESC')
-    ->orderBy('t.tid', 'ASC')
-    ->execute()
-    ->fetchAll();
+    ->orderBy('t.tid', 'ASC');
+
+  if ($status_filter) {
+    $query->condition('t.status', $status_filter);
+  }
+  else {
+    $query->condition('t.status', $all_active_statuses, 'IN');
+  }
+  if ($pid_filter) {
+    $query->condition('t.pid', $pid_filter);
+  }
+  if ($tag_filter) {
+    $query->join('field_data_field_drop_tags', 'ftag',
+      'ftag.entity_id = t.tid AND ftag.entity_type = :et AND ftag.deleted = 0',
+      array(':et' => 'drop_ticket'));
+    $query->condition('ftag.field_drop_tags_tid', $tag_filter);
+  }
+
+  $tickets_raw = $query->execute()->fetchAll();
 
   if (empty($tickets_raw)) {
     $output['empty'] = array(

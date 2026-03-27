@@ -303,7 +303,7 @@ function droptickets_menu() {
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_LOCAL_TASK,
-    'weight'           => 8,
+    'weight'           => 2,
   );
   // AJAX toggle — marks/unmarks a ticket as reviewed for the current user.
   // Path: admin/drop/tickets/review/toggle/{tid}
@@ -575,11 +575,12 @@ function droptickets_menu() {
  * tabs by increasing their weight.
  */
 function droptickets_menu_alter(&$items) {
+  // Push developer/admin tabs to the end so PM tabs stay visible.
   if (isset($items['admin/drop/tickets/manage/fields'])) {
-    $items['admin/drop/tickets/manage/fields']['weight'] = 50;
+    $items['admin/drop/tickets/manage/fields']['weight'] = 70;
   }
   if (isset($items['admin/drop/tickets/manage/display'])) {
-    $items['admin/drop/tickets/manage/display']['weight'] = 51;
+    $items['admin/drop/tickets/manage/display']['weight'] = 71;
   }
 }
 
@@ -907,6 +908,45 @@ function droptickets_review_clear_all($uid) {
   $all = state_get('droptickets.reviewed', array());
   unset($all[$uid]);
   state_set('droptickets.reviewed', $all);
+}
+
+/**
+ * Returns the review mode state for a user, or FALSE if not active.
+ *
+ * @param int $uid
+ * @return array|false  Array with keys 'active', 'pid', 'tag', or FALSE.
+ */
+function droptickets_review_mode_get($uid) {
+  $state = state_get('droptickets.review_mode.' . $uid, array());
+  if (empty($state['active'])) {
+    return FALSE;
+  }
+  return $state;
+}
+
+/**
+ * Activates review mode for a user, saving optional filter values.
+ *
+ * @param int $uid
+ * @param int $pid  Project ID filter (0 = all).
+ * @param int $tag  Tag term ID filter (0 = all).
+ */
+function droptickets_review_mode_set($uid, $pid = 0, $tag = 0, $status = '') {
+  state_set('droptickets.review_mode.' . $uid, array(
+    'active' => TRUE,
+    'pid'    => (int) $pid,
+    'tag'    => (int) $tag,
+    'status' => (string) $status,
+  ));
+}
+
+/**
+ * Deactivates review mode for a user.
+ *
+ * @param int $uid
+ */
+function droptickets_review_mode_clear($uid) {
+  state_del('droptickets.review_mode.' . $uid);
 }
 
 /**
