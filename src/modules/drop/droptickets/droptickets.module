@@ -599,6 +599,12 @@ function droptickets_menu() {
  * tabs by increasing their weight.
  */
 function droptickets_menu_alter(&$items) {
+  // Hide the intermediate 'manage' stub that Field UI auto-generates as a tab.
+  // It has no title so it renders as '...' for admins. 'Manage fields' and
+  // 'Manage display' are still accessible via their own tabs.
+  if (isset($items['admin/drop/tickets/manage'])) {
+    $items['admin/drop/tickets/manage']['type'] = MENU_CALLBACK;
+  }
   // Push developer/admin tabs to the end so PM tabs stay visible.
   if (isset($items['admin/drop/tickets/manage/fields'])) {
     $items['admin/drop/tickets/manage/fields']['weight'] = 70;
