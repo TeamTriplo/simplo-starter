@@ -1165,16 +1165,26 @@ function droptickets_ticket_view(DropTicket $ticket) {
 
   if ($comments) {
     foreach ($comments as $comment) {
-      $author   = isset($comment_accounts[$comment->uid]) ? check_plain($comment_accounts[$comment->uid]->name) : t('Unknown');
-      $date     = format_date($comment->created, 'custom', 'M j, Y g:i A');
+      $author    = isset($comment_accounts[$comment->uid]) ? check_plain($comment_accounts[$comment->uid]->name) : t('Unknown');
+      $date      = format_date($comment->created, 'custom', 'M j, Y g:i A');
       $is_unread = $last_read > 0 && (int) $comment->created > $last_read;
       $comment_classes = 'droptickets-comment' . ($is_unread ? ' droptickets-comment--unread' : '');
+      $avatar_letter = backdrop_strtoupper(backdrop_substr($author, 0, 1));
+      $avatar_color  = (int) $comment->uid % 6;
       $main .= '<div class="' . $comment_classes . '">';
-      $new_badge = $is_unread ? ' <span class="droptickets-comment-new">' . t('New') . '</span>' : '';
-      $main .= '<div class="droptickets-comment-meta"><strong>' . $author . '</strong> · ' . $date . $new_badge;
+      $main .= '<div class="droptickets-comment-avatar droptickets-comment-avatar--' . $avatar_color . '">' . $avatar_letter . '</div>';
+      $main .= '<div class="droptickets-comment-content">';
+      $new_badge = $is_unread ? '<span class="droptickets-comment-new">' . t('New') . '</span>' : '';
+      $main .= '<div class="droptickets-comment-meta">'
+        . '<strong class="droptickets-comment-author">' . $author . '</strong>'
+        . '<span class="droptickets-comment-date">' . $date . '</span>'
+        . $new_badge;
       if (droptickets_comment_access('update', (object) $comment)) {
-        $main .= ' · ' . l(t('Edit'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit');
-        $main .= ' · ' . l(t('Delete'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/delete');
+        $main .= '<span class="droptickets-comment-actions">'
+          . l(t('Edit'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit')
+          . ' · '
+          . l(t('Delete'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/delete')
+          . '</span>';
       }
       $main .= '</div>';
       $main .= '<div class="droptickets-comment-body">' . check_markup($comment->body, $comment->body_format) . '</div>';
@@ -1183,7 +1193,8 @@ function droptickets_ticket_view(DropTicket $ticket) {
         $comment_reactions = isset($all_reactions[$tcid_key]) ? $all_reactions[$tcid_key] : array_fill_keys(array_keys(droptickets_reaction_emojis()), array());
         $main .= droptickets_render_reactions($ticket->tid, $tcid_key, $comment_reactions, $reaction_accounts);
       }
-      $main .= '</div>';
+      $main .= '</div>'; // close droptickets-comment-content
+      $main .= '</div>'; // close droptickets-comment
     }
   }
 
@@ -1270,6 +1281,7 @@ function droptickets_render_reactions($tid, $tcid, array $reactions, array $acco
     $char   = isset($emojis[$code]) ? $emojis[$code] : $code;
     $count  = count($uids);
     $active = in_array((int) $user->uid, $uids) ? ' is-active' : '';
+    $empty  = $count === 0 ? ' react-btn--empty' : '';
     $label  = $count > 0 ? $char . ' ' . $count : $char;
 
     // Build tooltip: "You · Rajib · Tim"
@@ -1284,7 +1296,7 @@ function droptickets_render_reactions($tid, $tcid, array $reactions, array $acco
     }
     $title = $names ? $char . ' ' . implode(' · ', $names) : $char;
 
-    $html .= '<button class="react-btn' . $active . '" data-emoji="' . check_plain($code) . '" title="' . check_plain($title) . '">' . $label . '</button>';
+    $html .= '<button class="react-btn' . $active . $empty . '" data-emoji="' . check_plain($code) . '" title="' . check_plain($title) . '">' . $label . '</button>';
   }
   $html .= '</div>';
   return $html;

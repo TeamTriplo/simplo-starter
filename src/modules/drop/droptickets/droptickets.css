@@ -371,10 +371,13 @@
    --------------------------------------------------------------------------- */
 
 .droptickets-comment {
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 1rem 1.1rem;
-  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.85rem;
   background: #fff;
 }
 
@@ -383,24 +386,74 @@
   background: #f0f7ff;
 }
 
+/* Avatar circle */
+.droptickets-comment-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 0.1rem;
+}
+
+.droptickets-comment-avatar--0 { background: #1565c0; }
+.droptickets-comment-avatar--1 { background: #2e7d32; }
+.droptickets-comment-avatar--2 { background: #6a1b9a; }
+.droptickets-comment-avatar--3 { background: #e65100; }
+.droptickets-comment-avatar--4 { background: #00695c; }
+.droptickets-comment-avatar--5 { background: #c62828; }
+
+/* Content area */
+.droptickets-comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.droptickets-comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.droptickets-comment-author {
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--drop-text, #222);
+}
+
+.droptickets-comment-date {
+  font-size: 0.8em;
+  color: var(--drop-text-secondary, #999);
+}
+
+.droptickets-comment-actions {
+  font-size: 0.8em;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.droptickets-comment:hover .droptickets-comment-actions {
+  opacity: 1;
+}
+
 .droptickets-comment-new {
   display: inline-block;
-  font-size: 0.75em;
+  font-size: 0.72em;
   font-weight: 700;
   color: #fff;
   background: var(--drop-primary, #1565c0);
   border-radius: 999px;
   padding: 0.1em 0.5em;
-  margin-left: 0.4em;
-  vertical-align: middle;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-
-.droptickets-comment-meta {
-  font-size: 0.85em;
-  color: var(--drop-text-secondary, #666);
-  margin-bottom: 0.5rem;
 }
 
 .droptickets-comment-body {
@@ -698,24 +751,36 @@ a.droptickets-flag-on svg,
 .droptickets-reactions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  padding: 0.75rem 1rem 0.5rem;
-  border-top: 1px solid #ececec;
+  gap: 0.3rem;
+  padding: 0.4rem 0 0;
+  margin-top: 0.4rem;
 }
 
 .react-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3em;
-  padding: 0.2rem 0.6rem;
-  border: 1px solid #d8d8d8;
+  gap: 0.25em;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid #ddd;
   border-radius: 1rem;
   background: #f8f8f8;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   cursor: pointer;
   line-height: 1.4;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
   user-select: none;
+}
+
+/* Empty picker buttons (no reactions yet) hidden until comment is hovered.
+   Buttons with a count, or ones the current user has reacted to, always show. */
+.react-btn--empty:not(.is-active) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.droptickets-comment:hover .react-btn--empty:not(.is-active) {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .react-btn:hover {
