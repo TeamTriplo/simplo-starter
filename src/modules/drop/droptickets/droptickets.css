@@ -378,6 +378,25 @@
   background: #fff;
 }
 
+.droptickets-comment--unread {
+  border-left: 3px solid var(--drop-primary, #1565c0);
+  background: #f0f7ff;
+}
+
+.droptickets-comment-new {
+  display: inline-block;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: #fff;
+  background: var(--drop-primary, #1565c0);
+  border-radius: 999px;
+  padding: 0.1em 0.5em;
+  margin-left: 0.4em;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .droptickets-comment-meta {
   font-size: 0.85em;
   color: var(--drop-text-secondary, #666);

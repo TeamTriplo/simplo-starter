@@ -835,6 +835,24 @@ function droptickets_ticket_view(DropTicket $ticket) {
     droptickets_mark_read_for_ticket($ticket->tid, $user->uid);
   }
 
+  // Capture the user's previous last_read timestamp before updating it.
+  // Any comment with created > $last_read is considered unread.
+  $last_read = 0;
+  if ($user->uid) {
+    $last_read = db_select('droptickets_comment_read', 'r')
+      ->fields('r', array('last_read'))
+      ->condition('r.uid', $user->uid)
+      ->condition('r.tid', $ticket->tid)
+      ->execute()
+      ->fetchField();
+    $last_read = $last_read ? (int) $last_read : 0;
+
+    db_merge('droptickets_comment_read')
+      ->key(array('uid' => $user->uid, 'tid' => $ticket->tid))
+      ->fields(array('last_read' => REQUEST_TIME))
+      ->execute();
+  }
+
   $status_options  = droptickets_status_options();
   $type_options    = droptickets_type_options();
   $priority_labels = drop_base_priority_labels();
@@ -1147,10 +1165,13 @@ function droptickets_ticket_view(DropTicket $ticket) {
 
   if ($comments) {
     foreach ($comments as $comment) {
-      $author = isset($comment_accounts[$comment->uid]) ? check_plain($comment_accounts[$comment->uid]->name) : t('Unknown');
-      $date   = format_date($comment->created, 'custom', 'M j, Y g:i A');
-      $main .= '<div class="droptickets-comment">';
-      $main .= '<div class="droptickets-comment-meta"><strong>' . $author . '</strong> · ' . $date;
+      $author   = isset($comment_accounts[$comment->uid]) ? check_plain($comment_accounts[$comment->uid]->name) : t('Unknown');
+      $date     = format_date($comment->created, 'custom', 'M j, Y g:i A');
+      $is_unread = $last_read > 0 && (int) $comment->created > $last_read;
+      $comment_classes = 'droptickets-comment' . ($is_unread ? ' droptickets-comment--unread' : '');
+      $main .= '<div class="' . $comment_classes . '">';
+      $new_badge = $is_unread ? ' <span class="droptickets-comment-new">' . t('New') . '</span>' : '';
+      $main .= '<div class="droptickets-comment-meta"><strong>' . $author . '</strong> · ' . $date . $new_badge;
       if (droptickets_comment_access('update', (object) $comment)) {
         $main .= ' · ' . l(t('Edit'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit');
         $main .= ' · ' . l(t('Delete'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/delete');

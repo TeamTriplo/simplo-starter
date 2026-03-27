@@ -355,6 +355,34 @@ function droptickets_schema() {
     ),
   );
 
+  $schema['droptickets_comment_read'] = array(
+    'description' => 'Tracks when each user last read a ticket, for unread comment highlighting.',
+    'fields' => array(
+      'uid' => array(
+        'type'     => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default'  => 0,
+      ),
+      'tid' => array(
+        'type'     => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default'  => 0,
+      ),
+      'last_read' => array(
+        'type'     => 'int',
+        'not null' => TRUE,
+        'default'  => 0,
+        'description' => 'Unix timestamp of the last time this user viewed this ticket.',
+      ),
+    ),
+    'primary key' => array('uid', 'tid'),
+    'indexes' => array(
+      'tid' => array('tid'),
+    ),
+  );
+
   return $schema;
 }
 
@@ -728,6 +756,41 @@ function droptickets_update_1008() {
 /**
  * Add goal_id column to drop_ticket to link tickets to strategic goals.
  */
+/**
+ * Create the droptickets_comment_read table for unread comment tracking.
+ */
+function droptickets_update_1022() {
+  if (!db_table_exists('droptickets_comment_read')) {
+    db_create_table('droptickets_comment_read', array(
+      'description' => 'Tracks when each user last read a ticket, for unread comment highlighting.',
+      'fields' => array(
+        'uid' => array(
+          'type'     => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default'  => 0,
+        ),
+        'tid' => array(
+          'type'     => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default'  => 0,
+        ),
+        'last_read' => array(
+          'type'     => 'int',
+          'not null' => TRUE,
+          'default'  => 0,
+          'description' => 'Unix timestamp of the last time this user viewed this ticket.',
+        ),
+      ),
+      'primary key' => array('uid', 'tid'),
+      'indexes' => array(
+        'tid' => array('tid'),
+      ),
+    ));
+  }
+}
+
 function droptickets_update_1021() {
   if (!db_field_exists('drop_ticket', 'goal_id')) {
     db_add_field('drop_ticket', 'goal_id', array(
