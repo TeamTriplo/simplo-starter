@@ -148,4 +148,38 @@
       });
     }
   };
+
+  /**
+   * Review / triage toggle buttons.
+   *
+   * POSTs to the toggle endpoint and updates the button + row class in place
+   * so the user can work through the list without page reloads.
+   */
+  Backdrop.behaviors.dropticketReview = {
+    attach: function (context, settings) {
+      $('.droptickets-review-btn', context).once('droptickets-review').on('click', function () {
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        var url  = $btn.data('url');
+
+        $btn.prop('disabled', true);
+
+        $.post(url, function (data) {
+          if (data.reviewed) {
+            $btn.addClass('droptickets-review-btn--done')
+                .attr('title', Backdrop.t('Reviewed \u2014 click to unmark'));
+            $row.addClass('droptickets-review-row--done');
+          }
+          else {
+            $btn.removeClass('droptickets-review-btn--done')
+                .attr('title', Backdrop.t('Mark as reviewed'));
+            $row.removeClass('droptickets-review-row--done');
+          }
+        }, 'json').always(function () {
+          $btn.prop('disabled', false);
+        });
+      });
+    }
+  };
+
 }(jQuery));

@@ -1766,3 +1766,182 @@ function droptickets_stale_report_page() {
   return $output;
 }
 
+// ---------------------------------------------------------------------------
+// Review / triage
+// ---------------------------------------------------------------------------
+
+/**
+ * Page callback: personal ticket review / triage queue.
+ *
+ * Shows all active tickets sorted unreviewed-first. Each row has an AJAX
+ * toggle button the current user can click to mark a ticket as reviewed.
+ * Reviewed tickets are shown below, visually dimmed, until flags are cleared.
+ */
+function droptickets_review_page() {
+  global $user;
+
+  backdrop_set_title(t('Review'));
+
+  $output = array(
+    '#attached' => array(
+      'css' => array(backdrop_get_path('module', 'droptickets') . '/droptickets.css'),
+      'js'  => array(backdrop_get_path('module', 'droptickets') . '/droptickets.js'),
+    ),
+  );
+
+  // Load all active tickets (everything except icebox and closed).
+  $active_statuses = array('open', 'todo', 'in_progress', 'in_review', 'blocked', 'done');
+  $tickets_raw = db_select('drop_ticket', 't')
+    ->fields('t', array('tid', 'title', 'status', 'pid', 'assignee_uid', 'priority'))
+    ->condition('t.status', $active_statuses, 'IN')
+    ->orderBy('t.priority', 'DESC')
+    ->orderBy('t.tid', 'ASC')
+    ->execute()
+    ->fetchAll();
+
+  if (empty($tickets_raw)) {
+    $output['empty'] = array(
+      '#markup' => '<p class="droptickets-empty">' . t('No active tickets to review.') . '</p>',
+    );
+    return $output;
+  }
+
+  $reviewed_tids = droptickets_review_get($user->uid);
+  $reviewed_set  = array_flip($reviewed_tids);
+  $reviewed_count = count($reviewed_tids);
+
+  // Controls bar.
+  $clear_link = $reviewed_count
+    ? l(t('Clear @count reviewed flag(s)', array('@count' => $reviewed_count)),
+        'admin/drop/tickets/review/clear',
+        array('query' => array('token' => backdrop_get_token('review-clear'))))
+    : '';
+  $output['controls'] = array(
+    '#markup' => '<div class="droptickets-review-controls">'
+      . '<span class="droptickets-review-summary">'
+      . format_plural(count($tickets_raw), '1 ticket', '@count tickets')
+      . ($reviewed_count ? ', ' . format_plural($reviewed_count, '1 reviewed', '@count reviewed') : '')
+      . '</span>'
+      . ($clear_link ? ' &nbsp;·&nbsp; ' . $clear_link : '')
+      . '</div>',
+    '#weight' => -10,
+  );
+
+  // Bulk-load related data.
+  $tids = array_column($tickets_raw, 'tid');
+  $pids = array_filter(array_unique(array_column($tickets_raw, 'pid')));
+  $auids = array_filter(array_unique(array_column($tickets_raw, 'assignee_uid')));
+  $projects = $pids  ? entity_load('drop_project', $pids)  : array();
+  $accounts = $auids ? user_load_multiple($auids) : array();
+  $status_options = droptickets_status_options();
+
+  // Index tickets by tid for easy lookup.
+  $tickets_by_tid = array();
+  foreach ($tickets_raw as $t) {
+    $tickets_by_tid[$t->tid] = $t;
+  }
+
+  // Split into unreviewed (first) and reviewed (last).
+  $unreviewed = array();
+  $reviewed   = array();
+  foreach ($tickets_raw as $t) {
+    if (isset($reviewed_set[$t->tid])) {
+      $reviewed[] = $t;
+    }
+    else {
+      $unreviewed[] = $t;
+    }
+  }
+  $ordered = array_merge($unreviewed, $reviewed);
+
+  $token = backdrop_get_token('review-toggle');
+  $rows  = array();
+  foreach ($ordered as $t) {
+    $is_reviewed = isset($reviewed_set[$t->tid]);
+    $project     = isset($projects[$t->pid]) ? $projects[$t->pid] : NULL;
+    $proj_name   = $project ? check_plain($project->name) : '—';
+    $assignee    = (!empty($t->assignee_uid) && isset($accounts[$t->assignee_uid]))
+      ? check_plain($accounts[$t->assignee_uid]->name) : '—';
+    $status_label = isset($status_options[$t->status]) ? $status_options[$t->status] : $t->status;
+
+    $btn_class  = 'droptickets-review-btn' . ($is_reviewed ? ' droptickets-review-btn--done' : '');
+    $btn_title  = $is_reviewed ? t('Reviewed — click to unmark') : t('Mark as reviewed');
+    $toggle_url = url('admin/drop/tickets/review/toggle/' . $t->tid,
+      array('query' => array('token' => $token)));
+    // Both icons are always rendered; CSS toggles which one is visible.
+    $icon_off = icon('circle',       array('attributes' => array('width' => 20, 'height' => 20)));
+    $icon_on  = icon('check-circle', array('attributes' => array('width' => 20, 'height' => 20)));
+    $btn = '<button type="button" class="' . $btn_class . '" '
+      . 'data-url="' . check_plain($toggle_url) . '" '
+      . 'data-tid="' . (int) $t->tid . '" '
+      . 'title="' . $btn_title . '">'
+      . '<span class="droptickets-review-icon-off">' . $icon_off . '</span>'
+      . '<span class="droptickets-review-icon-on">' . $icon_on . '</span>'
+      . '</button>';
+
+    $rows[] = array(
+      'data' => array(
+        array('data' => $btn,   'class' => array('droptickets-review-col-btn')),
+        array('data' => l($t->title, 'admin/drop/tickets/' . $t->tid)),
+        array('data' => $proj_name),
+        array('data' => $assignee),
+        array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($t->status) . '">' . check_plain($status_label) . '</span>'),
+      ),
+      'class' => array(
+        'droptickets-review-row',
+        $is_reviewed ? 'droptickets-review-row--done' : '',
+        drop_base_priority_class($t->priority) ? 'drop-priority-' . drop_base_priority_class($t->priority) : '',
+      ),
+      'data-tid' => (int) $t->tid,
+    );
+  }
+
+  $output['table'] = array(
+    '#theme'      => 'table',
+    '#header'     => array('', t('Title'), t('Project'), t('Assignee'), t('Status')),
+    '#rows'       => $rows,
+    '#attributes' => array('class' => array('droptickets-review-table')),
+    '#empty'      => t('No active tickets.'),
+  );
+
+  return $output;
+}
+
+/**
+ * AJAX callback: toggles the review flag for a ticket.
+ *
+ * Returns JSON: {tid, reviewed}.
+ */
+function droptickets_review_toggle($tid) {
+  global $user;
+
+  backdrop_add_http_header('Content-Type', 'application/json');
+
+  $token = isset($_GET['token']) ? $_GET['token'] : '';
+  if (!backdrop_valid_token($token, 'review-toggle')) {
+    print backdrop_json_encode(array('error' => 'invalid token'));
+    exit();
+  }
+
+  $tid      = (int) $tid;
+  $reviewed = droptickets_review_toggle_state($user->uid, $tid);
+  print backdrop_json_encode(array('tid' => $tid, 'reviewed' => $reviewed));
+  exit();
+}
+
+/**
+ * Page callback: clears all review flags for the current user.
+ */
+function droptickets_review_clear() {
+  global $user;
+
+  if (!backdrop_valid_token($_GET['token'], 'review-clear')) {
+    backdrop_access_denied();
+    return;
+  }
+
+  droptickets_review_clear_all($user->uid);
+  backdrop_set_message(t('Review flags cleared.'));
+  backdrop_goto('admin/drop/tickets/review');
+}
+

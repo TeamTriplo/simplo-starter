@@ -933,3 +933,72 @@ a.droptickets-flag-on svg,
   margin-top: 0.4em;
   font-size: 0.8em;
 }
+
+/* ---------------------------------------------------------------------------
+   Review / triage
+   --------------------------------------------------------------------------- */
+
+.droptickets-review-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9em;
+  color: var(--drop-text-secondary, #666);
+}
+
+.droptickets-review-table {
+  width: 100%;
+}
+
+.droptickets-review-col-btn {
+  width: 2.2rem;
+  text-align: center;
+  padding-right: 0;
+}
+
+.droptickets-review-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.15rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Show circle (off), hide checkmark (on) by default */
+.droptickets-review-icon-off {
+  display: inline-flex;
+  color: #bbb;
+}
+.droptickets-review-icon-on {
+  display: none;
+  color: var(--drop-success, #2e7d32);
+}
+
+.droptickets-review-btn:hover .droptickets-review-icon-off {
+  color: var(--drop-primary, #1565c0);
+}
+
+/* When reviewed: hide circle, show green checkmark */
+.droptickets-review-btn--done .droptickets-review-icon-off {
+  display: none;
+}
+.droptickets-review-btn--done .droptickets-review-icon-on {
+  display: inline-flex;
+}
+
+.droptickets-review-btn--done:hover .droptickets-review-icon-on {
+  color: #c62828;
+}
+
+/* Reviewed rows — clearly de-emphasised */
+tr.droptickets-review-row--done td {
+  opacity: 0.3;
+  text-decoration: line-through;
+}
+
+tr.droptickets-review-row--done .droptickets-review-btn {
+  text-decoration: none;
+  opacity: 1;
+}

@@ -295,6 +295,36 @@ function droptickets_menu() {
     'weight'           => 5,
   );
 
+  // Review / triage page.
+  $items['admin/drop/tickets/review'] = array(
+    'title'            => 'Review',
+    'page callback'    => 'droptickets_review_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 8,
+  );
+  // AJAX toggle — marks/unmarks a ticket as reviewed for the current user.
+  // Path: admin/drop/tickets/review/toggle/{tid}
+  // Indices:  0     1    2       3      4       5
+  $items['admin/drop/tickets/review/toggle/%'] = array(
+    'page callback'    => 'droptickets_review_toggle',
+    'page arguments'   => array(5),
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+  // Clear all review flags for the current user.
+  $items['admin/drop/tickets/review/clear'] = array(
+    'page callback'    => 'droptickets_review_clear',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
   // Reports parent tab.
   $items['admin/drop/tickets/reports'] = array(
     'title'            => 'Reports',
@@ -824,6 +854,59 @@ function droptickets_unread_count($uid) {
     ->countQuery()
     ->execute()
     ->fetchField();
+}
+
+// ---------------------------------------------------------------------------
+// Review / triage helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the set of tids the current user has marked as reviewed.
+ *
+ * @param int $uid
+ *
+ * @return array
+ *   Flat array of integer ticket IDs.
+ */
+function droptickets_review_get($uid) {
+  $all = state_get('droptickets.reviewed', array());
+  return isset($all[$uid]) && is_array($all[$uid]) ? $all[$uid] : array();
+}
+
+/**
+ * Toggles the reviewed state of a ticket for a user.
+ *
+ * @param int $uid
+ * @param int $tid
+ *
+ * @return bool
+ *   TRUE if the ticket is now reviewed, FALSE if it was unmarked.
+ */
+function droptickets_review_toggle_state($uid, $tid) {
+  $all  = state_get('droptickets.reviewed', array());
+  $pins = isset($all[$uid]) && is_array($all[$uid]) ? $all[$uid] : array();
+  if (in_array($tid, $pins)) {
+    $pins = array_values(array_diff($pins, array($tid)));
+    $reviewed = FALSE;
+  }
+  else {
+    $pins[]   = $tid;
+    $reviewed = TRUE;
+  }
+  $all[$uid] = $pins;
+  state_set('droptickets.reviewed', $all);
+  return $reviewed;
+}
+
+/**
+ * Clears all reviewed flags for a user.
+ *
+ * @param int $uid
+ */
+function droptickets_review_clear_all($uid) {
+  $all = state_get('droptickets.reviewed', array());
+  unset($all[$uid]);
+  state_set('droptickets.reviewed', $all);
 }
 
 /**
