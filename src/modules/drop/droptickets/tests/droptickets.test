@@ -887,9 +887,13 @@ class DropTicketsListFilterTest extends DropTicketsTestBase {
   }
 
   /**
-   * Tests that the default "All" view excludes tickets with status "done".
+   * Tests that the default "Active" view includes tickets with status "done".
+   *
+   * Done is a distinct state from Closed — team members can mark tickets Done
+   * while only PMs can Close them. Done tickets remain visible in the default
+   * Active list until a PM closes them.
    */
-  public function testDefaultViewExcludesDone() {
+  public function testDefaultViewIncludesDone() {
     $project = $this->createTestProject();
     $this->createTestTicket($project, array('title' => 'Active ticket', 'status' => 'open'));
     $this->createTestTicket($project, array('title' => 'Done ticket', 'status' => 'done'));
@@ -897,7 +901,7 @@ class DropTicketsListFilterTest extends DropTicketsTestBase {
 
     $this->backdropGet('admin/drop/tickets');
     $this->assertText('Active ticket', 'Open ticket appears in the default list.');
-    $this->assertNoText('Done ticket', 'Done ticket is excluded from the default list.');
+    $this->assertText('Done ticket', 'Done ticket appears in the default Active list.');
   }
 
   /**
