@@ -982,6 +982,42 @@ function droptickets_review_mode_clear($uid) {
 /**
  * Page callback: marks all of the current user's notifications as read.
  */
+// ---------------------------------------------------------------------------
+// Activity log
+// ---------------------------------------------------------------------------
+
+/**
+ * Writes a single event record to the ticket activity log.
+ *
+ * @param int $tid
+ * @param int $uid
+ *   The user who triggered the event.
+ * @param string $message
+ *   Pre-formatted action string, e.g. "changed status from Open to Closed".
+ */
+function droptickets_event_write($tid, $uid, $message) {
+  db_insert('drop_ticket_event')->fields(array(
+    'tid'     => (int) $tid,
+    'uid'     => (int) $uid,
+    'message' => $message,
+    'created' => REQUEST_TIME,
+  ))->execute();
+}
+
+/**
+ * Loads all events for a ticket, ordered by creation time.
+ *
+ * @param int $tid
+ * @return array
+ */
+function droptickets_events_load($tid) {
+  return db_select('drop_ticket_event', 'e')
+    ->fields('e')
+    ->condition('e.tid', $tid)
+    ->orderBy('e.created', 'ASC')
+    ->execute()->fetchAll();
+}
+
 function droptickets_mark_all_read() {
   global $user;
   if (!backdrop_valid_token($_GET['token'], 'mark-all-read')) {
@@ -1027,6 +1063,7 @@ function droptickets_entity_insert($entity, $type) {
   }
   droptickets_track_inline_images($entity);
   droptickets_slack_notify_new_ticket($entity);
+  droptickets_event_write($entity->tid, $entity->uid, t('created this ticket'));
 }
 
 /**
@@ -1380,6 +1417,30 @@ function droptickets_entity_update($entity, $type) {
   $priority_changed = $original && $entity->priority != $original->priority;
   if ($status_changed || $priority_changed) {
     droptickets_notify_watchers($entity->tid, 'updated', $user->uid);
+  }
+
+  // Record activity log events.
+  if ($status_changed) {
+    $status_opts = droptickets_status_options();
+    $old_label = isset($status_opts[$original->status]) ? $status_opts[$original->status] : $original->status;
+    $new_label = isset($status_opts[$entity->status])   ? $status_opts[$entity->status]   : $entity->status;
+    droptickets_event_write($entity->tid, $user->uid, t('changed status from @old to @new', array('@old' => $old_label, '@new' => $new_label)));
+  }
+  if ($assignee_changed) {
+    if (empty($entity->assignee_uid)) {
+      droptickets_event_write($entity->tid, $user->uid, t('removed the assignee'));
+    }
+    else {
+      $assignee = user_load($entity->assignee_uid);
+      $name = $assignee ? check_plain($assignee->name) : t('someone');
+      droptickets_event_write($entity->tid, $user->uid, t('assigned to @name', array('@name' => $name)));
+    }
+  }
+  if ($priority_changed) {
+    $priority_labels = drop_base_priority_labels();
+    $old_label = isset($priority_labels[$original->priority]) ? $priority_labels[$original->priority] : $original->priority;
+    $new_label = isset($priority_labels[$entity->priority])   ? $priority_labels[$entity->priority]   : $entity->priority;
+    droptickets_event_write($entity->tid, $user->uid, t('changed priority from @old to @new', array('@old' => $old_label, '@new' => $new_label)));
   }
 }
 

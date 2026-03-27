@@ -1149,25 +1149,61 @@ function droptickets_ticket_view(DropTicket $ticket) {
   }
   $main .= '</div>';
 
-  // Comments.
+  // Comments + activity events — unified timeline.
   $comment_order = config_get('droptickets.settings', 'comment_order') ?: 'asc';
   $comments = db_select('drop_ticket_comment', 'c')
     ->fields('c')
     ->condition('c.tid', $ticket->tid)
-    ->orderBy('c.created', strtoupper($comment_order))
     ->execute()
     ->fetchAll();
 
-  $comment_uids     = array_unique(array_filter(array_column((array) $comments, 'uid')));
-  $comment_accounts = $comment_uids ? user_load_multiple($comment_uids) : array();
+  $events = droptickets_events_load($ticket->tid);
 
-  $main .= '<h3 class="droptickets-section-heading">' . t('Comments (@count)', array('@count' => count($comments))) . '</h3>';
+  // Merge and sort by timestamp.
+  $timeline = array();
+  foreach ($comments as $c) {
+    $timeline[] = array('type' => 'comment', 'created' => (int) $c->created, 'data' => $c);
+  }
+  foreach ($events as $e) {
+    $timeline[] = array('type' => 'event', 'created' => (int) $e->created, 'data' => $e);
+  }
+  usort($timeline, function($a, $b) use ($comment_order) {
+    return $comment_order === 'desc' ? $b['created'] - $a['created'] : $a['created'] - $b['created'];
+  });
 
-  if ($comments) {
-    foreach ($comments as $comment) {
-      $author    = isset($comment_accounts[$comment->uid]) ? check_plain($comment_accounts[$comment->uid]->name) : t('Unknown');
-      $date      = format_date($comment->created, 'custom', 'M j, Y g:i A');
-      $is_unread = $last_read > 0 && (int) $comment->created > $last_read;
+  // Load all actor accounts in one query.
+  $all_uids = array_unique(array_filter(array_map(function($item) {
+    return (int) $item['data']->uid;
+  }, $timeline)));
+  $all_accounts = $all_uids ? user_load_multiple($all_uids) : array();
+
+  $comment_count = count($comments);
+  $has_events    = !empty($events);
+
+  $main .= '<div class="droptickets-timeline-header">';
+  $main .= '<h3 class="droptickets-section-heading">' . t('Comments (@count)', array('@count' => $comment_count)) . '</h3>';
+  if ($has_events) {
+    $main .= '<button type="button" class="droptickets-toggle-events" data-label-show="' . t('Show activity') . '" data-label-hide="' . t('Hide activity') . '">' . t('Hide activity') . '</button>';
+  }
+  $main .= '</div>';
+
+  foreach ($timeline as $item) {
+    $account = isset($all_accounts[$item['data']->uid]) ? $all_accounts[$item['data']->uid] : NULL;
+    $author  = $account ? check_plain($account->name) : t('Unknown');
+    $date    = format_date($item['created'], 'custom', 'M j, Y g:i A');
+
+    if ($item['type'] === 'event') {
+      $main .= '<div class="droptickets-event">';
+      $main .= '<span class="droptickets-event-dot"></span>';
+      $main .= '<span class="droptickets-event-text">';
+      $main .= '<strong>' . $author . '</strong> ' . check_plain($item['data']->message);
+      $main .= '</span>';
+      $main .= '<span class="droptickets-event-date">' . $date . '</span>';
+      $main .= '</div>';
+    }
+    else {
+      $comment = $item['data'];
+      $is_unread = $last_read > 0 && $item['created'] > $last_read;
       $comment_classes = 'droptickets-comment' . ($is_unread ? ' droptickets-comment--unread' : '');
       $avatar_letter = backdrop_strtoupper(backdrop_substr($author, 0, 1));
       $avatar_color  = (int) $comment->uid % 6;

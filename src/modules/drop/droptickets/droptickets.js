@@ -1,6 +1,6 @@
 /**
  * @file
- * DropTickets — datepicker, body toggle, emoji reactions, inline status.
+ * DropTickets — datepicker, body toggle, emoji reactions, inline status, activity log.
  */
 (function ($) {
   Backdrop.behaviors.dropticketsDatpicker = {
@@ -182,4 +182,27 @@
     }
   };
 
+}(jQuery));
+
+(function ($) {
+  /**
+   * Toggle activity events in the ticket timeline.
+   */
+  Backdrop.behaviors.dropticketsActivityToggle = {
+    attach: function (context, settings) {
+      $('.droptickets-toggle-events', context).once('activity-toggle').on('click', function () {
+        var $btn      = $(this);
+        var $timeline = $btn.closest('.droptickets-view-main');
+        var hidden    = $timeline.hasClass('droptickets-events-hidden');
+        if (hidden) {
+          $timeline.removeClass('droptickets-events-hidden');
+          $btn.text($btn.data('label-hide'));
+        }
+        else {
+          $timeline.addClass('droptickets-events-hidden');
+          $btn.text($btn.data('label-show'));
+        }
+      });
+    }
+  };
 }(jQuery));

@@ -357,6 +357,77 @@
   color: #555;
 }
 
+/* Timeline header row: heading + toggle button */
+.droptickets-timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e0ddd8;
+}
+
+.droptickets-timeline-header .droptickets-section-heading {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  flex: 1;
+}
+
+.droptickets-toggle-events {
+  font-size: 0.75em;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.droptickets-toggle-events:hover {
+  color: #333;
+}
+
+/* Activity event items */
+.droptickets-event {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.85em;
+  color: #666;
+  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
+}
+
+.droptickets-event-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ccc;
+  flex-shrink: 0;
+  position: relative;
+  top: -1px;
+}
+
+.droptickets-event-text {
+  flex: 1;
+}
+
+.droptickets-event-text strong {
+  color: #444;
+}
+
+.droptickets-event-date {
+  color: #aaa;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+/* Hidden state when events are toggled off */
+.droptickets-events-hidden .droptickets-event {
+  display: none;
+}
+
 @media (max-width: 700px) {
   .droptickets-view-layout {
     flex-direction: column;

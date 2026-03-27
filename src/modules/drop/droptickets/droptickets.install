@@ -383,7 +383,92 @@ function droptickets_schema() {
     ),
   );
 
+  $schema['drop_ticket_event'] = array(
+    'description' => 'Activity log for ticket events (status changes, assignments, etc.).',
+    'fields' => array(
+      'eid' => array(
+        'type'     => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'tid' => array(
+        'type'     => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default'  => 0,
+      ),
+      'uid' => array(
+        'type'     => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default'  => 0,
+        'description' => 'User who triggered the event.',
+      ),
+      'message' => array(
+        'type'     => 'varchar',
+        'length'   => 512,
+        'not null' => TRUE,
+        'default'  => '',
+        'description' => 'Pre-formatted action string, e.g. "changed status from Open to Closed".',
+      ),
+      'created' => array(
+        'type'     => 'int',
+        'not null' => TRUE,
+        'default'  => 0,
+      ),
+    ),
+    'primary key' => array('eid'),
+    'indexes' => array(
+      'tid' => array('tid'),
+    ),
+  );
+
   return $schema;
+}
+
+/**
+ * Add drop_ticket_event table for activity log.
+ */
+function droptickets_update_1023() {
+  if (!db_table_exists('drop_ticket_event')) {
+    db_create_table('drop_ticket_event', array(
+      'description' => 'Activity log for ticket events (status changes, assignments, etc.).',
+      'fields' => array(
+        'eid' => array(
+          'type'     => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'tid' => array(
+          'type'     => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default'  => 0,
+        ),
+        'uid' => array(
+          'type'     => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default'  => 0,
+        ),
+        'message' => array(
+          'type'     => 'varchar',
+          'length'   => 512,
+          'not null' => TRUE,
+          'default'  => '',
+        ),
+        'created' => array(
+          'type'     => 'int',
+          'not null' => TRUE,
+          'default'  => 0,
+        ),
+      ),
+      'primary key' => array('eid'),
+      'indexes' => array(
+        'tid' => array('tid'),
+      ),
+    ));
+  }
 }
 
 /**
