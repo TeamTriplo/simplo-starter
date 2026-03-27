@@ -320,8 +320,13 @@ function droptickets_member_page($account) {
     ),
   );
 
-  $output['back'] = array(
-    '#markup' => '<p>' . l(t('← Back to team'), 'admin/drop/team') . '</p>',
+  $kanban_url = url('admin/drop/tickets/kanban', array('query' => array('assignee' => $account->uid)));
+  $output['actions'] = array(
+    '#markup' => '<p>'
+      . l(t('← Back to team'), 'admin/drop/team')
+      . ' &nbsp; '
+      . l(t('View Kanban'), $kanban_url, array('html' => FALSE))
+      . '</p>',
     '#weight' => -10,
   );
 
@@ -480,6 +485,9 @@ function droptickets_kanban_page() {
   // --- Project filter ---
   $pid_filter = (!empty($_GET['pid']) && is_numeric($_GET['pid'])) ? (int) $_GET['pid'] : 0;
 
+  // Assignee filter.
+  $assignee_filter = (!empty($_GET['assignee']) && is_numeric($_GET['assignee'])) ? (int) $_GET['assignee'] : 0;
+
   // Top-level only toggle.
   $toplevel_only = !empty($_GET['toplevel']) ? 1 : 0;
 
@@ -489,24 +497,58 @@ function droptickets_kanban_page() {
     ->orderBy('p.name')
     ->execute()->fetchAllKeyed();
 
+  // Load team members who have tickets assigned to them.
+  $assignee_uids = db_select('drop_ticket', 't')
+    ->fields('t', array('assignee_uid'))
+    ->condition('t.assignee_mode', 'user')
+    ->isNotNull('t.assignee_uid')
+    ->distinct()
+    ->execute()->fetchCol();
+  $kanban_accounts = $assignee_uids ? user_load_multiple($assignee_uids) : array();
+  uasort($kanban_accounts, function($a, $b) { return strcasecmp($a->name, $b->name); });
+
   $opts = '<option value="0"' . (!$pid_filter ? ' selected' : '') . '>' . t('— All projects —') . '</option>';
   foreach ($all_projects as $pid => $name) {
     $sel   = ($pid_filter === (int) $pid) ? ' selected' : '';
     $opts .= '<option value="' . (int) $pid . '"' . $sel . '>' . check_plain($name) . '</option>';
   }
-  // Preserve board and top-level selections when changing project filter.
-  $board_hidden    = $board_filter ? '<input type="hidden" name="board" value="' . (int) $board_filter . '">' : '';
-  $toplevel_hidden = $toplevel_only ? '<input type="hidden" name="toplevel" value="1">' : '';
-  $toplevel_check  = '<label class="droptickets-kanban-toplevel-toggle">'
+
+  $assignee_opts = '<option value="0"' . (!$assignee_filter ? ' selected' : '') . '>' . t('— All people —') . '</option>';
+  foreach ($kanban_accounts as $account) {
+    $sel = ($assignee_filter === (int) $account->uid) ? ' selected' : '';
+    $assignee_opts .= '<option value="' . (int) $account->uid . '"' . $sel . '>' . check_plain($account->name) . '</option>';
+  }
+
+  // Preserve board selection when changing filters.
+  $board_hidden = $board_filter ? '<input type="hidden" name="board" value="' . (int) $board_filter . '">' : '';
+  $toplevel_check = '<label class="droptickets-kanban-toplevel-toggle">'
     . '<input type="checkbox" name="toplevel" value="1" onchange="this.form.submit()"' . ($toplevel_only ? ' checked' : '') . '>'
     . t('Top-level only')
     . '</label>';
-  $filter_html  = '<form class="droptickets-kanban-filter" method="get" action="' . url('admin/drop/tickets/kanban') . '">'
+
+  // "My Kanban" quick link — pill that pre-filters to the current user.
+  global $user;
+  $my_query = array('assignee' => $user->uid);
+  if ($board_filter) { $my_query['board'] = $board_filter; }
+  $my_kanban_active = ($assignee_filter === (int) $user->uid);
+  $my_kanban_link = '<a href="' . url('admin/drop/tickets/kanban', array('query' => $my_query)) . '"'
+    . ' class="droptickets-board-pill' . ($my_kanban_active ? ' droptickets-board-pill--active' : '') . '"'
+    . ' title="' . t('Show only my tickets') . '">'
+    . icon('user', array('attributes' => array('width' => 13, 'height' => 13)))
+    . ' ' . t('My Kanban')
+    . '</a>';
+
+  $filter_form = '<form class="droptickets-filter-form" method="get" action="' . url('admin/drop/tickets/kanban') . '">'
     . $board_hidden
-    . '<label>' . t('Project:') . ' <select name="pid" onchange="this.form.submit()">' . $opts . '</select></label>'
+    . '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $opts . '</select>'
+    . '<select name="assignee" class="droptickets-filter-select" onchange="this.form.submit()">' . $assignee_opts . '</select>'
     . $toplevel_check
     . '</form>';
-  $output['filter'] = array('#markup' => $filter_html, '#weight' => -10);
+
+  $output['filter'] = array(
+    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $my_kanban_link . '</div>',
+    '#weight' => -10,
+  );
 
   // --- Base query ---
   $query = db_select('drop_ticket', 't')
@@ -518,6 +560,10 @@ function droptickets_kanban_page() {
 
   if ($pid_filter) {
     $query->condition('t.pid', $pid_filter);
+  }
+  if ($assignee_filter) {
+    $query->condition('t.assignee_uid', $assignee_filter);
+    $query->condition('t.assignee_mode', 'user');
   }
   if ($toplevel_only) {
     $query->condition(

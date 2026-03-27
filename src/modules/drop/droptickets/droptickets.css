@@ -721,13 +721,6 @@ a.droptickets-flag-on svg,
    Kanban board
    --------------------------------------------------------------------------- */
 
-.droptickets-kanban-filter {
-  margin-bottom: 1.25rem;
-}
-
-.droptickets-kanban-filter select {
-  margin-left: 0.4rem;
-}
 
 .droptickets-kanban {
   display: flex;
