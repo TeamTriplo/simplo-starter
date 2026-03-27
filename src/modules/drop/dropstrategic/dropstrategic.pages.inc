@@ -177,7 +177,7 @@ function dropstrategic_goal_view(DropGoalStrategic $goal) {
 
   // --- Progress bar ---
   $token    = backdrop_get_token('kr-toggle');
-  $progress = (int) $goal->progress;
+  $progress = dropstrategic_calculate_progress($key_results);
   $output['progress'] = array(
     '#markup' => dropstrategic_render_progress_bar($progress),
     '#weight' => -5,
@@ -295,11 +295,10 @@ function dropstrategic_render_goal_card($goal, array $accounts, $show_private = 
   $type_label  = isset($type_opts[$goal->type]) ? $type_opts[$goal->type] : $goal->type;
   $status_label = isset($status_opts[$goal->status]) ? $status_opts[$goal->status] : $goal->status;
   $owner       = isset($accounts[$goal->owner_uid]) ? $accounts[$goal->owner_uid] : NULL;
-  $progress    = (int) $goal->progress;
-
   $key_results = dropstrategic_key_results_load($goal->gid);
   $kr_done     = count(array_filter($key_results, function($kr) { return $kr->done; }));
   $kr_total    = count($key_results);
+  $progress    = dropstrategic_calculate_progress($key_results);
 
   $html  = '<div class="dropstrategic-card dropstrategic-card--' . check_plain($goal->status) . '">';
 
@@ -354,6 +353,36 @@ function dropstrategic_render_goal_card($goal, array $accounts, $show_private = 
 
   $html .= '</div>'; // .dropstrategic-card
   return $html;
+}
+
+/**
+ * Calculates overall progress percentage from an array of key result objects.
+ *
+ * For KRs with a numeric target, progress = min(100, current/target * 100).
+ * For checkbox-only KRs, progress = 100 if done, 0 if not.
+ * Returns the average across all KRs, or 0 if there are none.
+ *
+ * @param array $key_results
+ *   Array of key result objects from dropstrategic_key_results_load().
+ * @return int
+ *   Progress percentage 0–100.
+ */
+function dropstrategic_calculate_progress(array $key_results) {
+  if (empty($key_results)) {
+    return 0;
+  }
+  $total = 0;
+  foreach ($key_results as $kr) {
+    if (!empty($kr->target) && is_numeric($kr->target) && (float) $kr->target > 0) {
+      $current = !empty($kr->current_value) && is_numeric($kr->current_value)
+        ? (float) $kr->current_value : 0;
+      $total += min(100, round($current / (float) $kr->target * 100));
+    }
+    else {
+      $total += $kr->done ? 100 : 0;
+    }
+  }
+  return (int) round($total / count($key_results));
 }
 
 /**

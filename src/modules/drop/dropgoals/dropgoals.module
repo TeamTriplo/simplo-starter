@@ -145,7 +145,7 @@ function dropgoals_menu() {
 
   // Daily dashboard.
   $items['admin/drop/goals'] = array(
-    'title'            => 'Goals',
+    'title'            => 'Personal Goals',
     'page callback'    => 'dropgoals_dashboard',
     'access callback'  => 'user_access',
     'access arguments' => array('access goals'),

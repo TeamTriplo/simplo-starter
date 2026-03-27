@@ -67,7 +67,7 @@ function dropstrategic_menu() {
   $items = array();
 
   $items['admin/drop/strategic'] = array(
-    'title'            => 'Goals',
+    'title'            => 'Strategic Goals',
     'page callback'    => 'dropstrategic_dashboard_page',
     'access arguments' => array('view strategic goals'),
     'file'             => 'dropstrategic.pages.inc',
