@@ -125,6 +125,13 @@ function droptickets_schema() {
         'default'     => 0,
         'description' => 'Parent ticket ID, or 0 for top-level tickets.',
       ),
+      'goal_id' => array(
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+        'description' => 'Linked strategic goal ID (drop_strategic_goal.gid), or 0.',
+      ),
     ),
     'primary key' => array('tid'),
     'unique keys' => array(
@@ -137,6 +144,7 @@ function droptickets_schema() {
       'assignee_uid' => array('assignee_uid'),
       'uid'          => array('uid'),
       'parent_tid'   => array('parent_tid'),
+      'goal_id'      => array('goal_id'),
     ),
   );
 
@@ -717,6 +725,22 @@ function droptickets_update_1008() {
 /**
  * Add parent_tid column to drop_ticket for one-level parent/child hierarchy.
  */
+/**
+ * Add goal_id column to drop_ticket to link tickets to strategic goals.
+ */
+function droptickets_update_1021() {
+  if (!db_field_exists('drop_ticket', 'goal_id')) {
+    db_add_field('drop_ticket', 'goal_id', array(
+      'type'        => 'int',
+      'unsigned'    => TRUE,
+      'not null'    => TRUE,
+      'default'     => 0,
+      'description' => 'Linked strategic goal ID, or 0.',
+    ));
+    db_add_index('drop_ticket', 'goal_id', array('goal_id'));
+  }
+}
+
 function droptickets_update_1020() {
   if (!db_field_exists('drop_ticket', 'parent_tid')) {
     db_add_field('drop_ticket', 'parent_tid', array(

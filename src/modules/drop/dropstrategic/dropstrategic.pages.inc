@@ -224,6 +224,45 @@ function dropstrategic_goal_view(DropGoalStrategic $goal) {
     $output['key_results'] = array('#markup' => $kr_html, '#weight' => 5);
   }
 
+  // --- Linked tickets ---
+  if (module_exists('droptickets')) {
+    $tickets = db_select('drop_ticket', 't')
+      ->fields('t', array('tid', 'title', 'status', 'pid', 'ticket_number'))
+      ->condition('t.goal_id', $goal->gid)
+      ->isNull('t.import_id')
+      ->orderBy('t.status')
+      ->orderBy('t.priority', 'DESC')
+      ->execute()->fetchAll();
+
+    if (!empty($tickets)) {
+      $pids     = array_unique(array_filter(array_column((array) $tickets, 'pid')));
+      $projects = $pids ? entity_load('drop_project', $pids) : array();
+      $status_options = droptickets_status_options();
+
+      $done_statuses = array('done', 'closed');
+      $open  = array_filter($tickets, function($t) use ($done_statuses) { return !in_array($t->status, $done_statuses); });
+      $done  = array_filter($tickets, function($t) use ($done_statuses) { return in_array($t->status, $done_statuses); });
+
+      $t_html  = '<div class="dropstrategic-linked-tickets">';
+      $t_html .= '<h3 class="dropstrategic-kr-heading">' . t('Linked tickets') . ' <span class="dropstrategic-ticket-count">' . count($open) . '/' . count($tickets) . ' ' . t('open') . '</span></h3>';
+      $t_html .= '<ul class="dropstrategic-ticket-list">';
+      foreach (array_merge(array_values($open), array_values($done)) as $ticket) {
+        $project = isset($projects[$ticket->pid]) ? $projects[$ticket->pid] : NULL;
+        $label   = droptickets_ticket_label($ticket, $project);
+        $status_label = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
+        $is_done = in_array($ticket->status, $done_statuses);
+        $t_html .= '<li class="dropstrategic-ticket-item' . ($is_done ? ' dropstrategic-ticket-item--done' : '') . '">';
+        $t_html .= '<span class="droptickets-ticket-id">' . check_plain($label) . '</span> ';
+        $t_html .= l($ticket->title, 'admin/drop/tickets/' . $ticket->tid);
+        $t_html .= ' <span class="dropstrategic-ticket-status droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>';
+        $t_html .= '</li>';
+      }
+      $t_html .= '</ul>';
+      $t_html .= '</div>';
+      $output['linked_tickets'] = array('#markup' => $t_html, '#weight' => 8);
+    }
+  }
+
   // --- Private notes (owner only) ---
   $is_owner = (int) $goal->owner_uid === (int) $user->uid;
   if (($is_owner || user_access('administer dropstrategic')) && !empty($goal->private_notes)) {

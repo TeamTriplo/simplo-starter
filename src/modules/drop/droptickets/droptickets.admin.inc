@@ -279,6 +279,28 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#weight'            => -12,
   );
 
+  // Goal link — only shown when dropstrategic is enabled.
+  if (module_exists('dropstrategic')) {
+    $goal_options = array(0 => t('— No goal —'));
+    $goals = db_select('drop_strategic_goal', 'g')
+      ->fields('g', array('gid', 'title', 'type'))
+      ->condition('g.status', 'active')
+      ->orderBy('g.type')
+      ->orderBy('g.title')
+      ->execute()->fetchAll();
+    foreach ($goals as $g) {
+      $type_label = $g->type === 'team' ? t('Team') : t('Personal');
+      $goal_options[$g->gid] = '[' . $type_label . '] ' . $g->title;
+    }
+    $form['goal_id'] = array(
+      '#type'          => 'select',
+      '#title'         => t('Goal'),
+      '#options'       => $goal_options,
+      '#default_value' => ($is_edit && !empty($ticket->goal_id)) ? $ticket->goal_id : 0,
+      '#description'   => t('Link this ticket to a strategic goal.'),
+    );
+  }
+
   // External link closes the sidebar and layout wrapper.
   $form['external_link'] = array(
     '#type'          => 'textfield',
@@ -429,6 +451,7 @@ function droptickets_ticket_form_submit($form, &$form_state) {
   $ticket->external_link = $external_link !== '' ? $external_link : NULL;
 
   $ticket->parent_tid = isset($values['parent_tid_resolved']) ? (int) $values['parent_tid_resolved'] : 0;
+  $ticket->goal_id    = isset($values['goal_id']) ? (int) $values['goal_id'] : 0;
 
   if (isset($values['status'])) {
     $ticket->status = $values['status'];

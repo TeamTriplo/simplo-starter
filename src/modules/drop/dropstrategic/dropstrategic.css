@@ -341,6 +341,50 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Linked tickets
+   --------------------------------------------------------------------------- */
+
+.dropstrategic-linked-tickets {
+  margin-top: 1.25rem;
+}
+
+.dropstrategic-ticket-count {
+  font-weight: 400;
+  color: var(--drop-text-secondary, #888);
+  font-size: 0.85em;
+  margin-left: 0.4em;
+}
+
+.dropstrategic-ticket-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropstrategic-ticket-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--drop-border, #f0f0f0);
+  font-size: 0.9em;
+}
+
+.dropstrategic-ticket-item:last-child {
+  border-bottom: none;
+}
+
+.dropstrategic-ticket-item--done a {
+  text-decoration: line-through;
+  color: var(--drop-text-secondary, #aaa);
+}
+
+.dropstrategic-ticket-status {
+  margin-left: auto;
+  font-size: 0.8em;
+}
+
+/* ---------------------------------------------------------------------------
    Private notes
    --------------------------------------------------------------------------- */
 

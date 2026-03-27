@@ -1006,7 +1006,99 @@ function droptickets_entity_insert($entity, $type) {
   if (!empty($entity->assignee_uid)) {
     droptickets_watcher_add($entity->tid, $entity->assignee_uid);
   }
+  droptickets_track_inline_images($entity);
   droptickets_slack_notify_new_ticket($entity);
+}
+
+/**
+ * Implements hook_entity_delete().
+ *
+ * Removes file usage records when a ticket is deleted.
+ */
+function droptickets_entity_delete($entity, $type) {
+  if ($type !== 'drop_ticket') {
+    return;
+  }
+  droptickets_untrack_inline_images($entity->tid);
+}
+
+/**
+ * Registers file usage for all inline images embedded in a ticket body.
+ *
+ * Converts absolute public file URLs to stream wrapper URIs, looks up the
+ * corresponding fids, marks each file permanent, and adds a usage record so
+ * cron will not delete them.
+ *
+ * @param object $entity
+ *   The drop_ticket entity (must have a valid tid).
+ */
+function droptickets_track_inline_images($entity) {
+  if (empty($entity->body) || empty($entity->tid)) {
+    return;
+  }
+
+  // Build the public files URL prefix (e.g. "https://example.com/files/").
+  $public_url = rtrim(file_create_url('public://'), '/') . '/';
+
+  // Extract all img src values from the body HTML.
+  preg_match_all('/<img[^>]+src="([^"]+)"/i', $entity->body, $matches);
+  $src_list = !empty($matches[1]) ? $matches[1] : array();
+
+  $uris = array();
+  foreach ($src_list as $src) {
+    if (strpos($src, $public_url) === 0) {
+      $uris[] = 'public://' . substr($src, strlen($public_url));
+    }
+  }
+
+  if (empty($uris)) {
+    return;
+  }
+
+  $fids = db_select('file_managed', 'f')
+    ->fields('f', array('fid'))
+    ->condition('f.uri', $uris, 'IN')
+    ->execute()
+    ->fetchCol();
+
+  foreach ($fids as $fid) {
+    $file = file_load($fid);
+    if (!$file) {
+      continue;
+    }
+    // Ensure the file is permanent so cron won't garbage-collect it.
+    if ($file->status != FILE_STATUS_PERMANENT) {
+      $file->status = FILE_STATUS_PERMANENT;
+      file_save($file);
+    }
+    file_usage_add($file, 'droptickets', 'drop_ticket', $entity->tid);
+  }
+}
+
+/**
+ * Removes all inline-image file usage records for the given ticket.
+ *
+ * Called before re-tracking on update, and on delete. Decrementing usage via
+ * file_usage_delete() allows Backdrop's cron to clean up unreferenced files.
+ *
+ * @param int $tid
+ *   The drop_ticket entity ID.
+ */
+function droptickets_untrack_inline_images($tid) {
+  $fids = db_select('file_usage', 'fu')
+    ->fields('fu', array('fid'))
+    ->condition('fu.module', 'droptickets')
+    ->condition('fu.type', 'drop_ticket')
+    ->condition('fu.id', $tid)
+    ->execute()
+    ->fetchCol();
+
+  foreach ($fids as $fid) {
+    $file = file_load($fid);
+    if ($file) {
+      file_usage_delete($file, 'droptickets', 'drop_ticket', $tid);
+    }
+  }
 }
 
 /**
@@ -1132,6 +1224,9 @@ function droptickets_entity_update($entity, $type) {
   if ($type !== 'drop_ticket') {
     return;
   }
+  // Refresh file usage tracking whenever the body is saved.
+  droptickets_untrack_inline_images($entity->tid);
+  droptickets_track_inline_images($entity);
   $original = isset($entity->original) ? $entity->original : NULL;
 
   // Assignee changed — auto-watch new assignee and notify them.
