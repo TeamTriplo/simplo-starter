@@ -1011,6 +1011,28 @@ function droptickets_entity_insert($entity, $type) {
 }
 
 /**
+ * Implements hook_file_presave().
+ *
+ * Renames clipboard-pasted inline images with a timestamp suffix so that
+ * repeated pastes of "image.png" never collide and overwrite each other.
+ */
+function droptickets_file_presave($file) {
+  // Only act on brand-new files landing in inline-images.
+  if (!empty($file->fid) || strpos($file->uri, 'public://inline-images/') !== 0) {
+    return;
+  }
+  $info = pathinfo($file->filename);
+  $base = $info['filename'];
+  $ext  = isset($info['extension']) ? '.' . $info['extension'] : '';
+  $new_filename = $base . '-' . REQUEST_TIME . $ext;
+  $new_uri = 'public://inline-images/' . $new_filename;
+  if (file_unmanaged_move($file->uri, $new_uri)) {
+    $file->uri      = $new_uri;
+    $file->filename = $new_filename;
+  }
+}
+
+/**
  * Implements hook_entity_delete().
  *
  * Removes file usage records when a ticket is deleted.
