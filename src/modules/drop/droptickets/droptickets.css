@@ -464,6 +464,22 @@
   margin-bottom: 0;
 }
 
+/* Image preview panel shown below the comment textarea while composing */
+.droptickets-comment-img-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.droptickets-comment-img-preview img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  object-fit: contain;
+}
+
 /* ---------------------------------------------------------------------------
    Related tickets
    --------------------------------------------------------------------------- */

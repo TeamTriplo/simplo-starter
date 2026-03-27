@@ -504,6 +504,15 @@ function droptickets_menu() {
     'type'             => MENU_CALLBACK,
   );
 
+  // Inline image upload for comment textarea paste (AJAX).
+  $items['admin/drop/tickets/upload-image'] = array(
+    'page callback'    => 'droptickets_comment_image_upload',
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
   // Emoji reaction toggle (AJAX).
   $items['admin/drop/tickets/react/%/%'] = array(
     'page callback'    => 'droptickets_react_ajax',
@@ -1000,6 +1009,10 @@ function droptickets_mark_read_for_ticket($tid, $uid) {
  */
 function droptickets_entity_insert($entity, $type) {
   global $user;
+  if ($type === 'drop_ticket_comment') {
+    droptickets_track_comment_inline_images($entity);
+    return;
+  }
   if ($type !== 'drop_ticket') {
     return;
   }
@@ -1038,6 +1051,10 @@ function droptickets_file_presave($file) {
  * Removes file usage records when a ticket is deleted.
  */
 function droptickets_entity_delete($entity, $type) {
+  if ($type === 'drop_ticket_comment') {
+    droptickets_untrack_comment_inline_images($entity->tcid);
+    return;
+  }
   if ($type !== 'drop_ticket') {
     return;
   }
@@ -1126,6 +1143,80 @@ function droptickets_untrack_inline_images($tid) {
     $file = file_load($fid);
     if ($file) {
       file_usage_delete($file, 'droptickets', 'drop_ticket', $tid);
+    }
+  }
+}
+
+/**
+ * Registers file usage for inline images embedded in a comment body.
+ *
+ * @param object $comment
+ *   The drop_ticket_comment entity (must have a valid tcid).
+ */
+function droptickets_track_comment_inline_images($comment) {
+  if (empty($comment->body) || empty($comment->tcid)) {
+    return;
+  }
+
+  $public_url  = rtrim(file_create_url('public://'), '/') . '/';
+  $wrapper     = file_stream_wrapper_get_instance_by_scheme('public');
+  $public_path = '/' . rtrim($wrapper->getDirectoryPath(), '/') . '/';
+
+  preg_match_all('/<img[^>]+src="([^"]+)"/i', $comment->body, $matches);
+  $src_list = !empty($matches[1]) ? $matches[1] : array();
+
+  $uris = array();
+  foreach ($src_list as $src) {
+    if (strpos($src, $public_url) === 0) {
+      $uris[] = 'public://' . substr($src, strlen($public_url));
+    }
+    elseif (strpos($src, $public_path) === 0) {
+      $uris[] = 'public://' . substr($src, strlen($public_path));
+    }
+  }
+
+  if (empty($uris)) {
+    return;
+  }
+
+  $fids = db_select('file_managed', 'f')
+    ->fields('f', array('fid'))
+    ->condition('f.uri', $uris, 'IN')
+    ->execute()
+    ->fetchCol();
+
+  foreach ($fids as $fid) {
+    $file = file_load($fid);
+    if (!$file) {
+      continue;
+    }
+    if ($file->status != FILE_STATUS_PERMANENT) {
+      $file->status = FILE_STATUS_PERMANENT;
+      file_save($file);
+    }
+    file_usage_add($file, 'droptickets', 'drop_ticket_comment', $comment->tcid);
+  }
+}
+
+/**
+ * Removes all inline-image file usage records for the given comment.
+ *
+ * @param int $tcid
+ *   The drop_ticket_comment entity ID.
+ */
+function droptickets_untrack_comment_inline_images($tcid) {
+  $fids = db_select('file_usage', 'fu')
+    ->fields('fu', array('fid'))
+    ->condition('fu.module', 'droptickets')
+    ->condition('fu.type', 'drop_ticket_comment')
+    ->condition('fu.id', $tcid)
+    ->execute()
+    ->fetchCol();
+
+  foreach ($fids as $fid) {
+    $file = file_load($fid);
+    if ($file) {
+      file_usage_delete($file, 'droptickets', 'drop_ticket_comment', $tcid);
     }
   }
 }
@@ -1250,6 +1341,11 @@ function droptickets_slack_notify_assignment($ticket, $original) {
  */
 function droptickets_entity_update($entity, $type) {
   global $user;
+  if ($type === 'drop_ticket_comment') {
+    droptickets_untrack_comment_inline_images($entity->tcid);
+    droptickets_track_comment_inline_images($entity);
+    return;
+  }
   if ($type !== 'drop_ticket') {
     return;
   }

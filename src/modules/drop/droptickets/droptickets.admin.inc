@@ -717,6 +717,16 @@ function droptickets_comment_form($form, &$form_state, DropTicket $ticket, $comm
     $form['#attached']['js'][]  = backdrop_get_path('module', 'droptickets') . '/droptickets.mentions.js';
   }
 
+  // Attach image paste handler.
+  $form['#attached']['js'][] = backdrop_get_path('module', 'droptickets') . '/droptickets.comment-paste.js';
+  $form['#attached']['js'][] = array(
+    'data' => array('droptickets' => array(
+      'uploadUrl'   => url('admin/drop/tickets/upload-image'),
+      'uploadToken' => backdrop_get_token('droptickets_image_upload'),
+    )),
+    'type' => 'setting',
+  );
+
   if ($is_edit) {
     $form['tcid'] = array('#type' => 'hidden', '#value' => $comment->tcid);
   }

@@ -1266,6 +1266,66 @@ function droptickets_ticket_view(DropTicket $ticket) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Page callback: accept a pasted image upload from the comment textarea.
+ *
+ * Expects a multipart POST with a 'file' field and a CSRF token.
+ * Returns JSON: { url: '...' } or { error: '...' }.
+ */
+function droptickets_comment_image_upload() {
+  backdrop_add_http_header('Content-Type', 'application/json');
+
+  if (!backdrop_valid_token(isset($_POST['token']) ? $_POST['token'] : '', 'droptickets_image_upload')) {
+    print backdrop_json_encode(array('error' => 'Invalid token'));
+    return;
+  }
+
+  if (empty($_FILES['file']['tmp_name']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+    $err = isset($_FILES['file']['error']) ? $_FILES['file']['error'] : 'missing';
+    print backdrop_json_encode(array('error' => 'No file received', 'code' => $err));
+    return;
+  }
+
+  // Validate MIME type — only allow images.
+  $mime = isset($_FILES['file']['type']) ? $_FILES['file']['type'] : '';
+  if (strpos($mime, 'image/') !== 0) {
+    // Fallback: check with getimagesize if MIME is blank/wrong.
+    if (!@getimagesize($_FILES['file']['tmp_name'])) {
+      print backdrop_json_encode(array('error' => 'Not a valid image'));
+      return;
+    }
+  }
+
+  $destination = 'public://inline-images/';
+  file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
+
+  // Build a managed file directly without using file_save_upload() which
+  // requires a form context.
+  $original_name = isset($_FILES['file']['name']) ? basename($_FILES['file']['name']) : 'image.png';
+  $uri = file_destination($destination . $original_name, FILE_EXISTS_RENAME);
+
+  if (!move_uploaded_file($_FILES['file']['tmp_name'], backdrop_realpath($uri))) {
+    print backdrop_json_encode(array('error' => 'Move failed'));
+    return;
+  }
+
+  // Register the file in file_managed so hook_file_presave fires (timestamp rename).
+  global $user;
+  $file = new File();
+  $file->uid      = $user->uid;
+  $file->filename = basename($uri);
+  $file->uri      = $uri;
+  $file->filemime = file_get_mimetype($uri);
+  $file->filesize = filesize(backdrop_realpath($uri));
+  $file->status   = 0; // Temporary — file usage tracking on comment save makes it permanent.
+  $file->timestamp = REQUEST_TIME;
+  file_save($file);
+
+  print backdrop_json_encode(array('url' => file_create_url($file->uri)));
+}
+
+// ---------------------------------------------------------------------------
+
+/**
  * Renders the reaction button bar for a ticket or comment.
  *
  * @param int $tid
