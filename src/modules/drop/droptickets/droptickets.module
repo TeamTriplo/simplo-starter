@@ -91,9 +91,13 @@ function droptickets_permission() {
       'title'       => t('Flag DropTickets'),
       'description' => t('Flag and unflag tickets as priority (Project Manager action).'),
     ),
+    'done droptickets' => array(
+      'title'       => t('Mark DropTickets as Done'),
+      'description' => t('Set a ticket status to Done, indicating work is complete. Can be granted to all team members.'),
+    ),
     'close droptickets' => array(
       'title'       => t('Close DropTickets'),
-      'description' => t('Mark tickets as done. Intended for Project Managers only.'),
+      'description' => t('Permanently close tickets (final PM step after Done). Intended for Project Managers only.'),
     ),
     'delete droptickets' => array(
       'title'       => t('Delete DropTickets'),
@@ -137,6 +141,17 @@ function droptickets_ticket_access($op, $ticket = NULL, $account = NULL) {
 /**
  * Access callback for closing (marking done) a ticket.
  */
+function droptickets_done_access($ticket = NULL, $account = NULL) {
+  global $user;
+  if (!$account) {
+    $account = $user;
+  }
+  // Close permission implies done permission.
+  return user_access('administer droptickets', $account)
+    || user_access('done droptickets', $account)
+    || user_access('close droptickets', $account);
+}
+
 function droptickets_close_access($ticket = NULL, $account = NULL) {
   global $user;
   if (!$account) {
@@ -1465,10 +1480,10 @@ function droptickets_status_options() {
 }
 
 /**
- * Returns statuses considered "active" (not done, not iced).
+ * Returns statuses considered "active" — everything except Icebox and Closed.
  */
 function droptickets_active_statuses() {
-  return array('open', 'todo', 'in_progress', 'in_review', 'blocked');
+  return array('open', 'todo', 'in_progress', 'in_review', 'blocked', 'done');
 }
 
 /**

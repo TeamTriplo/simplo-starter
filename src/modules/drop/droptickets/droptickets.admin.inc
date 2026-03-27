@@ -177,15 +177,17 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
 
   if ($is_edit) {
     $status_options = droptickets_status_options();
-    if (!user_access('close droptickets') && !user_access('administer site configuration')) {
+    if (!droptickets_done_access($ticket)) {
       unset($status_options['done']);
+    }
+    if (!droptickets_close_access($ticket)) {
+      unset($status_options['closed']);
     }
     $form['status'] = array(
       '#type'          => 'select',
       '#title'         => t('Status'),
       '#options'       => $status_options,
       '#default_value' => $ticket->status,
-      '#description'   => t('Not everyone can close tickets.'),
       '#weight'        => -15,
     );
   }
@@ -243,6 +245,38 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#description'   => t('YYYY-MM-DD format, optional.'),
     '#attributes'    => array('class' => array('droptickets-datepicker')),
     '#weight'        => -13,
+  );
+
+  // Parent ticket autocomplete.
+  $parent_default = '';
+  if (!$is_edit && !empty($_GET['parent_tid']) && is_numeric($_GET['parent_tid'])) {
+    $pre_parent = entity_load('drop_ticket', array((int) $_GET['parent_tid']));
+    $pre_parent = $pre_parent ? reset($pre_parent) : NULL;
+    if ($pre_parent) {
+      $pre_proj_load = !empty($pre_parent->pid) ? entity_load('drop_project', array($pre_parent->pid)) : array();
+      $pre_proj      = $pre_proj_load ? reset($pre_proj_load) : NULL;
+      $pre_label  = droptickets_ticket_label($pre_parent, $pre_proj);
+      $parent_default = $pre_label . ': ' . $pre_parent->title . ' [' . $pre_parent->tid . ']';
+    }
+  }
+  if ($is_edit && !empty($ticket->parent_tid)) {
+    $parent_load = entity_load('drop_ticket', array($ticket->parent_tid));
+    $parent      = $parent_load ? reset($parent_load) : NULL;
+    if ($parent) {
+      $parent_proj_load = !empty($parent->pid) ? entity_load('drop_project', array($parent->pid)) : array();
+      $parent_project   = $parent_proj_load ? reset($parent_proj_load) : NULL;
+      $parent_label   = droptickets_ticket_label($parent, $parent_project);
+      $parent_default = $parent_label . ': ' . $parent->title . ' [' . $parent->tid . ']';
+    }
+  }
+  $form['parent_tid'] = array(
+    '#type'              => 'textfield',
+    '#title'             => t('Parent ticket'),
+    '#default_value'     => $parent_default,
+    '#description'       => t('Optional. Makes this a sub-ticket. Type a ticket ID or title to search.'),
+    '#autocomplete_path' => 'admin/drop/tickets/autocomplete',
+    '#maxlength'         => 300,
+    '#weight'            => -12,
   );
 
   // External link closes the sidebar and layout wrapper.
@@ -317,10 +351,30 @@ function droptickets_ticket_form_validate($form, &$form_state) {
   if ($due && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $due)) {
     form_set_error('due_date', t('Due date must be in YYYY-MM-DD format.'));
   }
-  if (!empty($form_state['values']['status']) && $form_state['values']['status'] === 'done'
-      && !user_access('close droptickets') && !user_access('administer site configuration')) {
-    form_set_error('status', t('You do not have permission to mark tickets as done.'));
+
+  // Validate and resolve the parent ticket autocomplete value.
+  $parent_raw = trim($form_state['values']['parent_tid']);
+  if ($parent_raw !== '') {
+    $parent_tid = 0;
+    if (preg_match('/\[(\d+)\]$/', $parent_raw, $m)) {
+      $parent_tid = (int) $m[1];
+    }
+    $parent_check = $parent_tid ? entity_load('drop_ticket', array($parent_tid)) : array();
+    if (!$parent_tid || !$parent_check) {
+      form_set_error('parent_tid', t('Parent ticket not found. Select a suggestion from the list.'));
+    }
+    elseif (!empty($form_state['values']['tid']) && $parent_tid === (int) $form_state['values']['tid']) {
+      form_set_error('parent_tid', t('A ticket cannot be its own parent.'));
+    }
+    else {
+      // Store resolved tid for the submit handler.
+      $form_state['values']['parent_tid_resolved'] = $parent_tid;
+    }
   }
+  else {
+    $form_state['values']['parent_tid_resolved'] = 0;
+  }
+
   field_attach_form_validate('drop_ticket', $form['#ticket'], $form, $form_state);
 }
 
@@ -373,6 +427,8 @@ function droptickets_ticket_form_submit($form, &$form_state) {
 
   $external_link = trim($values['external_link']);
   $ticket->external_link = $external_link !== '' ? $external_link : NULL;
+
+  $ticket->parent_tid = isset($values['parent_tid_resolved']) ? (int) $values['parent_tid_resolved'] : 0;
 
   if (isset($values['status'])) {
     $ticket->status = $values['status'];

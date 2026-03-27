@@ -1086,3 +1086,166 @@ tr.droptickets-review-row--done .droptickets-review-btn {
 .droptickets-review-back-exit:hover {
   color: #c62828;
 }
+
+/* ---------------------------------------------------------------------------
+   Kanban — Board switcher
+   --------------------------------------------------------------------------- */
+
+.droptickets-board-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.droptickets-board-switcher-label {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--drop-text-secondary, #666);
+  margin-right: 0.15rem;
+}
+
+.droptickets-board-pill {
+  display: inline-block;
+  padding: 0.25em 0.85em;
+  border: 1px solid var(--drop-border, #ccc);
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--drop-text, #333);
+  text-decoration: none;
+  white-space: nowrap;
+  background: #fff;
+}
+
+.droptickets-board-pill:hover {
+  border-color: var(--drop-primary, #1565c0);
+  color: var(--drop-primary, #1565c0);
+  text-decoration: none;
+}
+
+.droptickets-board-pill--active {
+  background: var(--drop-primary, #1565c0);
+  border-color: var(--drop-primary, #1565c0);
+  color: #fff;
+  font-weight: 700;
+}
+
+.droptickets-board-pill--active:hover {
+  background: var(--drop-primary, #1565c0);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------------------
+   Sub-tickets (progress bar, child list, add link)
+   --------------------------------------------------------------------------- */
+
+.droptickets-children-progress {
+  font-size: 0.8em;
+  font-weight: 400;
+  color: var(--drop-text-secondary, #888);
+  margin-left: 0.4em;
+}
+
+.droptickets-children-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--drop-border, #e0e0e0);
+  margin: 0.35rem 0 0.6rem;
+  overflow: hidden;
+}
+
+.droptickets-children-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--drop-success, #2e7d32);
+  transition: width 0.3s;
+}
+
+.droptickets-children-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+}
+
+.droptickets-child-item {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--drop-border, #eee);
+  font-size: 0.85em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.droptickets-child-item:last-child {
+  border-bottom: none;
+}
+
+.droptickets-child-item--done a,
+.droptickets-child-item--closed a {
+  text-decoration: line-through;
+  color: var(--drop-text-secondary, #888);
+}
+
+.droptickets-child-status {
+  font-size: 0.78em;
+  color: var(--drop-text-secondary, #888);
+  white-space: nowrap;
+}
+
+.droptickets-child-add {
+  margin-top: 0.4rem;
+  font-size: 0.85em;
+}
+
+/* ---------------------------------------------------------------------------
+   Parent ticket indicator on list rows and Kanban cards
+   --------------------------------------------------------------------------- */
+
+.droptickets-parent-indicator {
+  font-size: 0.75em;
+  color: var(--drop-text-secondary, #888);
+  display: block;
+  margin-top: 0.15em;
+}
+
+.droptickets-parent-indicator a {
+  color: inherit;
+}
+
+.droptickets-parent-indicator a:hover {
+  color: var(--drop-primary, #1565c0);
+}
+
+.droptickets-kanban-parent {
+  font-size: 0.72em;
+  color: var(--drop-text-secondary, #999);
+  margin-top: 0.15em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.droptickets-kanban-parent a {
+  color: inherit;
+}
+
+/* ---------------------------------------------------------------------------
+   Kanban top-level toggle
+   --------------------------------------------------------------------------- */
+
+.droptickets-kanban-toplevel-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85em;
+  color: var(--drop-text-secondary, #666);
+  cursor: pointer;
+  user-select: none;
+}
+
+.droptickets-kanban-toplevel-toggle input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}

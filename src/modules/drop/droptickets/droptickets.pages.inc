@@ -44,8 +44,8 @@ function droptickets_list_page() {
 
   // Combined filter row: status dropdown + project dropdown + search + add link.
 
-  // Status select — "Active" (non-done/non-closed) first, then individual
-  // statuses grouped, then "All tickets" and "Imported" at the bottom.
+  // Status select — "Active" (everything except Icebox and Closed) first,
+  // then individual statuses grouped, then "All tickets" and "Imported".
   $status_opts_html = '<option value="all"' . ($status === 'all' ? ' selected' : '') . '>' . t('Active') . '</option>';
   $status_opts_html .= '<optgroup label="' . t('By status') . '">';
   foreach (droptickets_status_options() as $skey => $slabel) {
@@ -78,7 +78,8 @@ function droptickets_list_page() {
   // Active tag badge — shown inline when a tag filter is in use.
   $tag_badge = '';
   if ($tag_filter) {
-    $term = entity_load_single('taxonomy_term', $tag_filter);
+    $term_load = entity_load('taxonomy_term', array($tag_filter));
+    $term      = $term_load ? reset($term_load) : NULL;
     if ($term) {
       $clear_q = array('status' => $status);
       if ($pid_filter) { $clear_q['pid'] = $pid_filter; }
@@ -121,8 +122,8 @@ function droptickets_list_page() {
     $query->isNull('t.import_id');
 
     if ($status === 'all') {
-      // Default: all active tickets — excludes done and closed.
-      $query->condition('t.status', array('done', 'closed'), 'NOT IN');
+      // Default: all active tickets — everything except Icebox and Closed.
+      $query->condition('t.status', droptickets_active_statuses(), 'IN');
     }
     elseif ($status !== 'all_tickets') {
       // Specific status filter; 'all_tickets' applies no condition.
@@ -191,6 +192,16 @@ function droptickets_list_page() {
   $can_flag     = user_access('flag droptickets');
   $flag_count   = count($flagged_tids);
 
+  // Bulk-load parent ticket titles.
+  $list_parent_tids = array_filter(array_unique(array_column((array) $tickets, 'parent_tid')));
+  $list_parent_titles = array();
+  if (!empty($list_parent_tids)) {
+    $list_parent_titles = db_select('drop_ticket', 'p')
+      ->fields('p', array('tid', 'title'))
+      ->condition('p.tid', $list_parent_tids, 'IN')
+      ->execute()->fetchAllKeyed();
+  }
+
   $rows = array();
 
   foreach ($tickets as $ticket) {
@@ -236,11 +247,19 @@ function droptickets_list_page() {
 
     $priority_dot = '<span class="droptickets-priority-dot drop-priority-' . check_plain(drop_base_priority_class($ticket->priority)) . '" title="' . check_plain(isset($priority_labels[$ticket->priority]) ? $priority_labels[$ticket->priority] : '') . '"></span>';
 
+    $parent_indicator = '';
+    if (!empty($ticket->parent_tid) && isset($list_parent_titles[$ticket->parent_tid])) {
+      $parent_indicator = '<span class="droptickets-parent-indicator">'
+        . icon('arrow-bend-up-left', array('attributes' => array('width' => 10, 'height' => 10)))
+        . ' ' . l(truncate_utf8(check_plain($list_parent_titles[$ticket->parent_tid]), 50, FALSE, TRUE), 'admin/drop/tickets/' . (int) $ticket->parent_tid)
+        . '</span>';
+    }
+
     $row_data = array(
       array('data' => $flag_cell, 'class' => array('droptickets-col-flag')),
       array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>', 'class' => array('droptickets-col-id')),
       array('data' => $proj_name, 'class' => array('droptickets-col-project')),
-      array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid), 'class' => array('droptickets-col-title')),
+      array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid) . $parent_indicator, 'class' => array('droptickets-col-title')),
       array('data' => $priority_dot, 'class' => array('droptickets-col-priority')),
       array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
     );
@@ -422,8 +441,47 @@ function droptickets_kanban_page() {
 
   $kanban_statuses = droptickets_kanban_statuses();
 
-  // Project filter.
+  // --- Board filter ---
+  $board_filter = (!empty($_GET['board']) && is_numeric($_GET['board'])) ? (int) $_GET['board'] : 0;
+
+  // Load all boards from the drop_boards vocabulary.
+  $all_boards = db_select('taxonomy_term_data', 'd')
+    ->fields('d', array('tid', 'name'))
+    ->condition('d.vocabulary', 'drop_boards')
+    ->orderBy('d.weight')
+    ->orderBy('d.name')
+    ->execute()->fetchAllKeyed();
+
+  // Identify the "General" board TID (first term named "General", case-insensitive).
+  $general_tid = 0;
+  foreach ($all_boards as $tid => $name) {
+    if (strtolower(trim($name)) === 'general') {
+      $general_tid = (int) $tid;
+      break;
+    }
+  }
+
+  // Board switcher pills.
+  $is_general = (!$board_filter || $board_filter === $general_tid);
+  $switcher = '<div class="droptickets-board-switcher">'
+    . '<span class="droptickets-board-switcher-label">' . t('Board:') . '</span>';
+  $switcher .= '<a href="' . url('admin/drop/tickets/kanban') . '" class="droptickets-board-pill'
+    . ($is_general ? ' droptickets-board-pill--active' : '') . '">' . t('General') . '</a>';
+  foreach ($all_boards as $tid => $name) {
+    if ((int) $tid === $general_tid) { continue; }
+    $active    = ($board_filter === (int) $tid);
+    $switcher .= '<a href="' . url('admin/drop/tickets/kanban', array('query' => array('board' => $tid))) . '"'
+      . ' class="droptickets-board-pill' . ($active ? ' droptickets-board-pill--active' : '') . '">'
+      . check_plain($name) . '</a>';
+  }
+  $switcher .= '</div>';
+  $output['board_switcher'] = array('#markup' => $switcher, '#weight' => -20);
+
+  // --- Project filter ---
   $pid_filter = (!empty($_GET['pid']) && is_numeric($_GET['pid'])) ? (int) $_GET['pid'] : 0;
+
+  // Top-level only toggle.
+  $toplevel_only = !empty($_GET['toplevel']) ? 1 : 0;
 
   $all_projects = db_select('drop_project', 'p')
     ->fields('p', array('pid', 'name'))
@@ -436,21 +494,82 @@ function droptickets_kanban_page() {
     $sel   = ($pid_filter === (int) $pid) ? ' selected' : '';
     $opts .= '<option value="' . (int) $pid . '"' . $sel . '>' . check_plain($name) . '</option>';
   }
-  $filter_html = '<form class="droptickets-kanban-filter" method="get" action="' . url('admin/drop/tickets/kanban') . '">'
+  // Preserve board and top-level selections when changing project filter.
+  $board_hidden    = $board_filter ? '<input type="hidden" name="board" value="' . (int) $board_filter . '">' : '';
+  $toplevel_hidden = $toplevel_only ? '<input type="hidden" name="toplevel" value="1">' : '';
+  $toplevel_check  = '<label class="droptickets-kanban-toplevel-toggle">'
+    . '<input type="checkbox" name="toplevel" value="1" onchange="this.form.submit()"' . ($toplevel_only ? ' checked' : '') . '>'
+    . t('Top-level only')
+    . '</label>';
+  $filter_html  = '<form class="droptickets-kanban-filter" method="get" action="' . url('admin/drop/tickets/kanban') . '">'
+    . $board_hidden
     . '<label>' . t('Project:') . ' <select name="pid" onchange="this.form.submit()">' . $opts . '</select></label>'
+    . $toplevel_check
     . '</form>';
   $output['filter'] = array('#markup' => $filter_html, '#weight' => -10);
 
-  // Query all kanban tickets in one go.
+  // --- Base query ---
   $query = db_select('drop_ticket', 't')
     ->fields('t')
     ->condition('t.status', array_keys($kanban_statuses), 'IN')
     ->isNull('t.import_id')
     ->orderBy('t.priority', 'DESC')
     ->orderBy('t.created', 'ASC');
+
   if ($pid_filter) {
     $query->condition('t.pid', $pid_filter);
   }
+  if ($toplevel_only) {
+    $query->condition(
+      db_or()
+        ->condition('t.parent_tid', 0)
+        ->isNull('t.parent_tid')
+    );
+  }
+
+  // --- Board scoping ---
+  // Use PHP set operations on pre-fetched TID lists to avoid JOIN/DISTINCT complexity.
+  if (!$is_general) {
+    // Focused board: tickets explicitly assigned to this board.
+    $board_tids = db_select('field_data_field_drop_board', 'fb')
+      ->fields('fb', array('entity_id'))
+      ->condition('fb.entity_type', 'drop_ticket')
+      ->condition('fb.deleted', 0)
+      ->condition('fb.field_drop_board_tid', $board_filter)
+      ->execute()->fetchCol();
+    if (empty($board_tids)) {
+      $output['empty'] = array('#markup' => '<p class="droptickets-empty">' . t('No tickets on this board yet.') . '</p>');
+      return $output;
+    }
+    $query->condition('t.tid', $board_tids, 'IN');
+  }
+  else {
+    // General board: tickets with no board assignment, OR explicitly tagged "General".
+    // Exclude tickets that have a non-General board assignment but no General assignment.
+    $all_boarded = db_select('field_data_field_drop_board', 'fb')
+      ->fields('fb', array('entity_id'))
+      ->condition('fb.entity_type', 'drop_ticket')
+      ->condition('fb.deleted', 0)
+      ->execute()->fetchCol();
+
+    if (!empty($all_boarded)) {
+      $general_boarded = $general_tid
+        ? db_select('field_data_field_drop_board', 'fb')
+            ->fields('fb', array('entity_id'))
+            ->condition('fb.entity_type', 'drop_ticket')
+            ->condition('fb.deleted', 0)
+            ->condition('fb.field_drop_board_tid', $general_tid)
+            ->execute()->fetchCol()
+        : array();
+
+      // Tickets that have board tags but NOT the General tag are excluded.
+      $exclude_tids = array_values(array_unique(array_diff($all_boarded, $general_boarded)));
+      if (!empty($exclude_tids)) {
+        $query->condition('t.tid', $exclude_tids, 'NOT IN');
+      }
+    }
+  }
+
   $tickets = $query->execute()->fetchAll();
 
   // Bulk-load related data.
@@ -462,6 +581,17 @@ function droptickets_kanban_page() {
     db_select('drop_ticket_flag', 'f')->fields('f', array('tid'))->execute()->fetchCol()
   );
   $type_options  = droptickets_type_options();
+
+  // Bulk-load parent ticket titles for cards that have a parent.
+  $parent_tids = array_filter(array_unique(array_column((array) $tickets, 'parent_tid')));
+  $parent_titles = array();
+  if (!empty($parent_tids)) {
+    $parent_rows = db_select('drop_ticket', 'p')
+      ->fields('p', array('tid', 'title'))
+      ->condition('p.tid', $parent_tids, 'IN')
+      ->execute()->fetchAllKeyed();
+    $parent_titles = $parent_rows;
+  }
 
   // Group by status.
   $by_status = array_fill_keys(array_keys($kanban_statuses), array());
@@ -520,9 +650,18 @@ function droptickets_kanban_page() {
           ? ' <span class="droptickets-kanban-flag">' . icon('flag-fill', array('attributes' => array('width' => 11, 'height' => 11))) . '</span>'
           : '';
 
+        $parent_html = '';
+        if (!empty($ticket->parent_tid) && isset($parent_titles[$ticket->parent_tid])) {
+          $parent_html = '<div class="droptickets-kanban-parent">'
+            . icon('arrow-bend-up-left', array('attributes' => array('width' => 10, 'height' => 10)))
+            . ' ' . l(truncate_utf8(check_plain($parent_titles[$ticket->parent_tid]), 40, FALSE, TRUE), 'admin/drop/tickets/' . (int) $ticket->parent_tid)
+            . '</div>';
+        }
+
         $board .= '<div class="droptickets-kanban-card ' . $priority_class . '" draggable="true" data-tid="' . (int) $ticket->tid . '">';
         $board .= '<div class="droptickets-kanban-card-id"><span class="droptickets-ticket-id">' . check_plain($label) . '</span>' . $flag_html . '</div>';
         $board .= '<div class="droptickets-kanban-card-title">' . l($ticket->title, 'admin/drop/tickets/' . $ticket->tid) . '</div>';
+        $board .= $parent_html;
         $board .= '<div class="droptickets-kanban-card-meta">';
         $board .= '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>';
         $board .= '<span class="droptickets-kanban-assignee">' . $assignee_name . '</span>';
@@ -568,8 +707,12 @@ function droptickets_inline_set_status(DropTicket $ticket) {
     exit();
   }
 
-  if ($status === 'done' && !droptickets_close_access($ticket)) {
+  if ($status === 'done' && !droptickets_done_access($ticket)) {
     print backdrop_json_encode(array('ok' => FALSE, 'message' => 'You do not have permission to mark tickets as done.'));
+    exit();
+  }
+  if ($status === 'closed' && !droptickets_close_access($ticket)) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Only a project manager can close tickets.'));
     exit();
   }
 
@@ -603,9 +746,13 @@ function droptickets_kanban_set_status(DropTicket $ticket) {
     exit();
   }
 
-  // Only users with close permission may drag a ticket into the Done column.
-  if ($status === 'done' && !droptickets_close_access($ticket)) {
+  // Done requires done permission; closed requires close permission.
+  if ($status === 'done' && !droptickets_done_access($ticket)) {
     print backdrop_json_encode(array('ok' => FALSE, 'message' => 'You do not have permission to mark tickets as done.'));
+    exit();
+  }
+  if ($status === 'closed' && !droptickets_close_access($ticket)) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Only a project manager can close tickets.'));
     exit();
   }
 
@@ -700,8 +847,11 @@ function droptickets_ticket_view(DropTicket $ticket) {
   // Build status field: inline select for editors, static badge for viewers.
   if (droptickets_ticket_access('update', $ticket)) {
     $status_options_all = droptickets_status_options();
-    if (!droptickets_close_access($ticket)) {
+    if (!droptickets_done_access($ticket)) {
       unset($status_options_all['done']);
+    }
+    if (!droptickets_close_access($ticket)) {
+      unset($status_options_all['closed']);
     }
     $status_select = '<select class="droptickets-status-select droptickets-status--' . check_plain($ticket->status) . '"'
       . ' data-tid="' . (int) $ticket->tid . '"'
@@ -717,6 +867,19 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $status_field = '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>';
   }
 
+  // Parent ticket link.
+  $parent_item = '';
+  if (!empty($ticket->parent_tid)) {
+    $parent_load = entity_load('drop_ticket', array($ticket->parent_tid));
+    $parent      = $parent_load ? reset($parent_load) : NULL;
+    if ($parent) {
+      $parent_proj_load = !empty($parent->pid) ? entity_load('drop_project', array($parent->pid)) : array();
+      $parent_proj      = $parent_proj_load ? reset($parent_proj_load) : NULL;
+      $parent_label = droptickets_ticket_label($parent, $parent_proj);
+      $parent_item  = l($parent_label . ': ' . $parent->title, 'admin/drop/tickets/' . $parent->tid);
+    }
+  }
+
   $meta_items = array(
     t('Project')  => $proj_name,
     t('Status')   => $status_field,
@@ -726,10 +889,12 @@ function droptickets_ticket_view(DropTicket $ticket) {
     t('Assignee') => droptickets_assignee_label($ticket),
     t('Due')      => $due,
   );
+  if ($parent_item) {
+    $meta_items[t('Parent')] = $parent_item;
+  }
   if ($tag_html) {
     $meta_items[t('Tags')] = $tag_html;
   }
-
   if (!empty($ticket->external_link)) {
     $meta_items[t('External link')] = l(t('View in JIRA'), $ticket->external_link, array(
       'attributes' => array('target' => '_blank', 'rel' => 'noopener'),
@@ -741,6 +906,46 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $sidebar .= '<div class="droptickets-sidebar-label">' . check_plain($meta_label) . '</div>';
     $sidebar .= '<div class="droptickets-sidebar-value">' . $meta_value . '</div>';
     $sidebar .= '</div>';
+  }
+
+  // Sub-tickets section (shown when this ticket has children).
+  $children = db_select('drop_ticket', 'c')
+    ->fields('c', array('tid', 'title', 'status', 'pid', 'ticket_number'))
+    ->condition('c.parent_tid', $ticket->tid)
+    ->orderBy('c.priority', 'DESC')
+    ->orderBy('c.tid', 'ASC')
+    ->execute()->fetchAll();
+
+  if (!empty($children)) {
+    $child_pids      = array_unique(array_filter(array_column($children, 'pid')));
+    $child_projects  = $child_pids ? entity_load('drop_project', $child_pids) : array();
+    $done_statuses   = array('done', 'closed');
+    $done_count      = count(array_filter($children, function($c) use ($done_statuses) {
+      return in_array($c->status, $done_statuses);
+    }));
+    $total_count     = count($children);
+    $progress_pct    = $total_count ? round($done_count / $total_count * 100) : 0;
+
+    $sidebar .= '<div class="droptickets-sidebar-section-label">'
+      . t('Sub-tickets')
+      . ' <span class="droptickets-children-progress">' . $done_count . '/' . $total_count . '</span>'
+      . '</div>';
+    $sidebar .= '<div class="droptickets-children-bar"><div class="droptickets-children-bar-fill" style="width:' . $progress_pct . '%"></div></div>';
+    $sidebar .= '<ul class="droptickets-children-list">';
+    foreach ($children as $child) {
+      $child_proj  = isset($child_projects[$child->pid]) ? $child_projects[$child->pid] : NULL;
+      $child_label = droptickets_ticket_label($child, $child_proj);
+      $is_done     = in_array($child->status, $done_statuses);
+      $sidebar .= '<li class="droptickets-child-item' . ($is_done ? ' droptickets-child-item--done' : '') . '">'
+        . l($child_label . ': ' . $child->title, 'admin/drop/tickets/' . $child->tid)
+        . '</li>';
+    }
+    $sidebar .= '</ul>';
+    if (droptickets_ticket_access('create')) {
+      $sidebar .= '<div class="droptickets-child-add">'
+        . l(t('+ Add sub-ticket'), 'admin/drop/tickets/add', array('query' => array('parent_tid' => $ticket->tid)))
+        . '</div>';
+    }
   }
 
   // Watchers section.
@@ -1922,7 +2127,6 @@ function droptickets_review_page() {
   );
 
   // Load active tickets, applying any filters.
-  $all_active_statuses = array('open', 'todo', 'in_progress', 'in_review', 'blocked', 'done');
   $query = db_select('drop_ticket', 't')
     ->fields('t', array('tid', 'title', 'status', 'pid', 'assignee_uid', 'priority'))
     ->orderBy('t.priority', 'DESC')
@@ -1932,7 +2136,7 @@ function droptickets_review_page() {
     $query->condition('t.status', $status_filter);
   }
   else {
-    $query->condition('t.status', $all_active_statuses, 'IN');
+    $query->condition('t.status', droptickets_active_statuses(), 'IN');
   }
   if ($pid_filter) {
     $query->condition('t.pid', $pid_filter);

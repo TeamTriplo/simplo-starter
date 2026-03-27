@@ -118,6 +118,13 @@ function droptickets_schema() {
         'default'     => NULL,
         'description' => 'Optional external URL, e.g. original JIRA issue link.',
       ),
+      'parent_tid' => array(
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+        'description' => 'Parent ticket ID, or 0 for top-level tickets.',
+      ),
     ),
     'primary key' => array('tid'),
     'unique keys' => array(
@@ -129,6 +136,7 @@ function droptickets_schema() {
       'owner_uid'    => array('owner_uid'),
       'assignee_uid' => array('assignee_uid'),
       'uid'          => array('uid'),
+      'parent_tid'   => array('parent_tid'),
     ),
   );
 
@@ -706,6 +714,87 @@ function droptickets_update_1008() {
 /**
  * Grant flag/close/delete droptickets permissions to the administrator role.
  */
+/**
+ * Add parent_tid column to drop_ticket for one-level parent/child hierarchy.
+ */
+function droptickets_update_1020() {
+  if (!db_field_exists('drop_ticket', 'parent_tid')) {
+    db_add_field('drop_ticket', 'parent_tid', array(
+      'type'        => 'int',
+      'unsigned'    => TRUE,
+      'not null'    => TRUE,
+      'default'     => 0,
+      'description' => 'Parent ticket ID, or 0 for top-level tickets.',
+    ));
+    db_add_index('drop_ticket', 'parent_tid', array('parent_tid'));
+  }
+}
+
+/**
+ * Grant 'done droptickets' permission to authenticated users so team members
+ * can mark tickets Done independently of the Close (PM-only) action.
+ */
+function droptickets_update_1019() {
+  user_role_grant_permissions('authenticated', array('done droptickets'));
+  user_role_grant_permissions('administrator', array('done droptickets'));
+}
+
+function droptickets_update_1018() {
+  // Create the drop_boards vocabulary (Kanban board definitions).
+  if (!taxonomy_vocabulary_load('drop_boards')) {
+    $vocab = new TaxonomyVocabulary(array(
+      'machine_name' => 'drop_boards',
+      'name'         => 'Kanban Boards',
+      'description'  => 'Defines which Kanban board(s) a ticket appears on. Tickets with no board assigned appear on the General board automatically.',
+    ));
+    taxonomy_vocabulary_save($vocab);
+
+    // Create the default "General" board term.
+    $term = new TaxonomyTerm(array(
+      'name'       => 'General',
+      'vocabulary' => 'drop_boards',
+    ));
+    taxonomy_term_save($term);
+  }
+
+  // Create the field_drop_board term-reference field.
+  if (!field_info_field('field_drop_board')) {
+    field_create_field(array(
+      'field_name'  => 'field_drop_board',
+      'type'        => 'taxonomy_term_reference',
+      'settings'    => array(
+        'allowed_values' => array(
+          array('vocabulary' => 'drop_boards', 'parent' => 0),
+        ),
+      ),
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    ));
+  }
+
+  // Attach instance to drop_ticket.
+  if (!field_info_instance('drop_ticket', 'field_drop_board', 'drop_ticket')) {
+    field_create_instance(array(
+      'field_name'  => 'field_drop_board',
+      'entity_type' => 'drop_ticket',
+      'bundle'      => 'drop_ticket',
+      'label'       => 'Kanban Boards',
+      'required'    => FALSE,
+      'description' => 'Select which Kanban board(s) this ticket appears on. Leave empty to show on the General board by default.',
+      'widget'      => array(
+        'type'   => 'options_buttons',
+        'weight' => 22,
+      ),
+      'display' => array(
+        'default' => array(
+          'label'  => 'hidden',
+          'type'   => 'hidden',
+          'weight' => 22,
+        ),
+      ),
+    ));
+  }
+}
+
 function droptickets_update_1017() {
   user_role_grant_permissions('administrator', array(
     'flag droptickets',
