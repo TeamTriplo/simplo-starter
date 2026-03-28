@@ -314,12 +314,11 @@ function droptickets_member_page($account) {
     ),
   );
 
-  $kanban_url = url('drop/tickets/kanban', array('query' => array('assignee' => $account->uid)));
   $output['actions'] = array(
     '#markup' => '<p>'
       . l(t('← Back to team'), 'drop/team')
       . ' &nbsp; '
-      . l(t('View Kanban'), $kanban_url, array('html' => FALSE))
+      . l(t('View Kanban'), 'drop/tickets/kanban', array('query' => array('assignee' => $account->uid)))
       . '</p>',
     '#weight' => -10,
   );

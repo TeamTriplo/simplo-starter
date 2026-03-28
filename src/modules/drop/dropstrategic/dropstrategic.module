@@ -139,6 +139,18 @@ function dropstrategic_menu() {
     'weight'           => 10,
   );
 
+  // Admin hub card — settings entry under admin/drop.
+  $items['admin/drop/strategic'] = array(
+    'title'            => 'Drop Strategic settings',
+    'description'      => t('Configure strategic goal tracking for the Drop Suite.'),
+    'page callback'    => 'backdrop_goto',
+    'page arguments'   => array('drop/strategic'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer dropstrategic'),
+    'type'             => MENU_NORMAL_ITEM,
+    'weight'           => 15,
+  );
+
   // Key result toggle (AJAX).
   $items['drop/strategic/kr/%/toggle'] = array(
     'page callback'    => 'dropstrategic_kr_toggle',
@@ -365,15 +377,15 @@ function dropstrategic_kr_toggle($krid) {
 // ---------------------------------------------------------------------------
 
 /**
- * Implements hook_drop_base_nav_items().
+ * Implements hook_drop_nav_links().
  */
-function dropstrategic_drop_base_nav_items() {
+function dropstrategic_drop_nav_links() {
   return array(
     array(
-      'title'  => t('Goals'),
-      'path'   => 'drop/strategic',
-      'icon'   => 'target',
-      'weight' => 6,
+      'title'      => t('Strategy'),
+      'path'       => 'drop/strategic',
+      'permission' => 'view strategic goals',
+      'weight'     => 55,
     ),
   );
 }
