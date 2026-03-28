@@ -142,22 +142,34 @@
   margin-bottom: 0;
 }
 
-.droptime-entry-form .form-actions {
-  display: inline-block;
-  vertical-align: bottom;
-  margin-bottom: 0.25rem;
-}
-
 .droptime-entry-form .form-item-pid {
-  min-width: 160px;
+  min-width: 240px;
 }
 
 .droptime-entry-form .form-item-notes {
-  min-width: 220px;
+  min-width: 320px;
+}
+
+/* Override Bootstrap's .form-text margin-top which pushes inputs down. */
+.droptime-entry-form input.form-text {
+  margin-top: 0 !important;
+}
+
+/* Match select height to text inputs. Browsers don't reliably honour height on
+   <select>, so we control it via padding instead. 13px top/bottom matches. */
+.droptime-entry-form select.form-select {
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
 }
 
 .droptime-entry-form .form-item-billable {
   padding-top: 1.6em; /* align checkbox with other inputs */
+}
+
+.droptime-entry-form .form-actions {
+  display: block;
+  margin-top: 0.75rem;
+  margin-bottom: 0;
 }
 
 .droptime-time-field {

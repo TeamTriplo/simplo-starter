@@ -66,7 +66,7 @@ function dropstrategic_permission() {
 function dropstrategic_menu() {
   $items = array();
 
-  $items['admin/drop/strategic'] = array(
+  $items['drop/strategic'] = array(
     'title'            => 'Strategic Goals',
     'page callback'    => 'dropstrategic_dashboard_page',
     'access arguments' => array('view strategic goals'),
@@ -75,13 +75,13 @@ function dropstrategic_menu() {
     'weight'           => 6,
   );
 
-  $items['admin/drop/strategic/dashboard'] = array(
+  $items['drop/strategic/dashboard'] = array(
     'title'  => 'All goals',
     'type'   => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
 
-  $items['admin/drop/strategic/mine'] = array(
+  $items['drop/strategic/mine'] = array(
     'title'            => 'My goals',
     'page callback'    => 'dropstrategic_mine_page',
     'access arguments' => array('view strategic goals'),
@@ -90,7 +90,7 @@ function dropstrategic_menu() {
     'weight'           => 2,
   );
 
-  $items['admin/drop/strategic/add'] = array(
+  $items['drop/strategic/add'] = array(
     'title'            => 'Add goal',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('dropstrategic_goal_form'),
@@ -99,50 +99,50 @@ function dropstrategic_menu() {
     'type'             => MENU_LOCAL_ACTION,
   );
 
-  $items['admin/drop/strategic/%drop_goal_strategic'] = array(
+  $items['drop/strategic/%drop_goal_strategic'] = array(
     'title callback'   => 'dropstrategic_goal_title',
-    'title arguments'  => array(3),
+    'title arguments'  => array(2),
     'page callback'    => 'dropstrategic_goal_view',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access arguments' => array('view strategic goals'),
-    'load arguments'   => array(3),
+    'load arguments'   => array(2),
     'file'             => 'dropstrategic.pages.inc',
   );
 
-  $items['admin/drop/strategic/%drop_goal_strategic/view'] = array(
+  $items['drop/strategic/%drop_goal_strategic/view'] = array(
     'title'  => 'View',
     'type'   => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
 
-  $items['admin/drop/strategic/%drop_goal_strategic/edit'] = array(
+  $items['drop/strategic/%drop_goal_strategic/edit'] = array(
     'title'            => 'Edit',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('dropstrategic_goal_form', 3),
+    'page arguments'   => array('dropstrategic_goal_form', 2),
     'access callback'  => 'dropstrategic_goal_access',
-    'access arguments' => array('edit', 3),
-    'load arguments'   => array(3),
+    'access arguments' => array('edit', 2),
+    'load arguments'   => array(2),
     'file'             => 'dropstrategic.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 2,
   );
 
-  $items['admin/drop/strategic/%drop_goal_strategic/delete'] = array(
+  $items['drop/strategic/%drop_goal_strategic/delete'] = array(
     'title'            => 'Delete',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('dropstrategic_goal_delete_form', 3),
+    'page arguments'   => array('dropstrategic_goal_delete_form', 2),
     'access callback'  => 'dropstrategic_goal_access',
-    'access arguments' => array('delete', 3),
-    'load arguments'   => array(3),
+    'access arguments' => array('delete', 2),
+    'load arguments'   => array(2),
     'file'             => 'dropstrategic.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 10,
   );
 
   // Key result toggle (AJAX).
-  $items['admin/drop/strategic/kr/%/toggle'] = array(
+  $items['drop/strategic/kr/%/toggle'] = array(
     'page callback'    => 'dropstrategic_kr_toggle',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access arguments' => array('view strategic goals'),
     'type'             => MENU_CALLBACK,
   );
@@ -155,8 +155,8 @@ function dropstrategic_menu() {
  */
 function dropstrategic_menu_alter(&$items) {
   // Push the delete tab to the end.
-  if (isset($items['admin/drop/strategic/%drop_goal_strategic/delete'])) {
-    $items['admin/drop/strategic/%drop_goal_strategic/delete']['weight'] = 20;
+  if (isset($items['drop/strategic/%drop_goal_strategic/delete'])) {
+    $items['drop/strategic/%drop_goal_strategic/delete']['weight'] = 20;
   }
 }
 
@@ -371,9 +371,32 @@ function dropstrategic_drop_base_nav_items() {
   return array(
     array(
       'title'  => t('Goals'),
-      'path'   => 'admin/drop/strategic',
+      'path'   => 'drop/strategic',
       'icon'   => 'target',
       'weight' => 6,
+    ),
+  );
+}
+
+/**
+ * Implements hook_drop_section_links().
+ */
+function dropstrategic_drop_section_links($section) {
+  if ($section !== 'strategic') {
+    return array();
+  }
+
+  return array(
+    'dashboard' => array(
+      'title'        => t('Dashboard'),
+      'href'         => 'drop/strategic',
+      'weight'       => -10,
+      'active_paths' => array('drop/strategic', 'drop/strategic/dashboard'),
+    ),
+    'mine' => array(
+      'title'  => t('My Goals'),
+      'href'   => 'drop/strategic/mine',
+      'weight' => 0,
     ),
   );
 }

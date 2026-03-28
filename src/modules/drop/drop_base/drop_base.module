@@ -30,14 +30,24 @@
  */
 function drop_base_preprocess_layout(&$variables) {
   $path = current_path();
-  if ($path !== 'admin/drop'
-    && strpos($path, 'admin/drop/') !== 0
-    && strpos($path, 'admin/crm') !== 0) {
+  if ($path !== 'drop' && strpos($path, 'drop/') !== 0) {
     return;
   }
 
-  $pin_html = _drop_base_report_pin_action($path);
-  $variables['action_links'] = $pin_html ? $pin_html : '';
+  // No-op: pin action is now delivered via the Drop Pin Action block.
+
+  // If no sidebar regions have content, add a class so CSS can expand the
+  // main content column to full width.
+  $has_sidebar = FALSE;
+  foreach ($variables['content'] as $region_name => $region_content) {
+    if (strpos($region_name, 'sidebar') !== FALSE && !empty($region_content)) {
+      $has_sidebar = TRUE;
+      break;
+    }
+  }
+  if (!$has_sidebar) {
+    $variables['classes'][] = 'layout--no-sidebar';
+  }
 }
 
 /**
@@ -59,7 +69,7 @@ function _drop_base_report_pin_action($path) {
 
   // Build a path → report_id lookup.
   // For reports marked as the default sub-task, also map their parent path
-  // (e.g. admin/drop/tickets/reports → droptickets_stale), since Backdrop
+  // (e.g. drop/tickets/reports → droptickets_stale), since Backdrop
   // renders the default sub-task at the parent URL without redirecting.
   $report_by_path = array();
   foreach ($all_reports as $id => $report) {
@@ -123,12 +133,22 @@ function _drop_base_report_pin_action($path) {
 /**
  * Implements hook_block_info().
  *
- * Exposes the Drop nav bar as a placeable layout block.
+ * Exposes the Drop nav bar and section nav as placeable layout blocks.
  */
 function drop_base_block_info() {
   $blocks['drop_nav'] = array(
     'info'        => t('Drop Navigation'),
     'description' => t('Primary navigation bar for the Drop module suite (CRM, Tasks, Tickets, Time, Goals).'),
+    'cache'       => BACKDROP_NO_CACHE,
+  );
+  $blocks['drop_section_nav'] = array(
+    'info'        => t('Drop Section Navigation'),
+    'description' => t('Secondary navigation bar for the current Drop Suite section (module-specific links). Replaces Backdrop tabs on Drop pages.'),
+    'cache'       => BACKDROP_NO_CACHE,
+  );
+  $blocks['drop_pin_action'] = array(
+    'info'        => t('Drop Pin Action'),
+    'description' => t('Pin/unpin report button for the current Drop Suite report page. Place in the layout where action links should appear.'),
     'cache'       => BACKDROP_NO_CACHE,
   );
   return $blocks;
@@ -138,19 +158,40 @@ function drop_base_block_info() {
  * Implements hook_block_view().
  */
 function drop_base_block_view($delta = '') {
-  if ($delta !== 'drop_nav') {
-    return array();
+  if ($delta === 'drop_nav') {
+    $nav_html = _drop_base_render_nav();
+    if (!$nav_html) {
+      return array();
+    }
+    return array(
+      'subject' => NULL,
+      'content' => $nav_html,
+    );
   }
 
-  $nav_html = _drop_base_render_nav();
-  if (!$nav_html) {
-    return array();
+  if ($delta === 'drop_section_nav') {
+    $html = _drop_base_section_nav_block();
+    if (!$html) {
+      return array();
+    }
+    return array(
+      'subject' => NULL,
+      'content' => $html,
+    );
   }
 
-  return array(
-    'subject' => NULL,
-    'content' => $nav_html,
-  );
+  if ($delta === 'drop_pin_action') {
+    $html = _drop_base_report_pin_action(current_path());
+    if (!$html) {
+      return array();
+    }
+    return array(
+      'subject' => NULL,
+      'content' => $html,
+    );
+  }
+
+  return array();
 }
 
 /**
@@ -194,12 +235,184 @@ function _drop_base_render_nav() {
  * @return bool
  */
 function _drop_base_nav_is_active($link_path, $current_path) {
-  // DropBridge lives at admin/drop exactly — don't treat it as a prefix match.
-  if ($link_path === 'admin/drop') {
-    return $current_path === 'admin/drop';
+  // DropBridge dashboard lives at 'drop' exactly — don't treat it as a prefix match.
+  if ($link_path === 'drop') {
+    return $current_path === 'drop';
   }
   return $current_path === $link_path
     || strpos($current_path, $link_path . '/') === 0;
+}
+
+// ---------------------------------------------------------------------------
+// Section navigation (hook_drop_section_links)
+// ---------------------------------------------------------------------------
+
+/**
+ * @defgroup drop_section_nav Drop Suite section navigation
+ *
+ * Provides a per-module secondary navigation bar on Drop Suite pages.
+ *
+ * Any module can contribute links to a section by implementing
+ * hook_drop_section_links($section). The section is derived from the second
+ * path component (e.g. 'tickets' for drop/tickets/*).
+ *
+ * Each link is an associative array with:
+ *   - title: (string) Human-readable label.
+ *   - href: (string) Backdrop path for the link.
+ *   - weight: (int) Sort order (lower = further left).
+ *   - badge: (int|string, optional) Short text rendered as a badge pill.
+ *   - admin_only: (bool, optional) Renders link de-emphasised; does not
+ *     enforce access — callers must check permissions before adding the link.
+ *   - active_paths: (string[], optional) Additional paths (exact or prefix)
+ *     that trigger the active state for this link.
+ *   - pinned: (bool, optional) Added automatically for pinned reports.
+ */
+
+/**
+ * Builds and returns the section nav HTML for the current page, or FALSE.
+ *
+ * Collects links via hook_drop_section_links(), injects any pinned reports
+ * the current user has for this section, sorts by weight, and renders.
+ *
+ * @return string|false
+ */
+function _drop_base_section_nav_block() {
+  $section = _drop_base_get_section();
+  if (!$section) {
+    return FALSE;
+  }
+
+  // Gather links from all modules.
+  $links = module_invoke_all('drop_section_links', $section);
+  backdrop_alter('drop_section_links', $links, $section);
+
+  // Inject pinned reports that belong to this section.
+  global $user;
+  $pinned      = drop_base_get_pinned_reports($user->uid);
+  $all_reports = drop_base_get_all_reports();
+  $pin_weight  = 50;
+  foreach ($pinned as $report_id) {
+    if (!isset($all_reports[$report_id])) {
+      continue;
+    }
+    $report = $all_reports[$report_id];
+    if (!_drop_base_report_in_section($report, $section)) {
+      continue;
+    }
+    if (!empty($report['access callback'])) {
+      $args = !empty($report['access arguments']) ? $report['access arguments'] : array();
+      if (!call_user_func_array($report['access callback'], $args)) {
+        continue;
+      }
+    }
+    $links['pinned_' . $report_id] = array(
+      'title'  => $report['title'],
+      'href'   => $report['path'],
+      'weight' => $pin_weight++,
+      'pinned' => TRUE,
+    );
+  }
+
+  if (empty($links)) {
+    return FALSE;
+  }
+
+  uasort($links, 'drupal_sort_weight');
+  return _drop_base_render_section_nav($links);
+}
+
+/**
+ * Returns the section identifier for the current path, or NULL.
+ *
+ * The section is the second path component for drop/* pages:
+ *   drop/tickets/* → 'tickets'
+ *   drop/crm/*     → 'crm'
+ *   drop           → NULL  (dashboard — no section nav)
+ *
+ * @return string|null
+ */
+function _drop_base_get_section() {
+  $path = current_path();
+  if (preg_match('#^drop/([^/]+)#', $path, $m)) {
+    return $m[1];
+  }
+  return NULL;
+}
+
+/**
+ * Checks whether a report belongs to a given section.
+ *
+ * @param array $report
+ *   A report definition from hook_drop_reports().
+ * @param string $section
+ *   The section identifier (e.g. 'tickets').
+ *
+ * @return bool
+ */
+function _drop_base_report_in_section(array $report, $section) {
+  if (empty($report['root_path'])) {
+    return FALSE;
+  }
+  $prefix = 'drop/' . $section;
+  return $report['root_path'] === $prefix
+    || strpos($report['root_path'], $prefix . '/') === 0;
+}
+
+/**
+ * Renders a sorted array of section nav links as HTML.
+ *
+ * @param array $links
+ *   Sorted array of link definition arrays (see hook_drop_section_links).
+ *
+ * @return string|false
+ *   Rendered nav HTML, or FALSE if no items to display.
+ */
+function _drop_base_render_section_nav(array $links) {
+  $current = current_path();
+  $items   = array();
+
+  foreach ($links as $link) {
+    $href = $link['href'];
+
+    // Determine active state: exact match or any declared active_path.
+    $active = ($current === $href);
+    if (!$active && !empty($link['active_paths'])) {
+      foreach ($link['active_paths'] as $ap) {
+        if ($current === $ap || strpos($current, $ap . '/') === 0) {
+          $active = TRUE;
+          break;
+        }
+      }
+    }
+
+    $classes = array('drop-snav__item');
+    if ($active) {
+      $classes[] = 'is-active';
+    }
+    if (!empty($link['admin_only'])) {
+      $classes[] = 'drop-snav__item--admin';
+    }
+    if (!empty($link['pinned'])) {
+      $classes[] = 'drop-snav__item--pinned';
+    }
+
+    $badge = '';
+    if (!empty($link['badge'])) {
+      $badge = '<span class="drop-snav__badge">' . check_plain((string) $link['badge']) . '</span>';
+    }
+
+    $title_html = check_plain($link['title']) . $badge;
+    $item_html  = l($title_html, $href, array('html' => TRUE));
+    $items[]    = '<li class="' . implode(' ', $classes) . '">' . $item_html . '</li>';
+  }
+
+  if (empty($items)) {
+    return FALSE;
+  }
+
+  return '<nav class="drop-snav" aria-label="' . t('Section navigation') . '">'
+    . '<ul class="drop-snav__list">' . implode('', $items) . '</ul>'
+    . '</nav>';
 }
 
 /**
@@ -308,15 +521,54 @@ function drop_base_page_actions(array $links) {
 }
 
 /**
+ * Implements hook_custom_theme().
+ *
+ * Serves all Drop Suite pages (drop/*) through the Dropper theme,
+ * keeping standard Backdrop admin pages on the admin theme.
+ */
+function drop_base_custom_theme() {
+  $path = current_path();
+  if ($path === 'drop' || strpos($path, 'drop/') === 0) {
+    return 'dropper';
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function drop_base_menu() {
-  $items['admin/drop/team'] = array(
+  $items['drop/team'] = array(
     'title'            => 'Team',
     'page callback'    => 'drop_base_team_page',
     'access arguments' => array('access drop team'),
     'type'             => MENU_NORMAL_ITEM,
   );
+
+  // Drop Suite admin hub — visible in the Backdrop Configuration menu.
+  $items['admin/drop'] = array(
+    'title'            => 'Drop Suite',
+    'description'      => t('Configure and administer Drop Suite modules (DropTickets, DropCRM, DropTasks, and more).'),
+    'page callback'    => 'system_admin_menu_block_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'file'             => 'system.admin.inc',
+    'file path'        => backdrop_get_path('module', 'system'),
+    'type'             => MENU_NORMAL_ITEM,
+    'weight'           => 50,
+  );
+
+  // Permissions card — links to the Backdrop permissions page.
+  $items['admin/drop/permissions'] = array(
+    'title'            => 'Drop Suite permissions',
+    'description'      => t('Configure who can access DropTickets, DropCRM, DropTasks, and other Drop Suite modules.'),
+    'page callback'    => 'backdrop_goto',
+    'page arguments'   => array('admin/people/permissions'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer permissions'),
+    'type'             => MENU_NORMAL_ITEM,
+    'weight'           => 0,
+  );
+
   // Pin/unpin report toggle endpoint.
   $items['drop-base/pin-report/%'] = array(
     'page callback'   => 'drop_base_pin_report_toggle',
@@ -330,56 +582,12 @@ function drop_base_menu() {
 /**
  * Implements hook_menu_local_tasks_alter().
  *
- * Injects each user's pinned reports as top-level primary tabs on the module
- * root page where the report lives.
+ * Pinned reports are now displayed in the Drop Section Navigation block
+ * (_drop_base_section_nav_block), so they no longer need to be injected as
+ * Local Tasks tabs here.
  */
 function drop_base_menu_local_tasks_alter(&$data, $router_item, $root_path) {
-  global $user;
-
-  if (empty($data['tabs'][0]['output'])) {
-    return;
-  }
-
-  $all_reports = drop_base_get_all_reports();
-  if (empty($all_reports)) {
-    return;
-  }
-
-  $pinned = drop_base_get_pinned_reports($user->uid);
-  if (empty($pinned)) {
-    return;
-  }
-
-  $current_path = current_path();
-  $weight = 10;
-
-  foreach ($pinned as $report_id) {
-    if (!isset($all_reports[$report_id])) {
-      continue;
-    }
-    $report = $all_reports[$report_id];
-    if (empty($report['root_path']) || $report['root_path'] !== $root_path) {
-      continue;
-    }
-    // Access check.
-    if (!empty($report['access callback'])) {
-      $args = !empty($report['access arguments']) ? $report['access arguments'] : array();
-      if (!call_user_func_array($report['access callback'], $args)) {
-        continue;
-      }
-    }
-    $data['tabs'][0]['output'][] = array(
-      '#theme'  => 'menu_local_task',
-      '#link'   => array(
-        'title'             => $report['title'],
-        'href'              => $report['path'],
-        'localized_options' => array(),
-      ),
-      '#active' => ($current_path === $report['path'])
-        || (!empty($report['is_default_subtask']) && $current_path === implode('/', array_slice(explode('/', $report['path']), 0, -1))),
-      '#weight' => $weight++,
-    );
-  }
+  // No-op: section nav handles pinned report display.
 }
 
 // ---------------------------------------------------------------------------
@@ -527,7 +735,7 @@ function drop_base_drop_nav_links() {
   return array(
     array(
       'title'      => t('Team'),
-      'path'       => 'admin/drop/team',
+      'path'       => 'drop/team',
       'permission' => 'access drop team',
       'weight'     => 90,
     ),
@@ -558,7 +766,7 @@ function drop_base_team_page() {
       ? t('@time ago', array('@time' => format_interval(REQUEST_TIME - $account->access)))
       : t('Never');
     $name = $can_see_tickets
-      ? l($account->name, 'admin/drop/tickets/member/' . $account->uid)
+      ? l($account->name, 'drop/tickets/member/' . $account->uid)
       : check_plain($account->name);
     $rows[] = array($name, $last_seen);
   }

@@ -1,0 +1,55 @@
+/**
+ * Drop Suite layout styles.
+ *
+ * Structural rules only — colors, typography, and component styles
+ * live in the Dropper theme CSS.
+ */
+
+/* Navigation region */
+.l-navigation {
+  width: 100%;
+}
+
+.l-navigation-inner {
+  max-width: 100%;
+}
+
+/* Main wrapper */
+.l-wrapper {
+  width: 100%;
+}
+
+.l-wrapper-inner {
+  max-width: 100%;
+  padding: 0 1rem;
+}
+
+/* Messages */
+.l-messages {
+  margin-bottom: 1rem;
+}
+
+/* Page title */
+.l-page-title {
+  margin-bottom: 0.5rem;
+}
+
+/* Main content + sidebar columns */
+.l-middle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.l-content {
+  min-width: 0;
+}
+
+.l-sidebar {
+  min-width: 0;
+}
+
+/* Footer */
+.l-footer-inner {
+  padding: 1rem;
+}

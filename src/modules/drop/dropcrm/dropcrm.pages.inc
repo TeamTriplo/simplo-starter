@@ -17,9 +17,9 @@ function dropcrm_contact_view(CrmContact $contact) {
   backdrop_set_title(entity_label('crm_contact', $contact), PASS_THROUGH);
   backdrop_set_breadcrumb(array(
     l(t('Home'), '<front>'),
-    l(t('Drop Admin'), 'admin/drop'),
-    l(t('CRM'), 'admin/drop/crm'),
-    l(t('Contacts'), 'admin/drop/crm/contacts'),
+    l(t('Drop Suite'), 'drop'),
+    l(t('CRM'), 'drop/crm'),
+    l(t('Contacts'), 'drop/crm/contacts'),
   ));
 
   // Always start with a plain array so all named children render reliably.
@@ -35,10 +35,10 @@ function dropcrm_contact_view(CrmContact $contact) {
       'crm_household'    => t('Edit household'),
     );
     $edit_label = isset($bundle_labels[$contact->bundle()]) ? $bundle_labels[$contact->bundle()] : t('Edit');
-    $actions[] = l($edit_label, 'admin/drop/crm/contacts/' . $contact->cid . '/edit');
+    $actions[] = l($edit_label, 'drop/crm/contacts/' . $contact->cid . '/edit');
   }
   if (dropcrm_contact_access('delete', $contact)) {
-    $actions[] = l(t('Delete'), 'admin/drop/crm/contacts/' . $contact->cid . '/delete');
+    $actions[] = l(t('Delete'), 'drop/crm/contacts/' . $contact->cid . '/delete');
   }
   $output['actions'] = array(
     '#markup' => drop_base_page_actions($actions),
@@ -61,7 +61,7 @@ function dropcrm_contact_view(CrmContact $contact) {
     $aff_rows = array();
     foreach ($affiliated as $person) {
       $aff_rows[] = array(
-        l(entity_label('crm_contact', $person), 'admin/drop/crm/contact/' . $person->cid),
+        l(entity_label('crm_contact', $person), 'drop/crm/contact/' . $person->cid),
       );
     }
     $output['affiliated_contacts'] = array(
@@ -71,7 +71,7 @@ function dropcrm_contact_view(CrmContact $contact) {
     $output['affiliated_contacts']['heading'] = array(
       '#markup' => drop_base_section_header(
         t('Affiliated People'),
-        l(t('+ Add person'), 'admin/drop/crm/contacts/add/crm_person',
+        l(t('+ Add person'), 'drop/crm/contacts/add/crm_person',
           array('attributes' => array('class' => array('drop-section-add')),
                 'query'      => array('org' => $contact->cid)))
       ),
@@ -97,7 +97,7 @@ function dropcrm_contact_view(CrmContact $contact) {
     'address'   => t('Address'),
     'url'       => t('Website/Social'),
   ) as $bundle => $label) {
-    $add_links[] = l('+ ' . $label, 'admin/drop/crm/contact-methods/add/' . $bundle,
+    $add_links[] = l('+ ' . $label, 'drop/crm/contact-methods/add/' . $bundle,
       array('attributes' => array('class' => array('drop-section-add')),
             'query'      => array('contact' => $contact->cid)));
   }
@@ -134,7 +134,7 @@ function dropcrm_contact_view(CrmContact $contact) {
   $output['relationships']['heading'] = array(
     '#markup' => drop_base_section_header(
       t('Relationships'),
-      l(t('+ Add relationship'), 'admin/drop/crm/relationships/add',
+      l(t('+ Add relationship'), 'drop/crm/relationships/add',
         array('attributes' => array('class' => array('drop-section-add')),
               'query'      => array('contact' => $contact->cid)))
     ),
@@ -149,10 +149,10 @@ function dropcrm_contact_view(CrmContact $contact) {
       continue;
     }
     $type_label = isset($type_options[$rel->type]) ? $type_options[$rel->type] : $rel->type;
-    $ops = l(t('Edit'), 'admin/drop/crm/relationships/' . $rel->rid . '/edit')
-      . ' &middot; ' . l(t('Delete'), 'admin/drop/crm/relationships/' . $rel->rid . '/delete');
+    $ops = l(t('Edit'), 'drop/crm/relationships/' . $rel->rid . '/edit')
+      . ' &middot; ' . l(t('Delete'), 'drop/crm/relationships/' . $rel->rid . '/delete');
     $rel_rows[] = array(
-      l(entity_label('crm_contact', $other), 'admin/drop/crm/contact/' . $other->cid),
+      l(entity_label('crm_contact', $other), 'drop/crm/contact/' . $other->cid),
       $type_label,
       check_plain($rel->notes),
       $ops,
@@ -173,7 +173,7 @@ function dropcrm_contact_view(CrmContact $contact) {
   $output['activities']['heading'] = array(
     '#markup' => drop_base_section_header(
       t('Activities'),
-      l(t('+ Add activity'), 'admin/drop/crm/activities/add',
+      l(t('+ Add activity'), 'drop/crm/activities/add',
         array('attributes' => array('class' => array('drop-section-add')),
               'query'      => array('contact' => $contact->cid)))
     ),
@@ -199,7 +199,7 @@ function dropcrm_contact_view(CrmContact $contact) {
 
   $rows = array();
   foreach ($activities as $activity) {
-    $subject_cell = l(check_plain($activity->subject), 'admin/drop/crm/activity/' . $activity->aid);
+    $subject_cell = l(check_plain($activity->subject), 'drop/crm/activity/' . $activity->aid);
     if (!empty($activity->is_outreach)) {
       $subject_cell .= ' <span class="crm-outreach-badge">' . t('outreach') . '</span>';
     }
@@ -243,9 +243,9 @@ function dropcrm_activity_view(CrmActivity $activity) {
   backdrop_set_title(entity_label('crm_activity', $activity), PASS_THROUGH);
   backdrop_set_breadcrumb(array(
     l(t('Home'), '<front>'),
-    l(t('Drop Admin'), 'admin/drop'),
-    l(t('CRM'), 'admin/drop/crm'),
-    l(t('Activities'), 'admin/drop/crm/activities'),
+    l(t('Drop Suite'), 'drop'),
+    l(t('CRM'), 'drop/crm'),
+    l(t('Activities'), 'drop/crm/activities'),
   ));
 
   $aid            = $activity->aid;
@@ -314,7 +314,7 @@ function dropcrm_activity_view(CrmActivity $activity) {
       $links = array();
       foreach ((array) $contacts as $contact) {
         if ($contact) {
-          $links[] = l(entity_label('crm_contact', $contact), 'admin/drop/crm/contact/' . $contact->cid);
+          $links[] = l(entity_label('crm_contact', $contact), 'drop/crm/contact/' . $contact->cid);
         }
       }
       if ($links) {
@@ -330,10 +330,10 @@ function dropcrm_activity_view(CrmActivity $activity) {
   // --- Action links bar (top of page) ---
   $activity_actions = array();
   if (dropcrm_activity_access('edit', $activity)) {
-    $activity_actions[] = l(t('Edit activity'), 'admin/drop/crm/activities/manage/' . $aid . '/edit');
+    $activity_actions[] = l(t('Edit activity'), 'drop/crm/activities/manage/' . $aid . '/edit');
   }
   if (dropcrm_activity_access('delete', $activity)) {
-    $activity_actions[] = l(t('Delete'), 'admin/drop/crm/activities/manage/' . $aid . '/delete');
+    $activity_actions[] = l(t('Delete'), 'drop/crm/activities/manage/' . $aid . '/delete');
   }
 
   // "Add follow-up task" button — pre-fills title, links contact and activity.
@@ -355,17 +355,17 @@ function dropcrm_activity_view(CrmActivity $activity) {
     }
     catch (EntityMetadataWrapperException $e) {}
 
-    $activity_actions[] = l(t('+ Add follow-up task'), 'admin/drop/tasks/add', array(
+    $activity_actions[] = l(t('+ Add follow-up task'), 'drop/tasks/add', array(
       'query' => $task_query,
     ));
   }
 
   // "Log time" button — links to DropTime daily page with note pre-filled.
   if (module_exists('droptime') && user_access('access droptime')) {
-    $activity_actions[] = l(t('+ Log time'), 'admin/drop/time', array(
+    $activity_actions[] = l(t('+ Log time'), 'drop/time', array(
       'query' => array(
         'notes'  => $activity->subject,
-        'return' => 'admin/drop/crm/activity/' . $aid,
+        'return' => 'drop/crm/activity/' . $aid,
       ),
     ));
   }
@@ -390,11 +390,11 @@ function dropcrm_activity_view(CrmActivity $activity) {
   $extend_label = !empty($activity->due_date) ? t('Extend Due Date:') : t('Set Due Date:');
   $output['extend'] = array(
     '#prefix' => '<div class="crm-extend-links"><strong>' . $extend_label . '</strong> ',
-    '#markup' => l(t('+ 1 Day'),   'admin/drop/crm/activity/' . $aid . '/extend/day')
+    '#markup' => l(t('+ 1 Day'),   'drop/crm/activity/' . $aid . '/extend/day')
       . ' &nbsp;·&nbsp; '
-      . l(t('+ 1 Week'),  'admin/drop/crm/activity/' . $aid . '/extend/week')
+      . l(t('+ 1 Week'),  'drop/crm/activity/' . $aid . '/extend/week')
       . ' &nbsp;·&nbsp; '
-      . l(t('+ 1 Month'), 'admin/drop/crm/activity/' . $aid . '/extend/month'),
+      . l(t('+ 1 Month'), 'drop/crm/activity/' . $aid . '/extend/month'),
     '#suffix' => '</div>',
     '#weight' => 2,
   );
@@ -451,14 +451,14 @@ function dropcrm_contact_method_view(CrmContactMethod $method) {
 
   $crumb = array(
     l(t('Home'), '<front>'),
-    l(t('Drop Admin'), 'admin/drop'),
-    l(t('CRM'), 'admin/drop/crm'),
+    l(t('Drop Suite'), 'drop'),
+    l(t('CRM'), 'drop/crm'),
   );
   if (!empty($method->cid)) {
     $contact = crm_contact_load($method->cid);
     if ($contact) {
-      $crumb[] = l(t('Contacts'), 'admin/drop/crm/contacts');
-      $crumb[] = l(entity_label('crm_contact', $contact), 'admin/drop/crm/contact/' . $method->cid);
+      $crumb[] = l(t('Contacts'), 'drop/crm/contacts');
+      $crumb[] = l(entity_label('crm_contact', $contact), 'drop/crm/contact/' . $method->cid);
     }
   }
   backdrop_set_breadcrumb($crumb);
@@ -614,7 +614,7 @@ function _dropcrm_person_details(CrmContact $contact) {
     foreach ($w->field_crm_employer->getIterator() as $item) {
       $org = $item->value();
       if ($org) {
-        $org_links[] = l(entity_label('crm_contact', $org), 'admin/drop/crm/contact/' . $org->cid);
+        $org_links[] = l(entity_label('crm_contact', $org), 'drop/crm/contact/' . $org->cid);
       }
     }
     if ($org_links) {
@@ -643,7 +643,7 @@ function _dropcrm_person_details(CrmContact $contact) {
       if (!empty($item['tid'])) {
         $term = taxonomy_term_load($item['tid']);
         if ($term) {
-          $tag_links[] = l($term->name, 'admin/drop/crm/people',
+          $tag_links[] = l($term->name, 'drop/crm/people',
             array('query' => array('tag' => $item['tid'])));
         }
       }

@@ -31,7 +31,7 @@ function dropstrategic_dashboard_page() {
       . check_plain($label) . '</option>';
   }
   $filter_html = '<div class="droptickets-filter-row">'
-    . '<form class="droptickets-filter-form" method="get" action="' . url('admin/drop/strategic') . '">'
+    . '<form class="droptickets-filter-form" method="get" action="' . url('drop/strategic') . '">'
     . '<select name="status" class="droptickets-filter-select" onchange="this.form.submit()">' . $status_opts_html . '</select>'
     . '</form>'
     . '</div>';
@@ -54,7 +54,7 @@ function dropstrategic_dashboard_page() {
   if (empty($goals)) {
     $output['empty'] = array(
       '#markup' => '<p class="dropstrategic-empty">' . t('No goals yet. <a href="@url">Add the first one.</a>', array(
-        '@url' => url('admin/drop/strategic/add'),
+        '@url' => url('drop/strategic/add'),
       )) . '</p>',
     );
     return $output;
@@ -114,7 +114,7 @@ function dropstrategic_mine_page() {
   if (empty($goals)) {
     $output['empty'] = array(
       '#markup' => '<p class="dropstrategic-empty">' . t('You have no active goals. <a href="@url">Add one.</a>', array(
-        '@url' => url('admin/drop/strategic/add'),
+        '@url' => url('drop/strategic/add'),
       )) . '</p>',
     );
     return $output;
@@ -203,7 +203,7 @@ function dropstrategic_goal_view(DropGoalStrategic $goal) {
       $kr_html .= '<li class="dropstrategic-kr-item' . $done_class . '" data-krid="' . (int) $kr->krid . '">';
 
       if ($can_toggle) {
-        $toggle_url = url('admin/drop/strategic/kr/' . $kr->krid . '/toggle', array('query' => array('token' => $token)));
+        $toggle_url = url('drop/strategic/kr/' . $kr->krid . '/toggle', array('query' => array('token' => $token)));
         $checked    = $kr->done ? ' checked' : '';
         $kr_html .= '<input type="checkbox" class="dropstrategic-kr-check"' . $checked . ' data-url="' . check_plain($toggle_url) . '">';
       }
@@ -254,7 +254,7 @@ function dropstrategic_goal_view(DropGoalStrategic $goal) {
         $is_done = in_array($ticket->status, $done_statuses);
         $t_html .= '<li class="dropstrategic-ticket-item' . ($is_done ? ' dropstrategic-ticket-item--done' : '') . '">';
         $t_html .= '<span class="droptickets-ticket-id">' . check_plain($label) . '</span> ';
-        $t_html .= l($ticket->title, 'admin/drop/tickets/' . $ticket->tid);
+        $t_html .= l($ticket->title, 'drop/tickets/' . $ticket->tid);
         $t_html .= ' <span class="dropstrategic-ticket-status droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>';
         $t_html .= '</li>';
       }
@@ -305,7 +305,7 @@ function dropstrategic_render_goal_card($goal, array $accounts, $show_private = 
 
   // Card header row.
   $html .= '<div class="dropstrategic-card-header">';
-  $html .= '<h3 class="dropstrategic-card-title">' . l($goal->title, 'admin/drop/strategic/' . $goal->gid) . '</h3>';
+  $html .= '<h3 class="dropstrategic-card-title">' . l($goal->title, 'drop/strategic/' . $goal->gid) . '</h3>';
   $html .= '<div class="dropstrategic-card-badges">';
   $html .= '<span class="dropstrategic-badge dropstrategic-badge--status-' . check_plain($goal->status) . '">' . check_plain($status_label) . '</span>';
   if ($owner) {
@@ -326,7 +326,7 @@ function dropstrategic_render_goal_card($goal, array $accounts, $show_private = 
   // Key results preview (first 3).
   if (!empty($key_results)) {
     $html .= '<ul class="dropstrategic-card-krs">';
-    foreach (array_slice($key_results, 0, 3) as $kr) {
+    foreach (array_slice($key_results, 0, 2) as $kr) {
       $done_class = $kr->done ? ' dropstrategic-card-kr--done' : '';
       $icon_name  = $kr->done ? 'check-circle' : 'circle';
       $html .= '<li class="dropstrategic-card-kr' . $done_class . '">'
@@ -348,7 +348,7 @@ function dropstrategic_render_goal_card($goal, array $accounts, $show_private = 
   // Edit link.
   if (dropstrategic_goal_access('edit', $goal)) {
     $html .= '<div class="dropstrategic-card-actions">'
-      . l(t('Edit'), 'admin/drop/strategic/' . $goal->gid . '/edit', array('attributes' => array('class' => array('dropstrategic-card-edit'))))
+      . l(t('Edit'), 'drop/strategic/' . $goal->gid . '/edit', array('attributes' => array('class' => array('dropstrategic-card-edit'))))
       . '</div>';
   }
 

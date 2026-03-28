@@ -266,7 +266,7 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
     $form['actions']['cancel'] = array(
       '#type'       => 'link',
       '#title'      => t('Cancel'),
-      '#href'       => 'admin/drop/tasks/' . $task->tid,
+      '#href'       => 'drop/tasks/' . $task->tid,
       '#attributes' => array('class' => array('button', 'button-secondary')),
     );
   }
@@ -274,7 +274,7 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
   // "Back to activity" link when creating a follow-up from an activity view.
   if ($is_new && $activity_id) {
     $form['actions']['back'] = array(
-      '#markup' => ' ' . l(t('← Back to activity'), 'admin/drop/crm/activity/' . $activity_id),
+      '#markup' => ' ' . l(t('← Back to activity'), 'drop/crm/activity/' . $activity_id),
     );
   }
 
@@ -376,10 +376,10 @@ function droptasks_task_form_submit($form, &$form_state) {
   backdrop_set_message(t('Task saved.'));
   // Return to the source activity so follow-up tasks can be added easily.
   if (!empty($task->source_activity_id)) {
-    $form_state['redirect'] = 'admin/drop/crm/activity/' . $task->source_activity_id;
+    $form_state['redirect'] = 'drop/crm/activity/' . $task->source_activity_id;
   }
   else {
-    $form_state['redirect'] = 'admin/drop/tasks';
+    $form_state['redirect'] = 'drop/tasks';
   }
 }
 
@@ -413,5 +413,5 @@ function droptasks_task_delete_form_submit($form, &$form_state) {
   db_delete('drop_task_completion')->condition('tid', $task->tid)->execute();
   $task->delete();
   backdrop_set_message(t('Task %title deleted.', array('%title' => $task->title)));
-  $form_state['redirect'] = 'admin/drop/tasks';
+  $form_state['redirect'] = 'drop/tasks';
 }

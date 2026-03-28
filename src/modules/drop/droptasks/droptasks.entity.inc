@@ -78,7 +78,7 @@ class DroptTask extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/tasks/' . $this->tid, 'options' => array());
+    return array('path' => 'drop/tasks/' . $this->tid, 'options' => array());
   }
 
   /**
@@ -92,7 +92,7 @@ class DroptTask extends Entity {
    * {@inheritdoc}
    */
   protected function defaultUri() {
-    return array('path' => 'admin/drop/tasks/' . $this->tid, 'options' => array());
+    return array('path' => 'drop/tasks/' . $this->tid, 'options' => array());
   }
 
   /**

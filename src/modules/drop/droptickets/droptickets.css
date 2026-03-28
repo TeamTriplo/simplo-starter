@@ -130,6 +130,7 @@
   vertical-align: middle;
 }
 
+
 .droptickets-ticket-id {
   font-family: monospace;
   font-size: 0.85em;
@@ -564,13 +565,32 @@
    Related tickets
    --------------------------------------------------------------------------- */
 
-/* Parent ticket indicator card */
-.droptickets-parent-ticket {
+/* Hierarchy card — combined parent + child tickets */
+.droptickets-hierarchy-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.droptickets-hierarchy-summary::-webkit-details-marker {
+  display: none;
+}
+
+.droptickets-hierarchy-left {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  min-width: 0;
+}
+
+.droptickets-hierarchy-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .droptickets-parent-ticket-label {
@@ -582,25 +602,25 @@
   white-space: nowrap;
 }
 
-/* Collapsible cards — <details>/<summary> pattern */
-details.droptickets-card {
-  /* <details> renders as block by default; card styles apply as-is */
+.droptickets-hierarchy-child-count {
+  font-size: 0.85em;
+  color: var(--drop-text-secondary, #888);
+  white-space: nowrap;
 }
 
-details.droptickets-card > summary {
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0;
+.droptickets-hierarchy-summary a {
+  font-size: 0.85em;
 }
 
-details.droptickets-card > summary::-webkit-details-marker {
-  display: none;
+details.droptickets-hierarchy[open] > summary,
+details.droptickets-related[open] > summary {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--drop-border, #e0ddd8);
 }
 
-details.droptickets-card > summary::after {
+details.droptickets-hierarchy > summary::after,
+details.droptickets-related > summary::after {
   content: '';
   display: inline-block;
   width: 1em;
@@ -610,28 +630,16 @@ details.droptickets-card > summary::after {
   background-repeat: no-repeat;
   transition: transform 0.2s;
   flex-shrink: 0;
-  margin-left: 0.5rem;
+  margin-left: 0.25rem;
 }
 
-details.droptickets-card[open] > summary::after {
+details.droptickets-hierarchy[open] > summary::after,
+details.droptickets-related[open] > summary::after {
   transform: rotate(180deg);
 }
 
-details.droptickets-card > summary .droptickets-section-heading,
-details.droptickets-card > summary {
-  /* summary IS the heading — keep heading styles but remove bottom margin */
-  margin-bottom: 0;
-}
+/* Collapsible cards — <details>/<summary> pattern */
 
-details.droptickets-card[open] > summary {
-  margin-bottom: 0.75rem;
-}
-
-details.droptickets-card:not([open]) > summary {
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 0;
-}
 
 .droptickets-related {
   /* Styled as a .droptickets-card — no additional layout needed. */
@@ -846,7 +854,7 @@ details.droptickets-card:not([open]) > summary {
 .droptickets-col-flag {
   width: 1.5rem;
   text-align: center;
-  padding-right: 0 !important;
+  padding-right: 0.4rem !important;
 }
 
 a.droptickets-flag-off svg {

@@ -49,13 +49,13 @@ function droptasks_entity_info() {
         'drop_task' => array(
           'label' => t('Task'),
           'admin' => array(
-            'path'             => 'admin/drop/tasks/configure/manage/drop_task',
+            'path'             => 'drop/tasks/configure/manage/drop_task',
             'access arguments' => array('administer tasks'),
           ),
         ),
       ),
       'admin ui'        => array(
-        'path'             => 'admin/drop/tasks/configure',
+        'path'             => 'drop/tasks/configure',
         'file'             => 'droptasks.admin.inc',
         'controller class' => 'EntityDefaultUIController',
         'menu wildcard'    => '%drop_task',
@@ -187,7 +187,7 @@ function droptasks_menu() {
   $items = array();
 
   // Task list (default: active tasks).
-  $items['admin/drop/tasks'] = array(
+  $items['drop/tasks'] = array(
     'title'            => 'Tasks',
     'page callback'    => 'droptasks_task_list',
     'page arguments'   => array('active'),
@@ -198,7 +198,7 @@ function droptasks_menu() {
   );
 
   // Filter tabs.
-  $items['admin/drop/tasks/active'] = array(
+  $items['drop/tasks/active'] = array(
     'title'            => 'Active',
     'page callback'    => 'droptasks_task_list',
     'page arguments'   => array('active'),
@@ -208,7 +208,7 @@ function droptasks_menu() {
     'type'             => MENU_DEFAULT_LOCAL_TASK,
     'weight'           => 0,
   );
-  $items['admin/drop/tasks/today'] = array(
+  $items['drop/tasks/today'] = array(
     'title'            => 'Due Today',
     'page callback'    => 'droptasks_task_list',
     'page arguments'   => array('today'),
@@ -218,7 +218,7 @@ function droptasks_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 1,
   );
-  $items['admin/drop/tasks/upcoming'] = array(
+  $items['drop/tasks/upcoming'] = array(
     'title'            => 'Upcoming',
     'page callback'    => 'droptasks_task_list',
     'page arguments'   => array('upcoming'),
@@ -228,7 +228,7 @@ function droptasks_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 2,
   );
-  $items['admin/drop/tasks/completed'] = array(
+  $items['drop/tasks/completed'] = array(
     'title'            => 'Completed',
     'page callback'    => 'droptasks_task_list',
     'page arguments'   => array('completed'),
@@ -240,7 +240,7 @@ function droptasks_menu() {
   );
 
   // Add task.
-  $items['admin/drop/tasks/add'] = array(
+  $items['drop/tasks/add'] = array(
     'title'            => 'Add task',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('droptasks_task_form', NULL),
@@ -251,52 +251,52 @@ function droptasks_menu() {
   );
 
   // View task.
-  $items['admin/drop/tasks/%drop_task'] = array(
+  $items['drop/tasks/%drop_task'] = array(
     'title callback'   => 'entity_label',
-    'title arguments'  => array('drop_task', 3),
+    'title arguments'  => array('drop_task', 2),
     'page callback'    => 'droptasks_task_view',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'droptasks_task_access',
-    'access arguments' => array('view', 3),
+    'access arguments' => array('view', 2),
     'file'             => 'droptasks.pages.inc',
   );
-  $items['admin/drop/tasks/%drop_task/view'] = array(
+  $items['drop/tasks/%drop_task/view'] = array(
     'title'  => 'View',
     'type'   => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
 
   // Edit task.
-  $items['admin/drop/tasks/%drop_task/edit'] = array(
+  $items['drop/tasks/%drop_task/edit'] = array(
     'title'            => 'Edit',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptasks_task_form', 3),
+    'page arguments'   => array('droptasks_task_form', 2),
     'access callback'  => 'droptasks_task_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('update', 2),
     'file'             => 'droptasks.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 1,
   );
 
   // Delete task.
-  $items['admin/drop/tasks/%drop_task/delete'] = array(
+  $items['drop/tasks/%drop_task/delete'] = array(
     'title'            => 'Delete',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptasks_task_delete_form', 3),
+    'page arguments'   => array('droptasks_task_delete_form', 2),
     'access callback'  => 'droptasks_task_access',
-    'access arguments' => array('delete', 3),
+    'access arguments' => array('delete', 2),
     'file'             => 'droptasks.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 2,
   );
 
   // Toggle complete (quick action, no form).
-  $items['admin/drop/tasks/%drop_task/complete'] = array(
+  $items['drop/tasks/%drop_task/complete'] = array(
     'title'            => 'Toggle complete',
     'page callback'    => 'droptasks_task_toggle_complete',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'droptasks_task_access',
-    'access arguments' => array('complete', 3),
+    'access arguments' => array('complete', 2),
     'file'             => 'droptasks.pages.inc',
     'type'             => MENU_CALLBACK,
   );
@@ -327,9 +327,68 @@ function droptasks_drop_nav_links() {
   return array(
     array(
       'title'      => t('Tasks'),
-      'path'       => 'admin/drop/tasks',
+      'path'       => 'drop/tasks',
       'permission' => 'access tasks',
       'weight'     => 20,
     ),
   );
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ *
+ * On the main Tasks page, strips all local tasks except admin-only ones.
+ * Operational navigation lives in the Drop Section Navigation block.
+ */
+function droptasks_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  if ($root_path !== 'drop/tasks') {
+    return;
+  }
+  $admin_paths = array('drop/tasks/configure');
+  if (!empty($data['tabs'][0]['output'])) {
+    foreach ($data['tabs'][0]['output'] as $key => $tab) {
+      $href = isset($tab['#link']['href']) ? $tab['#link']['href'] : '';
+      if (!in_array($href, $admin_paths)) {
+        unset($data['tabs'][0]['output'][$key]);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_drop_section_links().
+ */
+function droptasks_drop_section_links($section) {
+  if ($section !== 'tasks') {
+    return array();
+  }
+
+  $links = array();
+
+  $links['active'] = array(
+    'title'        => t('Active'),
+    'href'         => 'drop/tasks',
+    'weight'       => -10,
+    'active_paths' => array('drop/tasks', 'drop/tasks/active'),
+  );
+
+  $links['today'] = array(
+    'title'  => t('Today'),
+    'href'   => 'drop/tasks/today',
+    'weight' => 0,
+  );
+
+  $links['upcoming'] = array(
+    'title'  => t('Upcoming'),
+    'href'   => 'drop/tasks/upcoming',
+    'weight' => 10,
+  );
+
+  $links['completed'] = array(
+    'title'  => t('Completed'),
+    'href'   => 'drop/tasks/completed',
+    'weight' => 20,
+  );
+
+  return $links;
 }

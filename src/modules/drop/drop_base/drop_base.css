@@ -387,3 +387,116 @@ span.drop-pin-link.drop-pin-disabled {
   font-size: 0.9em;
   font-weight: 500;
 }
+
+/* ==========================================================================
+   Drop Suite Secondary Navigation (drop-snav)
+   Replaces Backdrop's local task tabs on Drop Suite section pages.
+   ========================================================================== */
+
+.drop-snav {
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 1.25rem;
+}
+
+.drop-snav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.drop-snav__item a {
+  display: inline-block;
+  padding: 0.5rem 0.875rem;
+  text-decoration: none;
+  color: #555;
+  font-size: 0.875rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.drop-snav__item a:hover {
+  color: #1565c0;
+  border-bottom-color: #90caf9;
+  text-decoration: none;
+}
+
+.drop-snav__item.is-active a {
+  color: #1565c0;
+  border-bottom-color: #1565c0;
+  font-weight: 600;
+}
+
+/* Admin-only items — de-emphasised, separated by a subtle gap */
+.drop-snav__item--admin {
+  margin-left: 0.25rem;
+}
+
+.drop-snav__item--admin a {
+  color: #aaa;
+  font-size: 0.78rem;
+}
+
+.drop-snav__item--admin a:hover {
+  color: #666;
+  border-bottom-color: #ccc;
+}
+
+.drop-snav__item--admin.is-active a {
+  color: #1565c0;
+  border-bottom-color: #1565c0;
+}
+
+/* Pinned report items — pin icon prefix */
+.drop-snav__item--pinned a::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%23aaa' d='M236.07 98.21 157.79 19.93a16 16 0 0 0-22.63 0l-28.29 28.29a16 16 0 0 0-3.55 17.38l-33.91 33.91A16 16 0 0 0 52 99.43a16.27 16.27 0 0 0 .39 3.55L19.72 135.63a16 16 0 0 0 0 22.63l13.17 13.17L19.72 184.6a16 16 0 0 0 22.63 22.62l13.17-13.17 11.64 11.64a16 16 0 0 0 22.63 0l32.64-32.64A16.27 16.27 0 0 0 125.94 173a16 16 0 0 0-.47-3.17L157.79 137a16 16 0 0 0 17.38-3.55l28.29-28.28a16 16 0 0 0 0-22.63z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  margin-right: 4px;
+  opacity: 0.5;
+  vertical-align: middle;
+}
+
+/* Badges */
+.drop-snav__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1565c0;
+  color: #fff;
+  border-radius: 10px;
+  min-width: 1.3em;
+  height: 1.3em;
+  padding: 0 0.35em;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.drop-snav__item.is-active .drop-snav__badge {
+  background: #1565c0;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * Full-width content when no sidebar regions are populated.
+ * drop_base_preprocess_layout() adds layout--no-sidebar when empty.
+ * --------------------------------------------------------------------------- */
+.layout--no-sidebar .l-content {
+  flex: 0 0 100%;
+  max-width: 100%;
+  width: 100%;
+}
+.layout--no-sidebar .l-sidebar {
+  display: none;
+}

@@ -59,7 +59,7 @@ function droptime_daily_page() {
     $output['no_projects'] = array(
       '#markup' => '<p class="droptime-notice">'
         . t('No active projects yet. !link to get started.', array(
-            '!link' => l(t('Add a project'), 'admin/drop/crm/projects/add'),
+            '!link' => l(t('Add a project'), 'drop/crm/projects/add'),
           ))
         . '</p>',
       '#weight' => 0,
@@ -93,12 +93,12 @@ function _droptime_date_nav($date, $today) {
   $label    = format_date($ts, 'custom', 'l, F j, Y');
 
   $html  = '<div class="droptime-date-nav">';
-  $html .= l('‹', 'admin/drop/time', array('query' => array('date' => $prev), 'attributes' => array('class' => array('droptime-nav-arrow'), 'title' => t('Previous day'))));
+  $html .= l('‹', 'drop/time', array('query' => array('date' => $prev), 'attributes' => array('class' => array('droptime-nav-arrow'), 'title' => t('Previous day'))));
   $html .= '<span class="droptime-nav-label">' . check_plain($label) . '</span>';
 
   if (!$is_today) {
-    $html .= l('›', 'admin/drop/time', array('query' => array('date' => $next), 'attributes' => array('class' => array('droptime-nav-arrow'), 'title' => t('Next day'))));
-    $html .= ' ' . l(t('Today'), 'admin/drop/time', array('attributes' => array('class' => array('droptime-nav-today'))));
+    $html .= l('›', 'drop/time', array('query' => array('date' => $next), 'attributes' => array('class' => array('droptime-nav-arrow'), 'title' => t('Next day'))));
+    $html .= ' ' . l(t('Today'), 'drop/time', array('attributes' => array('class' => array('droptime-nav-today'))));
   }
   else {
     $html .= '<span class="droptime-nav-arrow droptime-nav-arrow--disabled">›</span>';
@@ -111,7 +111,7 @@ function _droptime_date_nav($date, $today) {
   $html .= l(t('▶ Start timer'), '#', array(
     'attributes' => array(
       'class'    => array('droptime-timer-start-link', 'js-droptime-start'),
-      'data-url' => url('admin/drop/time/timer/start'),
+      'data-url' => url('drop/time/timer/start'),
     ),
   ));
   $html .= '</span>';
@@ -174,8 +174,8 @@ function _droptime_render_entries($entries, $date) {
       : '<span class="droptime-bill droptime-bill--no"></span>';
     $note    = !empty($entry->notes) ? '<span class="droptime-entry-note">' . check_plain($entry->notes) . '</span>' : '';
 
-    $edit_link   = l(t('Edit'), 'admin/drop/time/entry/' . $entry->eid . '/edit');
-    $delete_link = l(t('Delete'), 'admin/drop/time/entry/' . $entry->eid . '/delete', array('query' => array('date' => $date)));
+    $edit_link   = l(t('Edit'), 'drop/time/entry/' . $entry->eid . '/edit');
+    $delete_link = l(t('Delete'), 'drop/time/entry/' . $entry->eid . '/delete', array('query' => array('date' => $date)));
 
     $html .= '<li class="droptime-entry">';
     $html .= '<span class="droptime-entry-time">' . check_plain($entry->start_time) . '–' . check_plain($entry->end_time) . '</span>';
@@ -346,7 +346,7 @@ function droptime_entry_form($form, &$form_state, $entry = NULL, $date = NULL) {
   );
   if ($is_edit) {
     $form['actions']['cancel'] = array(
-      '#markup' => ' ' . l(t('Cancel'), 'admin/drop/time', array('query' => array('date' => $date))),
+      '#markup' => ' ' . l(t('Cancel'), 'drop/time', array('query' => array('date' => $date))),
     );
   }
 
@@ -416,7 +416,7 @@ function droptime_entry_form_submit($form, &$form_state) {
     $form_state['redirect'] = $return;
   }
   else {
-    $form_state['redirect'] = array('admin/drop/time', array('query' => array('date' => $date)));
+    $form_state['redirect'] = array('drop/time', array('query' => array('date' => $date)));
   }
 }
 
@@ -428,7 +428,7 @@ function droptime_entry_delete_form($form, &$form_state, DropTimeEntry $entry) {
   return confirm_form(
     $form,
     t('Delete this time entry?'),
-    isset($_GET['date']) ? 'admin/drop/time?date=' . check_plain($_GET['date']) : 'admin/drop/time',
+    isset($_GET['date']) ? 'drop/time?date=' . check_plain($_GET['date']) : 'drop/time',
     t('This action cannot be undone.'),
     t('Delete'),
     t('Cancel')
@@ -443,7 +443,7 @@ function droptime_entry_delete_form_submit($form, &$form_state) {
   $date  = $entry->entry_date;
   $entry->delete();
   backdrop_set_message(t('Time entry deleted.'));
-  $form_state['redirect'] = array('admin/drop/time', array('query' => array('date' => $date)));
+  $form_state['redirect'] = array('drop/time', array('query' => array('date' => $date)));
 }
 
 // ---------------------------------------------------------------------------
@@ -484,7 +484,7 @@ function droptime_timer_start() {
   }
 
   backdrop_set_message(t('Timer started at @time.', array('@time' => $now->format('g:i A'))));
-  backdrop_goto('admin/drop/time');
+  backdrop_goto('drop/time');
 }
 
 /**
@@ -497,13 +497,13 @@ function droptime_timer_stop() {
   state_del('droptime_timer_' . $user->uid);
 
   if (!$timer) {
-    backdrop_goto('admin/drop/time');
+    backdrop_goto('drop/time');
   }
 
   $site_tz = new DateTimeZone(config_get('system.date', 'default_timezone') ?: date_default_timezone_get());
   $end     = (new DateTime('now', $site_tz))->format('H:i');
 
-  backdrop_goto('admin/drop/time', array('query' => array(
+  backdrop_goto('drop/time', array('query' => array(
     'date'  => $timer['date'],
     'start' => $timer['start'],
     'end'   => $end,
@@ -518,7 +518,7 @@ function _droptime_timer_banner($timer) {
   $html .= icon('timer', array('attributes' => array('width' => '16', 'height' => '16')));
   $html .= ' ' . t('Timer started at @time', array('@time' => check_plain($timer['start'])));
   $html .= ' — <span class="droptime-elapsed"></span>';
-  $html .= ' ' . l(t('■ Stop & log'), 'admin/drop/time/timer/stop', array('attributes' => array('class' => array('droptime-timer-stop'))));
+  $html .= ' ' . l(t('■ Stop & log'), 'drop/time/timer/stop', array('attributes' => array('class' => array('droptime-timer-stop'))));
   $html .= '</div>';
   return $html;
 }
@@ -631,7 +631,7 @@ function droptime_report_personal() {
   $period_links = array();
   foreach (array('day' => t('Day'), 'week' => t('Week'), 'month' => t('Month')) as $p => $plabel) {
     $attr = $p === $period ? array('class' => array('droptime-period-active')) : array();
-    $period_links[] = l($plabel, 'admin/drop/time/reports', array(
+    $period_links[] = l($plabel, 'drop/time/reports', array(
       'query'      => array('period' => $p, 'date' => $date),
       'attributes' => $attr,
     ));
@@ -643,9 +643,9 @@ function droptime_report_personal() {
 
   // Date nav.
   $html_nav  = '<div class="droptime-date-nav">';
-  $html_nav .= l('‹', 'admin/drop/time/reports', array('query' => array('period' => $period, 'date' => $prev_date), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= l('‹', 'drop/time/reports', array('query' => array('period' => $period, 'date' => $prev_date), 'attributes' => array('class' => array('droptime-nav-arrow'))));
   $html_nav .= '<span class="droptime-nav-label">' . check_plain($label) . '</span>';
-  $html_nav .= l('›', 'admin/drop/time/reports', array('query' => array('period' => $period, 'date' => $next_date), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= l('›', 'drop/time/reports', array('query' => array('period' => $period, 'date' => $next_date), 'attributes' => array('class' => array('droptime-nav-arrow'))));
   $html_nav .= '</div>';
   $output['nav'] = array('#markup' => $html_nav, '#weight' => -5);
 
@@ -767,7 +767,7 @@ function droptime_team_reports_page() {
   $period_links = array();
   foreach (array('day' => t('Day'), 'week' => t('Week'), 'month' => t('Month')) as $p => $plabel) {
     $attr = $p === $period ? array('class' => array('droptime-period-active')) : array();
-    $period_links[] = l($plabel, 'admin/drop/time/reports/team', array(
+    $period_links[] = l($plabel, 'drop/time/reports/team', array(
       'query'      => array('period' => $p, 'date' => $date, 'uid' => $filter_uid, 'pid' => $filter_pid, 'group' => $group_by),
       'attributes' => $attr,
     ));
@@ -779,9 +779,9 @@ function droptime_team_reports_page() {
 
   // Date nav.
   $html_nav  = '<div class="droptime-date-nav">';
-  $html_nav .= l('‹', 'admin/drop/time/reports/team', array('query' => array_merge($base_query, array('date' => $prev_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= l('‹', 'drop/time/reports/team', array('query' => array_merge($base_query, array('date' => $prev_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
   $html_nav .= '<span class="droptime-nav-label">' . check_plain($label) . '</span>';
-  $html_nav .= l('›', 'admin/drop/time/reports/team', array('query' => array_merge($base_query, array('date' => $next_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
+  $html_nav .= l('›', 'drop/time/reports/team', array('query' => array_merge($base_query, array('date' => $next_date)), 'attributes' => array('class' => array('droptime-nav-arrow'))));
   $html_nav .= '</div>';
   $output['nav'] = array('#markup' => $html_nav, '#weight' => -15);
 
@@ -820,12 +820,12 @@ function droptime_team_reports_page() {
   $users    = $uids ? user_load_multiple($uids) : array();
 
   // Group-by toggle.
-  $group_links  = l(t('By Project'), 'admin/drop/time/reports/team', array(
+  $group_links  = l(t('By Project'), 'drop/time/reports/team', array(
     'query'      => array_merge($base_query, array('group' => 'project')),
     'attributes' => $group_by === 'project' ? array('class' => array('droptime-period-active')) : array(),
   ));
   $group_links .= ' ';
-  $group_links .= l(t('By Person'), 'admin/drop/time/reports/team', array(
+  $group_links .= l(t('By Person'), 'drop/time/reports/team', array(
     'query'      => array_merge($base_query, array('group' => 'person')),
     'attributes' => $group_by === 'person' ? array('class' => array('droptime-period-active')) : array(),
   ));
@@ -878,7 +878,7 @@ function _droptime_team_filter_bar($filter_uid, $filter_pid, $group_by, $period,
     $proj_options .= '<option value="' . (int) $pid . '"' . $sel . '>' . check_plain($name) . '</option>';
   }
 
-  $action = url('admin/drop/time/reports/team');
+  $action = url('drop/time/reports/team');
   $html   = '<form class="droptime-filter-bar" method="get" action="' . $action . '">';
   $html  .= '<input type="hidden" name="period" value="' . check_plain($period) . '">';
   $html  .= '<input type="hidden" name="date" value="' . check_plain($date) . '">';

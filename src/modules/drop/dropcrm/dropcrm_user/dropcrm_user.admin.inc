@@ -119,14 +119,14 @@ function dropcrm_user_link_contact_form($form, &$form_state, $account) {
     $form['current'] = array(
       '#type'   => 'item',
       '#title'  => t('Currently linked contact'),
-      '#markup' => l(entity_label('crm_contact', $current_contact), 'admin/drop/crm/contact/' . $current_contact->cid),
+      '#markup' => l(entity_label('crm_contact', $current_contact), 'drop/crm/contact/' . $current_contact->cid),
     );
   }
 
   $form['contact_autocomplete'] = array(
     '#type'              => 'textfield',
     '#title'             => $current_contact ? t('Link to a different contact') : t('Link to an existing contact'),
-    '#autocomplete_path' => 'admin/drop/crm/autocomplete/contacts',
+    '#autocomplete_path' => 'drop/crm/autocomplete/contacts',
     '#description'       => t('Type a contact name to search. Leave blank to only remove the current link.'),
     '#maxlength'         => 512,
   );

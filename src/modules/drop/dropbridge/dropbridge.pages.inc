@@ -90,8 +90,8 @@ function dropbridge_daily_list() {
           'due'       => NULL,
           'overdue'   => FALSE,
           // No Done action in preview — can't complete future goals.
-          'done_url'  => ($is_preview) ? NULL : 'admin/drop/goal/' . $gid . '/done',
-          'view_url'  => 'admin/drop/goals/manage/' . $gid,
+          'done_url'  => ($is_preview) ? NULL : 'drop/goal/' . $gid . '/done',
+          'view_url'  => 'drop/goals/manage/' . $gid,
           'sort_key'  => 2,
           'sort_date' => 0,
         );
@@ -134,8 +134,8 @@ function dropbridge_daily_list() {
           'label'     => $task->title,
           'due'       => $task->due_date,
           'overdue'   => $overdue,
-          'done_url'  => ($is_preview) ? NULL : 'admin/drop/task/' . $tid . '/done',
-          'view_url'  => 'admin/drop/tasks/' . $tid,
+          'done_url'  => ($is_preview) ? NULL : 'drop/task/' . $tid . '/done',
+          'view_url'  => 'drop/tasks/' . $tid,
           'sort_key'  => $overdue ? 0 : 1,
           'sort_date' => $task->due_date,
         );
@@ -170,8 +170,8 @@ function dropbridge_daily_list() {
           'label'     => $activity->subject,
           'due'       => $activity->due_date,
           'overdue'   => $overdue,
-          'done_url'  => ($is_preview) ? NULL : 'admin/drop/activity/' . $aid . '/done',
-          'view_url'  => 'admin/drop/crm/activity/' . $aid,
+          'done_url'  => ($is_preview) ? NULL : 'drop/activity/' . $aid . '/done',
+          'view_url'  => 'drop/crm/activity/' . $aid,
           'sort_key'  => $overdue ? 0 : 1,
           'sort_date' => $activity->due_date,
         );
@@ -204,8 +204,8 @@ function dropbridge_daily_list() {
           'due'       => $ticket->due_date,
           'overdue'   => $overdue,
           'status'    => $ticket->status,
-          'done_url'  => ($is_preview || !user_access('close droptickets')) ? NULL : 'admin/drop/tickets/' . $tid . '/done',
-          'view_url'  => 'admin/drop/tickets/' . $tid,
+          'done_url'  => ($is_preview || !user_access('close droptickets')) ? NULL : 'drop/tickets/' . $tid . '/done',
+          'view_url'  => 'drop/tickets/' . $tid,
           'sort_key'  => $overdue ? 0 : ($due_today ? 1 : 2),
           'sort_date' => $ticket->due_date ?: PHP_INT_MAX,
         );
@@ -267,14 +267,14 @@ function dropbridge_daily_list() {
         $date    = format_date($n->created, 'custom', 'M j');
 
         $items_html .= '<li class="dropbridge-notif-item">';
-        $items_html .= l('<span class="dropbridge-notif-label">' . check_plain($nlabel) . '</span> ' . check_plain($nt->title), 'admin/drop/tickets/' . $n->tid, array('html' => TRUE));
+        $items_html .= l('<span class="dropbridge-notif-label">' . check_plain($nlabel) . '</span> ' . check_plain($nt->title), 'drop/tickets/' . $n->tid, array('html' => TRUE));
         $items_html .= ' <span class="dropbridge-notif-meta">' . $type . ($actor ? ' · ' . $actor : '') . ' · ' . $date . '</span>';
         $items_html .= '</li>';
       }
 
       $count = count($unread);
       $heading = format_plural($count, '1 unread notification', '@count unread notifications');
-      $all_link = l(t('View all'), 'admin/drop/notifications');
+      $all_link = l(t('View all'), 'drop/notifications');
 
       $output['notifications'] = array(
         '#markup' => '<details class="dropbridge-notifications">'
@@ -291,7 +291,7 @@ function dropbridge_daily_list() {
     $ql = l(
       icon('kanban', array('attributes' => array('width' => 22, 'height' => 22)))
         . '<span>' . t('Kanban Board') . '</span>',
-      'admin/drop/tickets/kanban',
+      'drop/tickets/kanban',
       array('html' => TRUE, 'attributes' => array('class' => array('dropbridge-quicklink')))
     );
     $output['quick_links'] = array(
@@ -353,7 +353,7 @@ function theme_dropbridge_daily_list($variables) {
   if ($is_preview) {
     $html  = '<div class="dropbridge-preview-banner">';
     $html .= t('Preview — items are read-only until the day arrives.');
-    $html .= ' ' . l(t('← Back to today'), 'admin/drop');
+    $html .= ' ' . l(t('← Back to today'), 'drop');
     $html .= '</div>';
     $html .= '<h2 class="dropbridge-date dropbridge-date--preview">' . check_plain($date_heading) . '</h2>';
   }
@@ -362,17 +362,17 @@ function theme_dropbridge_daily_list($variables) {
     $html .= '<p class="dropbridge-date-nav">';
     // Previous day link (go one further back).
     $prev_str = date('Y-m-d', strtotime($preview_date . ' -1 day'));
-    $html .= l('← ' . date('M j', strtotime($prev_str)), 'admin/drop', array('query' => array('date' => $prev_str)));
+    $html .= l('← ' . date('M j', strtotime($prev_str)), 'drop', array('query' => array('date' => $prev_str)));
     $html .= ' &nbsp; ';
-    $html .= l(t('Today →'), 'admin/drop');
+    $html .= l(t('Today →'), 'drop');
     $html .= '</p>';
   }
   else {
     $html  = '<h2 class="dropbridge-date">' . check_plain($date_heading) . '</h2>';
     $html .= '<p class="dropbridge-date-nav">'
-      . l('← ' . date('M j', strtotime($yesterday_str)), 'admin/drop', array('query' => array('date' => $yesterday_str)))
+      . l('← ' . date('M j', strtotime($yesterday_str)), 'drop', array('query' => array('date' => $yesterday_str)))
       . ' &nbsp; '
-      . l(date('M j', strtotime($tomorrow_str)) . ' →', 'admin/drop', array('query' => array('date' => $tomorrow_str)))
+      . l(date('M j', strtotime($tomorrow_str)) . ' →', 'drop', array('query' => array('date' => $tomorrow_str)))
       . '</p>';
   }
 
@@ -391,10 +391,10 @@ function theme_dropbridge_daily_list($variables) {
     // Group items by type, preserving their existing sort order within each group.
     $groups = array(
       'event'    => array('label' => t('Calendar'),   'add_url' => NULL),
-      'goal'     => array('label' => t('Goals'),      'add_url' => 'admin/drop/goals/manage/add'),
-      'task'     => array('label' => t('Tasks'),      'add_url' => 'admin/drop/tasks/add'),
-      'activity' => array('label' => t('Activities'), 'add_url' => 'admin/drop/crm/activities/add'),
-      'ticket'   => array('label' => t('Tickets'),    'add_url' => 'admin/drop/tickets/add'),
+      'goal'     => array('label' => t('Goals'),      'add_url' => 'drop/goals/manage/add'),
+      'task'     => array('label' => t('Tasks'),      'add_url' => 'drop/tasks/add'),
+      'activity' => array('label' => t('Activities'), 'add_url' => 'drop/crm/activities/add'),
+      'ticket'   => array('label' => t('Tickets'),    'add_url' => 'drop/tickets/add'),
     );
     foreach ($groups as $type => $info) {
       $groups[$type]['items'] = array();
@@ -441,13 +441,13 @@ function theme_dropbridge_daily_list($variables) {
   // Module quick-links.
   $module_links = array();
   if (module_exists('dropgoals')) {
-    $module_links[] = l(t('Goals'), 'admin/drop/goals');
+    $module_links[] = l(t('Goals'), 'drop/goals');
   }
   if (module_exists('droptasks')) {
-    $module_links[] = l(t('Tasks'), 'admin/drop/tasks');
+    $module_links[] = l(t('Tasks'), 'drop/tasks');
   }
   if (module_exists('dropcrm')) {
-    $module_links[] = l(t('CRM'), 'admin/drop/crm');
+    $module_links[] = l(t('CRM'), 'drop/crm');
   }
   if ($module_links) {
     $html .= '<p class="dropbridge-module-links">' . implode(' &nbsp;·&nbsp; ', $module_links) . '</p>';
@@ -456,7 +456,7 @@ function theme_dropbridge_daily_list($variables) {
   $footer_links = array();
   $footer_links[] = l(t('My Account'), 'user/' . $user->uid . '/edit');
   if (user_access('administer site configuration')) {
-    $footer_links[] = l(t('Settings'), 'admin/drop/settings');
+    $footer_links[] = l(t('Settings'), 'drop/settings');
   }
   $html .= '<p class="dropbridge-settings-link">' . implode(' &nbsp;·&nbsp; ', $footer_links) . '</p>';
 
@@ -1082,7 +1082,7 @@ function dropbridge_goal_done(DropGoal $goal) {
   }
 
   backdrop_set_message(t('%label marked done.', array('%label' => $goal->label)));
-  backdrop_goto('admin/drop');
+  backdrop_goto('drop');
 }
 
 /**
@@ -1095,7 +1095,7 @@ function dropbridge_task_done(DroptTask $task) {
   $task->status = 'complete';
   $task->save();
   backdrop_set_message(t('Task %title marked complete.', array('%title' => $task->title)));
-  backdrop_goto('admin/drop');
+  backdrop_goto('drop');
 }
 
 /**
@@ -1107,7 +1107,7 @@ function dropbridge_task_done(DroptTask $task) {
 function dropbridge_activity_done(CrmActivity $activity) {
   $activity->status = 'completed';
   $activity->save();
-  $link = l($activity->subject, 'admin/drop/crm/activity/' . $activity->aid);
+  $link = l($activity->subject, 'drop/crm/activity/' . $activity->aid);
   backdrop_set_message(t('!link marked as done.', array('!link' => $link)));
-  backdrop_goto('admin/drop');
+  backdrop_goto('drop');
 }

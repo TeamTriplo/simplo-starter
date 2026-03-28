@@ -1,0 +1,27 @@
+type = layout
+name = Drop Suite
+description = Two-column layout with right sidebar for Drop Suite application pages. Based on Moscone Flipped.
+version = 1.x
+backdrop = 1.x
+
+; Regions — all standard Moscone Flipped regions retained for compatibility.
+; Navigation region added for Drop Suite primary nav.
+regions[header]     = Header
+regions[navigation] = Navigation
+regions[top]        = Top
+regions[content]    = Content
+regions[sidebar]    = Sidebar
+regions[bottom]     = Bottom
+regions[footer]     = Footer
+
+; The default region automatically receives the "Main Content" block if needed.
+default region = content
+
+; Default stylesheets for this layout.
+stylesheets[all][] = drop_suite.css
+
+; Preview
+preview = drop_suite.png
+
+; Include the Bootstrap4 Grid System
+libraries[] = bootstrap4-gs

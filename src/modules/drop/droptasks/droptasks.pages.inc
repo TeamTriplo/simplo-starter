@@ -118,7 +118,7 @@ function droptasks_task_list($filter = 'active') {
   );
 
   if (module_exists('dropcrm') && user_access('access crm')) {
-    $output['#suffix'] = '<p>' . l(t('← Go to CRM'), 'admin/drop/crm') . '</p>';
+    $output['#suffix'] = '<p>' . l(t('← Go to CRM'), 'drop/crm') . '</p>';
   }
 
   return $output;
@@ -144,7 +144,7 @@ function theme_droptasks_task_list($variables) {
   // Active tag filter banner.
   $prefix = '';
   if ($tag_filter !== '') {
-    $clear_url = url('admin/drop/tasks/' . $filter);
+    $clear_url = url('drop/tasks/' . $filter);
     $prefix = '<p class="droptasks-tag-filter-banner">'
       . t('Showing tasks tagged: <strong>@tag</strong>', array('@tag' => $tag_filter))
       . ' &nbsp;·&nbsp; '
@@ -173,7 +173,7 @@ function theme_droptasks_task_list($variables) {
     // Title + recurrence indicator + tag chips stacked in the first cell.
     $tags_html       = _droptasks_render_tags($task);
     $recurrence_html = _droptasks_recurrence_label($task);
-    $title_cell = l(check_plain($task->title), 'admin/drop/tasks/' . $task->tid);
+    $title_cell = l(check_plain($task->title), 'drop/tasks/' . $task->tid);
     $sub = array();
     if ($recurrence_html) {
       $sub[] = '<span class="droptasks-recurrence">' . check_plain($recurrence_html) . '</span>';
@@ -186,11 +186,11 @@ function theme_droptasks_task_list($variables) {
     }
 
     $complete_label = ($task->status === 'complete') ? t('Reopen') : t('Complete');
-    $actions = l(t('Edit'), 'admin/drop/tasks/' . $task->tid . '/edit')
+    $actions = l(t('Edit'), 'drop/tasks/' . $task->tid . '/edit')
       . ' &nbsp;·&nbsp; '
-      . l($complete_label, 'admin/drop/tasks/' . $task->tid . '/complete')
+      . l($complete_label, 'drop/tasks/' . $task->tid . '/complete')
       . ' &nbsp;·&nbsp; '
-      . l(t('Delete'), 'admin/drop/tasks/' . $task->tid . '/delete');
+      . l(t('Delete'), 'drop/tasks/' . $task->tid . '/delete');
 
     $row = array(
       'data' => array(
@@ -207,7 +207,7 @@ function theme_droptasks_task_list($variables) {
   }
 
   $empty_messages = array(
-    'active'    => t('No active tasks. <a href="!url">Add one</a>.', array('!url' => url('admin/drop/tasks/add'))),
+    'active'    => t('No active tasks. <a href="!url">Add one</a>.', array('!url' => url('drop/tasks/add'))),
     'today'     => t('Nothing due today.'),
     'upcoming'  => t('Nothing due in the next 7 days.'),
     'completed' => t('No completed tasks.'),
@@ -248,19 +248,19 @@ function droptasks_task_view(DroptTask $task) {
   $actions = array();
   if (droptasks_task_access('update', $task)) {
     $complete_label = ($task->status === 'complete') ? t('Reopen') : t('Mark complete');
-    $actions[] = l(t('Edit task'), 'admin/drop/tasks/' . $task->tid . '/edit');
-    $actions[] = l($complete_label, 'admin/drop/tasks/' . $task->tid . '/complete');
+    $actions[] = l(t('Edit task'), 'drop/tasks/' . $task->tid . '/edit');
+    $actions[] = l($complete_label, 'drop/tasks/' . $task->tid . '/complete');
   }
   if (droptasks_task_access('delete', $task)) {
-    $actions[] = l(t('Delete'), 'admin/drop/tasks/' . $task->tid . '/delete');
+    $actions[] = l(t('Delete'), 'drop/tasks/' . $task->tid . '/delete');
   }
 
   // "Log time" link — links to DropTime daily page with note pre-filled.
   if (module_exists('droptime') && user_access('access droptime')) {
-    $actions[] = l(t('+ Log time'), 'admin/drop/time', array(
+    $actions[] = l(t('+ Log time'), 'drop/time', array(
       'query' => array(
         'notes'  => $task->title,
-        'return' => 'admin/drop/tasks/' . $task->tid,
+        'return' => 'drop/tasks/' . $task->tid,
       ),
     ));
   }
@@ -463,7 +463,7 @@ function droptasks_task_toggle_complete(DroptTask $task) {
     backdrop_set_message(t('Task %title @label.', array('%title' => $task->title, '@label' => $label)));
   }
 
-  backdrop_goto('admin/drop/tasks');
+  backdrop_goto('drop/tasks');
 }
 
 /**
@@ -674,11 +674,11 @@ function _droptasks_recurrence_label(DroptTask $task) {
  *
  * @param DroptTask $task
  * @param string $base_path
- *   The list path to link chips to (defaults to 'admin/drop/tasks').
+ *   The list path to link chips to (defaults to 'drop/tasks').
  *
  * @return string
  */
-function _droptasks_render_tags(DroptTask $task, $base_path = 'admin/drop/tasks') {
+function _droptasks_render_tags(DroptTask $task, $base_path = 'drop/tasks') {
   $items = field_get_items('drop_task', $task, 'field_drop_tags');
   if (!$items) {
     return '';

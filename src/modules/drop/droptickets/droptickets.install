@@ -68,6 +68,8 @@ function droptickets_schema() {
         'default'  => 1,
         'description' => '0=Low, 1=Normal, 2=High.',
       ),
+      // owner_uid: hidden from UI pending decision — see ticket #436 on simplo.
+      // Column retained intentionally; do not remove without reviewing that ticket.
       'owner_uid' => array(
         'type'        => 'int',
         'unsigned'    => TRUE,

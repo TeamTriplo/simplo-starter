@@ -30,11 +30,11 @@ function dropgoals_goal_manage_list() {
   $freq_labels = dropgoals_frequency_labels();
   $rows = array();
   foreach ($goals as $goal) {
-    $actions = l(t('Edit'), 'admin/drop/goals/manage/' . $goal->gid . '/edit')
+    $actions = l(t('Edit'), 'drop/goals/manage/' . $goal->gid . '/edit')
       . ' &nbsp;·&nbsp; '
-      . l(t('History'), 'admin/drop/goals/manage/' . $goal->gid)
+      . l(t('History'), 'drop/goals/manage/' . $goal->gid)
       . ' &nbsp;·&nbsp; '
-      . l(t('Delete'), 'admin/drop/goals/manage/' . $goal->gid . '/delete');
+      . l(t('Delete'), 'drop/goals/manage/' . $goal->gid . '/delete');
 
     $freq = isset($goal->frequency) ? $goal->frequency : 'daily';
     $freq_label = isset($freq_labels[$freq]) ? $freq_labels[$freq] : t('Every day');
@@ -58,7 +58,7 @@ function dropgoals_goal_manage_list() {
       $freq_label .= ' (' . implode(', ', $labels) . ')';
     }
     $rows[] = array(
-      l(check_plain($goal->label), 'admin/drop/goals/manage/' . $goal->gid),
+      l(check_plain($goal->label), 'drop/goals/manage/' . $goal->gid),
       $freq_label,
       $goal->active ? t('Active') : t('Inactive'),
       $actions,
@@ -75,7 +75,7 @@ function dropgoals_goal_manage_list() {
     '#theme'  => 'table',
     '#header' => array(t('Goal'), t('Frequency'), t('Status'), t('Actions')),
     '#rows'   => $rows,
-    '#empty'  => t('No goals yet. <a href="!url">Add one</a>.', array('!url' => url('admin/drop/goals/manage/add'))),
+    '#empty'  => t('No goals yet. <a href="!url">Add one</a>.', array('!url' => url('drop/goals/manage/add'))),
   );
 
   return $output;
@@ -220,7 +220,7 @@ function dropgoals_goal_form($form, &$form_state, $goal = NULL) {
     $form['actions']['cancel'] = array(
       '#type'       => 'link',
       '#title'      => t('Cancel'),
-      '#href'       => 'admin/drop/goals/manage/' . $goal->gid,
+      '#href'       => 'drop/goals/manage/' . $goal->gid,
       '#attributes' => array('class' => array('button', 'button-secondary')),
     );
   }
@@ -264,7 +264,7 @@ function dropgoals_goal_form_submit($form, &$form_state) {
   $goal->save();
 
   backdrop_set_message(t('Goal %label saved.', array('%label' => $goal->label)));
-  $form_state['redirect'] = 'admin/drop/goals/manage';
+  $form_state['redirect'] = 'drop/goals/manage';
 }
 
 // ---------------------------------------------------------------------------
@@ -285,7 +285,7 @@ function dropgoals_goal_delete_form($form, &$form_state, DropGoal $goal) {
   return confirm_form(
     $form,
     t('Are you sure you want to delete the goal %label?', array('%label' => $goal->label)),
-    'admin/drop/goals/manage',
+    'drop/goals/manage',
     t('All completion history for this goal will also be deleted. This action cannot be undone.'),
     t('Delete'),
     t('Cancel')
@@ -305,5 +305,5 @@ function dropgoals_goal_delete_form_submit($form, &$form_state) {
 
   $goal->delete();
   backdrop_set_message(t('Goal %label and its history have been deleted.', array('%label' => $goal->label)));
-  $form_state['redirect'] = 'admin/drop/goals/manage';
+  $form_state['redirect'] = 'drop/goals/manage';
 }

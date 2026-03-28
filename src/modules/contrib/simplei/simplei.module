@@ -1,0 +1,50 @@
+<?php
+/**
+ * @file
+ * Simple Environment indicator.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function simplei_init() {
+  $simple_environment_indicator = settings_get('simple_environment_indicator');
+
+  if (!empty($simple_environment_indicator)) {
+    $admin_bar_access = module_exists('admin_bar') && user_access('access administration bar');
+    $simple_environment_favicon = settings_get('simple_environment_favicon', FALSE);
+    $indicator = explode(' ', str_replace('  ', ' ', $simple_environment_indicator), 2);
+
+    // Manipulate favicon.
+    if ($admin_bar_access || $simple_environment_favicon) {
+      $js_settings = array(
+        'simplei' => array(
+          'addFavicon' => TRUE,
+          // Get the first letter out of the name.
+          'faviconLabel' => $indicator[1][0] ?? '',
+          'faviconColor' => $indicator[0] ?? '',
+          'faviconTextColor' => '#ffffff',
+        ),
+      );
+      backdrop_add_js($js_settings, 'setting');
+      backdrop_add_js(backdrop_get_path('module', 'simplei') . '/js/tinycon.min.js', array(
+        'every_page' => TRUE,
+      ));
+      backdrop_add_js(backdrop_get_path('module', 'simplei') . '/js/simplei.js', array(
+        'every_page' => TRUE,
+      ));
+    }
+
+    // Change the admin bar's style.
+    if ($admin_bar_access && !empty($indicator[0])) {
+      $css = "#admin-bar { --simplei-background-color: $indicator[0]; background: var(--simplei-background-color); }";
+
+      if (!empty($indicator[1])) {
+        $css .= "#admin-bar .dropdown .admin-bar-icon > a .admin-bar-link-text:before { content: '$indicator[1]'; padding-right: 7px; }";
+      }
+      if (!empty($css)) {
+        backdrop_add_css($css, array('type' => 'inline', 'weight' => 10));
+      }
+    }
+  }
+}

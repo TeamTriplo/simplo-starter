@@ -109,7 +109,7 @@ function dropbridge_settings_form_submit($form, &$form_state) {
   cache_clear_all('dropbridge_calendar_', 'cache', TRUE);
 
   backdrop_set_message(t('Settings saved.'));
-  $form_state['redirect'] = 'admin/drop';
+  $form_state['redirect'] = 'drop';
 }
 
 /**
@@ -122,7 +122,7 @@ function dropbridge_settings_form_test_reminder($form, &$form_state) {
   global $user;
   _dropbridge_cron_time_reminders(TRUE);
   backdrop_set_message(t('Test reminder check complete. Check watchdog for details, and your Slack DM if a reminder was sent.'));
-  $form_state['redirect'] = 'admin/drop/settings';
+  $form_state['redirect'] = 'drop/settings';
 }
 
 /**
@@ -134,7 +134,7 @@ function dropbridge_settings_form_test_reminder($form, &$form_state) {
 function dropbridge_settings_form_fetch($form, &$form_state) {
   cache_clear_all('dropbridge_calendar_', 'cache', TRUE);
   backdrop_set_message(t('Calendar cache cleared. Fetching fresh data now.'));
-  $form_state['redirect'] = 'admin/drop';
+  $form_state['redirect'] = 'drop';
 }
 
 /**

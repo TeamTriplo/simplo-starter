@@ -15,7 +15,7 @@
 /**
  * Page callback: list CRM contacts filtered to a single bundle.
  *
- * Provides the People, Organizations, and Households tab pages on admin/drop/crm.
+ * Provides the People, Organizations, and Households tab pages on drop/crm.
  *
  * @param string $bundle
  *   One of: crm_person, crm_organization, crm_household.
@@ -25,15 +25,15 @@
  */
 function dropcrm_contact_list_page($bundle) {
   $bundle_info = array(
-    'crm_person'       => array('label' => t('Person'),       'plural' => t('People'),        'add_path' => 'admin/drop/crm/contacts/add/crm_person'),
-    'crm_organization' => array('label' => t('Organization'), 'plural' => t('Organizations'), 'add_path' => 'admin/drop/crm/contacts/add/crm_organization'),
-    'crm_household'    => array('label' => t('Household'),    'plural' => t('Households'),    'add_path' => 'admin/drop/crm/contacts/add/crm_household'),
+    'crm_person'       => array('label' => t('Person'),       'plural' => t('People'),        'add_path' => 'drop/crm/contacts/add/crm_person'),
+    'crm_organization' => array('label' => t('Organization'), 'plural' => t('Organizations'), 'add_path' => 'drop/crm/contacts/add/crm_organization'),
+    'crm_household'    => array('label' => t('Household'),    'plural' => t('Households'),    'add_path' => 'drop/crm/contacts/add/crm_household'),
   );
 
   $info = isset($bundle_info[$bundle]) ? $bundle_info[$bundle] : array(
     'label'    => $bundle,
     'plural'   => $bundle,
-    'add_path' => 'admin/drop/crm/contacts/add/' . $bundle,
+    'add_path' => 'drop/crm/contacts/add/' . $bundle,
   );
 
   backdrop_set_title($info['plural'], PASS_THROUGH);
@@ -139,7 +139,7 @@ function dropcrm_contact_list_page($bundle) {
         $links = array();
         foreach ($ocids as $org_cid) {
           if (isset($orgs[$org_cid])) {
-            $links[] = l($orgs[$org_cid]->name, 'admin/drop/crm/contact/' . $org_cid);
+            $links[] = l($orgs[$org_cid]->name, 'drop/crm/contact/' . $org_cid);
           }
         }
         if ($links) {
@@ -155,7 +155,7 @@ function dropcrm_contact_list_page($bundle) {
   $rows = array();
   foreach ($contacts as $contact) {
     $row = array(
-      l($contact->name, 'admin/drop/crm/contact/' . $contact->cid),
+      l($contact->name, 'drop/crm/contact/' . $contact->cid),
     );
     if ($show_org_col) {
       $row[] = isset($org_by_cid[$contact->cid])
@@ -169,8 +169,8 @@ function dropcrm_contact_list_page($bundle) {
     $stars = !empty($contact->rating) ? _dropcrm_render_stars((int) $contact->rating) : '';
     $row[] = array('data' => $stars, 'class' => array('crm-rating-cell'));
     $row[] = $contact->status ? t('Active') : t('Inactive');
-    $row[] = l(t('Edit'), 'admin/drop/crm/contacts/' . $contact->cid . '/edit');
-    $row[] = l(t('Delete'), 'admin/drop/crm/contacts/' . $contact->cid . '/delete');
+    $row[] = l(t('Edit'), 'drop/crm/contacts/' . $contact->cid . '/edit');
+    $row[] = l(t('Delete'), 'drop/crm/contacts/' . $contact->cid . '/delete');
     $rows[] = $row;
   }
 
@@ -229,7 +229,7 @@ function dropcrm_contact_list_page($bundle) {
  */
 function dropcrm_reports_page() {
   // The default local task (last-contact report) renders automatically.
-  // This callback is only hit if someone navigates directly to admin/drop/crm/reports
+  // This callback is only hit if someone navigates directly to drop/crm/reports
   // without a sub-path, which the MENU_DEFAULT_LOCAL_TASK handles.
   return dropcrm_report_last_contact();
 }
@@ -282,7 +282,7 @@ function dropcrm_report_last_contact() {
         $links = array();
         foreach ($ocids as $ocid) {
           if (isset($orgs[$ocid])) {
-            $links[] = l($orgs[$ocid]->name, 'admin/drop/crm/contact/' . $ocid);
+            $links[] = l($orgs[$ocid]->name, 'drop/crm/contact/' . $ocid);
           }
         }
         if ($links) {
@@ -307,7 +307,7 @@ function dropcrm_report_last_contact() {
     }
 
     $rows[] = array(
-      l($person->name, 'admin/drop/crm/contact/' . $person->cid),
+      l($person->name, 'drop/crm/contact/' . $person->cid),
       isset($org_names[$person->cid]) ? $org_names[$person->cid] : '',
       $date_col,
     );
@@ -361,7 +361,7 @@ function dropcrm_activity_list_page() {
     . $select_html
     . ' <button type="submit">' . t('Filter') . '</button>';
   if ($type_filter || $contact_filter) {
-    $filter_form .= ' ' . l(t('Clear'), 'admin/drop/crm/activities');
+    $filter_form .= ' ' . l(t('Clear'), 'drop/crm/activities');
   }
   $filter_form .= '</form>';
 
@@ -423,7 +423,7 @@ function dropcrm_activity_list_page() {
 
   $rows = array();
   foreach ($activities as $activity) {
-    $subject_cell = l($activity->subject, 'admin/drop/crm/activity/' . $activity->aid);
+    $subject_cell = l($activity->subject, 'drop/crm/activity/' . $activity->aid);
     if (!empty($aids_with_notes[$activity->aid])) {
       $subject_cell .= ' <span class="crm-notes-badge" title="' . t('Has meeting notes') . '">' . icon('note', array('attributes' => array('width' => 14, 'height' => 14))) . '</span>';
     }
@@ -433,8 +433,8 @@ function dropcrm_activity_list_page() {
       isset($contact_links[$activity->aid]) ? implode(', ', $contact_links[$activity->aid]) : '',
       format_date($activity->activity_date, 'custom', 'M j, Y'),
       format_date($activity->created, 'custom', 'M j, Y'),
-      l(t('Edit'), 'admin/drop/crm/activities/manage/' . $activity->aid . '/edit')
-        . ' · ' . l(t('Delete'), 'admin/drop/crm/activities/manage/' . $activity->aid . '/delete'),
+      l(t('Edit'), 'drop/crm/activities/manage/' . $activity->aid . '/edit')
+        . ' · ' . l(t('Delete'), 'drop/crm/activities/manage/' . $activity->aid . '/delete'),
     );
   }
 
@@ -495,7 +495,7 @@ function _dropcrm_activity_contact_links(array $aids) {
       if (isset($contacts[$cid])) {
         $links[$aid][] = l(
           entity_label('crm_contact', $contacts[$cid]),
-          'admin/drop/crm/contact/' . $cid
+          'drop/crm/contact/' . $cid
         );
       }
     }
@@ -570,16 +570,16 @@ function dropcrm_todo_page() {
     $rows[] = array(
       'data' => array(
         implode(', ', $contact_links),
-        l($activity->subject, 'admin/drop/crm/activity/' . $activity->aid),
+        l($activity->subject, 'drop/crm/activity/' . $activity->aid),
         isset($type_options[$activity->type]) ? $type_options[$activity->type] : $activity->type,
         array(
           'data'  => isset($priority_options[$activity->priority]) ? $priority_options[$activity->priority] : '',
           'class' => array('crm-priority-' . (($activity->priority == 2) ? 'high' : (($activity->priority == 0) ? 'low' : 'normal'))),
         ),
         $date_cell,
-        l(t('Edit'), 'admin/drop/crm/activities/manage/' . $activity->aid . '/edit')
+        l(t('Edit'), 'drop/crm/activities/manage/' . $activity->aid . '/edit')
         . ' · '
-        . l(t('Mark done'), 'admin/drop/crm/activities/' . $activity->aid . '/done'),
+        . l(t('Mark done'), 'drop/crm/activities/' . $activity->aid . '/done'),
       ),
       'class' => ($due_class === 'crm-due-overdue') ? array('crm-row-overdue') : array(),
     );
@@ -590,7 +590,7 @@ function dropcrm_todo_page() {
   $output['add_link'] = array(
     '#markup' => l(
       t('+ Add task'),
-      'admin/drop/crm/activities/add',
+      'drop/crm/activities/add',
       array('query' => array('status' => 'planned'))
     ),
     '#prefix' => '<p class="crm-add-link">',
@@ -620,9 +620,9 @@ function dropcrm_todo_page() {
 function dropcrm_activity_mark_done(CrmActivity $activity) {
   $activity->status = 'completed';
   $activity->save();
-  $link = l($activity->subject, 'admin/drop/crm/activity/' . $activity->aid);
+  $link = l($activity->subject, 'drop/crm/activity/' . $activity->aid);
   backdrop_set_message(t('!link marked as done.', array('!link' => $link)));
-  backdrop_goto('admin/drop/crm/todo');
+  backdrop_goto('drop/crm/todo');
 }
 
 // ---------------------------------------------------------------------------
@@ -695,7 +695,7 @@ function dropcrm_admin_overview() {
           . ' &nbsp;<span class="' . $status_class . '">' . $delta_label . '</span></p>',
       ),
       'link' => array(
-        '#markup' => '<p>' . l(t('View full report →'), 'admin/drop/crm/reports/outreach-goal') . '</p>',
+        '#markup' => '<p>' . l(t('View full report →'), 'drop/crm/reports/outreach-goal') . '</p>',
       ),
     );
   }
@@ -703,22 +703,22 @@ function dropcrm_admin_overview() {
   $links = array(
     'contacts' => array(
       'title' => t('Manage Contacts'),
-      'href'  => 'admin/drop/crm/contacts',
+      'href'  => 'drop/crm/contacts',
     ),
     'activities' => array(
       'title' => t('Manage Activities'),
-      'href'  => 'admin/drop/crm/activities',
+      'href'  => 'drop/crm/activities',
     ),
     'settings' => array(
       'title' => t('CRM Settings'),
-      'href'  => 'admin/drop/crm/settings',
+      'href'  => 'drop/crm/settings',
     ),
   );
 
   if (module_exists('droptasks') && user_access('access tasks')) {
     $links['droptasks'] = array(
       'title' => t('Go to Tasks →'),
-      'href'  => 'admin/drop/tasks',
+      'href'  => 'drop/tasks',
     );
   }
 
@@ -808,7 +808,7 @@ function crm_contact_form_submit($form, &$form_state) {
   $entity->status = !empty($form_state['values']['status']) ? 1 : 0;
 
   $entity->save();
-  $link = l($entity->label(), 'admin/drop/crm/contact/' . $entity->cid);
+  $link = l($entity->label(), 'drop/crm/contact/' . $entity->cid);
   backdrop_set_message(t('Contact !link saved.', array('!link' => $link)));
 
   // If a destination was embedded in the form (e.g. from the Clients report),
@@ -819,7 +819,7 @@ function crm_contact_form_submit($form, &$form_state) {
   }
 
   // Redirect to the contact's own view page so the person can confirm the save.
-  $form_state['redirect'] = 'admin/drop/crm/contact/' . $entity->cid;
+  $form_state['redirect'] = 'drop/crm/contact/' . $entity->cid;
 }
 
 // ---------------------------------------------------------------------------
@@ -1079,9 +1079,9 @@ function crm_activity_form_submit($form, &$form_state) {
   }
 
   $entity->save();
-  $link = l($entity->label(), 'admin/drop/crm/activity/' . $entity->aid);
+  $link = l($entity->label(), 'drop/crm/activity/' . $entity->aid);
   backdrop_set_message(t('Activity !link saved.', array('!link' => $link)));
-  $form_state['redirect'] = 'admin/drop/crm/activities';
+  $form_state['redirect'] = 'drop/crm/activities';
 }
 
 // ---------------------------------------------------------------------------
@@ -1258,7 +1258,7 @@ function crm_contact_method_form($form, &$form_state, $entity, $op = 'edit') {
     '#default_value'     => $cid_default,
     '#required'          => TRUE,
     '#weight'            => -30,
-    '#autocomplete_path' => 'admin/drop/crm/autocomplete/contacts',
+    '#autocomplete_path' => 'drop/crm/autocomplete/contacts',
     '#description'       => t('Start typing a contact name.'),
     '#maxlength'         => 300,
     '#access'            => !$contact_locked,
@@ -1342,9 +1342,9 @@ function crm_contact_method_form_submit($form, &$form_state) {
   }
 
   $entity->save();
-  $contact_link = l(t('View contact'), 'admin/drop/crm/contact/' . $entity->cid);
+  $contact_link = l(t('View contact'), 'drop/crm/contact/' . $entity->cid);
   backdrop_set_message(t('Contact method saved. !link.', array('!link' => $contact_link)));
-  $form_state['redirect'] = 'admin/drop/crm/contact-methods';
+  $form_state['redirect'] = 'drop/crm/contact-methods';
 }
 
 // ---------------------------------------------------------------------------
@@ -1385,11 +1385,11 @@ function dropcrm_settings_form($form, &$form_state) {
   }
   $links = array();
   foreach ($bundles as $bundle => $label) {
-    $links[] = l($label, 'admin/drop/crm/contacts/manage/' . $bundle . '/fields');
+    $links[] = l($label, 'drop/crm/contacts/manage/' . $bundle . '/fields');
   }
-  $links[] = l(t('Activities'), 'admin/drop/crm/activities/manage/crm_activity/fields');
+  $links[] = l(t('Activities'), 'drop/crm/activities/manage/crm_activity/fields');
   if (module_exists('droptasks')) {
-    $links[] = l(t('Tasks'), 'admin/drop/tasks/configure/manage/drop_task/fields');
+    $links[] = l(t('Tasks'), 'drop/tasks/configure/manage/drop_task/fields');
   }
   $form['custom_fields']['links'] = array(
     '#markup' => implode(' &nbsp;·&nbsp; ', $links),
@@ -1411,7 +1411,7 @@ function dropcrm_settings_form($form, &$form_state) {
   $form['outreach_goal'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Outreach Goal'),
-    '#description' => t('Track your outreach pace. Any completed activity with the "Count as outreach" checkbox ticked contributes to this goal. View progress at <a href="@url">Reports → Outreach Goal</a>.', array('@url' => url('admin/drop/crm/reports/outreach-goal'))),
+    '#description' => t('Track your outreach pace. Any completed activity with the "Count as outreach" checkbox ticked contributes to this goal. View progress at <a href="@url">Reports → Outreach Goal</a>.', array('@url' => url('drop/crm/reports/outreach-goal'))),
     '#weight'      => -5,
   );
   $form['outreach_goal']['outreach_goal_amount'] = array(
@@ -1687,7 +1687,7 @@ function dropcrm_relationship_form($form, &$form_state, $rid_or_object = NULL) {
     '#title'             => t('Person'),
     '#default_value'     => $contact_a_default,
     '#required'          => TRUE,
-    '#autocomplete_path' => 'admin/drop/crm/autocomplete/contacts',
+    '#autocomplete_path' => 'drop/crm/autocomplete/contacts',
     '#description'       => t('Start typing a contact name.'),
     '#maxlength'         => 300,
     '#weight'            => -30,
@@ -1698,7 +1698,7 @@ function dropcrm_relationship_form($form, &$form_state, $rid_or_object = NULL) {
     '#title'             => t('Related Person'),
     '#default_value'     => $contact_b_default,
     '#required'          => TRUE,
-    '#autocomplete_path' => 'admin/drop/crm/autocomplete/contacts',
+    '#autocomplete_path' => 'drop/crm/autocomplete/contacts',
     '#description'       => t('Start typing a contact name.'),
     '#maxlength'         => 300,
     '#weight'            => -25,
@@ -1800,7 +1800,7 @@ function dropcrm_relationship_form_submit($form, &$form_state) {
   $return_cid = isset($_GET['contact']) && (int) $_GET['contact']
     ? (int) $_GET['contact']
     : $cid_a;
-  $contact_link = l(t('View contact'), 'admin/drop/crm/contact/' . $return_cid);
+  $contact_link = l(t('View contact'), 'drop/crm/contact/' . $return_cid);
 
   if ($rid) {
     db_update('crm_relationship')
@@ -1827,7 +1827,7 @@ function dropcrm_relationship_form_submit($form, &$form_state) {
     backdrop_set_message(t('Relationship added. !link.', array('!link' => $contact_link)));
   }
 
-  $form_state['redirect'] = 'admin/drop/crm/contact/' . $return_cid;
+  $form_state['redirect'] = 'drop/crm/contact/' . $return_cid;
 }
 
 /**
@@ -1867,7 +1867,7 @@ function dropcrm_relationship_delete_confirm($form, &$form_state, $rid) {
     $form,
     t('Are you sure you want to delete the %type relationship between %a and %b?',
       array('%type' => $type_label, '%a' => $name_a, '%b' => $name_b)),
-    'admin/drop/crm/contact/' . $relationship->cid_a,
+    'drop/crm/contact/' . $relationship->cid_a,
     t('This action cannot be undone.'),
     t('Delete'),
     t('Cancel')
@@ -1886,7 +1886,7 @@ function dropcrm_relationship_delete_confirm_submit($form, &$form_state) {
     ->execute();
 
   backdrop_set_message(t('Relationship deleted.'));
-  $form_state['redirect'] = 'admin/drop/crm/contact/' . $return_cid;
+  $form_state['redirect'] = 'drop/crm/contact/' . $return_cid;
 }
 
 /**
@@ -1964,7 +1964,7 @@ function dropcrm_report_outreach_goal() {
 
   if (empty($goal_amount)) {
     $output['no_goal'] = array(
-      '#markup' => '<p>' . t('No outreach goal has been set. Configure one on the <a href="@url">Settings page</a>.', array('@url' => url('admin/drop/crm/settings'))) . '</p>',
+      '#markup' => '<p>' . t('No outreach goal has been set. Configure one on the <a href="@url">Settings page</a>.', array('@url' => url('drop/crm/settings'))) . '</p>',
     );
     return $output;
   }
@@ -2099,7 +2099,7 @@ function dropcrm_outreach_start_over_form_submit($form, &$form_state) {
   backdrop_set_message(t('Outreach goal measurement restarted from @date.', array(
     '@date' => format_date($ts, 'custom', 'M j, Y'),
   )));
-  $form_state['redirect'] = 'admin/drop/crm/reports/outreach-goal';
+  $form_state['redirect'] = 'drop/crm/reports/outreach-goal';
 }
 
 // ---------------------------------------------------------------------------
@@ -2121,7 +2121,7 @@ function dropcrm_project_list() {
 
   if (empty($projects)) {
     return '<p>' . t('No projects yet. !link.', array(
-      '!link' => l(t('Add your first project'), 'admin/drop/crm/projects/add'),
+      '!link' => l(t('Add your first project'), 'drop/crm/projects/add'),
     )) . '</p>';
   }
 
@@ -2132,7 +2132,7 @@ function dropcrm_project_list() {
     $color       = check_plain($project->color);
     $swatch      = '<span class="droptime-swatch" style="background:' . $color . ';"></span>';
     $status      = $project->active ? t('Active') : '<em>' . t('Archived') . '</em>';
-    $label       = $swatch . ' ' . l(check_plain($project->name), 'admin/drop/crm/projects/' . $project->pid);
+    $label       = $swatch . ' ' . l(check_plain($project->name), 'drop/crm/projects/' . $project->pid);
     $color_label = isset($colors[$project->color]) ? $colors[$project->color] : $project->color;
 
     // Linked contact.
@@ -2141,13 +2141,13 @@ function dropcrm_project_list() {
       $contacts = entity_load('crm_contact', array((int) $project->cid));
       if ($contacts) {
         $contact = reset($contacts);
-        $contact_cell = l(check_plain($contact->name), 'admin/drop/crm/contact/' . $project->cid);
+        $contact_cell = l(check_plain($contact->name), 'drop/crm/contact/' . $project->cid);
       }
     }
 
     $links = array(
-      l(t('Edit'), 'admin/drop/crm/projects/' . $project->pid . '/edit'),
-      l(t('Delete'), 'admin/drop/crm/projects/' . $project->pid . '/delete'),
+      l(t('Edit'), 'drop/crm/projects/' . $project->pid . '/edit'),
+      l(t('Delete'), 'drop/crm/projects/' . $project->pid . '/delete'),
     );
 
     $prefix_cell = !empty($project->prefix)
@@ -2197,7 +2197,7 @@ function dropcrm_project_view($project) {
     $contacts = entity_load('crm_contact', array((int) $project->cid));
     if ($contacts) {
       $contact = reset($contacts);
-      $contact_html = l(check_plain($contact->name), 'admin/drop/crm/contact/' . $project->cid);
+      $contact_html = l(check_plain($contact->name), 'drop/crm/contact/' . $project->cid);
     }
   }
 
@@ -2215,9 +2215,9 @@ function dropcrm_project_view($project) {
   $actions = '';
   if (user_access('administer crm')) {
     $actions = '<p class="dropcrm-project-actions">'
-      . l(t('Edit project'), 'admin/drop/crm/projects/' . $project->pid . '/edit')
+      . l(t('Edit project'), 'drop/crm/projects/' . $project->pid . '/edit')
       . ' · '
-      . l(t('Delete'), 'admin/drop/crm/projects/' . $project->pid . '/delete')
+      . l(t('Delete'), 'drop/crm/projects/' . $project->pid . '/delete')
       . '</p>';
   }
 
@@ -2241,7 +2241,7 @@ function dropcrm_project_view($project) {
     $tabs = '';
     foreach ($tab_options as $key => $label) {
       $active = ($key === $status_filter) ? ' class="droptickets-tab-active"' : '';
-      $tabs .= '<a href="' . url('admin/drop/crm/projects/' . $project->pid, array('query' => array('status' => $key))) . '"' . $active . '>' . check_plain($label) . '</a> ';
+      $tabs .= '<a href="' . url('drop/crm/projects/' . $project->pid, array('query' => array('status' => $key))) . '"' . $active . '>' . check_plain($label) . '</a> ';
     }
 
     $query = db_select('drop_ticket', 't')
@@ -2271,11 +2271,11 @@ function dropcrm_project_view($project) {
       $rows[] = array(
         'data' => array(
           array('data' => '<span class="droptickets-ticket-id">' . check_plain($tlabel) . '</span>'),
-          array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid)),
+          array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid)),
           array('data' => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>'),
           array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
           array('data' => $assignee),
-          array('data' => l(t('Edit'), 'admin/drop/tickets/' . $ticket->tid . '/edit')),
+          array('data' => l(t('Edit'), 'drop/tickets/' . $ticket->tid . '/edit')),
         ),
         'class' => array($priority_class),
       );
@@ -2309,13 +2309,13 @@ function dropcrm_project_view($project) {
     }
 
     $output['add_ticket'] = array(
-      '#markup' => '<p>' . l(t('+ Add ticket for this project'), 'admin/drop/tickets/add', array('query' => array('pid' => $project->pid))) . '</p>',
+      '#markup' => '<p>' . l(t('+ Add ticket for this project'), 'drop/tickets/add', array('query' => array('pid' => $project->pid))) . '</p>',
       '#weight' => 3,
     );
   }
 
   $output['back'] = array(
-    '#markup' => '<p>' . l(t('← All projects'), 'admin/drop/crm/projects') . '</p>',
+    '#markup' => '<p>' . l(t('← All projects'), 'drop/crm/projects') . '</p>',
     '#weight' => 20,
   );
 
@@ -2354,7 +2354,7 @@ function dropcrm_project_form($form, &$form_state, $project = NULL) {
     '#type'              => 'textfield',
     '#title'             => t('Contact'),
     '#default_value'     => $default_contact,
-    '#autocomplete_path' => 'admin/drop/crm/autocomplete/contacts',
+    '#autocomplete_path' => 'drop/crm/autocomplete/contacts',
     '#description'       => t('Optionally link this project to a CRM contact.'),
     '#maxlength'         => 300,
   );
@@ -2385,7 +2385,7 @@ function dropcrm_project_form($form, &$form_state, $project = NULL) {
     '#value' => $is_edit ? t('Update project') : t('Add project'),
   );
   $form['actions']['cancel'] = array(
-    '#markup' => ' ' . l(t('Cancel'), 'admin/drop/crm/projects'),
+    '#markup' => ' ' . l(t('Cancel'), 'drop/crm/projects'),
   );
 
   return $form;
@@ -2421,7 +2421,7 @@ function dropcrm_project_form_submit($form, &$form_state) {
   $project->save();
 
   backdrop_set_message(t('Project %name saved.', array('%name' => $project->name)));
-  $form_state['redirect'] = 'admin/drop/crm/projects';
+  $form_state['redirect'] = 'drop/crm/projects';
 }
 
 /**
@@ -2432,7 +2432,7 @@ function dropcrm_project_delete_form($form, &$form_state, DropProject $project) 
   return confirm_form(
     $form,
     t('Delete the project %name?', array('%name' => $project->name)),
-    'admin/drop/crm/projects',
+    'drop/crm/projects',
     t('All time entries for this project will remain but will show as unknown project. This action cannot be undone.'),
     t('Delete'),
     t('Cancel')
@@ -2446,7 +2446,7 @@ function dropcrm_project_delete_form_submit($form, &$form_state) {
   $project = $form['#project'];
   $project->delete();
   backdrop_set_message(t('Project %name deleted.', array('%name' => $project->name)));
-  $form_state['redirect'] = 'admin/drop/crm/projects';
+  $form_state['redirect'] = 'drop/crm/projects';
 }
 
 // ---------------------------------------------------------------------------
@@ -2514,7 +2514,7 @@ function dropcrm_report_clients() {
     'crm_household'    => t('Household'),
   );
 
-  $link_options = array('query' => array('destination' => 'admin/drop/crm/reports/clients'));
+  $link_options = array('query' => array('destination' => 'drop/crm/reports/clients'));
 
   $rows = array();
   foreach ($results as $contact) {
@@ -2524,7 +2524,7 @@ function dropcrm_report_clients() {
       : '<span class="dropcrm-status-empty">—</span>';
 
     $rows[] = array(
-      l(check_plain($contact->name), 'admin/drop/crm/contacts/' . $contact->cid . '/edit', $link_options),
+      l(check_plain($contact->name), 'drop/crm/contacts/' . $contact->cid . '/edit', $link_options),
       check_plain($type_label),
       array('data' => $status_note, 'class' => array('dropcrm-col-status')),
     );
@@ -2571,10 +2571,10 @@ function dropcrm_report_tag_filter() {
   // Build filter tabs from all available tags.
   $tabs = '<div class="dropcrm-report-tabs">';
   $active_class = $filter_tid === 0 ? ' class="dropcrm-tab-active"' : '';
-  $tabs .= '<a href="' . url('admin/drop/crm/reports/tag-filter') . '"' . $active_class . '>' . t('All Tags') . '</a> ';
+  $tabs .= '<a href="' . url('drop/crm/reports/tag-filter') . '"' . $active_class . '>' . t('All Tags') . '</a> ';
   foreach ($term_map as $tid => $name) {
     $active_class = ($filter_tid === $tid) ? ' class="dropcrm-tab-active"' : '';
-    $tabs .= '<a href="' . url('admin/drop/crm/reports/tag-filter', array('query' => array('tid' => $tid))) . '"' . $active_class . '>'
+    $tabs .= '<a href="' . url('drop/crm/reports/tag-filter', array('query' => array('tid' => $tid))) . '"' . $active_class . '>'
       . check_plain($name) . '</a> ';
   }
   $tabs .= '</div>';
@@ -2655,7 +2655,7 @@ function dropcrm_report_tag_filter() {
       : '<span class="dropcrm-status-empty">—</span>';
 
     $rows[] = array(
-      l(check_plain($contact->name), 'admin/drop/crm/contact/' . $contact->cid),
+      l(check_plain($contact->name), 'drop/crm/contact/' . $contact->cid),
       check_plain($type_label),
       implode(', ', $tag_names),
       array('data' => $status_note, 'class' => array('dropcrm-col-status')),

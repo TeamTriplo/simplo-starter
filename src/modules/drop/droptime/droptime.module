@@ -116,7 +116,7 @@ function droptime_menu() {
   $items = array();
 
   // Daily timesheet.
-  $items['admin/drop/time'] = array(
+  $items['drop/time'] = array(
     'title'            => 'Time Tracker',
     'page callback'    => 'droptime_daily_page',
     'access callback'  => 'user_access',
@@ -124,14 +124,14 @@ function droptime_menu() {
     'file'             => 'droptime.pages.inc',
     'type'             => MENU_NORMAL_ITEM,
   );
-  $items['admin/drop/time/today'] = array(
+  $items['drop/time/today'] = array(
     'title'  => 'Today',
     'type'   => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
 
   // Reports parent tab.
-  $items['admin/drop/time/reports'] = array(
+  $items['drop/time/reports'] = array(
     'title'            => 'Reports',
     'page callback'    => 'droptime_reports_page',
     'access callback'  => 'user_access',
@@ -141,7 +141,7 @@ function droptime_menu() {
     'weight'           => 20,
   );
   // Personal reports — default sub-tab under Reports.
-  $items['admin/drop/time/reports/personal'] = array(
+  $items['drop/time/reports/personal'] = array(
     'title'            => 'Personal',
     'page callback'    => 'droptime_report_personal',
     'access callback'  => 'user_access',
@@ -151,7 +151,7 @@ function droptime_menu() {
     'weight'           => 0,
   );
   // Team reports sub-tab — admin/project manager only.
-  $items['admin/drop/time/reports/team'] = array(
+  $items['drop/time/reports/team'] = array(
     'title'            => 'Team',
     'page callback'    => 'droptime_team_reports_page',
     'access callback'  => 'user_access',
@@ -162,7 +162,7 @@ function droptime_menu() {
   );
 
   // Reassign entries — admin only.
-  $items['admin/drop/time/reassign'] = array(
+  $items['drop/time/reassign'] = array(
     'title'            => 'Reassign Entries',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('droptime_reassign_form'),
@@ -172,7 +172,7 @@ function droptime_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 20,
   );
-  $items['admin/drop/time/reassign/confirm'] = array(
+  $items['drop/time/reassign/confirm'] = array(
     'title'            => 'Confirm reassignment',
     'page callback'    => 'droptime_reassign_confirm_page',
     'access callback'  => 'user_access',
@@ -182,44 +182,44 @@ function droptime_menu() {
   );
 
   // Projects — redirect to DropCRM projects page (projects now live in DropCRM).
-  $items['admin/drop/time/projects'] = array(
+  $items['drop/time/projects'] = array(
     'title'            => 'Projects',
     'page callback'    => 'backdrop_goto',
-    'page arguments'   => array('admin/drop/crm/projects'),
+    'page arguments'   => array('drop/crm/projects'),
     'access callback'  => 'user_access',
     'access arguments' => array('access droptime'),
     'type'             => MENU_CALLBACK,
   );
 
   // Edit / delete entry. %drop_time_entry at arg 4.
-  $items['admin/drop/time/entry/%drop_time_entry/edit'] = array(
+  $items['drop/time/entry/%drop_time_entry/edit'] = array(
     'title'            => 'Edit time entry',
     'page callback'    => 'droptime_entry_edit_page',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access callback'  => 'droptime_entry_access',
-    'access arguments' => array('update', 4),
+    'access arguments' => array('update', 3),
     'file'             => 'droptime.pages.inc',
     'type'             => MENU_CALLBACK,
   );
-  $items['admin/drop/time/entry/%drop_time_entry/delete'] = array(
+  $items['drop/time/entry/%drop_time_entry/delete'] = array(
     'title'            => 'Delete time entry',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptime_entry_delete_form', 4),
+    'page arguments'   => array('droptime_entry_delete_form', 3),
     'access callback'  => 'droptime_entry_access',
-    'access arguments' => array('delete', 4),
+    'access arguments' => array('delete', 3),
     'file'             => 'droptime.pages.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Timer start / stop.
-  $items['admin/drop/time/timer/start'] = array(
+  $items['drop/time/timer/start'] = array(
     'page callback'    => 'droptime_timer_start',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptime'),
     'file'             => 'droptime.pages.inc',
     'type'             => MENU_CALLBACK,
   );
-  $items['admin/drop/time/timer/stop'] = array(
+  $items['drop/time/timer/stop'] = array(
     'page callback'    => 'droptime_timer_stop',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptime'),
@@ -251,7 +251,7 @@ function droptime_preprocess_layout(&$variables) {
 
   // Only on Drop admin pages.
   $path = current_path();
-  if (strpos($path, 'admin/drop') !== 0) {
+  if (strpos($path, 'drop') !== 0) {
     return;
   }
 
@@ -291,7 +291,7 @@ function droptime_preprocess_layout(&$variables) {
   backdrop_add_js(backdrop_get_path('module', 'droptime') . '/droptime.js');
 
   // Build the banner and prepend it to the layout content.
-  $log_link = l(t('Log time now'), 'admin/drop/time');
+  $log_link = l(t('Log time now'), 'drop/time');
   $icon     = icon('clock-countdown', array('attributes' => array('width' => 18, 'height' => 18)));
   if ($hours !== NULL) {
     $msg = t('You have not logged any time in the last @hours hours.', array('@hours' => $hours));
@@ -379,16 +379,16 @@ function droptime_drop_reports() {
   return array(
     'droptime_personal' => array(
       'title'              => t('My Time Reports'),
-      'path'               => 'admin/drop/time/reports/personal',
-      'root_path'          => 'admin/drop/time',
+      'path'               => 'drop/time/reports/personal',
+      'root_path'          => 'drop/time',
       'module'             => 'droptime',
       'default_pin'        => TRUE,
       'is_default_subtask' => TRUE,
     ),
     'droptime_team' => array(
       'title'            => t('Team Reports'),
-      'path'             => 'admin/drop/time/reports/team',
-      'root_path'        => 'admin/drop/time',
+      'path'             => 'drop/time/reports/team',
+      'root_path'        => 'drop/time',
       'module'           => 'droptime',
       'access callback'  => 'user_access',
       'access arguments' => array('administer droptime'),
@@ -404,11 +404,53 @@ function droptime_drop_nav_links() {
   return array(
     array(
       'title'      => t('Time'),
-      'path'       => 'admin/drop/time',
+      'path'       => 'drop/time',
       'permission' => 'access droptime',
       'weight'     => 40,
     ),
   );
+}
+
+/**
+ * Implements hook_drop_section_links().
+ */
+function droptime_drop_section_links($section) {
+  if ($section !== 'time') {
+    return array();
+  }
+
+  $links = array();
+
+  $links['today'] = array(
+    'title'        => t('Today'),
+    'href'         => 'drop/time',
+    'weight'       => -10,
+    'active_paths' => array('drop/time', 'drop/time/today'),
+  );
+
+  $links['my_reports'] = array(
+    'title'        => t('My Reports'),
+    'href'         => 'drop/time/reports/personal',
+    'weight'       => 0,
+    'active_paths' => array('drop/time/reports/personal', 'drop/time/reports'),
+  );
+
+  if (user_access('administer droptime')) {
+    $links['team_reports'] = array(
+      'title'        => t('Team'),
+      'href'         => 'drop/time/reports/team',
+      'weight'       => 10,
+      'active_paths' => array('drop/time/reports/team'),
+    );
+    $links['reassign'] = array(
+      'title'      => t('Reassign'),
+      'href'       => 'drop/time/reassign',
+      'weight'     => 90,
+      'admin_only' => TRUE,
+    );
+  }
+
+  return $links;
 }
 
 // ---------------------------------------------------------------------------
@@ -431,7 +473,7 @@ function droptime_dropcrm_contact_view_alter(&$output, $contact) {
   $rows = array();
   foreach ($projects as $project) {
     $rows[] = array(
-      l(check_plain($project->name), 'admin/drop/crm/projects/' . $project->pid . '/edit'),
+      l(check_plain($project->name), 'drop/crm/projects/' . $project->pid . '/edit'),
       $project->active ? t('Active') : t('Inactive'),
     );
   }

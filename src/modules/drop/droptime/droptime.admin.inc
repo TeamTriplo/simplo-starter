@@ -144,7 +144,7 @@ function droptime_reassign_form_submit($form, &$form_state) {
       '@count'   => $count,
       '@from'    => $from_account->name,
       '@to'      => $to_account->name,
-      '@confirm' => url('admin/drop/time/reassign/confirm', array(
+      '@confirm' => url('drop/time/reassign/confirm', array(
         'query' => array(
           'from'      => $from,
           'to'        => $to,
@@ -216,7 +216,7 @@ function droptime_reassign_confirm_form($form, &$form_state, $from, $to, $date_f
       '@from'  => $from_account->name,
       '@to'    => $to_account->name,
     )),
-    'admin/drop/time/reassign',
+    'drop/time/reassign',
     t('This will reassign @count entries@range from <strong>@from</strong> to <strong>@to</strong>. This cannot be undone.', array(
       '@count' => $count,
       '@range' => $range_text,
@@ -262,5 +262,5 @@ function droptime_reassign_confirm_form_submit($form, &$form_state) {
     '@to'    => $to,
   ), WATCHDOG_NOTICE);
 
-  $form_state['redirect'] = 'admin/drop/time/reassign';
+  $form_state['redirect'] = 'drop/time/reassign';
 }

@@ -5,7 +5,7 @@
  */
 
 /**
- * Page callback: renders the docs index at admin/drop/docs.
+ * Page callback: renders the docs index at drop/docs.
  *
  * Displays all docs in a hierarchical tree with an add-doc action.
  *
@@ -15,7 +15,7 @@ function dropdocs_index_page() {
   backdrop_set_title(t('Docs'));
   backdrop_set_breadcrumb(array(
     l(t('Home'), '<front>'),
-    l(t('Drop Admin'), 'admin/drop'),
+    l(t('Drop Suite'), 'drop'),
   ));
 
   $output = array();
@@ -68,12 +68,12 @@ function dropdocs_doc_view($node) {
   // Build breadcrumb with ancestor chain.
   $crumb = array(
     l(t('Home'), '<front>'),
-    l(t('Drop Admin'), 'admin/drop'),
-    l(t('Docs'), 'admin/drop/docs'),
+    l(t('Drop Suite'), 'drop'),
+    l(t('Docs'), 'drop/docs'),
   );
   $ancestors = dropdocs_get_ancestors($node->nid);
   foreach ($ancestors as $ancestor) {
-    $crumb[] = l(check_plain($ancestor->title), 'admin/drop/doc/' . $ancestor->nid);
+    $crumb[] = l(check_plain($ancestor->title), 'drop/doc/' . $ancestor->nid);
   }
   backdrop_set_breadcrumb($crumb);
 
@@ -122,8 +122,8 @@ function dropdocs_reorder_form($form, &$form_state) {
   backdrop_set_title(t('Reorder docs'));
   backdrop_set_breadcrumb(array(
     l(t('Home'), '<front>'),
-    l(t('Drop Admin'), 'admin/drop'),
-    l(t('Docs'), 'admin/drop/docs'),
+    l(t('Drop Suite'), 'drop'),
+    l(t('Docs'), 'drop/docs'),
   ));
 
   $docs = dropdocs_load_all();
@@ -281,5 +281,5 @@ function dropdocs_reorder_form_submit($form, &$form_state) {
     }
   }
   backdrop_set_message(t('Doc order saved.'));
-  $form_state['redirect'] = 'admin/drop/docs';
+  $form_state['redirect'] = 'drop/docs';
 }

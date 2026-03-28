@@ -63,21 +63,21 @@ function dropcrm_entity_info() {
       'crm_person' => array(
         'label' => t('Person'),
         'admin' => array(
-          'path'             => 'admin/drop/crm/contacts/manage/crm_person',
+          'path'             => 'drop/crm/contacts/manage/crm_person',
           'access arguments' => array('administer crm'),
         ),
       ),
       'crm_organization' => array(
         'label' => t('Organization'),
         'admin' => array(
-          'path'             => 'admin/drop/crm/contacts/manage/crm_organization',
+          'path'             => 'drop/crm/contacts/manage/crm_organization',
           'access arguments' => array('administer crm'),
         ),
       ),
       'crm_household' => array(
         'label' => t('Household'),
         'admin' => array(
-          'path'             => 'admin/drop/crm/contacts/manage/crm_household',
+          'path'             => 'drop/crm/contacts/manage/crm_household',
           'access arguments' => array('administer crm'),
         ),
       ),
@@ -93,7 +93,7 @@ function dropcrm_entity_info() {
     ),
     'module'        => 'dropcrm',
     'admin ui'      => array(
-      'path'             => 'admin/drop/crm/contacts',
+      'path'             => 'drop/crm/contacts',
       'file'             => 'dropcrm.admin.inc',
       'controller class' => 'CrmContactUIController',
       'menu wildcard'    => '%crm_contact',
@@ -125,7 +125,7 @@ function dropcrm_entity_info() {
     'access callback' => 'dropcrm_contact_method_access',
     'module'        => 'dropcrm',
     'admin ui'      => array(
-      'path'             => 'admin/drop/crm/contact-methods',
+      'path'             => 'drop/crm/contact-methods',
       'file'             => 'dropcrm.admin.inc',
       'controller class' => 'CrmContactMethodUIController',
       'menu wildcard'    => '%crm_contact_method',
@@ -154,7 +154,7 @@ function dropcrm_entity_info() {
     'access callback' => 'dropcrm_activity_access',
     'module'        => 'dropcrm',
     'admin ui'      => array(
-      'path'             => 'admin/drop/crm/activities',
+      'path'             => 'drop/crm/activities',
       'file'             => 'dropcrm.admin.inc',
       'controller class' => 'CrmActivityUIController',
       'menu wildcard'    => '%crm_activity',
@@ -781,7 +781,7 @@ function dropcrm_activity_extend(CrmActivity $activity, $period) {
   $activity->due_date = strtotime($allowed[$period], $base);
   $activity->save();
   backdrop_set_message(t('Due date extended by 1 @period.', array('@period' => $period)));
-  backdrop_goto('admin/drop/crm/activity/' . $activity->aid);
+  backdrop_goto('drop/crm/activity/' . $activity->aid);
 }
 
 
@@ -852,7 +852,7 @@ function dropcrm_menu() {
   $items = array();
 
   // CRM overview — parent page for all tabs.
-  $items['admin/drop/crm'] = array(
+  $items['drop/crm'] = array(
     'title'            => 'CRM',
     'description'      => 'Manage contacts, activities, and CRM settings.',
     'page callback'    => 'dropcrm_admin_overview',
@@ -863,56 +863,56 @@ function dropcrm_menu() {
 
   // "Overview" default tab — keeps the dashboard accessible as a tab when
   // the user navigates to a sibling tab (contacts, activities, settings).
-  $items['admin/drop/crm/overview'] = array(
+  $items['drop/crm/overview'] = array(
     'title'            => 'Overview',
     'type'             => MENU_DEFAULT_LOCAL_TASK,
     'weight'           => -10,
   );
 
   // Contact view pages.
-  $items['admin/drop/crm/contact/%crm_contact'] = array(
+  $items['drop/crm/contact/%crm_contact'] = array(
     'title callback'   => 'entity_label',
-    'title arguments'  => array('crm_contact', 4),
+    'title arguments'  => array('crm_contact', 3),
     'page callback'    => 'dropcrm_contact_view',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access callback'  => 'dropcrm_contact_access',
-    'access arguments' => array('view', 4),
+    'access arguments' => array('view', 3),
     'file'             => 'dropcrm.pages.inc',
   );
 
   // Activity view pages.
-  $items['admin/drop/crm/activity/%crm_activity'] = array(
+  $items['drop/crm/activity/%crm_activity'] = array(
     'title callback'   => 'entity_label',
-    'title arguments'  => array('crm_activity', 4),
+    'title arguments'  => array('crm_activity', 3),
     'page callback'    => 'dropcrm_activity_view',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access callback'  => 'dropcrm_activity_access',
-    'access arguments' => array('view', 4),
+    'access arguments' => array('view', 3),
     'file'             => 'dropcrm.pages.inc',
   );
 
   // Activity due-date extend shortcuts.
-  $items['admin/drop/crm/activity/%crm_activity/extend/%'] = array(
+  $items['drop/crm/activity/%crm_activity/extend/%'] = array(
     'page callback'    => 'dropcrm_activity_extend',
-    'page arguments'   => array(4, 6),
+    'page arguments'   => array(3, 4),
     'access callback'  => 'dropcrm_activity_access',
-    'access arguments' => array('edit', 4),
+    'access arguments' => array('edit', 3),
     'type'             => MENU_CALLBACK,
   );
 
   // Contact method pages.
-  $items['admin/drop/crm/contact-method/%crm_contact_method'] = array(
+  $items['drop/crm/contact-method/%crm_contact_method'] = array(
     'title callback'   => 'entity_label',
-    'title arguments'  => array('crm_contact_method', 4),
+    'title arguments'  => array('crm_contact_method', 3),
     'page callback'    => 'dropcrm_contact_method_view',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access callback'  => 'dropcrm_contact_method_access',
-    'access arguments' => array('view', 4),
+    'access arguments' => array('view', 3),
     'file'             => 'dropcrm.pages.inc',
   );
 
   // Contact name autocomplete.
-  $items['admin/drop/crm/autocomplete/contacts'] = array(
+  $items['drop/crm/autocomplete/contacts'] = array(
     'title'          => 'Contact autocomplete',
     'page callback'  => 'dropcrm_contact_autocomplete',
     'access arguments' => array('access crm'),
@@ -945,7 +945,7 @@ function dropcrm_menu() {
   );
 
   // To Do list — planned activities, sorted soonest first.
-  $items['admin/drop/crm/todo'] = array(
+  $items['drop/crm/todo'] = array(
     'title'            => 'To Do',
     'page callback'    => 'dropcrm_todo_page',
     'access arguments' => array('access crm'),
@@ -955,17 +955,17 @@ function dropcrm_menu() {
   );
 
   // Mark a single activity as done (one-click action from the To Do list).
-  $items['admin/drop/crm/activities/%crm_activity/done'] = array(
+  $items['drop/crm/activities/%crm_activity/done'] = array(
     'page callback'    => 'dropcrm_activity_mark_done',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access callback'  => 'dropcrm_activity_access',
-    'access arguments' => array('edit', 4),
+    'access arguments' => array('edit', 3),
     'type'             => MENU_CALLBACK,
     'file'             => 'dropcrm.admin.inc',
   );
 
   // Reports section.
-  $items['admin/drop/crm/reports'] = array(
+  $items['drop/crm/reports'] = array(
     'title'            => 'Reports',
     'page callback'    => 'dropcrm_reports_page',
     'access arguments' => array('access crm'),
@@ -973,7 +973,7 @@ function dropcrm_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 20,
   );
-  $items['admin/drop/crm/reports/last-contact'] = array(
+  $items['drop/crm/reports/last-contact'] = array(
     'title'            => 'People by Last Contact',
     'page callback'    => 'dropcrm_report_last_contact',
     'access arguments' => array('access crm'),
@@ -981,7 +981,7 @@ function dropcrm_menu() {
     'type'             => MENU_DEFAULT_LOCAL_TASK,
     'weight'           => 0,
   );
-  $items['admin/drop/crm/reports/outreach-goal'] = array(
+  $items['drop/crm/reports/outreach-goal'] = array(
     'title'            => 'Outreach Goal',
     'page callback'    => 'dropcrm_report_outreach_goal',
     'access arguments' => array('access crm'),
@@ -989,7 +989,7 @@ function dropcrm_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 5,
   );
-  $items['admin/drop/crm/reports/clients'] = array(
+  $items['drop/crm/reports/clients'] = array(
     'title'            => 'Clients',
     'page callback'    => 'dropcrm_report_clients',
     'access arguments' => array('access crm'),
@@ -997,7 +997,7 @@ function dropcrm_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 10,
   );
-  $items['admin/drop/crm/reports/tag-filter'] = array(
+  $items['drop/crm/reports/tag-filter'] = array(
     'title'            => 'Tag Filter',
     'page callback'    => 'dropcrm_report_tag_filter',
     'access arguments' => array('access crm'),
@@ -1007,7 +1007,7 @@ function dropcrm_menu() {
   );
 
   // Per-bundle contact tabs.
-  $items['admin/drop/crm/people'] = array(
+  $items['drop/crm/people'] = array(
     'title'            => 'People',
     'page callback'    => 'dropcrm_contact_list_page',
     'page arguments'   => array('crm_person'),
@@ -1016,7 +1016,7 @@ function dropcrm_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 0,
   );
-  $items['admin/drop/crm/organizations'] = array(
+  $items['drop/crm/organizations'] = array(
     'title'            => 'Organizations',
     'page callback'    => 'dropcrm_contact_list_page',
     'page arguments'   => array('crm_organization'),
@@ -1026,7 +1026,7 @@ function dropcrm_menu() {
     'weight'           => 1,
   );
   if (config_get('dropcrm.settings', 'enable_households')) {
-    $items['admin/drop/crm/households'] = array(
+    $items['drop/crm/households'] = array(
       'title'            => 'Households',
       'page callback'    => 'dropcrm_contact_list_page',
       'page arguments'   => array('crm_household'),
@@ -1038,7 +1038,7 @@ function dropcrm_menu() {
   }
 
   // Relationship CRUD routes.
-  $items['admin/drop/crm/relationships/add'] = array(
+  $items['drop/crm/relationships/add'] = array(
     'title'            => 'Add Relationship',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('dropcrm_relationship_form'),
@@ -1048,20 +1048,20 @@ function dropcrm_menu() {
     'type'             => MENU_CALLBACK,
   );
 
-  $items['admin/drop/crm/relationships/%/edit'] = array(
+  $items['drop/crm/relationships/%/edit'] = array(
     'title'            => 'Edit Relationship',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('dropcrm_relationship_form', 4),
+    'page arguments'   => array('dropcrm_relationship_form', 3),
     'access callback'  => 'user_access',
     'access arguments' => array('edit crm contacts'),
     'file'             => 'dropcrm.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
-  $items['admin/drop/crm/relationships/%/delete'] = array(
+  $items['drop/crm/relationships/%/delete'] = array(
     'title'            => 'Delete Relationship',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('dropcrm_relationship_delete_confirm', 4),
+    'page arguments'   => array('dropcrm_relationship_delete_confirm', 3),
     'access callback'  => 'user_access',
     'access arguments' => array('edit crm contacts'),
     'file'             => 'dropcrm.admin.inc',
@@ -1069,7 +1069,7 @@ function dropcrm_menu() {
   );
 
   // Settings tab.
-  $items['admin/drop/crm/settings'] = array(
+  $items['drop/crm/settings'] = array(
     'title'            => 'Settings',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('dropcrm_settings_form'),
@@ -1080,7 +1080,7 @@ function dropcrm_menu() {
   );
 
   // ---- Projects ----
-  $items['admin/drop/crm/projects'] = array(
+  $items['drop/crm/projects'] = array(
     'title'            => 'Projects',
     'page callback'    => 'dropcrm_project_list',
     'access callback'  => 'dropcrm_project_view_access',
@@ -1089,7 +1089,7 @@ function dropcrm_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 15,
   );
-  $items['admin/drop/crm/projects/add'] = array(
+  $items['drop/crm/projects/add'] = array(
     'title'            => 'Add project',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('dropcrm_project_form', NULL),
@@ -1098,30 +1098,30 @@ function dropcrm_menu() {
     'file'             => 'dropcrm.admin.inc',
     'type'             => MENU_LOCAL_ACTION,
   );
-  $items['admin/drop/crm/projects/%drop_project/edit'] = array(
+  $items['drop/crm/projects/%drop_project/edit'] = array(
     'title'            => 'Edit project',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('dropcrm_project_form', 4),
+    'page arguments'   => array('dropcrm_project_form', 3),
     'access callback'  => 'dropcrm_project_access',
-    'access arguments' => array('update', 4),
+    'access arguments' => array('update', 3),
     'file'             => 'dropcrm.admin.inc',
     'type'             => MENU_CALLBACK,
   );
-  $items['admin/drop/crm/projects/%drop_project/delete'] = array(
+  $items['drop/crm/projects/%drop_project/delete'] = array(
     'title'            => 'Delete project',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('dropcrm_project_delete_form', 4),
+    'page arguments'   => array('dropcrm_project_delete_form', 3),
     'access callback'  => 'dropcrm_project_access',
-    'access arguments' => array('delete', 4),
+    'access arguments' => array('delete', 3),
     'file'             => 'dropcrm.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Project view — ticket list for a single project.
-  $items['admin/drop/crm/projects/%drop_project'] = array(
+  $items['drop/crm/projects/%drop_project'] = array(
     'title'            => 'Project',
     'page callback'    => 'dropcrm_project_view',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access callback'  => 'dropcrm_project_view_access',
     'access arguments' => array(),
     'file'             => 'dropcrm.admin.inc',
@@ -1136,27 +1136,27 @@ function dropcrm_menu() {
  *
  * The entity_ui admin paths for contacts and activities are registered as
  * normal menu items. Promote them to local tasks so they appear as tabs on
- * the admin/drop/crm parent page.
+ * the drop/crm parent page.
  */
 function dropcrm_menu_alter(&$items) {
-  // admin/drop/crm/contacts is registered by entity_ui for CRUD (add/edit/delete).
+  // drop/crm/contacts is registered by entity_ui for CRUD (add/edit/delete).
   // Keep it accessible but remove it from tabs — per-bundle tabs replace it.
-  if (isset($items['admin/drop/crm/contacts'])) {
-    $items['admin/drop/crm/contacts']['type'] = MENU_NORMAL_ITEM;
+  if (isset($items['drop/crm/contacts'])) {
+    $items['drop/crm/contacts']['type'] = MENU_NORMAL_ITEM;
   }
-  if (isset($items['admin/drop/crm/activities'])) {
-    $items['admin/drop/crm/activities']['type']            = MENU_LOCAL_TASK;
-    $items['admin/drop/crm/activities']['title']           = 'Activities';
-    $items['admin/drop/crm/activities']['weight']          = 10;
-    $items['admin/drop/crm/activities']['page callback']   = 'dropcrm_activity_list_page';
-    $items['admin/drop/crm/activities']['page arguments']  = array();
-    $items['admin/drop/crm/activities']['file']            = 'dropcrm.admin.inc';
-    $items['admin/drop/crm/activities']['file path']       = backdrop_get_path('module', 'dropcrm');
+  if (isset($items['drop/crm/activities'])) {
+    $items['drop/crm/activities']['type']            = MENU_LOCAL_TASK;
+    $items['drop/crm/activities']['title']           = 'Activities';
+    $items['drop/crm/activities']['weight']          = 10;
+    $items['drop/crm/activities']['page callback']   = 'dropcrm_activity_list_page';
+    $items['drop/crm/activities']['page arguments']  = array();
+    $items['drop/crm/activities']['file']            = 'dropcrm.admin.inc';
+    $items['drop/crm/activities']['file path']       = backdrop_get_path('module', 'dropcrm');
   }
-  if (isset($items['admin/drop/crm/contact-methods'])) {
-    $items['admin/drop/crm/contact-methods']['type']   = MENU_LOCAL_TASK;
-    $items['admin/drop/crm/contact-methods']['title']  = 'Contact Details';
-    $items['admin/drop/crm/contact-methods']['weight'] = 5;
+  if (isset($items['drop/crm/contact-methods'])) {
+    $items['drop/crm/contact-methods']['type']   = MENU_LOCAL_TASK;
+    $items['drop/crm/contact-methods']['title']  = 'Contact Details';
+    $items['drop/crm/contact-methods']['weight'] = 5;
   }
 }
 
@@ -1179,12 +1179,12 @@ function dropcrm_form_alter(&$form, &$form_state, $form_id) {
     $entity = isset($form_state['entity']) ? $form_state['entity'] : NULL;
     $crumb = array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('CRM'), 'admin/drop/crm'),
-      l(t('Contacts'), 'admin/drop/crm/contacts'),
+      l(t('Drop Suite'), 'drop'),
+      l(t('CRM'), 'drop/crm'),
+      l(t('Contacts'), 'drop/crm/contacts'),
     );
     if ($entity && !empty($entity->cid)) {
-      $crumb[] = l(entity_label('crm_contact', $entity), 'admin/drop/crm/contact/' . $entity->cid);
+      $crumb[] = l(entity_label('crm_contact', $entity), 'drop/crm/contact/' . $entity->cid);
     }
     backdrop_set_breadcrumb($crumb);
 
@@ -1204,12 +1204,12 @@ function dropcrm_form_alter(&$form, &$form_state, $form_id) {
     $entity = isset($form_state['entity']) ? $form_state['entity'] : NULL;
     $crumb = array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('CRM'), 'admin/drop/crm'),
-      l(t('Activities'), 'admin/drop/crm/activities'),
+      l(t('Drop Suite'), 'drop'),
+      l(t('CRM'), 'drop/crm'),
+      l(t('Activities'), 'drop/crm/activities'),
     );
     if ($entity && !empty($entity->aid)) {
-      $crumb[] = l(entity_label('crm_activity', $entity), 'admin/drop/crm/activity/' . $entity->aid);
+      $crumb[] = l(entity_label('crm_activity', $entity), 'drop/crm/activity/' . $entity->aid);
     }
     backdrop_set_breadcrumb($crumb);
   }
@@ -1217,14 +1217,14 @@ function dropcrm_form_alter(&$form, &$form_state, $form_id) {
     $entity = isset($form_state['entity']) ? $form_state['entity'] : NULL;
     $crumb = array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('CRM'), 'admin/drop/crm'),
+      l(t('Drop Suite'), 'drop'),
+      l(t('CRM'), 'drop/crm'),
     );
     if ($entity && !empty($entity->cid)) {
       $contact = crm_contact_load($entity->cid);
       if ($contact) {
-        $crumb[] = l(t('Contacts'), 'admin/drop/crm/contacts');
-        $crumb[] = l(entity_label('crm_contact', $contact), 'admin/drop/crm/contact/' . $entity->cid);
+        $crumb[] = l(t('Contacts'), 'drop/crm/contacts');
+        $crumb[] = l(entity_label('crm_contact', $contact), 'drop/crm/contact/' . $entity->cid);
       }
     }
     backdrop_set_breadcrumb($crumb);
@@ -1597,11 +1597,27 @@ function dropcrm_all_contacts_autocomplete($string = '') {
  * task URL so that saving the edit form returns to the original report.
  */
 function dropcrm_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  // On the main CRM page, strip all local tasks except admin-only ones.
+  // Operational navigation lives in the Drop Section Navigation block.
+  if ($root_path === 'drop/crm') {
+    $admin_paths = array('drop/crm/settings');
+    if (!empty($data['tabs'][0]['output'])) {
+      foreach ($data['tabs'][0]['output'] as $key => $tab) {
+        $href = isset($tab['#link']['href']) ? $tab['#link']['href'] : '';
+        if (!in_array($href, $admin_paths)) {
+          unset($data['tabs'][0]['output'][$key]);
+        }
+      }
+    }
+  }
+
+  // Propagate ?destination onto contact edit tabs so saving returns to the
+  // originating report.
   if (empty($_GET['destination'])) {
     return;
   }
   // Only apply on the contact view page.
-  if ($root_path !== 'admin/drop/crm/contact/%') {
+  if ($root_path !== 'drop/crm/contact/%') {
     return;
   }
   $dest = $_GET['destination'];
@@ -1626,30 +1642,30 @@ function dropcrm_drop_reports() {
   return array(
     'dropcrm_last_contact' => array(
       'title'              => t('Last Contact'),
-      'path'               => 'admin/drop/crm/reports/last-contact',
-      'root_path'          => 'admin/drop/crm',
+      'path'               => 'drop/crm/reports/last-contact',
+      'root_path'          => 'drop/crm',
       'module'             => 'dropcrm',
       'default_pin'        => TRUE,
       'is_default_subtask' => TRUE,
     ),
     'dropcrm_outreach_goal' => array(
       'title'       => t('Outreach Goal'),
-      'path'        => 'admin/drop/crm/reports/outreach-goal',
-      'root_path'   => 'admin/drop/crm',
+      'path'        => 'drop/crm/reports/outreach-goal',
+      'root_path'   => 'drop/crm',
       'module'      => 'dropcrm',
       'default_pin' => FALSE,
     ),
     'dropcrm_clients' => array(
       'title'       => t('Clients'),
-      'path'        => 'admin/drop/crm/reports/clients',
-      'root_path'   => 'admin/drop/crm',
+      'path'        => 'drop/crm/reports/clients',
+      'root_path'   => 'drop/crm',
       'module'      => 'dropcrm',
       'default_pin' => FALSE,
     ),
     'dropcrm_tag_filter' => array(
       'title'       => t('Tag Filter'),
-      'path'        => 'admin/drop/crm/reports/tag-filter',
-      'root_path'   => 'admin/drop/crm',
+      'path'        => 'drop/crm/reports/tag-filter',
+      'root_path'   => 'drop/crm',
       'module'      => 'dropcrm',
       'default_pin' => FALSE,
     ),
@@ -1663,9 +1679,90 @@ function dropcrm_drop_nav_links() {
   return array(
     array(
       'title'      => t('CRM'),
-      'path'       => 'admin/drop/crm',
+      'path'       => 'drop/crm',
       'permission' => 'access crm',
       'weight'     => 10,
     ),
   );
+}
+
+/**
+ * Implements hook_drop_section_links().
+ */
+function dropcrm_drop_section_links($section) {
+  if ($section !== 'crm') {
+    return array();
+  }
+
+  $links = array();
+
+  $links['people'] = array(
+    'title'        => t('People'),
+    'href'         => 'drop/crm/people',
+    'weight'       => -20,
+    'active_paths' => array('drop/crm/people', 'drop/crm/contact'),
+  );
+
+  $links['organizations'] = array(
+    'title'  => t('Organizations'),
+    'href'   => 'drop/crm/organizations',
+    'weight' => -15,
+  );
+
+  if (config_get('dropcrm.settings', 'enable_households')) {
+    $links['households'] = array(
+      'title'  => t('Households'),
+      'href'   => 'drop/crm/households',
+      'weight' => -10,
+    );
+  }
+
+  $links['todo'] = array(
+    'title'  => t('To Do'),
+    'href'   => 'drop/crm/todo',
+    'weight' => -5,
+  );
+
+  $links['activities'] = array(
+    'title'        => t('Activities'),
+    'href'         => 'drop/crm/activities',
+    'weight'       => 0,
+    'active_paths' => array('drop/crm/activities', 'drop/crm/activity'),
+  );
+
+  if (user_access('access crm') || user_access('access crm projects')) {
+    $links['projects'] = array(
+      'title'        => t('Projects'),
+      'href'         => 'drop/crm/projects',
+      'weight'       => 10,
+      'active_paths' => array('drop/crm/projects'),
+    );
+  }
+
+  // Reports — flat links rather than a navigating "Reports" parent.
+  $links['last_contact'] = array(
+    'title'  => t('Last Contact'),
+    'href'   => 'drop/crm/reports/last-contact',
+    'weight' => 20,
+  );
+
+  $links['outreach_goal'] = array(
+    'title'  => t('Outreach Goal'),
+    'href'   => 'drop/crm/reports/outreach-goal',
+    'weight' => 25,
+  );
+
+  $links['clients'] = array(
+    'title'  => t('Clients'),
+    'href'   => 'drop/crm/reports/clients',
+    'weight' => 30,
+  );
+
+  $links['tag_filter'] = array(
+    'title'  => t('Tag Filter'),
+    'href'   => 'drop/crm/reports/tag-filter',
+    'weight' => 35,
+  );
+
+  return $links;
 }

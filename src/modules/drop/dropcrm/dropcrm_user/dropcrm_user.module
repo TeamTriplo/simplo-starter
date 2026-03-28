@@ -65,7 +65,7 @@ function dropcrm_user_user_view($account, $view_mode, $langcode) {
   if ($contact) {
     $contact_name = entity_label('crm_contact', $contact);
     $links = array();
-    $links[] = l(t('View contact'), 'admin/drop/crm/contact/' . $contact->cid);
+    $links[] = l(t('View contact'), 'drop/crm/contact/' . $contact->cid);
     $links[] = l(t('Change linked contact'), 'user/' . $account->uid . '/crm-link');
     $markup = '<strong>' . check_plain($contact_name) . '</strong>'
       . ' &nbsp; ' . implode(' &nbsp; ', $links);

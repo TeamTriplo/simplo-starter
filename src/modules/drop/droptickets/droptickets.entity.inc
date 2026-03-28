@@ -48,7 +48,7 @@ class DropTicket extends Entity {
 
   /** {@inheritdoc} */
   public function uri() {
-    return array('path' => 'admin/drop/tickets/' . $this->tid, 'options' => array());
+    return array('path' => 'drop/tickets/' . $this->tid, 'options' => array());
   }
 
   /** {@inheritdoc} */
@@ -127,7 +127,7 @@ class DropTicketComment extends Entity {
 
   /** {@inheritdoc} */
   public function uri() {
-    return array('path' => 'admin/drop/tickets/' . $this->tid, 'options' => array());
+    return array('path' => 'drop/tickets/' . $this->tid, 'options' => array());
   }
 
   /** {@inheritdoc} */

@@ -45,7 +45,7 @@ function droptickets_entity_info() {
         'drop_ticket' => array(
           'label' => t('Ticket'),
           'admin' => array(
-            'path'             => 'admin/drop/tickets/manage',
+            'path'             => 'drop/tickets/manage',
             'access arguments' => array('administer droptickets'),
           ),
         ),
@@ -210,7 +210,7 @@ function drop_ticket_comment_load($tcid) {
 function droptickets_menu() {
   $items = array();
 
-  $items['admin/drop/tickets'] = array(
+  $items['drop/tickets'] = array(
     'title'            => 'Tickets',
     'page callback'    => 'droptickets_list_page',
     'access callback'  => 'user_access',
@@ -218,14 +218,14 @@ function droptickets_menu() {
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_NORMAL_ITEM,
   );
-  $items['admin/drop/tickets/all'] = array(
+  $items['drop/tickets/all'] = array(
     'title'  => 'All tickets',
     'type'   => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
 
   // Add ticket.
-  $items['admin/drop/tickets/add'] = array(
+  $items['drop/tickets/add'] = array(
     'title'            => 'Add ticket',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('droptickets_ticket_form', NULL),
@@ -236,41 +236,41 @@ function droptickets_menu() {
   );
 
   // View ticket.
-  $items['admin/drop/tickets/%drop_ticket'] = array(
+  $items['drop/tickets/%drop_ticket'] = array(
     'title'            => 'View ticket',
     'page callback'    => 'droptickets_ticket_view',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('view', 3),
+    'access arguments' => array('view', 2),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Edit ticket.
-  $items['admin/drop/tickets/%drop_ticket/edit'] = array(
+  $items['drop/tickets/%drop_ticket/edit'] = array(
     'title callback'   => 'droptickets_edit_title',
-    'title arguments'  => array(3),
+    'title arguments'  => array(2),
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_ticket_form', 3),
+    'page arguments'   => array('droptickets_ticket_form', 2),
     'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('update', 2),
     'file'             => 'droptickets.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Delete ticket.
-  $items['admin/drop/tickets/%drop_ticket/delete'] = array(
+  $items['drop/tickets/%drop_ticket/delete'] = array(
     'title'            => 'Delete ticket',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_ticket_delete_form', 3),
+    'page arguments'   => array('droptickets_ticket_delete_form', 2),
     'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('delete', 3),
+    'access arguments' => array('delete', 2),
     'file'             => 'droptickets.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Ticket autocomplete.
-  $items['admin/drop/tickets/autocomplete'] = array(
+  $items['drop/tickets/autocomplete'] = array(
     'page callback'    => 'droptickets_ticket_autocomplete',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
@@ -278,61 +278,59 @@ function droptickets_menu() {
   );
 
   // Add relation.
-  $items['admin/drop/tickets/%drop_ticket/relate'] = array(
+  $items['drop/tickets/%drop_ticket/relate'] = array(
     'title'            => 'Add relation',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_relate_form', 3),
+    'page arguments'   => array('droptickets_relate_form', 2),
     'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('update', 2),
     'file'             => 'droptickets.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Remove relation (confirm page).
-  $items['admin/drop/tickets/%drop_ticket/unrelate/%'] = array(
+  $items['drop/tickets/%drop_ticket/unrelate/%'] = array(
     'title'            => 'Remove relation',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_unrelate_confirm_form', 3, 5),
+    'page arguments'   => array('droptickets_unrelate_confirm_form', 2, 4),
     'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('update', 2),
     'file'             => 'droptickets.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Flagged tickets page.
-  $items['admin/drop/tickets/flagged'] = array(
+  $items['drop/tickets/flagged'] = array(
     'title'            => 'Flagged',
     'page callback'    => 'droptickets_flagged_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 5,
+    'type'             => MENU_CALLBACK,
   );
 
   // Review / triage page.
-  $items['admin/drop/tickets/review'] = array(
+  $items['drop/tickets/review'] = array(
     'title'            => 'Review',
     'page callback'    => 'droptickets_review_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 2,
+    'type'             => MENU_CALLBACK,
   );
   // AJAX toggle — marks/unmarks a ticket as reviewed for the current user.
-  // Path: admin/drop/tickets/review/toggle/{tid}
+  // Path: drop/tickets/review/toggle/{tid}
   // Indices:  0     1    2       3      4       5
-  $items['admin/drop/tickets/review/toggle/%'] = array(
+  $items['drop/tickets/review/toggle/%'] = array(
     'page callback'    => 'droptickets_review_toggle',
-    'page arguments'   => array(5),
+    'page arguments'   => array(4),
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
   // Clear all review flags for the current user.
-  $items['admin/drop/tickets/review/clear'] = array(
+  $items['drop/tickets/review/clear'] = array(
     'page callback'    => 'droptickets_review_clear',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
@@ -340,62 +338,67 @@ function droptickets_menu() {
     'type'             => MENU_CALLBACK,
   );
 
-  // Reports parent tab.
-  $items['admin/drop/tickets/reports'] = array(
+  // Reports landing page — delegates to stale report.
+  $items['drop/tickets/reports'] = array(
     'title'            => 'Reports',
     'page callback'    => 'droptickets_reports_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 20,
+    'type'             => MENU_CALLBACK,
   );
-  // Stale tickets — default sub-tab under Reports.
-  $items['admin/drop/tickets/reports/stale'] = array(
+  // Stale tickets report.
+  $items['drop/tickets/reports/stale'] = array(
     'title'            => 'Stale',
     'page callback'    => 'droptickets_stale_report_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
-    'type'             => MENU_DEFAULT_LOCAL_TASK,
-    'weight'           => 0,
+    'type'             => MENU_CALLBACK,
   );
-  // Recent tickets sub-tab under Reports.
-  $items['admin/drop/tickets/reports/recent'] = array(
+  // Recent tickets report.
+  $items['drop/tickets/reports/recent'] = array(
     'title'            => 'Recent',
     'page callback'    => 'droptickets_recent_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 5,
+    'type'             => MENU_CALLBACK,
   );
-  // Notification log sub-tab — admin only.
-  $items['admin/drop/tickets/reports/notification-log'] = array(
+  // Notification log — admin only. Keep old path as callback for any saved links.
+  $items['drop/tickets/reports/notification-log'] = array(
+    'title'            => 'Notification log',
+    'page callback'    => 'backdrop_goto',
+    'page arguments'   => array('drop/tickets/notification-log'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer droptickets'),
+    'type'             => MENU_CALLBACK,
+  );
+  // Notification log as an admin local task, alongside Settings.
+  $items['drop/tickets/notification-log'] = array(
     'title'            => 'Notification log',
     'page callback'    => 'droptickets_notification_log_page',
     'access callback'  => 'user_access',
     'access arguments' => array('administer droptickets'),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_LOCAL_TASK,
-    'weight'           => 10,
+    'weight'           => 85,
   );
 
-  // Projects tab — links to the CRM projects list.
-  $items['admin/drop/tickets/projects'] = array(
+  // Projects page — links to the CRM projects list.
+  $items['drop/tickets/projects'] = array(
     'title'            => 'Projects (CRM)',
     'page callback'    => 'backdrop_goto',
-    'page arguments'   => array('admin/drop/crm/projects'),
+    'page arguments'   => array('drop/crm/projects'),
     'access callback'  => 'user_access',
     'access arguments' => array('administer crm'),
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 15,
+    'type'             => MENU_CALLBACK,
   );
 
   // Toggle flag on a ticket.
-  $items['admin/drop/tickets/%drop_ticket/flag'] = array(
+  $items['drop/tickets/%drop_ticket/flag'] = array(
     'page callback'    => 'droptickets_ticket_flag_toggle',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'user_access',
     'access arguments' => array('flag droptickets'),
     'file'             => 'droptickets.pages.inc',
@@ -403,7 +406,7 @@ function droptickets_menu() {
   );
 
   // Clear all flags.
-  $items['admin/drop/tickets/flags/clear'] = array(
+  $items['drop/tickets/flags/clear'] = array(
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('droptickets_flags_clear_form'),
     'access callback'  => 'user_access',
@@ -413,40 +416,40 @@ function droptickets_menu() {
   );
 
   // Activate an imported ticket (clears import_id).
-  $items['admin/drop/tickets/%drop_ticket/activate'] = array(
+  $items['drop/tickets/%drop_ticket/activate'] = array(
     'page callback'    => 'droptickets_ticket_activate',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('update', 2),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Close a ticket (move to closed status).
-  $items['admin/drop/tickets/%drop_ticket/close'] = array(
+  $items['drop/tickets/%drop_ticket/close'] = array(
     'page callback'    => 'droptickets_ticket_close',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'droptickets_close_access',
-    'access arguments' => array(3),
+    'access arguments' => array(2),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Mark ticket done (for DropBridge).
-  $items['admin/drop/tickets/%drop_ticket/done'] = array(
+  $items['drop/tickets/%drop_ticket/done'] = array(
     'page callback'    => 'droptickets_ticket_mark_done',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'droptickets_close_access',
-    'access arguments' => array(3),
+    'access arguments' => array(2),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Add comment.
-  $items['admin/drop/tickets/%drop_ticket/comment'] = array(
+  $items['drop/tickets/%drop_ticket/comment'] = array(
     'title'            => 'Add comment',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_comment_form', 3, NULL),
+    'page arguments'   => array('droptickets_comment_form', 2, NULL),
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.admin.inc',
@@ -454,29 +457,29 @@ function droptickets_menu() {
   );
 
   // Edit comment.
-  $items['admin/drop/tickets/%drop_ticket/comment/%drop_ticket_comment/edit'] = array(
+  $items['drop/tickets/%drop_ticket/comment/%drop_ticket_comment/edit'] = array(
     'title'            => 'Edit comment',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_comment_form', 3, 5),
+    'page arguments'   => array('droptickets_comment_form', 2, 4),
     'access callback'  => 'droptickets_comment_access',
-    'access arguments' => array('update', 5),
+    'access arguments' => array('update', 4),
     'file'             => 'droptickets.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Delete comment.
-  $items['admin/drop/tickets/%drop_ticket/comment/%drop_ticket_comment/delete'] = array(
+  $items['drop/tickets/%drop_ticket/comment/%drop_ticket_comment/delete'] = array(
     'title'            => 'Delete comment',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_comment_delete_form', 5),
+    'page arguments'   => array('droptickets_comment_delete_form', 4),
     'access callback'  => 'droptickets_comment_access',
-    'access arguments' => array('delete', 5),
+    'access arguments' => array('delete', 4),
     'file'             => 'droptickets.admin.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // Notifications page.
-  $items['admin/drop/notifications'] = array(
+  $items['drop/notifications'] = array(
     'title'            => 'Notifications',
     'page callback'    => 'droptickets_notifications_page',
     'access callback'  => 'user_access',
@@ -485,7 +488,7 @@ function droptickets_menu() {
     'type'             => MENU_CALLBACK,
   );
 
-  $items['admin/drop/notifications/mark-all-read'] = array(
+  $items['drop/notifications/mark-all-read'] = array(
     'title'            => 'Mark all notifications read',
     'page callback'    => 'droptickets_mark_all_read',
     'access callback'  => 'user_access',
@@ -494,10 +497,10 @@ function droptickets_menu() {
   );
 
   // Delete an import batch.
-  $items['admin/drop/tickets/import/%/delete'] = array(
+  $items['drop/tickets/import/%/delete'] = array(
     'title'            => 'Delete import',
     'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('droptickets_import_delete_form', 4),
+    'page arguments'   => array('droptickets_import_delete_form', 3),
     'access callback'  => 'user_access',
     'access arguments' => array('administer droptickets'),
     'file'             => 'droptickets.admin.inc',
@@ -505,7 +508,7 @@ function droptickets_menu() {
   );
 
   // Inline image upload for comment textarea paste (AJAX).
-  $items['admin/drop/tickets/upload-image'] = array(
+  $items['drop/tickets/upload-image'] = array(
     'page callback'    => 'droptickets_comment_image_upload',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
@@ -514,9 +517,9 @@ function droptickets_menu() {
   );
 
   // Emoji reaction toggle (AJAX).
-  $items['admin/drop/tickets/react/%/%'] = array(
+  $items['drop/tickets/react/%/%'] = array(
     'page callback'    => 'droptickets_react_ajax',
-    'page arguments'   => array(4, 5),
+    'page arguments'   => array(3, 4),
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
@@ -524,30 +527,29 @@ function droptickets_menu() {
   );
 
   // Kanban board.
-  $items['admin/drop/tickets/kanban'] = array(
+  $items['drop/tickets/kanban'] = array(
     'title'            => 'Kanban',
     'page callback'    => 'droptickets_kanban_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 3,
+    'type'             => MENU_CALLBACK,
   );
 
   // AJAX endpoint: inline status update from the ticket view page.
-  $items['admin/drop/tickets/%drop_ticket/inline-status'] = array(
+  $items['drop/tickets/%drop_ticket/inline-status'] = array(
     'page callback'    => 'droptickets_inline_set_status',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'droptickets_ticket_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('update', 2),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
 
   // AJAX endpoint: update ticket status from Kanban drag-and-drop.
-  $items['admin/drop/tickets/%drop_ticket/set-status'] = array(
+  $items['drop/tickets/%drop_ticket/set-status'] = array(
     'page callback'    => 'droptickets_kanban_set_status',
-    'page arguments'   => array(3),
+    'page arguments'   => array(2),
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
@@ -555,10 +557,10 @@ function droptickets_menu() {
   );
 
   // Per-member ticket page (linked from team directory).
-  $items['admin/drop/tickets/member/%user'] = array(
+  $items['drop/tickets/member/%user'] = array(
     'title'            => 'Member tickets',
     'page callback'    => 'droptickets_member_page',
-    'page arguments'   => array(4),
+    'page arguments'   => array(3),
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.pages.inc',
@@ -566,19 +568,30 @@ function droptickets_menu() {
   );
 
   // JIRA CSV import.
-  $items['admin/drop/tickets/import'] = array(
+  $items['drop/tickets/import'] = array(
     'title'            => 'Import from JIRA',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('droptickets_import_form'),
     'access callback'  => 'user_access',
     'access arguments' => array('administer droptickets'),
     'file'             => 'droptickets.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 60,
+    'type'             => MENU_CALLBACK,
+  );
+
+  // Admin hub card — settings entry under admin/drop.
+  $items['admin/drop/tickets'] = array(
+    'title'            => 'DropTickets settings',
+    'description'      => t('Configure stale-ticket thresholds, Slack notifications, and JIRA import options.'),
+    'page callback'    => 'backdrop_goto',
+    'page arguments'   => array('drop/tickets/settings'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer droptickets'),
+    'type'             => MENU_NORMAL_ITEM,
+    'weight'           => 10,
   );
 
   // Settings.
-  $items['admin/drop/tickets/settings'] = array(
+  $items['drop/tickets/settings'] = array(
     'title'            => 'Settings',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('droptickets_settings_form'),
@@ -602,15 +615,15 @@ function droptickets_menu_alter(&$items) {
   // Hide the intermediate 'manage' stub that Field UI auto-generates as a tab.
   // It has no title so it renders as '...' for admins. 'Manage fields' and
   // 'Manage display' are still accessible via their own tabs.
-  if (isset($items['admin/drop/tickets/manage'])) {
-    $items['admin/drop/tickets/manage']['type'] = MENU_CALLBACK;
+  if (isset($items['drop/tickets/manage'])) {
+    $items['drop/tickets/manage']['type'] = MENU_CALLBACK;
   }
   // Push developer/admin tabs to the end so PM tabs stay visible.
-  if (isset($items['admin/drop/tickets/manage/fields'])) {
-    $items['admin/drop/tickets/manage/fields']['weight'] = 70;
+  if (isset($items['drop/tickets/manage/fields'])) {
+    $items['drop/tickets/manage/fields']['weight'] = 70;
   }
-  if (isset($items['admin/drop/tickets/manage/display'])) {
-    $items['admin/drop/tickets/manage/display']['weight'] = 71;
+  if (isset($items['drop/tickets/manage/display'])) {
+    $items['drop/tickets/manage/display']['weight'] = 71;
   }
 }
 
@@ -621,27 +634,18 @@ function droptickets_drop_reports() {
   return array(
     'droptickets_stale' => array(
       'title'              => t('Stale Tickets'),
-      'path'               => 'admin/drop/tickets/reports/stale',
-      'root_path'          => 'admin/drop/tickets',
+      'path'               => 'drop/tickets/reports/stale',
+      'root_path'          => 'drop/tickets',
       'module'             => 'droptickets',
       'default_pin'        => TRUE,
       'is_default_subtask' => TRUE,
     ),
     'droptickets_recent' => array(
       'title'     => t('Recent Tickets'),
-      'path'      => 'admin/drop/tickets/reports/recent',
-      'root_path' => 'admin/drop/tickets',
+      'path'      => 'drop/tickets/reports/recent',
+      'root_path' => 'drop/tickets',
       'module'    => 'droptickets',
       'default_pin' => FALSE,
-    ),
-    'droptickets_notification_log' => array(
-      'title'            => t('Notification Log'),
-      'path'             => 'admin/drop/tickets/reports/notification-log',
-      'root_path'        => 'admin/drop/tickets',
-      'module'           => 'droptickets',
-      'access callback'  => 'user_access',
-      'access arguments' => array('administer droptickets'),
-      'default_pin'      => FALSE,
     ),
   );
 }
@@ -649,42 +653,34 @@ function droptickets_drop_reports() {
 /**
  * Implements hook_menu_local_tasks_alter().
  *
- * - Adds a count badge to the Flagged tab when there are flagged tickets.
- * - Adds a CSS class to admin-only tabs so they can be visually de-emphasised.
+ * Hides the "All tickets" default task from the Local Tasks block — it belongs
+ * in the Drop Section Navigation instead. Leaves the admin-only tabs (Settings,
+ * Manage fields, Manage display) visible and de-emphasised.
  */
 function droptickets_menu_local_tasks_alter(&$data, $router_item, $root_path) {
-  if ($root_path !== 'admin/drop/tickets') {
+  if ($root_path !== 'drop/tickets') {
     return;
   }
   if (empty($data['tabs'][0]['output'])) {
     return;
   }
 
+  // Only admin tabs belong in the Local Tasks block. Everything else lives in
+  // the Drop Section Navigation block. Use a whitelist so any injected tabs
+  // (e.g. pinned reports) are also stripped.
   $admin_paths = array(
-    'admin/drop/tickets/import',
-    'admin/drop/tickets/manage/fields',
-    'admin/drop/tickets/manage/display',
+    'drop/tickets/settings',
+    'drop/tickets/notification-log',
+    'drop/tickets/manage/fields',
+    'drop/tickets/manage/display',
   );
 
-  $flagged_count = NULL;
-
-  foreach ($data['tabs'][0]['output'] as &$tab) {
+  foreach ($data['tabs'][0]['output'] as $key => &$tab) {
     $href = isset($tab['#link']['href']) ? $tab['#link']['href'] : '';
-
-    // Add count badge to the Flagged tab.
-    if ($href === 'admin/drop/tickets/flagged') {
-      if ($flagged_count === NULL) {
-        $flagged_count = (int) db_select('drop_ticket_flag', 'f')->countQuery()->execute()->fetchField();
-      }
-      if ($flagged_count > 0) {
-        $tab['#link']['title'] = check_plain($tab['#link']['title'])
-          . ' <span class="droptickets-tab-count">' . $flagged_count . '</span>';
-        $tab['#link']['localized_options']['html'] = TRUE;
-      }
+    if (!in_array($href, $admin_paths)) {
+      unset($data['tabs'][0]['output'][$key]);
     }
-
-    // Mark admin-only tabs for CSS de-emphasis.
-    if (in_array($href, $admin_paths)) {
+    else {
       $tab['#link']['localized_options']['attributes']['class'][] = 'droptickets-tab-admin';
     }
   }
@@ -1035,7 +1031,7 @@ function droptickets_mark_all_read() {
     ->condition('is_read', 0)
     ->execute();
   backdrop_set_message(t('All notifications marked as read.'));
-  backdrop_goto('admin/drop/notifications');
+  backdrop_goto('drop/notifications');
 }
 
 /**
@@ -1295,7 +1291,7 @@ function droptickets_slack_notify_new_ticket($ticket) {
   $label    = droptickets_ticket_label($ticket, $project);
   $proj_name = $project ? $project->name : t('Unknown project');
 
-  $ticket_url = url('admin/drop/tickets/' . $ticket->tid, array('absolute' => TRUE));
+  $ticket_url = url('drop/tickets/' . $ticket->tid, array('absolute' => TRUE));
   $creator    = check_plain($user->name);
 
   // Resolve assignee label.
@@ -1351,7 +1347,7 @@ function droptickets_slack_notify_assignment($ticket, $original) {
   $projects  = entity_load('drop_project', array($ticket->pid));
   $project   = $projects ? reset($projects) : NULL;
   $label     = droptickets_ticket_label($ticket, $project);
-  $ticket_url = url('admin/drop/tickets/' . $ticket->tid, array('absolute' => TRUE));
+  $ticket_url = url('drop/tickets/' . $ticket->tid, array('absolute' => TRUE));
 
   // Resolve the new assignee label.
   $mode = isset($ticket->assignee_mode) ? $ticket->assignee_mode : 'user';
@@ -1467,7 +1463,7 @@ function droptickets_drop_nav_extras() {
     : '';
   $class = 'drop-nav-bell' . ($count > 0 ? ' drop-nav-bell--active' : '');
   return array(
-    '<a href="' . url('admin/drop/notifications') . '" class="' . $class . '" title="' . t('Notifications') . '">' . $bell . $badge . '</a>',
+    '<a href="' . url('drop/notifications') . '" class="' . $class . '" title="' . t('Notifications') . '">' . $bell . $badge . '</a>',
   );
 }
 
@@ -1866,7 +1862,7 @@ function droptickets_dropcrm_contact_view_alter(&$output, $contact) {
       $status_label = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
       $rows[] = array(
         array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>'),
-        l(check_plain($ticket->title), 'admin/drop/tickets/' . $ticket->tid),
+        l(check_plain($ticket->title), 'drop/tickets/' . $ticket->tid),
         $project ? check_plain($project->name) : '—',
         '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>',
       );
@@ -1883,7 +1879,7 @@ function droptickets_dropcrm_contact_view_alter(&$output, $contact) {
   $output['tickets']['heading'] = array(
     '#markup' => drop_base_section_header(
       t('Open Tickets'),
-      l(t('+ Add ticket'), 'admin/drop/tickets/add', array('attributes' => array('class' => array('drop-section-add'))))
+      l(t('+ Add ticket'), 'drop/tickets/add', array('attributes' => array('class' => array('drop-section-add'))))
     ),
     '#weight' => -5,
   );
@@ -1902,9 +1898,66 @@ function droptickets_drop_nav_links() {
   return array(
     array(
       'title'      => t('Tickets'),
-      'path'       => 'admin/drop/tickets',
+      'path'       => 'drop/tickets',
       'permission' => 'access droptickets',
       'weight'     => 30,
     ),
   );
+}
+
+/**
+ * Implements hook_drop_section_links().
+ */
+function droptickets_drop_section_links($section) {
+  if ($section !== 'tickets') {
+    return array();
+  }
+
+  $links = array();
+
+  // All tickets — first; active on the main list and the explicit /all sub-path.
+  $links['all'] = array(
+    'title'        => t('All tickets'),
+    'href'         => 'drop/tickets',
+    'weight'       => -20,
+    'active_paths' => array('drop/tickets', 'drop/tickets/all'),
+  );
+
+  // Flagged — badge shows count of currently flagged tickets.
+  if (user_access('flag droptickets') || user_access('administer droptickets')) {
+    $flagged_count = db_query('SELECT COUNT(*) FROM {drop_ticket_flag}')->fetchField();
+    $links['flagged'] = array(
+      'title'        => t('Flagged'),
+      'href'         => 'drop/tickets/flagged',
+      'weight'       => -10,
+      'badge'        => $flagged_count ? (int) $flagged_count : NULL,
+      'active_paths' => array('drop/tickets/flagged'),
+    );
+  }
+
+  $links['kanban'] = array(
+    'title'  => t('Kanban'),
+    'href'   => 'drop/tickets/kanban',
+    'weight' => 0,
+  );
+
+  $links['review'] = array(
+    'title'  => t('Review'),
+    'href'   => 'drop/tickets/review',
+    'weight' => 10,
+  );
+
+  $links['stale'] = array(
+    'title'  => t('Stale'),
+    'href'   => 'drop/tickets/reports/stale',
+    'weight' => 20,
+  );
+
+  $links['recent'] = array(
+    'title'  => t('Recent'),
+    'href'   => 'drop/tickets/reports/recent',
+    'weight' => 30,
+  );
+
+  return $links;
 }

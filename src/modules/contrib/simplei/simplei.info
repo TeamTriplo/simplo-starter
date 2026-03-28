@@ -1,0 +1,11 @@
+name = Simple Environment Indicator
+description = Environment Indicator, Super Light.
+package = Administration
+backdrop = 1.x
+type = module
+
+dependencies[] = system (>=1.28.0)
+; Added by Backdrop CMS packaging script on 2025-07-01
+project = simplei
+version = 1.x-1.0.5
+timestamp = 1751389475

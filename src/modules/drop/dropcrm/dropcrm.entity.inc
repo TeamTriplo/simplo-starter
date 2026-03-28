@@ -44,7 +44,7 @@ class CrmContact extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/crm/contact/' . $this->id(), 'options' => array());
+    return array('path' => 'drop/crm/contact/' . $this->id(), 'options' => array());
   }
 
 }
@@ -91,7 +91,7 @@ class CrmContactMethod extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/crm/contact-method/' . $this->id(), 'options' => array());
+    return array('path' => 'drop/crm/contact-method/' . $this->id(), 'options' => array());
   }
 
   /**
@@ -167,7 +167,7 @@ class CrmActivity extends Entity {
    * {@inheritdoc}
    */
   public function uri() {
-    return array('path' => 'admin/drop/crm/activity/' . $this->id(), 'options' => array());
+    return array('path' => 'drop/crm/activity/' . $this->id(), 'options' => array());
   }
 
 }
@@ -241,12 +241,12 @@ class CrmContactUIController extends EntityBundleableUIController {
   public function breadcrumb($entity = NULL, $op = NULL) {
     $crumb = array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('CRM'), 'admin/drop/crm'),
-      l(t('Contacts'), 'admin/drop/crm/contacts'),
+      l(t('Drop Suite'), 'drop'),
+      l(t('CRM'), 'drop/crm'),
+      l(t('Contacts'), 'drop/crm/contacts'),
     );
     if ($entity && !empty($entity->cid)) {
-      $crumb[] = l(entity_label('crm_contact', $entity), 'admin/drop/crm/contact/' . $entity->cid);
+      $crumb[] = l(entity_label('crm_contact', $entity), 'drop/crm/contact/' . $entity->cid);
     }
     backdrop_set_breadcrumb($crumb);
   }
@@ -267,14 +267,14 @@ class CrmContactMethodUIController extends EntityBundleableUIController {
   public function breadcrumb($entity = NULL, $op = NULL) {
     $crumb = array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('CRM'), 'admin/drop/crm'),
+      l(t('Drop Suite'), 'drop'),
+      l(t('CRM'), 'drop/crm'),
     );
     if ($entity && !empty($entity->cid)) {
       $contact = crm_contact_load($entity->cid);
       if ($contact) {
-        $crumb[] = l(t('Contacts'), 'admin/drop/crm/contacts');
-        $crumb[] = l(entity_label('crm_contact', $contact), 'admin/drop/crm/contact/' . $entity->cid);
+        $crumb[] = l(t('Contacts'), 'drop/crm/contacts');
+        $crumb[] = l(entity_label('crm_contact', $contact), 'drop/crm/contact/' . $entity->cid);
       }
     }
     backdrop_set_breadcrumb($crumb);
@@ -324,7 +324,7 @@ class CrmContactMethodUIController extends EntityBundleableUIController {
     $rows = array();
     foreach ($result as $row) {
       $contact_cell = $row->cid
-        ? l($row->contact_name ?: t('Unknown'), 'admin/drop/crm/contact/' . $row->cid)
+        ? l($row->contact_name ?: t('Unknown'), 'drop/crm/contact/' . $row->cid)
         : '—';
       $type_label = isset($bundle_labels[$row->type]) ? $bundle_labels[$row->type] : check_plain($row->type);
       $ops = l(t('Edit'), $this->path . '/' . $row->cmid . '/edit')
@@ -383,7 +383,7 @@ class DropProject extends Entity {
 
   /** {@inheritdoc} */
   public function uri() {
-    return array('path' => 'admin/drop/crm/projects/' . $this->pid . '/edit', 'options' => array());
+    return array('path' => 'drop/crm/projects/' . $this->pid . '/edit', 'options' => array());
   }
 
   /** {@inheritdoc} */
@@ -422,12 +422,12 @@ class CrmActivityUIController extends EntityDefaultUIController {
   public function breadcrumb($entity = NULL, $op = NULL) {
     $crumb = array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('CRM'), 'admin/drop/crm'),
-      l(t('Activities'), 'admin/drop/crm/activities'),
+      l(t('Drop Suite'), 'drop'),
+      l(t('CRM'), 'drop/crm'),
+      l(t('Activities'), 'drop/crm/activities'),
     );
     if ($entity && !empty($entity->aid)) {
-      $crumb[] = l(entity_label('crm_activity', $entity), 'admin/drop/crm/activity/' . $entity->aid);
+      $crumb[] = l(entity_label('crm_activity', $entity), 'drop/crm/activity/' . $entity->aid);
     }
     backdrop_set_breadcrumb($crumb);
   }

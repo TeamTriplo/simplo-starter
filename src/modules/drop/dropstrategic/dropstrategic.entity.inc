@@ -41,7 +41,7 @@ class DropGoalStrategic extends Entity {
 
   /** {@inheritdoc} */
   public function uri() {
-    return array('path' => 'admin/drop/strategic/' . $this->gid, 'options' => array());
+    return array('path' => 'drop/strategic/' . $this->gid, 'options' => array());
   }
 
   /** {@inheritdoc} */

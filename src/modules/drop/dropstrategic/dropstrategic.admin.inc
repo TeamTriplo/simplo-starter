@@ -56,7 +56,7 @@ function dropstrategic_goal_form($form, &$form_state, ?DropGoalStrategic $goal =
   );
 
   // Start with existing + 3 empty rows.
-  $kr_count = max(count($existing_krs) + 3, 3);
+  $kr_count = max(count($existing_krs) + 3, 2);
   for ($i = 0; $i < $kr_count; $i++) {
     $kr = isset($existing_krs[$i]) ? $existing_krs[$i] : NULL;
     $form['main']['left']['key_results']['kr_' . $i] = array(
@@ -185,7 +185,7 @@ function dropstrategic_goal_form($form, &$form_state, ?DropGoalStrategic $goal =
     $form['actions']['cancel'] = array(
       '#type'       => 'link',
       '#title'      => t('Cancel'),
-      '#href'       => 'admin/drop/strategic/' . $goal->gid,
+      '#href'       => 'drop/strategic/' . $goal->gid,
       '#attributes' => array('class' => array('button', 'button-secondary')),
     );
   }
@@ -252,7 +252,7 @@ function dropstrategic_goal_form_submit($form, &$form_state) {
   dropstrategic_key_results_save($goal->gid, $key_results);
 
   backdrop_set_message($is_edit ? t('Goal updated.') : t('Goal added.'));
-  $form_state['redirect'] = 'admin/drop/strategic/' . $goal->gid;
+  $form_state['redirect'] = 'drop/strategic/' . $goal->gid;
 }
 
 /**
@@ -263,7 +263,7 @@ function dropstrategic_goal_delete_form($form, &$form_state, DropGoalStrategic $
   return confirm_form(
     $form,
     t('Delete the goal %title?', array('%title' => $goal->title)),
-    'admin/drop/strategic/' . $goal->gid,
+    'drop/strategic/' . $goal->gid,
     t('This will also delete all key results. This cannot be undone.'),
     t('Delete'),
     t('Cancel')
@@ -278,7 +278,7 @@ function dropstrategic_goal_delete_form_submit($form, &$form_state) {
   db_delete('drop_strategic_key_result')->condition('gid', $goal->gid)->execute();
   $goal->delete();
   backdrop_set_message(t('Goal deleted.'));
-  $form_state['redirect'] = 'admin/drop/strategic';
+  $form_state['redirect'] = 'drop/strategic';
 }
 
 // ---------------------------------------------------------------------------

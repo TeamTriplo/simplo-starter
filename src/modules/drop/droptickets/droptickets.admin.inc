@@ -27,16 +27,16 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
   if ($is_edit) {
     backdrop_set_breadcrumb(array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('Tickets'), 'admin/drop/tickets'),
-      l(droptickets_ticket_label($ticket) . ': ' . check_plain($ticket->title), 'admin/drop/tickets/' . $ticket->tid),
+      l(t('Drop Suite'), 'drop'),
+      l(t('Tickets'), 'drop/tickets'),
+      l(droptickets_ticket_label($ticket) . ': ' . check_plain($ticket->title), 'drop/tickets/' . $ticket->tid),
     ));
   }
   else {
     backdrop_set_breadcrumb(array(
       l(t('Home'), '<front>'),
-      l(t('Drop Admin'), 'admin/drop'),
-      l(t('Tickets'), 'admin/drop/tickets'),
+      l(t('Drop Suite'), 'drop'),
+      l(t('Tickets'), 'drop/tickets'),
     ));
   }
 
@@ -194,15 +194,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
 
   $team_options = droptickets_assignee_options();
 
-  $form['owner_uid'] = array(
-    '#type'          => 'select',
-    '#title'         => t('Owner'),
-    '#description'   => t('Person responsible for driving this ticket forward.'),
-    '#options'       => $team_options,
-    '#empty_option'  => t('— None —'),
-    '#default_value' => $is_edit ? $ticket->owner_uid : NULL,
-    '#weight'        => -15,
-  );
+  // Owner field hidden from UI — see ticket #436 on simplo.
 
   // Assignee options: special modes first, then individual team members.
   $assignee_options = array(
@@ -274,7 +266,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#title'             => t('Parent ticket'),
     '#default_value'     => $parent_default,
     '#description'       => t('Optional. Makes this a sub-ticket. Type a ticket ID or title to search.'),
-    '#autocomplete_path' => 'admin/drop/tickets/autocomplete',
+    '#autocomplete_path' => 'drop/tickets/autocomplete',
     '#maxlength'         => 300,
     '#weight'            => -12,
   );
@@ -359,7 +351,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#value' => $is_edit ? t('Update ticket') : t('Add ticket'),
   );
   $form['actions']['cancel'] = array(
-    '#markup' => ' ' . l(t('Cancel'), $is_edit ? 'admin/drop/tickets/' . $ticket->tid : 'admin/drop/tickets'),
+    '#markup' => ' ' . l(t('Cancel'), $is_edit ? 'drop/tickets/' . $ticket->tid : 'drop/tickets'),
   );
 
   return $form;
@@ -483,7 +475,7 @@ function droptickets_ticket_form_submit($form, &$form_state) {
   }
 
   backdrop_set_message(t('Ticket %label saved.', array('%label' => droptickets_ticket_label($ticket))));
-  $form_state['redirect'] = 'admin/drop/tickets/' . $ticket->tid;
+  $form_state['redirect'] = 'drop/tickets/' . $ticket->tid;
 }
 
 // ---------------------------------------------------------------------------
@@ -498,7 +490,7 @@ function droptickets_ticket_delete_form($form, &$form_state, DropTicket $ticket)
   return confirm_form(
     $form,
     t('Delete ticket %label?', array('%label' => droptickets_ticket_label($ticket))),
-    'admin/drop/tickets/' . $ticket->tid,
+    'drop/tickets/' . $ticket->tid,
     t('All comments on this ticket will also be deleted. This action cannot be undone.'),
     t('Delete'),
     t('Cancel')
@@ -531,7 +523,7 @@ function droptickets_ticket_delete_form_submit($form, &$form_state) {
 
   $ticket->delete();
   backdrop_set_message(t('Ticket deleted.'));
-  $form_state['redirect'] = 'admin/drop/tickets';
+  $form_state['redirect'] = 'drop/tickets';
 }
 
 // ---------------------------------------------------------------------------
@@ -547,7 +539,7 @@ function droptickets_relate_form($form, &$form_state, DropTicket $ticket) {
   $form['ticket_ref'] = array(
     '#type'              => 'textfield',
     '#title'             => t('Ticket'),
-    '#autocomplete_path' => 'admin/drop/tickets/autocomplete',
+    '#autocomplete_path' => 'drop/tickets/autocomplete',
     '#required'          => TRUE,
     '#description'       => t('Start typing a ticket number or title.'),
     '#size'              => 50,
@@ -567,7 +559,7 @@ function droptickets_relate_form($form, &$form_state, DropTicket $ticket) {
     '#value' => t('Add relation'),
   );
   $form['actions']['cancel'] = array(
-    '#markup' => ' ' . l(t('Cancel'), 'admin/drop/tickets/' . $ticket->tid),
+    '#markup' => ' ' . l(t('Cancel'), 'drop/tickets/' . $ticket->tid),
   );
 
   return $form;
@@ -640,7 +632,7 @@ function droptickets_relate_form_submit($form, &$form_state) {
     ->execute();
 
   backdrop_set_message(t('Relation added.'));
-  $form_state['redirect'] = 'admin/drop/tickets/' . $ticket->tid;
+  $form_state['redirect'] = 'drop/tickets/' . $ticket->tid;
 }
 
 /**
@@ -656,7 +648,7 @@ function droptickets_unrelate_confirm_form($form, &$form_state, DropTicket $tick
 
   if (!$row || ($row->tid_a != $ticket->tid && $row->tid_b != $ticket->tid)) {
     backdrop_set_message(t('Relationship not found.'), 'error');
-    backdrop_goto('admin/drop/tickets/' . $ticket->tid);
+    backdrop_goto('drop/tickets/' . $ticket->tid);
   }
 
   $form['#ticket'] = $ticket;
@@ -665,7 +657,7 @@ function droptickets_unrelate_confirm_form($form, &$form_state, DropTicket $tick
   return confirm_form(
     $form,
     t('Remove this relationship?'),
-    'admin/drop/tickets/' . $ticket->tid,
+    'drop/tickets/' . $ticket->tid,
     t('This action cannot be undone.'),
     t('Remove'),
     t('Cancel')
@@ -681,7 +673,7 @@ function droptickets_unrelate_confirm_form_submit($form, &$form_state) {
     ->condition('trid', $form['#trid'])
     ->execute();
   backdrop_set_message(t('Relationship removed.'));
-  $form_state['redirect'] = 'admin/drop/tickets/' . $ticket->tid;
+  $form_state['redirect'] = 'drop/tickets/' . $ticket->tid;
 }
 
 // ---------------------------------------------------------------------------
@@ -721,7 +713,7 @@ function droptickets_comment_form($form, &$form_state, DropTicket $ticket, $comm
   $form['#attached']['js'][] = backdrop_get_path('module', 'droptickets') . '/droptickets.comment-paste.js';
   $form['#attached']['js'][] = array(
     'data' => array('droptickets' => array(
-      'uploadUrl'   => url('admin/drop/tickets/upload-image'),
+      'uploadUrl'   => url('drop/tickets/upload-image'),
       'uploadToken' => backdrop_get_token('droptickets_image_upload'),
     )),
     'type' => 'setting',
@@ -738,7 +730,7 @@ function droptickets_comment_form($form, &$form_state, DropTicket $ticket, $comm
     '#value' => $is_edit ? t('Update comment') : t('Post comment'),
   );
   $form['actions']['cancel'] = array(
-    '#markup' => ' ' . l(t('Cancel'), 'admin/drop/tickets/' . $ticket->tid),
+    '#markup' => ' ' . l(t('Cancel'), 'drop/tickets/' . $ticket->tid),
   );
 
   return $form;
@@ -784,7 +776,7 @@ function droptickets_comment_form_submit($form, &$form_state) {
   }
 
   backdrop_set_message(t('Comment saved.'));
-  $form_state['redirect'] = 'admin/drop/tickets/' . $values['tid'];
+  $form_state['redirect'] = 'drop/tickets/' . $values['tid'];
 }
 
 // ---------------------------------------------------------------------------
@@ -799,7 +791,7 @@ function droptickets_comment_delete_form($form, &$form_state, DropTicketComment 
   return confirm_form(
     $form,
     t('Delete this comment?'),
-    'admin/drop/tickets/' . $comment->tid,
+    'drop/tickets/' . $comment->tid,
     t('This action cannot be undone.'),
     t('Delete'),
     t('Cancel')
@@ -814,7 +806,7 @@ function droptickets_comment_delete_form_submit($form, &$form_state) {
   $tid     = $comment->tid;
   $comment->delete();
   backdrop_set_message(t('Comment deleted.'));
-  $form_state['redirect'] = 'admin/drop/tickets/' . $tid;
+  $form_state['redirect'] = 'drop/tickets/' . $tid;
 }
 
 // ---------------------------------------------------------------------------
@@ -861,7 +853,7 @@ function droptickets_watchers_form_submit($form, &$form_state) {
       ->execute();
   }
 
-  $form_state['redirect'] = 'admin/drop/tickets/' . $ticket->tid;
+  $form_state['redirect'] = 'drop/tickets/' . $ticket->tid;
 }
 
 // ---------------------------------------------------------------------------
@@ -1101,7 +1093,7 @@ function droptickets_import_form($form, &$form_state) {
       $proj_name = isset($projects[$imp->pid]) ? check_plain($projects[$imp->pid]->name) : '—';
       $importer  = isset($accounts[$imp->uid]) ? check_plain($accounts[$imp->uid]->name) : '—';
       $date      = format_date($imp->created, 'custom', 'M j, Y g:i A');
-      $delete    = l(t('Delete'), 'admin/drop/tickets/import/' . $imp->import_id . '/delete');
+      $delete    = l(t('Delete'), 'drop/tickets/import/' . $imp->import_id . '/delete');
       $rows[] = array($proj_name, $imp->ticket_count, $importer, $date, $delete);
     }
 
@@ -1244,10 +1236,10 @@ function droptickets_import_form_submit($form, &$form_state) {
     backdrop_set_message(format_plural($imported,
       'Imported 1 ticket successfully. You can manage imports on the <a href="@url">Import from JIRA</a> tab.',
       'Imported @count tickets successfully. You can manage imports on the <a href="@url">Import from JIRA</a> tab.',
-      array('@url' => url('admin/drop/tickets/import'))
+      array('@url' => url('drop/tickets/import'))
     ));
 
-    $form_state['redirect'] = 'admin/drop/tickets';
+    $form_state['redirect'] = 'drop/tickets';
   }
   if ($skipped > 0) {
     backdrop_set_message(format_plural($skipped,
@@ -1269,7 +1261,7 @@ function droptickets_import_delete_form($form, &$form_state, $import_id) {
 
   if (!$import) {
     backdrop_set_message(t('Import batch not found.'), 'error');
-    backdrop_goto('admin/drop/tickets/import');
+    backdrop_goto('drop/tickets/import');
   }
 
   $loaded  = entity_load('drop_project', array($import->pid));
@@ -1282,7 +1274,7 @@ function droptickets_import_delete_form($form, &$form_state, $import_id) {
   return confirm_form(
     $form,
     t('Delete @count imported tickets?', array('@count' => $import->ticket_count)),
-    'admin/drop/tickets/import',
+    'drop/tickets/import',
     t('This will permanently delete the @count tickets imported into %project on @date. This cannot be undone.', array(
       '@count'   => $import->ticket_count,
       '%project' => $proj_name,
@@ -1319,6 +1311,6 @@ function droptickets_import_delete_form_submit($form, &$form_state) {
     'Deleted @count imported tickets.'
   ));
 
-  $form_state['redirect'] = 'admin/drop/tickets/import';
+  $form_state['redirect'] = 'drop/tickets/import';
 }
 

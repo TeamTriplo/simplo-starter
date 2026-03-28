@@ -84,13 +84,13 @@ function droptickets_list_page() {
       $clear_q = array('status' => $status);
       if ($pid_filter) { $clear_q['pid'] = $pid_filter; }
       if ($search !== '') { $clear_q['search'] = $search; }
-      $tag_badge = ' <a href="' . url('admin/drop/tickets', array('query' => $clear_q)) . '" class="droptickets-tag-badge">'
+      $tag_badge = ' <a href="' . url('drop/tickets', array('query' => $clear_q)) . '" class="droptickets-tag-badge">'
         . check_plain($term->name) . ' ×</a>';
     }
   }
 
   // Assemble the single combined form.
-  $filter_form = '<form method="get" action="' . url('admin/drop/tickets') . '" class="droptickets-filter-form">'
+  $filter_form = '<form method="get" action="' . url('drop/tickets') . '" class="droptickets-filter-form">'
     . ($tag_filter ? '<input type="hidden" name="tag" value="' . (int) $tag_filter . '">' : '')
     . '<select name="status" class="droptickets-filter-select" onchange="this.form.submit()">' . $status_opts_html . '</select>';
 
@@ -178,9 +178,7 @@ function droptickets_list_page() {
   $projects = entity_load('drop_project', $pids);
 
   $assignee_uids = array_filter(array_unique(array_column((array) $tickets, 'assignee_uid')));
-  $owner_uids    = array_filter(array_unique(array_column((array) $tickets, 'owner_uid')));
-  $all_uids      = array_unique(array_merge($assignee_uids, $owner_uids));
-  $accounts      = $all_uids ? user_load_multiple($all_uids) : array();
+  $accounts      = $assignee_uids ? user_load_multiple($assignee_uids) : array();
 
   $type_options     = droptickets_type_options();
   $status_options   = droptickets_status_options();
@@ -211,14 +209,12 @@ function droptickets_list_page() {
       $proj_name = t('—');
     }
     elseif (module_exists('dropcrm') && dropcrm_project_access('view', $project)) {
-      $proj_name = l($project->name, 'admin/drop/crm/projects/' . $project->pid);
+      $proj_name = l($project->name, 'drop/crm/projects/' . $project->pid);
     }
     else {
       $proj_name = check_plain($project->name);
     }
     $assignee  = droptickets_assignee_label($ticket, $accounts);
-    $owner     = (!empty($ticket->owner_uid) && isset($accounts[$ticket->owner_uid]))
-      ? check_plain($accounts[$ticket->owner_uid]->name) : '—';
     $type_label   = isset($type_options[$ticket->type]) ? $type_options[$ticket->type] : $ticket->type;
     $status_label = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
     $priority_class = 'drop-priority-' . drop_base_priority_class($ticket->priority);
@@ -230,7 +226,7 @@ function droptickets_list_page() {
         : icon('flag', array('attributes' => array('width' => 16, 'height' => 16)));
       $dest_query = array_diff_key($_GET, array('q' => 1));
       $destination = current_path() . ($dest_query ? '?' . http_build_query($dest_query) : '');
-      $flag_cell = l($flag_icon, 'admin/drop/tickets/' . $ticket->tid . '/flag', array(
+      $flag_cell = l($flag_icon, 'drop/tickets/' . $ticket->tid . '/flag', array(
         'html'       => TRUE,
         'query'      => array('destination' => $destination),
         'attributes' => array(
@@ -251,7 +247,7 @@ function droptickets_list_page() {
     if (!empty($ticket->parent_tid) && isset($list_parent_titles[$ticket->parent_tid])) {
       $parent_indicator = '<span class="droptickets-parent-indicator">'
         . icon('arrow-bend-up-left', array('attributes' => array('width' => 10, 'height' => 10)))
-        . ' ' . l(truncate_utf8(check_plain($list_parent_titles[$ticket->parent_tid]), 50, FALSE, TRUE), 'admin/drop/tickets/' . (int) $ticket->parent_tid)
+        . ' ' . l(truncate_utf8(check_plain($list_parent_titles[$ticket->parent_tid]), 50, FALSE, TRUE), 'drop/tickets/' . (int) $ticket->parent_tid)
         . '</span>';
     }
 
@@ -259,7 +255,7 @@ function droptickets_list_page() {
       array('data' => $flag_cell, 'class' => array('droptickets-col-flag')),
       array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>', 'class' => array('droptickets-col-id')),
       array('data' => $proj_name, 'class' => array('droptickets-col-project')),
-      array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid) . $parent_indicator, 'class' => array('droptickets-col-title')),
+      array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid) . $parent_indicator, 'class' => array('droptickets-col-title')),
       array('data' => $priority_dot, 'class' => array('droptickets-col-priority')),
       array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
     );
@@ -269,10 +265,9 @@ function droptickets_list_page() {
       ? '<span class="droptickets-comment-count">' . $comment_count . '</span>'
       : '<span class="droptickets-comment-count droptickets-comment-count--none">—</span>';
 
-    $row_data[] = array('data' => $owner);
     $row_data[] = array('data' => $assignee);
     $row_data[] = array('data' => $comment_cell, 'class' => array('droptickets-col-comments'));
-    $row_data[] = array('data' => l(t('Edit'), 'admin/drop/tickets/' . $ticket->tid . '/edit'));
+    $row_data[] = array('data' => l(t('Edit'), 'drop/tickets/' . $ticket->tid . '/edit'));
 
     $rows[] = array(
       'data'  => $row_data,
@@ -281,7 +276,6 @@ function droptickets_list_page() {
   }
 
   $header = array('', t('ID'), t('Project'), t('Title'), t('P'), t('Status'));
-  $header[] = t('Owner');
   $header[] = t('Assignee');
   $header[] = icon('chat-circle', array('attributes' => array('width' => 14, 'height' => 14, 'title' => t('Comments'))));
   $header[] = t('Actions');
@@ -320,10 +314,10 @@ function droptickets_member_page($account) {
     ),
   );
 
-  $kanban_url = url('admin/drop/tickets/kanban', array('query' => array('assignee' => $account->uid)));
+  $kanban_url = url('drop/tickets/kanban', array('query' => array('assignee' => $account->uid)));
   $output['actions'] = array(
     '#markup' => '<p>'
-      . l(t('← Back to team'), 'admin/drop/team')
+      . l(t('← Back to team'), 'drop/team')
       . ' &nbsp; '
       . l(t('View Kanban'), $kanban_url, array('html' => FALSE))
       . '</p>',
@@ -333,17 +327,8 @@ function droptickets_member_page($account) {
   $status_options   = droptickets_status_options();
   $priority_labels  = drop_base_priority_labels();
 
-  // Fetch owned and assigned tickets (active statuses only).
+  // Fetch assigned tickets (active statuses only).
   $active = droptickets_active_statuses();
-
-  $owned_tickets = db_select('drop_ticket', 't')
-    ->fields('t')
-    ->condition('t.owner_uid', $account->uid)
-    ->condition('t.status', $active, 'IN')
-    ->isNull('t.import_id')
-    ->orderBy('t.priority', 'DESC')
-    ->orderBy('t.created', 'ASC')
-    ->execute()->fetchAll();
 
   $assigned_tickets = db_select('drop_ticket', 't')
     ->fields('t')
@@ -354,21 +339,11 @@ function droptickets_member_page($account) {
     ->orderBy('t.created', 'ASC')
     ->execute()->fetchAll();
 
-  // Bulk-load all referenced projects and user accounts.
-  $all_tickets = array_merge($owned_tickets, $assigned_tickets);
-  $pids     = array_unique(array_column((array) $all_tickets, 'pid'));
+  $pids     = array_unique(array_column((array) $assigned_tickets, 'pid'));
   $projects = $pids ? entity_load('drop_project', $pids) : array();
 
-  $uids = array_filter(array_unique(array_merge(
-    array_column((array) $all_tickets, 'owner_uid'),
-    array_column((array) $all_tickets, 'assignee_uid')
-  )));
-  $accounts = $uids ? user_load_multiple($uids) : array();
-
   // Helper to build a ticket table.
-  // $extra_col_header: column header string.
-  // $extra_col_type: 'assignee' uses droptickets_assignee_label(); 'owner' does a plain uid lookup.
-  $build_table = function($tickets, $projects, $accounts, $extra_col_header, $extra_col_type) use ($status_options, $priority_labels) {
+  $build_table = function($tickets, $projects) use ($status_options, $priority_labels) {
     if (empty($tickets)) {
       return array('#markup' => '<p class="droptickets-empty">' . t('None.') . '</p>');
     }
@@ -376,43 +351,31 @@ function droptickets_member_page($account) {
     foreach ($tickets as $ticket) {
       $project = isset($projects[$ticket->pid]) ? $projects[$ticket->pid] : NULL;
       $label   = droptickets_ticket_label($ticket, $project);
+      $proj_name      = $project ? check_plain($project->name) : '—';
       $status_label   = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
       $priority_class = 'drop-priority-' . drop_base_priority_class($ticket->priority);
       $priority_dot   = '<span class="droptickets-priority-dot ' . $priority_class . '" title="' . check_plain(isset($priority_labels[$ticket->priority]) ? $priority_labels[$ticket->priority] : '') . '"></span>';
-      if ($extra_col_type === 'assignee') {
-        $extra_name = droptickets_assignee_label($ticket, $accounts);
-      }
-      else {
-        $owner_uid  = !empty($ticket->owner_uid) ? (int) $ticket->owner_uid : 0;
-        $extra_name = ($owner_uid && isset($accounts[$owner_uid])) ? check_plain($accounts[$owner_uid]->name) : '—';
-      }
       $rows[] = array(
         array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>'),
-        array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid)),
+        array('data' => $proj_name),
+        array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid)),
         array('data' => $priority_dot),
         array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
-        array('data' => $extra_name),
       );
     }
     return array(
-      '#theme'  => 'table',
-      '#header' => array(t('ID'), t('Title'), t('P'), t('Status'), $extra_col_header),
-      '#rows'   => $rows,
+      '#theme'      => 'table',
+      '#header'     => array(t('ID'), t('Project'), t('Title'), t('P'), t('Status')),
+      '#rows'       => $rows,
       '#attributes' => array('class' => array('droptickets-list')),
     );
   };
-
-  $output['owned_heading'] = array(
-    '#markup' => '<h2>' . t('Owner') . '</h2>',
-    '#weight' => 10,
-  );
-  $output['owned'] = $build_table($owned_tickets, $projects, $accounts, t('Assignee'), 'assignee') + array('#weight' => 11);
 
   $output['assigned_heading'] = array(
     '#markup' => '<h2>' . t('Assigned') . '</h2>',
     '#weight' => 20,
   );
-  $output['assigned'] = $build_table($assigned_tickets, $projects, $accounts, t('Owner'), 'owner') + array('#weight' => 21);
+  $output['assigned'] = $build_table($assigned_tickets, $projects) + array('#weight' => 21);
 
   return $output;
 }
@@ -435,7 +398,7 @@ function droptickets_kanban_page() {
         $module_path . '/droptickets.kanban.js',
         array(
           'data' => array('droptickets' => array(
-            'kanbanStatusUrl' => url('admin/drop/tickets/'),
+            'kanbanStatusUrl' => url('drop/tickets/'),
             'kanbanToken'     => backdrop_get_token('droptickets_kanban'),
           )),
           'type' => 'setting',
@@ -470,12 +433,12 @@ function droptickets_kanban_page() {
   $is_general = (!$board_filter || $board_filter === $general_tid);
   $switcher = '<div class="droptickets-board-switcher">'
     . '<span class="droptickets-board-switcher-label">' . t('Board:') . '</span>';
-  $switcher .= '<a href="' . url('admin/drop/tickets/kanban') . '" class="droptickets-board-pill'
+  $switcher .= '<a href="' . url('drop/tickets/kanban') . '" class="droptickets-board-pill'
     . ($is_general ? ' droptickets-board-pill--active' : '') . '">' . t('General') . '</a>';
   foreach ($all_boards as $tid => $name) {
     if ((int) $tid === $general_tid) { continue; }
     $active    = ($board_filter === (int) $tid);
-    $switcher .= '<a href="' . url('admin/drop/tickets/kanban', array('query' => array('board' => $tid))) . '"'
+    $switcher .= '<a href="' . url('drop/tickets/kanban', array('query' => array('board' => $tid))) . '"'
       . ' class="droptickets-board-pill' . ($active ? ' droptickets-board-pill--active' : '') . '">'
       . check_plain($name) . '</a>';
   }
@@ -531,14 +494,14 @@ function droptickets_kanban_page() {
   $my_query = array('assignee' => $user->uid);
   if ($board_filter) { $my_query['board'] = $board_filter; }
   $my_kanban_active = ($assignee_filter === (int) $user->uid);
-  $my_kanban_link = '<a href="' . url('admin/drop/tickets/kanban', array('query' => $my_query)) . '"'
+  $my_kanban_link = '<a href="' . url('drop/tickets/kanban', array('query' => $my_query)) . '"'
     . ' class="droptickets-board-pill' . ($my_kanban_active ? ' droptickets-board-pill--active' : '') . '"'
     . ' title="' . t('Show only my tickets') . '">'
     . icon('user', array('attributes' => array('width' => 13, 'height' => 13)))
     . ' ' . t('My Kanban')
     . '</a>';
 
-  $filter_form = '<form class="droptickets-filter-form" method="get" action="' . url('admin/drop/tickets/kanban') . '">'
+  $filter_form = '<form class="droptickets-filter-form" method="get" action="' . url('drop/tickets/kanban') . '">'
     . $board_hidden
     . '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $opts . '</select>'
     . '<select name="assignee" class="droptickets-filter-select" onchange="this.form.submit()">' . $assignee_opts . '</select>'
@@ -700,13 +663,13 @@ function droptickets_kanban_page() {
         if (!empty($ticket->parent_tid) && isset($parent_titles[$ticket->parent_tid])) {
           $parent_html = '<div class="droptickets-kanban-parent">'
             . icon('arrow-bend-up-left', array('attributes' => array('width' => 10, 'height' => 10)))
-            . ' ' . l(truncate_utf8(check_plain($parent_titles[$ticket->parent_tid]), 40, FALSE, TRUE), 'admin/drop/tickets/' . (int) $ticket->parent_tid)
+            . ' ' . l(truncate_utf8(check_plain($parent_titles[$ticket->parent_tid]), 40, FALSE, TRUE), 'drop/tickets/' . (int) $ticket->parent_tid)
             . '</div>';
         }
 
         $board .= '<div class="droptickets-kanban-card ' . $priority_class . '" draggable="true" data-tid="' . (int) $ticket->tid . '">';
         $board .= '<div class="droptickets-kanban-card-id"><span class="droptickets-ticket-id">' . check_plain($label) . '</span>' . $flag_html . '</div>';
-        $board .= '<div class="droptickets-kanban-card-title">' . l($ticket->title, 'admin/drop/tickets/' . $ticket->tid) . '</div>';
+        $board .= '<div class="droptickets-kanban-card-title">' . l($ticket->title, 'drop/tickets/' . $ticket->tid) . '</div>';
         $board .= $parent_html;
         $board .= '<div class="droptickets-kanban-card-meta">';
         $board .= '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>';
@@ -825,8 +788,8 @@ function droptickets_ticket_view(DropTicket $ticket) {
 
   backdrop_set_breadcrumb(array(
     l(t('Home'), '<front>'),
-    l(t('Drop Admin'), 'admin/drop'),
-    l(t('Tickets'), 'admin/drop/tickets'),
+    l(t('Drop Suite'), 'drop'),
+    l(t('Tickets'), 'drop/tickets'),
   ));
 
   // Mark any unread notifications for this ticket as read.
@@ -857,16 +820,10 @@ function droptickets_ticket_view(DropTicket $ticket) {
   $type_options    = droptickets_type_options();
   $priority_labels = drop_base_priority_labels();
 
-  $owner_name = '—';
-  if (!empty($ticket->owner_uid)) {
-    $owner_account = user_load($ticket->owner_uid);
-    if ($owner_account) {
-      $owner_name = check_plain($owner_account->name);
-    }
-  }
+  // Owner field hidden from UI — see ticket #436 on simplo.
 
   $due       = $ticket->due_date ? format_date($ticket->due_date, 'custom', 'M j, Y') : '—';
-  $proj_name = $project ? l($project->name, 'admin/drop/crm/projects/' . $project->pid) : '—';
+  $proj_name = $project ? l($project->name, 'drop/crm/projects/' . $project->pid) : '—';
   $type_label   = isset($type_options[$ticket->type]) ? $type_options[$ticket->type] : $ticket->type;
   $status_label = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
   $priority_label = isset($priority_labels[$ticket->priority]) ? $priority_labels[$ticket->priority] : '—';
@@ -895,15 +852,13 @@ function droptickets_ticket_view(DropTicket $ticket) {
   // Actions at the top of the sidebar.
   if (droptickets_ticket_access('update', $ticket)) {
     $sidebar .= '<div class="droptickets-sidebar-actions">';
-    $sidebar .= l(t('Edit ticket'), 'admin/drop/tickets/' . $ticket->tid . '/edit', array('attributes' => array('class' => array('droptickets-sidebar-edit'))));
+    $sidebar .= l(t('Edit ticket'), 'drop/tickets/' . $ticket->tid . '/edit', array('attributes' => array('class' => array('droptickets-sidebar-edit'))));
     if (!empty($ticket->import_id)) {
-      $sidebar .= l(t('Activate'), 'admin/drop/tickets/' . $ticket->tid . '/activate', array('attributes' => array('class' => array('droptickets-sidebar-activate'))));
+      $sidebar .= l(t('Activate'), 'drop/tickets/' . $ticket->tid . '/activate', array('attributes' => array('class' => array('droptickets-sidebar-activate'))));
     }
-    if ($ticket->status !== 'closed' && droptickets_close_access($ticket)) {
-      $sidebar .= l(t('Close'), 'admin/drop/tickets/' . $ticket->tid . '/close', array('attributes' => array('class' => array('droptickets-sidebar-close'))));
-    }
+
     if (droptickets_ticket_access('delete', $ticket)) {
-      $sidebar .= l(t('Delete'), 'admin/drop/tickets/' . $ticket->tid . '/delete', array('attributes' => array('class' => array('droptickets-sidebar-delete'))));
+      $sidebar .= l(t('Delete'), 'drop/tickets/' . $ticket->tid . '/delete', array('attributes' => array('class' => array('droptickets-sidebar-delete'))));
     }
     $sidebar .= '</div>';
   }
@@ -920,7 +875,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $status_select = '<select class="droptickets-status-select droptickets-status--' . check_plain($ticket->status) . '"'
       . ' data-tid="' . (int) $ticket->tid . '"'
       . ' data-token="' . backdrop_get_token('droptickets_inline_status') . '"'
-      . ' data-endpoint="' . url('admin/drop/tickets/' . $ticket->tid . '/inline-status') . '">';
+      . ' data-endpoint="' . url('drop/tickets/' . $ticket->tid . '/inline-status') . '">';
     foreach ($status_options_all as $key => $label) {
       $status_select .= '<option value="' . check_plain($key) . '"' . ($key === $ticket->status ? ' selected' : '') . '>' . check_plain($label) . '</option>';
     }
@@ -940,7 +895,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
       $parent_proj_load = !empty($parent->pid) ? entity_load('drop_project', array($parent->pid)) : array();
       $parent_proj      = $parent_proj_load ? reset($parent_proj_load) : NULL;
       $parent_label = droptickets_ticket_label($parent, $parent_proj);
-      $parent_item  = l($parent_label . ': ' . $parent->title, 'admin/drop/tickets/' . $parent->tid);
+      $parent_item  = l($parent_label . ': ' . $parent->title, 'drop/tickets/' . $parent->tid);
     }
   }
 
@@ -949,7 +904,6 @@ function droptickets_ticket_view(DropTicket $ticket) {
     t('Status')   => $status_field,
     t('Type')     => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>',
     t('Priority') => check_plain($priority_label),
-    t('Owner')    => $owner_name,
     t('Assignee') => droptickets_assignee_label($ticket),
     t('Due')      => $due,
   );
@@ -1025,6 +979,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
   // Body.
   if (!empty($ticket->body)) {
     $main .= '<div class="droptickets-card droptickets-body droptickets-body--collapsible">';
+    $main .= '<div class="droptickets-section-heading droptickets-body-label">' . t('Description') . '</div>';
     $main .= '<div class="droptickets-body-inner">' . check_markup($ticket->body, $ticket->body_format) . '<div class="droptickets-body-fade"></div></div>';
     $main .= '<button class="droptickets-body-toggle" aria-expanded="false">' . t('Expand') . '</button>';
     if ($reactions_enabled) {
@@ -1076,63 +1031,74 @@ function droptickets_ticket_view(DropTicket $ticket) {
   $has_fields = element_children($field_output);
 
   // Parent ticket indicator — shown when this ticket is a child.
-  if ($parent_item) {
-    $main .= '<div class="droptickets-card droptickets-parent-ticket">';
-    $main .= '<span class="droptickets-parent-ticket-label">' . t('Parent Ticket') . '</span>';
-    $main .= $parent_item;
-    $main .= '</div>';
-  }
-
-  // Child tickets — collapsible, open by default when children exist.
+  // Hierarchy card — combines parent ticket + child tickets into one collapsible row.
   $done_statuses = array('done', 'closed');
-  if (!empty($children)) {
-    $child_pids     = array_unique(array_filter(array_column($children, 'pid')));
-    $child_projects = $child_pids ? entity_load('drop_project', $child_pids) : array();
-    $done_count     = count(array_filter($children, function($c) use ($done_statuses) {
-      return in_array($c->status, $done_statuses);
-    }));
-    $total_count    = count($children);
-    $progress_pct   = $total_count ? round($done_count / $total_count * 100) : 0;
+  $total_count   = count($children);
+  $has_hierarchy = $parent_item || $total_count > 0 || droptickets_ticket_access('create');
 
-    $main .= '<details class="droptickets-card droptickets-children" open>';
-    $main .= '<summary class="droptickets-section-heading">'
-      . t('Child Tickets')
-      . ' <span class="droptickets-children-progress">' . $done_count . '/' . $total_count . ' ' . t('done') . '</span>'
+  if ($has_hierarchy) {
+    $child_count_label = format_plural($total_count, '1 child ticket', '@count child tickets');
+
+    // Build summary line: parent info on left, child count on right.
+    $summary_left = $parent_item
+      ? '<span class="droptickets-parent-ticket-label">' . t('Parent Ticket') . '</span>' . $parent_item
+      : '';
+    $summary_right = '<span class="droptickets-hierarchy-child-count">' . check_plain($child_count_label) . '</span>';
+
+    $main .= '<details class="droptickets-card droptickets-hierarchy"' . ($total_count > 0 ? ' open' : '') . '>';
+    $main .= '<summary class="droptickets-hierarchy-summary">'
+      . '<span class="droptickets-hierarchy-left">' . $summary_left . '</span>'
+      . '<span class="droptickets-hierarchy-right">' . $summary_right . '</span>'
       . '</summary>';
-    $main .= '<div class="droptickets-children-bar"><div class="droptickets-children-bar-fill" style="width:' . $progress_pct . '%"></div></div>';
-    $main .= '<ul class="droptickets-children-list">';
-    foreach ($children as $child) {
-      $child_proj  = isset($child_projects[$child->pid]) ? $child_projects[$child->pid] : NULL;
-      $child_label = droptickets_ticket_label($child, $child_proj);
-      $is_done     = in_array($child->status, $done_statuses);
-      $main .= '<li class="droptickets-child-item' . ($is_done ? ' droptickets-child-item--done' : '') . '">'
-        . '<span class="droptickets-ticket-id">' . check_plain($child_label) . '</span> '
-        . l($child->title, 'admin/drop/tickets/' . $child->tid)
-        . '</li>';
+
+    if ($total_count > 0) {
+      $child_pids     = array_unique(array_filter(array_column($children, 'pid')));
+      $child_projects = $child_pids ? entity_load('drop_project', $child_pids) : array();
+      $done_count     = count(array_filter($children, function($c) use ($done_statuses) {
+        return in_array($c->status, $done_statuses);
+      }));
+      $progress_pct = round($done_count / $total_count * 100);
+
+      $main .= '<div class="droptickets-children-bar"><div class="droptickets-children-bar-fill" style="width:' . $progress_pct . '%"></div></div>';
+      $main .= '<ul class="droptickets-children-list">';
+      foreach ($children as $child) {
+        $child_proj  = isset($child_projects[$child->pid]) ? $child_projects[$child->pid] : NULL;
+        $child_label = droptickets_ticket_label($child, $child_proj);
+        $is_done     = in_array($child->status, $done_statuses);
+        $main .= '<li class="droptickets-child-item' . ($is_done ? ' droptickets-child-item--done' : '') . '">'
+          . '<span class="droptickets-ticket-id">' . check_plain($child_label) . '</span> '
+          . l($child->title, 'drop/tickets/' . $child->tid)
+          . '</li>';
+      }
+      $main .= '</ul>';
     }
-    $main .= '</ul>';
+    else {
+      $main .= '<p class="droptickets-empty">' . t('No child tickets.') . '</p>';
+    }
+
     if (droptickets_ticket_access('create')) {
       $main .= '<p class="droptickets-child-add">'
-        . l(t('+ Add child ticket'), 'admin/drop/tickets/add', array('query' => array('parent_tid' => $ticket->tid)))
+        . l(t('+ Add child ticket'), 'drop/tickets/add', array('query' => array('parent_tid' => $ticket->tid)))
         . '</p>';
     }
-    $main .= '</details>';
-  }
-  elseif (droptickets_ticket_access('create')) {
-    $main .= '<details class="droptickets-card droptickets-children droptickets-children--empty">';
-    $main .= '<summary class="droptickets-section-heading">' . t('Child Tickets') . '</summary>';
-    $main .= '<p class="droptickets-empty">' . t('No child tickets.') . '</p>';
-    $main .= '<p class="droptickets-child-add">'
-      . l(t('+ Add child ticket'), 'admin/drop/tickets/add', array('query' => array('parent_tid' => $ticket->tid)))
-      . '</p>';
+
     $main .= '</details>';
   }
 
   // Related tickets — collapsible, open by default when relations exist.
   $related = droptickets_get_related($ticket->tid);
-  $related_open = $related ? ' open' : '';
+  $related_open  = $related ? ' open' : '';
+  $related_count = $related ? count($related) : 0;
+  $related_count_label = format_plural($related_count, '1 related ticket', '@count related tickets');
   $main .= '<details class="droptickets-card droptickets-related"' . $related_open . '>';
-  $main .= '<summary class="droptickets-section-heading">' . t('Related Tickets') . '</summary>';
+  $main .= '<summary class="droptickets-hierarchy-summary">'
+    . '<span class="droptickets-hierarchy-left">'
+    . '<span class="droptickets-parent-ticket-label">' . t('Related Tickets') . '</span>'
+    . '</span>'
+    . '<span class="droptickets-hierarchy-right">'
+    . '<span class="droptickets-hierarchy-child-count">' . check_plain($related_count_label) . '</span>'
+    . '</span>'
+    . '</summary>';
 
   if ($related) {
     $related_tids     = array_map(function($r) { return $r->related_tid; }, $related);
@@ -1153,10 +1119,10 @@ function droptickets_ticket_view(DropTicket $ticket) {
       $rstatus = isset($status_options[$rt->status]) ? $status_options[$rt->status] : $rt->status;
       $main .= '<tr>';
       $main .= '<td><span class="droptickets-ticket-id">' . check_plain($rlabel) . '</span></td>';
-      $main .= '<td>' . l($rt->title, 'admin/drop/tickets/' . $rt->tid) . '</td>';
+      $main .= '<td>' . l($rt->title, 'drop/tickets/' . $rt->tid) . '</td>';
       $main .= '<td><span class="droptickets-rel-type">' . check_plain($rel->rel_label) . '</span></td>';
       $main .= '<td><span class="droptickets-status droptickets-status--' . check_plain($rt->status) . '">' . check_plain($rstatus) . '</span></td>';
-      $main .= '<td>' . l(t('Remove'), 'admin/drop/tickets/' . $ticket->tid . '/unrelate/' . $rel->trid) . '</td>';
+      $main .= '<td>' . l(t('Remove'), 'drop/tickets/' . $ticket->tid . '/unrelate/' . $rel->trid) . '</td>';
       $main .= '</tr>';
     }
     $main .= '</tbody></table>';
@@ -1166,7 +1132,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
   }
 
   if (droptickets_ticket_access('update', $ticket)) {
-    $main .= '<p class="droptickets-related-add">' . l(t('+ Add relation'), 'admin/drop/tickets/' . $ticket->tid . '/relate') . '</p>';
+    $main .= '<p class="droptickets-related-add">' . l(t('+ Add relation'), 'drop/tickets/' . $ticket->tid . '/relate') . '</p>';
   }
   $main .= '</details>';
 
@@ -1252,9 +1218,9 @@ function droptickets_ticket_view(DropTicket $ticket) {
         . $new_badge;
       if (droptickets_comment_access('update', (object) $comment)) {
         $main .= '<span class="droptickets-comment-actions">'
-          . l(t('Edit'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit')
+          . l(t('Edit'), 'drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit')
           . ' · '
-          . l(t('Delete'), 'admin/drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/delete')
+          . l(t('Delete'), 'drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/delete')
           . '</span>';
       }
       $main .= '</div>';
@@ -1298,13 +1264,13 @@ function droptickets_ticket_view(DropTicket $ticket) {
       'tag'    => !empty($review_mode['tag']) ? $review_mode['tag'] : NULL,
       'status' => !empty($review_mode['status']) ? $review_mode['status'] : NULL,
     ));
-    $back_url = url('admin/drop/tickets/review', $back_query ? array('query' => $back_query) : array());
-    $exit_url  = url('admin/drop/tickets/review', array('query' => array('exit_mode' => 1) + $back_query));
+    $back_url = url('drop/tickets/review', $back_query ? array('query' => $back_query) : array());
+    $exit_url  = url('drop/tickets/review', array('query' => array('exit_mode' => 1) + $back_query));
     $output['review_bar'] = array(
       '#markup' => '<div class="droptickets-review-back-bar">'
         . l(
             icon('arrow-left', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . t('Back to Review'),
-            'admin/drop/tickets/review',
+            'drop/tickets/review',
             array('query' => $back_query ?: array(), 'html' => TRUE, 'attributes' => array('class' => array('droptickets-review-back-link')))
           )
         . '<span class="droptickets-review-back-mode">' . t('Review Mode') . '</span>'
@@ -1434,7 +1400,7 @@ function droptickets_render_reactions($tid, $tcid, array $reactions, array $acco
 /**
  * Page callback: toggle an emoji reaction (AJAX).
  *
- * Route: admin/drop/tickets/react/%/% (entity_type, entity_id)
+ * Route: drop/tickets/react/%/% (entity_type, entity_id)
  * POST: emoji
  */
 function droptickets_react_ajax($entity_type, $entity_id) {
@@ -1570,7 +1536,7 @@ function droptickets_ticket_mark_done(DropTicket $ticket) {
   $ticket->status = 'done';
   $ticket->save();
   backdrop_set_message(t('Ticket %label marked as done.', array('%label' => droptickets_ticket_label($ticket))));
-  backdrop_goto('admin/drop');
+  backdrop_goto('drop');
 }
 
 /**
@@ -1580,7 +1546,7 @@ function droptickets_ticket_close(DropTicket $ticket) {
   $ticket->status = 'closed';
   $ticket->save();
   backdrop_set_message(t('Ticket %label has been closed.', array('%label' => droptickets_ticket_label($ticket))));
-  backdrop_goto('admin/drop/tickets/' . $ticket->tid);
+  backdrop_goto('drop/tickets/' . $ticket->tid);
 }
 
 // ---------------------------------------------------------------------------
@@ -1624,7 +1590,7 @@ function droptickets_notifications_page() {
     $output['mark_read'] = array(
       '#markup' => l(
         t('Mark all as read'),
-        'admin/drop/notifications/mark-all-read',
+        'drop/notifications/mark-all-read',
         array('query' => array('token' => $token))
       ),
       '#prefix' => '<p class="droptickets-mark-all-read">',
@@ -1676,7 +1642,7 @@ function droptickets_notifications_page() {
       'data' => array(
         array('data' => $dot, 'class' => array('drop-notif-col-dot')),
         array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>'),
-        array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid)),
+        array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid)),
         array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
         array('data' => $message),
         array('data' => $date),
@@ -1755,7 +1721,7 @@ function droptickets_notification_log_page() {
     $actor     = isset($accounts[$n->actor_uid]) ? check_plain($accounts[$n->actor_uid]->name) : 'uid:' . $n->actor_uid;
     $date      = format_date($n->created, 'custom', 'M j, Y g:i A');
     $ticket_link = $ticket
-      ? l($label, 'admin/drop/tickets/' . $n->tid)
+      ? l($label, 'drop/tickets/' . $n->tid)
       : check_plain($label);
 
     $rows[] = array(
@@ -1811,7 +1777,7 @@ function droptickets_ticket_flag_toggle(DropTicket $ticket) {
       ->execute();
   }
 
-  $destination = isset($_GET['destination']) ? $_GET['destination'] : 'admin/drop/tickets/flagged';
+  $destination = isset($_GET['destination']) ? $_GET['destination'] : 'drop/tickets/flagged';
   backdrop_goto($destination);
 }
 
@@ -1899,7 +1865,7 @@ function droptickets_recent_page() {
     $proj_name = '—';
     if ($project) {
       $proj_name = module_exists('dropcrm') && dropcrm_project_access('view', $project)
-        ? l($project->name, 'admin/drop/crm/projects/' . $project->pid)
+        ? l($project->name, 'drop/crm/projects/' . $project->pid)
         : check_plain($project->name);
     }
 
@@ -1926,7 +1892,7 @@ function droptickets_recent_page() {
         array('data' => $flag_icon,       'class' => array('droptickets-col-flag')),
         array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>', 'class' => array('droptickets-col-id')),
         array('data' => $proj_name,       'class' => array('droptickets-col-project')),
-        array('data' => l($row->title, 'admin/drop/tickets/' . $row->tid), 'class' => array('droptickets-col-title')),
+        array('data' => l($row->title, 'drop/tickets/' . $row->tid), 'class' => array('droptickets-col-title')),
         array('data' => $priority_dot,    'class' => array('droptickets-col-priority')),
         array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($row->status) . '">' . check_plain($status_label) . '</span>'),
         array('data' => $assignee),
@@ -1983,7 +1949,7 @@ function droptickets_flagged_page() {
 
   if (user_access('administer droptickets')) {
     $output['clear'] = array(
-      '#markup' => '<p>' . l(t('Clear all flags'), 'admin/drop/tickets/flags/clear') . '</p>',
+      '#markup' => '<p>' . l(t('Clear all flags'), 'drop/tickets/flags/clear') . '</p>',
       '#weight' => -5,
     );
   }
@@ -2015,17 +1981,15 @@ function droptickets_flagged_page() {
   foreach ($ordered as $ticket) {
     $project   = isset($projects[$ticket->pid]) ? $projects[$ticket->pid] : NULL;
     $label     = droptickets_ticket_label($ticket, $project);
-    $proj_name = $project ? l($project->name, 'admin/drop/crm/projects/' . $project->pid) : '—';
+    $proj_name = $project ? l($project->name, 'drop/crm/projects/' . $project->pid) : '—';
     $assignee  = droptickets_assignee_label($ticket, $accounts);
-    $owner     = (!empty($ticket->owner_uid) && isset($accounts[$ticket->owner_uid]))
-      ? check_plain($accounts[$ticket->owner_uid]->name) : '—';
     $type_label   = isset($type_options[$ticket->type]) ? $type_options[$ticket->type] : $ticket->type;
     $status_label = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
 
     $unflag = $can_flag ? ' ' . l(
       icon('flag-fill', array('attributes' => array('width' => 16, 'height' => 16))),
-      'admin/drop/tickets/' . $ticket->tid . '/flag',
-      array('html' => TRUE, 'query' => array('destination' => 'admin/drop/tickets/flagged'), 'attributes' => array('class' => array('droptickets-flag-on'), 'title' => t('Remove flag')))
+      'drop/tickets/' . $ticket->tid . '/flag',
+      array('html' => TRUE, 'query' => array('destination' => 'drop/tickets/flagged'), 'attributes' => array('class' => array('droptickets-flag-on'), 'title' => t('Remove flag')))
     ) : '';
 
     $rows[] = array(
@@ -2033,10 +1997,9 @@ function droptickets_flagged_page() {
         array('data' => '<strong>' . $i . '</strong>', 'class' => array('droptickets-flag-rank')),
         array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>'),
         array('data' => $proj_name),
-        array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid) . $unflag, 'class' => array('droptickets-col-title')),
+        array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid) . $unflag, 'class' => array('droptickets-col-title')),
         array('data' => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>'),
         array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
-        array('data' => $owner),
         array('data' => $assignee),
       ),
     );
@@ -2045,7 +2008,7 @@ function droptickets_flagged_page() {
 
   $output['table'] = array(
     '#theme'      => 'table',
-    '#header'     => array(t('#'), t('ID'), t('Project'), t('Title'), t('Type'), t('Status'), t('Owner'), t('Assignee')),
+    '#header'     => array(t('#'), t('ID'), t('Project'), t('Title'), t('Type'), t('Status'), t('Assignee')),
     '#rows'       => $rows,
     '#attributes' => array('class' => array('droptickets-list', 'droptickets-flagged-list')),
   );
@@ -2060,7 +2023,7 @@ function droptickets_flags_clear_form($form, &$form_state) {
   return confirm_form(
     $form,
     t('Clear all flagged tickets?'),
-    'admin/drop/tickets/flagged',
+    'drop/tickets/flagged',
     t('This will remove all flags. Your team will no longer see any priority tickets until you flag new ones.'),
     t('Clear all flags'),
     t('Cancel')
@@ -2073,7 +2036,7 @@ function droptickets_flags_clear_form($form, &$form_state) {
 function droptickets_flags_clear_form_submit($form, &$form_state) {
   db_delete('drop_ticket_flag')->execute();
   backdrop_set_message(t('All flags cleared.'));
-  $form_state['redirect'] = 'admin/drop/tickets/flagged';
+  $form_state['redirect'] = 'drop/tickets/flagged';
 }
 
 // ---------------------------------------------------------------------------
@@ -2086,7 +2049,7 @@ function droptickets_flags_clear_form_submit($form, &$form_state) {
 function droptickets_ticket_activate(DropTicket $ticket) {
   if (empty($ticket->import_id)) {
     backdrop_set_message(t('This ticket is already active.'), 'warning');
-    backdrop_goto('admin/drop/tickets/' . $ticket->tid);
+    backdrop_goto('drop/tickets/' . $ticket->tid);
   }
 
   $ticket->import_id = NULL;
@@ -2095,7 +2058,7 @@ function droptickets_ticket_activate(DropTicket $ticket) {
   backdrop_set_message(t('Ticket %label is now active and will appear in the normal ticket list.', array(
     '%label' => droptickets_ticket_label($ticket),
   )));
-  backdrop_goto('admin/drop/tickets/' . $ticket->tid);
+  backdrop_goto('drop/tickets/' . $ticket->tid);
 }
 
 // ---------------------------------------------------------------------------
@@ -2154,9 +2117,7 @@ function droptickets_stale_report_page() {
   $pids          = array_unique(array_column((array) $tickets, 'pid'));
   $projects      = entity_load('drop_project', $pids);
   $assignee_uids = array_filter(array_unique(array_column((array) $tickets, 'assignee_uid')));
-  $owner_uids    = array_filter(array_unique(array_column((array) $tickets, 'owner_uid')));
-  $all_uids      = array_unique(array_merge($assignee_uids, $owner_uids));
-  $accounts      = $all_uids ? user_load_multiple($all_uids) : array();
+  $accounts      = $assignee_uids ? user_load_multiple($assignee_uids) : array();
 
   $type_options   = droptickets_type_options();
   $status_options = droptickets_status_options();
@@ -2166,10 +2127,8 @@ function droptickets_stale_report_page() {
   foreach ($tickets as $ticket) {
     $project   = isset($projects[$ticket->pid]) ? $projects[$ticket->pid] : NULL;
     $label     = droptickets_ticket_label($ticket, $project);
-    $proj_name = $project ? l($project->name, 'admin/drop/crm/projects/' . $project->pid) : '—';
+    $proj_name = $project ? l($project->name, 'drop/crm/projects/' . $project->pid) : '—';
     $assignee  = droptickets_assignee_label($ticket, $accounts);
-    $owner     = (!empty($ticket->owner_uid) && isset($accounts[$ticket->owner_uid]))
-      ? check_plain($accounts[$ticket->owner_uid]->name) : '—';
     $type_label   = isset($type_options[$ticket->type]) ? $type_options[$ticket->type] : $ticket->type;
     $status_label = isset($status_options[$ticket->status]) ? $status_options[$ticket->status] : $ticket->status;
 
@@ -2180,10 +2139,9 @@ function droptickets_stale_report_page() {
       'data' => array(
         array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>'),
         array('data' => $proj_name),
-        array('data' => l($ticket->title, 'admin/drop/tickets/' . $ticket->tid), 'class' => array('droptickets-col-title')),
+        array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid), 'class' => array('droptickets-col-title')),
         array('data' => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>'),
         array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
-        array('data' => $owner),
         array('data' => $assignee),
         array('data' => $days_label),
       ),
@@ -2194,7 +2152,7 @@ function droptickets_stale_report_page() {
     '#theme'      => 'table',
     '#header'     => array(
       t('ID'), t('Project'), t('Title'), t('Type'), t('Status'),
-      t('Owner'), t('Assignee'), t('Last updated'),
+      t('Assignee'), t('Last updated'),
     ),
     '#rows'       => $rows,
     '#attributes' => array('class' => array('droptickets-list')),
@@ -2241,13 +2199,13 @@ function droptickets_review_page() {
   if (isset($_GET['enter_mode'])) {
     droptickets_review_mode_set($user->uid, $pid_filter, $tag_filter, $status_filter);
     $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'status' => $status_filter ?: NULL));
-    backdrop_goto('admin/drop/tickets/review', array('query' => $rq));
+    backdrop_goto('drop/tickets/review', array('query' => $rq));
     return;
   }
   if (isset($_GET['exit_mode'])) {
     droptickets_review_mode_clear($user->uid);
     $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'status' => $status_filter ?: NULL));
-    backdrop_goto('admin/drop/tickets/review', array('query' => $rq));
+    backdrop_goto('drop/tickets/review', array('query' => $rq));
     return;
   }
 
@@ -2310,20 +2268,20 @@ function droptickets_review_page() {
     'status' => $status_filter ?: NULL,
   ));
   if ($review_mode) {
-    $exit_url = url('admin/drop/tickets/review', array('query' => array('exit_mode' => 1) + $mode_query));
+    $exit_url = url('drop/tickets/review', array('query' => array('exit_mode' => 1) + $mode_query));
     $mode_btn = '<a href="' . $exit_url . '" class="droptickets-review-mode-btn droptickets-review-mode-btn--active">'
       . icon('x-circle', array('attributes' => array('width' => 14, 'height' => 14)))
       . ' ' . t('Exit Review Mode') . '</a>';
   }
   else {
-    $enter_url = url('admin/drop/tickets/review', array('query' => array('enter_mode' => 1) + $mode_query));
+    $enter_url = url('drop/tickets/review', array('query' => array('enter_mode' => 1) + $mode_query));
     $mode_btn = '<a href="' . $enter_url . '" class="droptickets-review-mode-btn">'
       . icon('play-circle', array('attributes' => array('width' => 14, 'height' => 14)))
       . ' ' . t('Enter Review Mode') . '</a>';
   }
 
   // Filter form.
-  $filter_form = '<form method="get" action="' . url('admin/drop/tickets/review') . '" class="droptickets-filter-form">'
+  $filter_form = '<form method="get" action="' . url('drop/tickets/review') . '" class="droptickets-filter-form">'
     . '<select name="status" class="droptickets-filter-select" onchange="this.form.submit()">' . $status_opts_html . '</select>'
     . '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $proj_opts_html . '</select>'
     . '<select name="tag" class="droptickets-filter-select" onchange="this.form.submit()">' . $tag_opts_html . '</select>'
@@ -2372,7 +2330,7 @@ function droptickets_review_page() {
   // Controls bar.
   $clear_link = $reviewed_count
     ? l(t('Clear @count reviewed flag(s)', array('@count' => $reviewed_count)),
-        'admin/drop/tickets/review/clear',
+        'drop/tickets/review/clear',
         array('query' => array('token' => backdrop_get_token('review-clear'))))
     : '';
   $output['controls'] = array(
@@ -2425,7 +2383,7 @@ function droptickets_review_page() {
 
     $btn_class  = 'droptickets-review-btn' . ($is_reviewed ? ' droptickets-review-btn--done' : '');
     $btn_title  = $is_reviewed ? t('Reviewed — click to unmark') : t('Mark as reviewed');
-    $toggle_url = url('admin/drop/tickets/review/toggle/' . $t->tid,
+    $toggle_url = url('drop/tickets/review/toggle/' . $t->tid,
       array('query' => array('token' => $token)));
     // Both icons are always rendered; CSS toggles which one is visible.
     $icon_off = icon('circle',       array('attributes' => array('width' => 20, 'height' => 20)));
@@ -2441,7 +2399,7 @@ function droptickets_review_page() {
     $rows[] = array(
       'data' => array(
         array('data' => $btn,   'class' => array('droptickets-review-col-btn')),
-        array('data' => l($t->title, 'admin/drop/tickets/' . $t->tid)),
+        array('data' => l($t->title, 'drop/tickets/' . $t->tid)),
         array('data' => $proj_name),
         array('data' => $assignee),
         array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($t->status) . '">' . check_plain($status_label) . '</span>'),
@@ -2501,6 +2459,6 @@ function droptickets_review_clear() {
 
   droptickets_review_clear_all($user->uid);
   backdrop_set_message(t('Review flags cleared.'));
-  backdrop_goto('admin/drop/tickets/review');
+  backdrop_goto('drop/tickets/review');
 }
 

@@ -89,7 +89,7 @@ function theme_dropgoals_dashboard($variables) {
   $freq_labels = dropgoals_frequency_labels();
 
   if (empty($goals)) {
-    $add_link = l(t('Add your first goal'), 'admin/drop/goals/manage/add');
+    $add_link = l(t('Add your first goal'), 'drop/goals/manage/add');
     return '<p>' . t('No active goals. !link.', array('!link' => $add_link)) . '</p>';
   }
 
@@ -100,7 +100,7 @@ function theme_dropgoals_dashboard($variables) {
     $completed = isset($log[$gid]) && $log[$gid]->completed;
     $item_class = 'dropgoals-item' . ($completed ? ' dropgoals-item--done' : '');
 
-    $toggle_url = 'admin/drop/goals/toggle/' . $gid;
+    $toggle_url = 'drop/goals/toggle/' . $gid;
     $toggle_label = $completed ? t('Mark incomplete') : t('Mark done');
 
     $icon = $completed
@@ -110,7 +110,7 @@ function theme_dropgoals_dashboard($variables) {
     $label = check_plain($goal->label);
     $frequency = isset($goal->frequency) ? $goal->frequency : 'daily';
     $freq_label = ($frequency !== 'daily' && isset($freq_labels[$frequency])) ? $freq_labels[$frequency] : '';
-    $history_link = l(t('history'), 'admin/drop/goals/manage/' . $gid, array('attributes' => array('class' => array('dropgoals-history-link'))));
+    $history_link = l(t('history'), 'drop/goals/manage/' . $gid, array('attributes' => array('class' => array('dropgoals-history-link'))));
 
     $output .= '<li class="' . $item_class . '">';
     $output .= '<span class="dropgoals-item-icon">' . $icon . '</span>';
@@ -179,7 +179,7 @@ function dropgoals_toggle_today(DropGoal $goal) {
   }
 
   backdrop_set_message(t('%label @status.', array('%label' => $goal->label, '@status' => $label)));
-  backdrop_goto('admin/drop/goals');
+  backdrop_goto('drop/goals');
 }
 
 /**
@@ -199,13 +199,13 @@ function dropgoals_toggle_date(DropGoal $goal, $date) {
   // Validate format.
   if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date)) {
     backdrop_set_message(t('Invalid date.'), 'error');
-    backdrop_goto('admin/drop/goals/manage/' . $goal->gid);
+    backdrop_goto('drop/goals/manage/' . $goal->gid);
   }
 
   $today = date('Y-m-d');
   if ($date > $today) {
     backdrop_set_message(t('Cannot log future dates.'), 'warning');
-    backdrop_goto('admin/drop/goals/manage/' . $goal->gid);
+    backdrop_goto('drop/goals/manage/' . $goal->gid);
   }
 
   $existing = db_select('drop_goal_log', 'l')
@@ -242,7 +242,7 @@ function dropgoals_toggle_date(DropGoal $goal, $date) {
     '@date'  => $date_label,
     '@status' => $label,
   )));
-  backdrop_goto('admin/drop/goals/manage/' . $goal->gid);
+  backdrop_goto('drop/goals/manage/' . $goal->gid);
 }
 
 // ---------------------------------------------------------------------------
@@ -270,10 +270,10 @@ function dropgoals_goal_history(DropGoal $goal) {
   // Actions bar.
   $actions = array();
   if (dropgoals_goal_access('update', $goal)) {
-    $actions[] = l(t('Edit goal'), 'admin/drop/goals/manage/' . $goal->gid . '/edit');
+    $actions[] = l(t('Edit goal'), 'drop/goals/manage/' . $goal->gid . '/edit');
   }
   if (dropgoals_goal_access('delete', $goal)) {
-    $actions[] = l(t('Delete'), 'admin/drop/goals/manage/' . $goal->gid . '/delete');
+    $actions[] = l(t('Delete'), 'drop/goals/manage/' . $goal->gid . '/delete');
   }
   $output['actions'] = array(
     '#markup' => drop_base_page_actions($actions),
@@ -555,15 +555,15 @@ function _dropgoals_render_history(DropGoal $goal) {
       if (!$is_partial && !$is_upcoming) {
         if ($completed) {
           // Link to the day it was completed so it can be un-done.
-          $toggle_url = url('admin/drop/goals/toggle/' . $goal->gid . '/' . $completion_date);
+          $toggle_url = url('drop/goals/toggle/' . $goal->gid . '/' . $completion_date);
         }
         elseif ($is_current) {
           // Current week: toggle today (target day may be in the future).
-          $toggle_url = url('admin/drop/goals/toggle/' . $goal->gid . '/' . $today);
+          $toggle_url = url('drop/goals/toggle/' . $goal->gid . '/' . $today);
         }
         elseif ($target_date <= $today) {
           // Past week: toggle the target day.
-          $toggle_url = url('admin/drop/goals/toggle/' . $goal->gid . '/' . $target_date);
+          $toggle_url = url('drop/goals/toggle/' . $goal->gid . '/' . $target_date);
         }
       }
 
@@ -669,7 +669,7 @@ function _dropgoals_render_history(DropGoal $goal) {
         $html .= '<div class="' . $class . '" title="' . check_plain($title) . '"></div>';
       }
       else {
-        $toggle_url = url('admin/drop/goals/toggle/' . $goal->gid . '/' . $cell_date);
+        $toggle_url = url('drop/goals/toggle/' . $goal->gid . '/' . $cell_date);
         $title .= ' — ' . t('click to toggle');
         $html .= '<a href="' . $toggle_url . '" class="' . $class . '" title="' . check_plain($title) . '"></a>';
       }
