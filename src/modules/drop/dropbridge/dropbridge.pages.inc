@@ -286,19 +286,6 @@ function dropbridge_daily_list() {
     }
   }
 
-  // Quick links — prominent shortcuts for frequently-used screens.
-  if (module_exists('droptickets') && user_access('access droptickets')) {
-    $ql = l(
-      icon('kanban', array('attributes' => array('width' => 22, 'height' => 22)))
-        . '<span>' . t('Kanban Board') . '</span>',
-      'drop/tickets/kanban',
-      array('html' => TRUE, 'attributes' => array('class' => array('dropbridge-quicklink')))
-    );
-    $output['quick_links'] = array(
-      '#markup' => '<div class="dropbridge-quicklinks">' . $ql . '</div>',
-      '#weight' => -5,
-    );
-  }
 
   $output['daily_list'] = array(
     '#theme'        => 'dropbridge_daily_list',
