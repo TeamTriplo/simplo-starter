@@ -950,8 +950,7 @@ function dropcrm_menu() {
     'page callback'    => 'dropcrm_todo_page',
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => -5,
+    'type'             => MENU_CALLBACK,
   );
 
   // Mark a single activity as done (one-click action from the To Do list).
@@ -970,40 +969,35 @@ function dropcrm_menu() {
     'page callback'    => 'dropcrm_reports_page',
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 20,
+    'type'             => MENU_CALLBACK,
   );
   $items['drop/crm/reports/last-contact'] = array(
     'title'            => 'People by Last Contact',
     'page callback'    => 'dropcrm_report_last_contact',
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_DEFAULT_LOCAL_TASK,
-    'weight'           => 0,
+    'type'             => MENU_CALLBACK,
   );
   $items['drop/crm/reports/outreach-goal'] = array(
     'title'            => 'Outreach Goal',
     'page callback'    => 'dropcrm_report_outreach_goal',
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 5,
+    'type'             => MENU_CALLBACK,
   );
   $items['drop/crm/reports/clients'] = array(
     'title'            => 'Clients',
     'page callback'    => 'dropcrm_report_clients',
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 10,
+    'type'             => MENU_CALLBACK,
   );
   $items['drop/crm/reports/tag-filter'] = array(
     'title'            => 'Tag Filter',
     'page callback'    => 'dropcrm_report_tag_filter',
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 15,
+    'type'             => MENU_CALLBACK,
   );
 
   // Per-bundle contact tabs.
@@ -1013,8 +1007,7 @@ function dropcrm_menu() {
     'page arguments'   => array('crm_person'),
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 0,
+    'type'             => MENU_CALLBACK,
   );
   $items['drop/crm/organizations'] = array(
     'title'            => 'Organizations',
@@ -1022,8 +1015,7 @@ function dropcrm_menu() {
     'page arguments'   => array('crm_organization'),
     'access arguments' => array('access crm'),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 1,
+    'type'             => MENU_CALLBACK,
   );
   if (config_get('dropcrm.settings', 'enable_households')) {
     $items['drop/crm/households'] = array(
@@ -1032,8 +1024,7 @@ function dropcrm_menu() {
       'page arguments'   => array('crm_household'),
       'access arguments' => array('access crm'),
       'file'             => 'dropcrm.admin.inc',
-      'type'             => MENU_LOCAL_TASK,
-      'weight'           => 2,
+      'type'             => MENU_CALLBACK,
     );
   }
 
@@ -1086,8 +1077,7 @@ function dropcrm_menu() {
     'access callback'  => 'dropcrm_project_view_access',
     'access arguments' => array(),
     'file'             => 'dropcrm.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 15,
+    'type'             => MENU_CALLBACK,
   );
   $items['drop/crm/projects/add'] = array(
     'title'            => 'Add project',
@@ -1145,18 +1135,16 @@ function dropcrm_menu_alter(&$items) {
     $items['drop/crm/contacts']['type'] = MENU_NORMAL_ITEM;
   }
   if (isset($items['drop/crm/activities'])) {
-    $items['drop/crm/activities']['type']            = MENU_LOCAL_TASK;
+    $items['drop/crm/activities']['type']            = MENU_CALLBACK;
     $items['drop/crm/activities']['title']           = 'Activities';
-    $items['drop/crm/activities']['weight']          = 10;
     $items['drop/crm/activities']['page callback']   = 'dropcrm_activity_list_page';
     $items['drop/crm/activities']['page arguments']  = array();
     $items['drop/crm/activities']['file']            = 'dropcrm.admin.inc';
     $items['drop/crm/activities']['file path']       = backdrop_get_path('module', 'dropcrm');
   }
   if (isset($items['drop/crm/contact-methods'])) {
-    $items['drop/crm/contact-methods']['type']   = MENU_LOCAL_TASK;
+    $items['drop/crm/contact-methods']['type']   = MENU_CALLBACK;
     $items['drop/crm/contact-methods']['title']  = 'Contact Details';
-    $items['drop/crm/contact-methods']['weight'] = 5;
   }
 }
 
