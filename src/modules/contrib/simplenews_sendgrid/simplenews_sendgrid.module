@@ -153,8 +153,11 @@ function simplenews_sendgrid_fetch_stats() {
     return FALSE;
   }
 
-  watchdog('simplenews_sendgrid', 'SendGrid API returned @count items.',
-    array('@count' => count($data)),
+  watchdog('simplenews_sendgrid', 'SendGrid API returned @count items. First item: @item',
+    array(
+      '@count' => count($data),
+      '@item'  => !empty($data[0]) ? print_r($data[0], TRUE) : 'n/a',
+    ),
     WATCHDOG_INFO);
 
   return $data;
