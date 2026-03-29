@@ -95,15 +95,11 @@ function dropcrm_contact_view(CrmContact $contact) {
     '#suffix' => dropcrm_accordion_suffix(),
   );
   $methods = _dropcrm_load_contact_methods($contact->cid);
+  $method_rows = array();
   foreach ($methods as $type => $type_methods) {
-    $output['contact_methods'][$type] = array(
-      '#theme'  => 'item_list',
-      '#title'  => _dropcrm_contact_method_bundle_label($type),
-      '#items'  => array(),
-      '#weight' => 0,
-    );
+    $type_label = _dropcrm_contact_method_bundle_label($type);
     foreach ($type_methods as $method) {
-      $label = !empty($method->label) ? $method->label . ': ' : '';
+      $label_text = !empty($method->label) ? check_plain($method->label) : '';
       if ($type === 'url') {
         $value = l(check_plain($method->value), $method->value,
           array('attributes' => array('target' => '_blank', 'rel' => 'noopener')));
@@ -111,8 +107,24 @@ function dropcrm_contact_view(CrmContact $contact) {
       else {
         $value = check_plain($method->value);
       }
-      $output['contact_methods'][$type]['#items'][] = $label . $value;
+      $edit_link = '';
+      if (dropcrm_contact_method_access('edit', $method)) {
+        $edit_link = l(t('Edit'), 'drop/crm/contact-methods/manage/' . $method->cmid . '/edit',
+          array('attributes' => array('class' => array('crm-method-edit-link'))));
+      }
+      $method_rows[] = array(
+        array('data' => '<span class="crm-method-type">' . check_plain($type_label) . '</span>', 'class' => array('crm-method-col-type')),
+        array('data' => ($label_text ? '<span class="crm-method-label">' . $label_text . '</span> ' : '') . $value, 'class' => array('crm-method-col-value')),
+        array('data' => $edit_link, 'class' => array('crm-method-col-edit')),
+      );
     }
+  }
+  if ($method_rows) {
+    $output['contact_methods']['table'] = array(
+      '#theme'      => 'table',
+      '#rows'       => $method_rows,
+      '#attributes' => array('class' => array('crm-methods-table')),
+    );
   }
 
   // --- Relationships ---
@@ -404,7 +416,7 @@ function dropcrm_activity_view(CrmActivity $activity) {
   if ($meeting_items && !empty($meeting_items[0]['value'])) {
     $format = !empty($meeting_items[0]['format']) ? $meeting_items[0]['format'] : 'filtered_html';
     $output['meeting_notes_heading'] = array(
-      '#markup' => drop_base_section_header(t('Meeting Notes')),
+      '#markup' => drop_base_section_header(t('Details')),
       '#weight' => 20,
     );
     $output['meeting_notes'] = array(
@@ -567,7 +579,7 @@ function _dropcrm_contact_method_bundle_label($type) {
  *   A render array for the hero block.
  */
 function _dropcrm_contact_hero(CrmContact $contact) {
-  // Action links.
+  // Action links — modules may append via hook_dropcrm_contact_hero_actions_alter().
   $action_items = array();
   if (dropcrm_contact_access('edit', $contact)) {
     $action_items[] = l(t('Edit person'), 'drop/crm/contacts/' . $contact->cid . '/edit');
@@ -575,6 +587,7 @@ function _dropcrm_contact_hero(CrmContact $contact) {
   if (dropcrm_contact_access('delete', $contact)) {
     $action_items[] = l(t('Delete'), 'drop/crm/contacts/' . $contact->cid . '/delete');
   }
+  backdrop_alter('dropcrm_contact_hero_actions', $action_items, $contact);
   $actions_html = '';
   if ($action_items) {
     $actions_html = '<div class="crm-hero-actions">' . implode(' ', $action_items) . '</div>';

@@ -760,12 +760,15 @@ ul.action-links a {
 .pager-next,
 .pager-last,
 .pager-item {
-  background: #586172;
-  color: #ffffff;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
 }
 
 .pager-ellipsis {
-  color: #586172;
+  color: #aaa;
+  border-color: transparent;
+  background: transparent;
 }
 
 .pager-first a,
@@ -773,7 +776,7 @@ ul.action-links a {
 .pager-next a,
 .pager-last a,
 .pager-item a {
-  color: #ffffff;
+  color: #0891b2;
 }
 
 .pager-first a:hover,
@@ -781,11 +784,25 @@ ul.action-links a {
 .pager-next a:hover,
 .pager-last a:hover,
 .pager-item a:hover {
-  background: #3c4350;
+  background: #f0f9ff;
+  border-color: #0891b2;
 }
 
 .pager-current {
-  background: #20252e;
+  background: #0891b2;
+  color: #fff;
+  border-color: #0891b2;
+}
+
+/* Always show text; suppress the CSS chevron pseudo-elements entirely
+   since the link text already contains › and » direction indicators. */
+.pager-first a,
+.pager-previous a,
+.pager-next a,
+.pager-last a {
+  text-indent: 0;
+  overflow: visible;
+  width: auto;
 }
 
 .pager-first a:before,
@@ -794,8 +811,7 @@ ul.action-links a {
 .pager-next a:before,
 .pager-last a:before,
 .pager-last a:after {
-  /* Mobile chevron color */
-  border-color: #ffffff;
+  display: none;
 }
 
 /**

@@ -1548,6 +1548,9 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $output['fields']['#weight'] = 5;
   }
 
+  // Allow other modules to append sections or actions (e.g. dropemail).
+  backdrop_alter('droptickets_ticket_view', $output, $ticket);
+
   return $output;
 }
 

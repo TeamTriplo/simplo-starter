@@ -217,16 +217,7 @@ ul.action-links a:after {
 .pager-next a:before,
 .pager-last a:before,
 .pager-last a:after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  width: 0.5em;
-  height: 0.5em;
-  border: 0.125rem solid #ffffff;
-  -webkit-transform: translate(-50%, -50%) rotate(45deg);
-  transform: translate(-50%, -50%) rotate(45deg);
+  display: none;
 }
 
 /*  components/progress.css  */

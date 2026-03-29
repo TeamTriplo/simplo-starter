@@ -911,6 +911,48 @@ function dropcrm_menu() {
     'file'             => 'dropcrm.pages.inc',
   );
 
+  // Admin hub card — contact methods list under admin/drop.
+  $items['admin/drop/crm'] = array(
+    'title'            => 'DropCRM: Contact Details',
+    'description'      => t('Browse and manage all contact method records (email, phone, address, website) across people and organisations.'),
+    'page callback'    => 'backdrop_goto',
+    'page arguments'   => array('drop/crm/contact-methods'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer crm'),
+    'type'             => MENU_NORMAL_ITEM,
+    'weight'           => 5,
+  );
+
+  $items['admin/drop/crm/email-audit'] = array(
+    'title'            => 'DropCRM: Email & Newsletter Audit',
+    'description'      => t('Review all contacts for missing email addresses and newsletter subscriptions.'),
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('dropcrm_email_audit_form'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer crm'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'dropcrm.admin.inc',
+    'weight'           => 6,
+  );
+
+  $items['admin/drop/crm/email-audit/add-email'] = array(
+    'title'          => 'Add contact email',
+    'page callback'  => 'dropcrm_email_audit_add_email',
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer crm'),
+    'type'           => MENU_CALLBACK,
+    'file'           => 'dropcrm.admin.inc',
+  );
+
+  $items['admin/drop/crm/email-audit/toggle-newsletter'] = array(
+    'title'          => 'Toggle newsletter subscription',
+    'page callback'  => 'dropcrm_email_audit_toggle_newsletter',
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer crm'),
+    'type'           => MENU_CALLBACK,
+    'file'           => 'dropcrm.admin.inc',
+  );
+
   // Contact name autocomplete.
   $items['drop/crm/autocomplete/contacts'] = array(
     'title'          => 'Contact autocomplete',
@@ -1143,7 +1185,7 @@ function dropcrm_menu_alter(&$items) {
     $items['drop/crm/activities']['file path']       = backdrop_get_path('module', 'dropcrm');
   }
   if (isset($items['drop/crm/contact-methods'])) {
-    $items['drop/crm/contact-methods']['type']   = MENU_CALLBACK;
+    $items['drop/crm/contact-methods']['type']   = MENU_NORMAL_ITEM;
     $items['drop/crm/contact-methods']['title']  = 'Contact Details';
   }
   // Redirect the entity_ui view path (contacts/N) to our custom view (contact/N).

@@ -1695,7 +1695,7 @@ function dropcrm_relationship_form($form, &$form_state, $rid_or_object = NULL) {
 
   $form['contact_b'] = array(
     '#type'              => 'textfield',
-    '#title'             => t('Related Person'),
+    '#title'             => t('Related Contact'),
     '#default_value'     => $contact_b_default,
     '#required'          => TRUE,
     '#autocomplete_path' => 'drop/crm/autocomplete/contacts',
@@ -2672,4 +2672,249 @@ function dropcrm_report_tag_filter() {
   $output .= '<p class="dropcrm-report-count">' . format_plural(count($rows), '1 contact', '@count contacts') . '</p>';
 
   return $output;
+}
+
+// ---------------------------------------------------------------------------
+// Email & Newsletter Audit
+// ---------------------------------------------------------------------------
+
+/**
+ * Form: audit all contacts for email addresses and newsletter subscriptions.
+ */
+function dropcrm_email_audit_form($form, &$form_state) {
+  backdrop_set_title(t('Email & Newsletter Audit'));
+  $form['#attached']['css'][] = backdrop_get_path('module', 'dropcrm') . '/dropcrm.admin.css';
+  $form['#attached']['js'][]  = backdrop_get_path('module', 'dropcrm') . '/dropcrm.email-audit.js';
+
+  // Load all newsletter categories.
+  $newsletters = db_select('taxonomy_term_data', 't')
+    ->fields('t', array('tid', 'name'))
+    ->condition('t.vocabulary', 'newsletter')
+    ->orderBy('t.name')
+    ->execute()
+    ->fetchAllKeyed();
+
+  // Load all subscribers keyed by email.
+  $subscribers = db_select('simplenews_subscriber', 's')
+    ->fields('s', array('snid', 'mail'))
+    ->execute()
+    ->fetchAllAssoc('mail');
+
+  // Load subscriptions keyed by snid → array of tids.
+  $subs_by_snid = array();
+  if ($subscribers) {
+    $snids = array_keys(array_column((array) $subscribers, NULL, 'snid'));
+    $snids = array_map(function($s) { return $s->snid; }, $subscribers);
+    $sub_rows = db_select('simplenews_subscription', 'ss')
+      ->fields('ss', array('snid', 'tid', 'status'))
+      ->condition('ss.snid', $snids, 'IN')
+      ->execute();
+    foreach ($sub_rows as $sr) {
+      $subs_by_snid[$sr->snid][$sr->tid] = (int) $sr->status;
+    }
+  }
+
+  // Load all contacts with their primary emails.
+  $contacts = db_select('crm_contact', 'c')
+    ->fields('c', array('cid', 'name', 'type'))
+    ->orderBy('c.name')
+    ->execute()
+    ->fetchAll();
+
+  $primary_emails = array();
+  if ($contacts) {
+    $cids = array_map(function($c) { return $c->cid; }, $contacts);
+    $email_rows = db_select('crm_contact_method', 'cm')
+      ->fields('cm', array('cid', 'value'))
+      ->condition('cm.cid', $cids, 'IN')
+      ->condition('cm.type', 'email')
+      ->condition('cm.is_primary', 1)
+      ->execute();
+    foreach ($email_rows as $er) {
+      $primary_emails[$er->cid] = $er->value;
+    }
+  }
+
+  $token = backdrop_get_token('dropcrm_email_audit');
+
+  // Build table header.
+  $nl_headers = array();
+  foreach ($newsletters as $tid => $nl_name) {
+    $nl_headers[] = array('data' => check_plain($nl_name), 'class' => array('audit-col-newsletter'));
+  }
+  $header = array_merge(
+    array(
+      array('data' => t('Contact'), 'class' => array('audit-col-name')),
+      array('data' => t('Type'),    'class' => array('audit-col-type')),
+      array('data' => t('Email'),   'class' => array('audit-col-email')),
+    ),
+    $nl_headers
+  );
+
+  $rows = array();
+  foreach ($contacts as $contact) {
+    $email = isset($primary_emails[$contact->cid]) ? $primary_emails[$contact->cid] : NULL;
+    $type_label = $contact->type === 'crm_person' ? t('Person') : ($contact->type === 'crm_organization' ? t('Org') : check_plain($contact->type));
+
+    // Name cell.
+    $name_cell = l(check_plain($contact->name), 'drop/crm/contact/' . $contact->cid, array('html' => TRUE));
+
+    // Email cell — show address or an inline add form.
+    if ($email) {
+      $email_cell = '<span class="audit-email">' . check_plain($email) . '</span>';
+    }
+    else {
+      $email_cell = '<span class="audit-no-email">'
+        . '<input type="text" class="audit-email-input" placeholder="' . t('Add email') . '" data-cid="' . (int) $contact->cid . '" data-token="' . $token . '" size="22" />'
+        . ' <button type="button" class="audit-email-save button button-small">' . t('Save') . '</button>'
+        . '</span>';
+    }
+
+    // Newsletter cells.
+    $snid = $email && isset($subscribers[$email]) ? $subscribers[$email]->snid : NULL;
+    $nl_cells = array();
+    foreach ($newsletters as $tid => $nl_name) {
+      if (!$email) {
+        $nl_cells[] = array('data' => '<span class="audit-nl-noemail" title="' . t('No email address') . '">—</span>', 'class' => array('audit-col-newsletter'));
+        continue;
+      }
+      $subscribed = $snid && isset($subs_by_snid[$snid][$tid]) && $subs_by_snid[$snid][$tid] == 1;
+      $checked    = $subscribed ? ' checked' : '';
+      $nl_cells[] = array(
+        'data' => '<input type="checkbox" class="audit-nl-checkbox"'
+          . $checked
+          . ' data-email="' . check_plain($email) . '"'
+          . ' data-tid="' . (int) $tid . '"'
+          . ' data-token="' . $token . '"'
+          . ' title="' . ($subscribed ? t('Subscribed') : t('Not subscribed')) . '"'
+          . ' />',
+        'class' => array('audit-col-newsletter'),
+      );
+    }
+
+    $row_cells = array_merge(
+      array(
+        array('data' => $name_cell,  'class' => array('audit-col-name')),
+        array('data' => $type_label, 'class' => array('audit-col-type')),
+        array('data' => $email_cell, 'class' => array('audit-col-email')),
+      ),
+      $nl_cells
+    );
+
+    $row_class = $email ? array() : array('audit-row-missing-email');
+    $rows[] = array('data' => $row_cells, 'class' => $row_class);
+  }
+
+  $form['intro'] = array(
+    '#markup' => '<p>' . t('All @count contacts. Contacts missing an email are highlighted. Add an email inline, or toggle newsletter subscriptions directly.',
+        array('@count' => count($contacts))) . '</p>',
+  );
+
+  $form['table'] = array(
+    '#markup' => theme('table', array(
+      'header'     => $header,
+      'rows'       => $rows,
+      'empty'      => t('No contacts found.'),
+      'attributes' => array('class' => array('dropcrm-audit-table')),
+    )),
+  );
+
+  return $form;
+}
+
+/**
+ * AJAX endpoint: add a primary email to a contact.
+ * POST: cid, email, token.
+ */
+function dropcrm_email_audit_add_email() {
+  backdrop_add_http_header('Content-Type', 'application/json');
+
+  if (!backdrop_valid_token(isset($_POST['token']) ? $_POST['token'] : '', 'dropcrm_email_audit')) {
+    print backdrop_json_encode(array('error' => 'Invalid token'));
+    return;
+  }
+  if (!user_access('administer crm')) {
+    print backdrop_json_encode(array('error' => 'Access denied'));
+    return;
+  }
+
+  $cid   = isset($_POST['cid'])   ? (int) $_POST['cid']            : 0;
+  $email = isset($_POST['email']) ? trim($_POST['email'])           : '';
+
+  if (!$cid || !valid_email_address($email)) {
+    print backdrop_json_encode(array('error' => 'Invalid input'));
+    return;
+  }
+
+  $contact = crm_contact_load($cid);
+  if (!$contact) {
+    print backdrop_json_encode(array('error' => 'Contact not found'));
+    return;
+  }
+
+  // Check for existing primary email.
+  $existing = db_select('crm_contact_method', 'cm')
+    ->fields('cm', array('cmid'))
+    ->condition('cm.cid', $cid)
+    ->condition('cm.type', 'email')
+    ->condition('cm.is_primary', 1)
+    ->range(0, 1)
+    ->execute()
+    ->fetchField();
+
+  if ($existing) {
+    print backdrop_json_encode(array('error' => 'Contact already has a primary email'));
+    return;
+  }
+
+  db_insert('crm_contact_method')
+    ->fields(array(
+      'cid'        => $cid,
+      'type'       => 'email',
+      'label'      => '',
+      'value'      => $email,
+      'is_primary' => 1,
+      'created'    => REQUEST_TIME,
+    ))
+    ->execute();
+
+  print backdrop_json_encode(array('success' => TRUE, 'email' => $email));
+}
+
+/**
+ * AJAX endpoint: subscribe or unsubscribe a contact email from a newsletter.
+ * POST: email, tid, subscribe (1/0), token.
+ */
+function dropcrm_email_audit_toggle_newsletter() {
+  backdrop_add_http_header('Content-Type', 'application/json');
+
+  if (!backdrop_valid_token(isset($_POST['token']) ? $_POST['token'] : '', 'dropcrm_email_audit')) {
+    print backdrop_json_encode(array('error' => 'Invalid token'));
+    return;
+  }
+  if (!user_access('administer crm')) {
+    print backdrop_json_encode(array('error' => 'Access denied'));
+    return;
+  }
+
+  $email     = isset($_POST['email'])     ? trim($_POST['email'])      : '';
+  $tid       = isset($_POST['tid'])       ? (int) $_POST['tid']        : 0;
+  $subscribe = isset($_POST['subscribe']) ? (int) $_POST['subscribe']  : 0;
+
+  if (!valid_email_address($email) || !$tid) {
+    print backdrop_json_encode(array('error' => 'Invalid input'));
+    return;
+  }
+
+  if ($subscribe) {
+    // Use simplenews API to subscribe.
+    module_load_include('inc', 'simplenews', 'includes/simplenews.subscription');
+    simplenews_subscribe_user($email, $tid, FALSE, 'dropcrm_audit');
+  }
+  else {
+    module_load_include('inc', 'simplenews', 'includes/simplenews.subscription');
+    simplenews_unsubscribe_user($email, $tid, FALSE, 'dropcrm_audit');
+  }
+
+  print backdrop_json_encode(array('success' => TRUE));
 }

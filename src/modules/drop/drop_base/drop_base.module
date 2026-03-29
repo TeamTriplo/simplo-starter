@@ -532,18 +532,6 @@ function drop_base_page_actions(array $links) {
   return '<div class="drop-page-actions">' . implode('', $links) . '</div>';
 }
 
-/**
- * Implements hook_custom_theme().
- *
- * Serves all Drop Suite pages (drop/*) through the Dropper theme,
- * keeping standard Backdrop admin pages on the admin theme.
- */
-function drop_base_custom_theme() {
-  $path = current_path();
-  if ($path === 'drop' || strpos($path, 'drop/') === 0) {
-    return 'dropper';
-  }
-}
 
 /**
  * Implements hook_menu().

@@ -234,6 +234,65 @@ a.crm-hero-tag:hover {
   text-decoration: underline;
 }
 
+/* Contact methods compact table */
+.crm-methods-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  margin: 0;
+}
+
+.crm-methods-table td {
+  padding: 0.3rem 0.5rem;
+  border: none;
+  vertical-align: middle;
+  background: none !important;
+}
+
+.crm-methods-table tr:nth-child(even) td {
+  background: #f7f9fb !important;
+}
+
+.crm-method-col-type {
+  width: 7rem;
+  white-space: nowrap;
+}
+
+.crm-method-type {
+  display: inline-block;
+  font-size: 0.78em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #777;
+}
+
+.crm-method-label {
+  color: #888;
+  font-size: 0.9em;
+}
+
+.crm-method-col-value {
+  word-break: break-all;
+}
+
+.crm-method-col-edit {
+  width: 3rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+a.crm-method-edit-link {
+  font-size: 0.78em;
+  color: #bbb;
+  text-decoration: none;
+}
+
+a.crm-method-edit-link:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
 .crm-section-body {
   padding: 0.75rem 1rem;
 }
@@ -580,4 +639,77 @@ a.crm-hero-tag:hover {
   border-color: var(--drop-primary, #1565c0);
   color: #fff;
   font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   Email & Newsletter Audit table
+   --------------------------------------------------------------------------- */
+
+.dropcrm-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875em;
+}
+
+.dropcrm-audit-table th,
+.dropcrm-audit-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.dropcrm-audit-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dropcrm-audit-table .audit-col-type {
+  color: #6b7280;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.dropcrm-audit-table .audit-col-newsletter {
+  text-align: center;
+  width: 100px;
+}
+
+/* Highlight rows missing an email */
+.dropcrm-audit-table tr.audit-row-missing-email td {
+  background: #fff8e1;
+}
+
+.audit-email {
+  color: #111;
+}
+
+.audit-no-email {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.audit-email-input {
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  font-size: 0.85em;
+  padding: 0.2rem 0.4rem;
+  width: 180px;
+}
+
+.audit-email-save.button-small {
+  font-size: 0.8em;
+  padding: 0.2rem 0.5rem;
+}
+
+.audit-nl-noemail {
+  color: #d1d5db;
+}
+
+.audit-nl-checkbox {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
 }

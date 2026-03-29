@@ -51,27 +51,31 @@ function dropnewsletter_contact_form($form, &$form_state, $contact) {
       );
     }
     else {
+      $desc_html = !empty($category->description)
+        ? '<span class="dropnewsletter-desc">' . check_plain($category->description) . '</span>'
+        : '';
       $form['newsletters']['newsletter_' . $tid] = array(
         '#type'          => 'checkbox',
         '#title'         => check_plain($category->name),
         '#default_value' => $status === 'subscribed' ? 1 : 0,
-        '#description'   => !empty($category->description) ? check_plain($category->description) : NULL,
-        '#attributes'    => array('class' => array('dropnewsletter-checkbox')),
-        '#wrapper_attributes' => array('class' => array('dropnewsletter-row')),
+        '#prefix'        => '<div class="dropnewsletter-row">',
+        '#suffix'        => $desc_html . '</div>',
       );
     }
   }
 
-  $form['footer'] = array(
-    '#markup' => '<p class="dropnewsletter-meta">'
-      . t('Subscriptions managed for %email.', array('%email' => $email))
-      . '</p>',
+  $form['actions'] = array(
+    '#type'       => 'actions',
+    '#attributes' => array('class' => array('dropnewsletter-actions')),
   );
-
-  $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type'  => 'submit',
     '#value' => t('Save subscriptions'),
+  );
+  $form['actions']['meta'] = array(
+    '#markup' => '<span class="dropnewsletter-meta">'
+      . t('Managing: %email', array('%email' => $email))
+      . '</span>',
   );
 
   return $form;

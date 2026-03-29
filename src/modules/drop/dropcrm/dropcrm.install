@@ -837,7 +837,7 @@ function dropcrm_update_1012() {
       'field_name'  => 'field_crm_meeting_notes',
       'entity_type' => 'crm_activity',
       'bundle'      => 'crm_activity',
-      'label'       => t('Meeting Notes'),
+      'label'       => t('Details'),
       'required'    => FALSE,
       'settings'    => array('text_processing' => 1),
       'widget'      => array(
@@ -1110,5 +1110,16 @@ function dropcrm_update_1018() {
   }
   if (field_info_field('field_crm_tags')) {
     field_delete_field('field_crm_tags');
+  }
+}
+
+/**
+ * Rename field_crm_meeting_notes label from "Meeting Notes" to "Details".
+ */
+function dropcrm_update_1019() {
+  $instance = field_read_instance('crm_activity', 'field_crm_meeting_notes', 'crm_activity');
+  if ($instance) {
+    $instance['label'] = 'Details';
+    field_update_instance($instance);
   }
 }
