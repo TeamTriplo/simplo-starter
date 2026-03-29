@@ -1337,7 +1337,7 @@ tr.droptickets-review-row--done .droptickets-review-btn {
    Review Mode — Enter/Exit button on review page
    --------------------------------------------------------------------------- */
 
-.droptickets-review-mode-btn {
+.droptickets-project-mode-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.3em;
@@ -1350,30 +1350,32 @@ tr.droptickets-review-row--done .droptickets-review-btn {
   color: var(--drop-primary, #1565c0);
   text-decoration: none;
   white-space: nowrap;
+  cursor: help;
 }
 
-.droptickets-review-mode-btn:hover {
+.droptickets-project-mode-btn:hover {
   background: var(--drop-primary, #1565c0);
   color: #fff;
   text-decoration: none;
 }
 
-.droptickets-review-mode-btn--active {
+.droptickets-project-mode-btn--active {
   background: var(--drop-primary, #1565c0);
   color: #fff;
+  cursor: default;
 }
 
-.droptickets-review-mode-btn--active:hover {
+.droptickets-project-mode-btn--active:hover {
   background: #c62828;
   border-color: #c62828;
   color: #fff;
 }
 
 /* ---------------------------------------------------------------------------
-   Review Mode — "Back to Review" bar on ticket view pages
+   Project Mode — "Back to [Report]" bar on ticket view pages
    --------------------------------------------------------------------------- */
 
-.droptickets-review-back-bar {
+.droptickets-project-mode-bar {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1385,7 +1387,7 @@ tr.droptickets-review-row--done .droptickets-review-btn {
   font-size: 0.88em;
 }
 
-.droptickets-review-back-link {
+.droptickets-project-mode-back-link {
   display: inline-flex;
   align-items: center;
   gap: 0.3em;
@@ -1394,11 +1396,11 @@ tr.droptickets-review-row--done .droptickets-review-btn {
   text-decoration: none;
 }
 
-.droptickets-review-back-link:hover {
+.droptickets-project-mode-back-link:hover {
   text-decoration: underline;
 }
 
-.droptickets-review-back-mode {
+.droptickets-project-mode-label {
   font-weight: 700;
   color: #3949ab;
   letter-spacing: 0.02em;
@@ -1406,14 +1408,14 @@ tr.droptickets-review-row--done .droptickets-review-btn {
   font-size: 0.85em;
 }
 
-.droptickets-review-back-exit {
+.droptickets-project-mode-exit {
   margin-left: auto;
   font-size: 0.85em;
   color: var(--drop-text-secondary, #888);
   text-decoration: none;
 }
 
-.droptickets-review-back-exit:hover {
+.droptickets-project-mode-exit:hover {
   color: #c62828;
 }
 

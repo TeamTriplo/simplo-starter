@@ -82,6 +82,7 @@ function _droptickets_assignee_field(DropTicket $ticket) {
  * Page callback: ticket list with status and project filters.
  */
 function droptickets_list_page() {
+  global $user;
   backdrop_set_title(t('Tickets'));
 
   $output = array(
@@ -114,6 +115,52 @@ function droptickets_list_page() {
 
   // Show child tickets toggle.
   $show_children = !empty($_GET['show_children']);
+
+  // --- Project Mode handling for All Tickets report ---
+  $project_mode      = droptickets_project_mode_get($user->uid);
+  $all_mode_active   = $project_mode && !empty($project_mode['report']) && $project_mode['report'] === 'all';
+
+  // Handle enter/exit mode toggles.
+  if (isset($_GET['enter_mode'])) {
+    droptickets_project_mode_set($user->uid, 'all', t('All Tickets'), 'drop/tickets', array(
+      'status'   => $status !== 'all' ? $status : NULL,
+      'pid'      => $pid_filter ?: NULL,
+      'tag'      => $tag_filter ?: NULL,
+      'search'   => $search ?: NULL,
+      'assignee' => $assignee_filter ?: NULL,
+    ));
+    $rq = array_filter(array('status' => $status !== 'all' ? $status : NULL, 'pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'search' => $search ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+    backdrop_goto('drop/tickets', array('query' => $rq));
+    return;
+  }
+  if (isset($_GET['exit_mode'])) {
+    droptickets_project_mode_clear($user->uid);
+    $rq = array_filter(array('status' => $status !== 'all' ? $status : NULL, 'pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'search' => $search ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+    backdrop_goto('drop/tickets', array('query' => $rq));
+    return;
+  }
+
+  // If in project mode on All Tickets and no URL params, restore frozen filters.
+  if ($all_mode_active && !isset($_GET['status']) && !isset($_GET['pid']) && !isset($_GET['tag']) && !isset($_GET['search']) && !isset($_GET['assignee'])) {
+    $f              = $project_mode['filters'];
+    $status         = !empty($f['status'])   ? $f['status']           : 'all';
+    $pid_filter     = !empty($f['pid'])      ? (int) $f['pid']        : 0;
+    $tag_filter     = !empty($f['tag'])      ? (int) $f['tag']        : 0;
+    $search         = !empty($f['search'])   ? (string) $f['search']  : '';
+    $assignee_filter = !empty($f['assignee']) ? (int) $f['assignee']  : 0;
+  }
+  // If in project mode on All Tickets and filters changed, update the saved state.
+  elseif ($all_mode_active && (isset($_GET['status']) || isset($_GET['pid']) || isset($_GET['tag']) || isset($_GET['search']) || isset($_GET['assignee']))) {
+    droptickets_project_mode_set($user->uid, 'all', t('All Tickets'), 'drop/tickets', array(
+      'status'   => $status !== 'all' ? $status : NULL,
+      'pid'      => $pid_filter ?: NULL,
+      'tag'      => $tag_filter ?: NULL,
+      'search'   => $search ?: NULL,
+      'assignee' => $assignee_filter ?: NULL,
+    ));
+    $project_mode    = droptickets_project_mode_get($user->uid);
+    $all_mode_active = TRUE;
+  }
 
   // Combined filter row: status dropdown + project dropdown + search + add link.
 
@@ -180,8 +227,29 @@ function droptickets_list_page() {
     . '</label>'
     . '</form>';
 
+  // Project Mode button for All Tickets.
+  $all_mode_query = array_filter(array(
+    'status'   => $status !== 'all' ? $status : NULL,
+    'pid'      => $pid_filter ?: NULL,
+    'tag'      => $tag_filter ?: NULL,
+    'search'   => $search ?: NULL,
+    'assignee' => $assignee_filter ?: NULL,
+  ));
+  if ($all_mode_active) {
+    $exit_url    = url('drop/tickets', array('query' => array('exit_mode' => 1) + $all_mode_query));
+    $all_mode_btn = '<a href="' . $exit_url . '" class="droptickets-project-mode-btn droptickets-project-mode-btn--active" title="' . t('Project Mode is active. Current filters are frozen. Click to exit.') . '">'
+      . icon('x-circle', array('attributes' => array('width' => 14, 'height' => 14)))
+      . ' ' . t('Exit Project Mode') . '</a>';
+  }
+  else {
+    $enter_url    = url('drop/tickets', array('query' => array('enter_mode' => 1) + $all_mode_query));
+    $all_mode_btn = '<a href="' . $enter_url . '" class="droptickets-project-mode-btn" title="' . t('Enter Project Mode to freeze the current filters. A persistent back link will appear on each ticket, making it easy to work through this list.') . '">'
+      . icon('play-circle', array('attributes' => array('width' => 14, 'height' => 14)))
+      . ' ' . t('Enter Project Mode') . '</a>';
+  }
+
   $output['filters'] = array(
-    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $tag_badge . '</div>',
+    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $tag_badge . $all_mode_btn . '</div>',
     '#weight' => -18,
   );
 
@@ -1446,25 +1514,22 @@ function droptickets_ticket_view(DropTicket $ticket) {
     ),
   );
 
-  // Review Mode: show "Back to Review" bar when the user is in review mode.
-  $review_mode = droptickets_review_mode_get($user->uid);
-  if ($review_mode) {
-    $back_query = array_filter(array(
-      'pid'    => !empty($review_mode['pid']) ? $review_mode['pid'] : NULL,
-      'tag'    => !empty($review_mode['tag']) ? $review_mode['tag'] : NULL,
-      'status' => !empty($review_mode['status']) ? $review_mode['status'] : NULL,
-    ));
-    $back_url = url('drop/tickets/review', $back_query ? array('query' => $back_query) : array());
-    $exit_url  = url('drop/tickets/review', array('query' => array('exit_mode' => 1) + $back_query));
-    $output['review_bar'] = array(
-      '#markup' => '<div class="droptickets-review-back-bar">'
-        . l(
-            icon('arrow-left', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . t('Back to Review'),
-            'drop/tickets/review',
-            array('query' => $back_query ?: array(), 'html' => TRUE, 'attributes' => array('class' => array('droptickets-review-back-link')))
-          )
-        . '<span class="droptickets-review-back-mode">' . t('Review Mode') . '</span>'
-        . '<a href="' . $exit_url . '" class="droptickets-review-back-exit">' . t('Exit') . '</a>'
+  // Project Mode: show "Back to [Report]" bar when the user is in project mode.
+  $project_mode = droptickets_project_mode_get($user->uid);
+  if ($project_mode) {
+    $back_path    = !empty($project_mode['path'])   ? $project_mode['path']   : 'drop/tickets';
+    $back_label   = !empty($project_mode['label'])  ? $project_mode['label']  : t('Tickets');
+    $back_filters = !empty($project_mode['filters']) ? array_filter($project_mode['filters']) : array();
+    $back_url  = url($back_path, $back_filters ? array('query' => $back_filters) : array());
+    $exit_url  = url($back_path, array('query' => array('exit_mode' => 1) + $back_filters));
+    $output['project_mode_bar'] = array(
+      '#markup' => '<div class="droptickets-project-mode-bar">'
+        . '<a href="' . $back_url . '" class="droptickets-project-mode-back-link">'
+        . icon('arrow-left', array('attributes' => array('width' => 14, 'height' => 14)))
+        . ' ' . t('Back to @label', array('@label' => $back_label))
+        . '</a>'
+        . '<span class="droptickets-project-mode-label" title="' . t('Filters are frozen. Use the back link to return to your report, or Exit to leave Project Mode.') . '">' . t('Project Mode') . '</span>'
+        . '<a href="' . $exit_url . '" class="droptickets-project-mode-exit">' . t('Exit') . '</a>'
         . '</div>',
       '#weight' => -10,
     );
@@ -2001,12 +2066,119 @@ function droptickets_ticket_flag_toggle(DropTicket $ticket) {
  * Page callback: tickets sorted by most recent edit or comment.
  */
 function droptickets_recent_page() {
+  global $user;
+
   backdrop_set_title(t('Recent tickets'));
 
   $output = array(
     '#attached' => array(
       'css' => array(backdrop_get_path('module', 'droptickets') . '/droptickets.css'),
     ),
+  );
+
+  // Filters.
+  $pid_filter      = (!empty($_GET['pid'])      && is_numeric($_GET['pid']))      ? (int) $_GET['pid']      : 0;
+  $assignee_filter = (!empty($_GET['assignee']) && is_numeric($_GET['assignee'])) ? (int) $_GET['assignee'] : 0;
+  $active_status_keys = array_keys(droptickets_status_options());
+  $status_filter   = (isset($_GET['status']) && in_array($_GET['status'], $active_status_keys)) ? $_GET['status'] : '';
+
+  // --- Project Mode ---
+  $project_mode       = droptickets_project_mode_get($user->uid);
+  $recent_mode_active = $project_mode && !empty($project_mode['report']) && $project_mode['report'] === 'recent';
+
+  if (isset($_GET['enter_mode'])) {
+    droptickets_project_mode_set($user->uid, 'recent', t('Recent'), 'drop/tickets/recent', array(
+      'pid'      => $pid_filter ?: NULL,
+      'assignee' => $assignee_filter ?: NULL,
+      'status'   => $status_filter ?: NULL,
+    ));
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL, 'status' => $status_filter ?: NULL));
+    backdrop_goto('drop/tickets/recent', array('query' => $rq));
+    return;
+  }
+  if (isset($_GET['exit_mode'])) {
+    droptickets_project_mode_clear($user->uid);
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL, 'status' => $status_filter ?: NULL));
+    backdrop_goto('drop/tickets/recent', array('query' => $rq));
+    return;
+  }
+  if ($recent_mode_active && !isset($_GET['pid']) && !isset($_GET['assignee']) && !isset($_GET['status'])) {
+    $f               = $project_mode['filters'];
+    $pid_filter      = !empty($f['pid'])      ? (int) $f['pid']         : 0;
+    $assignee_filter = !empty($f['assignee']) ? (int) $f['assignee']    : 0;
+    $status_filter   = !empty($f['status'])   ? (string) $f['status']   : '';
+  }
+  elseif ($recent_mode_active && (isset($_GET['pid']) || isset($_GET['assignee']) || isset($_GET['status']))) {
+    droptickets_project_mode_set($user->uid, 'recent', t('Recent'), 'drop/tickets/recent', array(
+      'pid'      => $pid_filter ?: NULL,
+      'assignee' => $assignee_filter ?: NULL,
+      'status'   => $status_filter ?: NULL,
+    ));
+    $project_mode       = droptickets_project_mode_get($user->uid);
+    $recent_mode_active = TRUE;
+  }
+
+  // Build project dropdown.
+  $project_pids = db_select('drop_ticket', 't')
+    ->fields('t', array('pid'))
+    ->isNull('t.import_id')
+    ->distinct()
+    ->execute()->fetchCol();
+  $proj_opts_html = '<option value="0"' . (!$pid_filter ? ' selected' : '') . '>' . t('— All projects —') . '</option>';
+  if (!empty($project_pids)) {
+    $all_projects = entity_load('drop_project', $project_pids);
+    uasort($all_projects, function($a, $b) { return strcasecmp($a->name, $b->name); });
+    foreach ($all_projects as $proj) {
+      $proj_opts_html .= '<option value="' . (int) $proj->pid . '"' . ($pid_filter === (int) $proj->pid ? ' selected' : '') . '>' . check_plain($proj->name) . '</option>';
+    }
+  }
+
+  // Build assignee dropdown.
+  $assignee_uids_all = db_select('drop_ticket', 't')
+    ->fields('t', array('assignee_uid'))
+    ->isNotNull('t.assignee_uid')
+    ->condition('t.assignee_uid', 0, '>')
+    ->isNull('t.import_id')
+    ->distinct()
+    ->execute()->fetchCol();
+  $assignee_opts_html = '<option value="0"' . (!$assignee_filter ? ' selected' : '') . '>' . t('— All assignees —') . '</option>';
+  if (!empty($assignee_uids_all)) {
+    $all_accounts = user_load_multiple($assignee_uids_all);
+    uasort($all_accounts, function($a, $b) { return strcasecmp($a->name, $b->name); });
+    foreach ($all_accounts as $acct) {
+      $assignee_opts_html .= '<option value="' . (int) $acct->uid . '"' . ($assignee_filter === (int) $acct->uid ? ' selected' : '') . '>' . check_plain($acct->name) . '</option>';
+    }
+  }
+
+  // Build status dropdown.
+  $status_opts_html = '<option value=""' . (!$status_filter ? ' selected' : '') . '>' . t('— All statuses —') . '</option>';
+  foreach (droptickets_status_options() as $skey => $slabel) {
+    $status_opts_html .= '<option value="' . check_plain($skey) . '"' . ($status_filter === $skey ? ' selected' : '') . '>' . check_plain($slabel) . '</option>';
+  }
+
+  // Mode button.
+  $recent_mode_query = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL, 'status' => $status_filter ?: NULL));
+  if ($recent_mode_active) {
+    $exit_url  = url('drop/tickets/recent', array('query' => array('exit_mode' => 1) + $recent_mode_query));
+    $mode_btn  = '<a href="' . $exit_url . '" class="droptickets-project-mode-btn droptickets-project-mode-btn--active" title="' . t('Project Mode is active. Current filters are frozen. Click to exit.') . '">'
+      . icon('x-circle', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . t('Exit Project Mode') . '</a>';
+  }
+  else {
+    $enter_url = url('drop/tickets/recent', array('query' => array('enter_mode' => 1) + $recent_mode_query));
+    $mode_btn  = '<a href="' . $enter_url . '" class="droptickets-project-mode-btn" title="' . t('Enter Project Mode to freeze the current filters. A persistent back link will appear on each ticket, making it easy to work through this list.') . '">'
+      . icon('play-circle', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . t('Enter Project Mode') . '</a>';
+  }
+
+  // Filter form.
+  $filter_form = '<form method="get" action="' . url('drop/tickets/recent') . '" class="droptickets-filter-form">'
+    . '<select name="status" class="droptickets-filter-select" onchange="this.form.submit()">' . $status_opts_html . '</select>'
+    . '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $proj_opts_html . '</select>'
+    . '<select name="assignee" class="droptickets-filter-select" onchange="this.form.submit()">' . $assignee_opts_html . '</select>'
+    . '</form>';
+
+  $output['filters'] = array(
+    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $mode_btn . '</div>',
+    '#weight' => -20,
   );
 
   // Join with the most recent comment per ticket, sort by whichever is later.
@@ -2021,6 +2193,15 @@ function droptickets_recent_page() {
   $query->addExpression('GREATEST(t.changed, COALESCE(lc.last_comment, 0))', 'last_activity');
   $query->addExpression('lc.last_comment', 'last_comment_ts');
   $query->isNull('t.import_id');
+  if ($pid_filter) {
+    $query->condition('t.pid', $pid_filter);
+  }
+  if ($assignee_filter) {
+    $query->condition('t.assignee_uid', $assignee_filter);
+  }
+  if ($status_filter) {
+    $query->condition('t.status', $status_filter);
+  }
   $query->orderBy('last_activity', 'DESC');
   $query->range(0, 50);
 
@@ -2285,6 +2466,8 @@ function droptickets_reports_page() {
  * Page callback: tickets not done and not updated in N+ days, oldest first.
  */
 function droptickets_stale_report_page() {
+  global $user;
+
   $stale_days = (int) config_get('droptickets.settings', 'stale_days');
   if ($stale_days < 1) {
     $stale_days = 20;
@@ -2298,16 +2481,116 @@ function droptickets_stale_report_page() {
     ),
   );
 
+  // Filters.
+  $pid_filter      = (!empty($_GET['pid'])      && is_numeric($_GET['pid']))      ? (int) $_GET['pid']      : 0;
+  $assignee_filter = (!empty($_GET['assignee']) && is_numeric($_GET['assignee'])) ? (int) $_GET['assignee'] : 0;
+
+  // --- Project Mode ---
+  $project_mode     = droptickets_project_mode_get($user->uid);
+  $stale_mode_active = $project_mode && !empty($project_mode['report']) && $project_mode['report'] === 'stale';
+
+  if (isset($_GET['enter_mode'])) {
+    droptickets_project_mode_set($user->uid, 'stale', t('Stale'), 'drop/tickets/stale', array(
+      'pid'      => $pid_filter ?: NULL,
+      'assignee' => $assignee_filter ?: NULL,
+    ));
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+    backdrop_goto('drop/tickets/stale', array('query' => $rq));
+    return;
+  }
+  if (isset($_GET['exit_mode'])) {
+    droptickets_project_mode_clear($user->uid);
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+    backdrop_goto('drop/tickets/stale', array('query' => $rq));
+    return;
+  }
+  if ($stale_mode_active && !isset($_GET['pid']) && !isset($_GET['assignee'])) {
+    $f               = $project_mode['filters'];
+    $pid_filter      = !empty($f['pid'])      ? (int) $f['pid']      : 0;
+    $assignee_filter = !empty($f['assignee']) ? (int) $f['assignee'] : 0;
+  }
+  elseif ($stale_mode_active && (isset($_GET['pid']) || isset($_GET['assignee']))) {
+    droptickets_project_mode_set($user->uid, 'stale', t('Stale'), 'drop/tickets/stale', array(
+      'pid'      => $pid_filter ?: NULL,
+      'assignee' => $assignee_filter ?: NULL,
+    ));
+    $project_mode      = droptickets_project_mode_get($user->uid);
+    $stale_mode_active = TRUE;
+  }
+
+  // Build project dropdown.
+  $project_pids = db_select('drop_ticket', 't')
+    ->fields('t', array('pid'))
+    ->isNull('t.import_id')
+    ->distinct()
+    ->execute()->fetchCol();
+  $proj_opts_html = '<option value="0"' . (!$pid_filter ? ' selected' : '') . '>' . t('— All projects —') . '</option>';
+  if (!empty($project_pids)) {
+    $all_projects = entity_load('drop_project', $project_pids);
+    uasort($all_projects, function($a, $b) { return strcasecmp($a->name, $b->name); });
+    foreach ($all_projects as $proj) {
+      $proj_opts_html .= '<option value="' . (int) $proj->pid . '"' . ($pid_filter === (int) $proj->pid ? ' selected' : '') . '>' . check_plain($proj->name) . '</option>';
+    }
+  }
+
+  // Build assignee dropdown.
+  $assignee_uids_all = db_select('drop_ticket', 't')
+    ->fields('t', array('assignee_uid'))
+    ->isNotNull('t.assignee_uid')
+    ->condition('t.assignee_uid', 0, '>')
+    ->isNull('t.import_id')
+    ->distinct()
+    ->execute()->fetchCol();
+  $assignee_opts_html = '<option value="0"' . (!$assignee_filter ? ' selected' : '') . '>' . t('— All assignees —') . '</option>';
+  if (!empty($assignee_uids_all)) {
+    $all_accounts = user_load_multiple($assignee_uids_all);
+    uasort($all_accounts, function($a, $b) { return strcasecmp($a->name, $b->name); });
+    foreach ($all_accounts as $acct) {
+      $assignee_opts_html .= '<option value="' . (int) $acct->uid . '"' . ($assignee_filter === (int) $acct->uid ? ' selected' : '') . '>' . check_plain($acct->name) . '</option>';
+    }
+  }
+
+  // Mode button.
+  $stale_mode_query = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+  if ($stale_mode_active) {
+    $exit_url  = url('drop/tickets/stale', array('query' => array('exit_mode' => 1) + $stale_mode_query));
+    $mode_btn  = '<a href="' . $exit_url . '" class="droptickets-project-mode-btn droptickets-project-mode-btn--active" title="' . t('Project Mode is active. Current filters are frozen. Click to exit.') . '">'
+      . icon('x-circle', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . t('Exit Project Mode') . '</a>';
+  }
+  else {
+    $enter_url = url('drop/tickets/stale', array('query' => array('enter_mode' => 1) + $stale_mode_query));
+    $mode_btn  = '<a href="' . $enter_url . '" class="droptickets-project-mode-btn" title="' . t('Enter Project Mode to freeze the current filters. A persistent back link will appear on each ticket, making it easy to work through this list.') . '">'
+      . icon('play-circle', array('attributes' => array('width' => 14, 'height' => 14))) . ' ' . t('Enter Project Mode') . '</a>';
+  }
+
+  // Filter form.
+  $filter_form = '<form method="get" action="' . url('drop/tickets/stale') . '" class="droptickets-filter-form">'
+    . '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $proj_opts_html . '</select>'
+    . '<select name="assignee" class="droptickets-filter-select" onchange="this.form.submit()">' . $assignee_opts_html . '</select>'
+    . '</form>';
+
+  $output['filters'] = array(
+    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $mode_btn . '</div>',
+    '#weight' => -20,
+  );
+
   $cutoff = REQUEST_TIME - ($stale_days * 86400);
 
-  $tickets = db_select('drop_ticket', 't')
+  $query = db_select('drop_ticket', 't')
     ->fields('t')
     ->condition('t.status', 'done', '!=')
     ->condition('t.changed', $cutoff, '<')
     ->isNull('t.import_id')
-    ->orderBy('t.changed', 'ASC')
-    ->execute()
-    ->fetchAll();
+    ->orderBy('t.changed', 'ASC');
+
+  if ($pid_filter) {
+    $query->condition('t.pid', $pid_filter);
+  }
+  if ($assignee_filter) {
+    $query->condition('t.assignee_uid', $assignee_filter);
+  }
+
+  $tickets = $query->execute()->fetchAll();
 
   $count = count($tickets);
   $output['summary'] = array(
@@ -2393,9 +2676,11 @@ function droptickets_review_page() {
     ),
   );
 
-  // --- Review mode + filter handling ---
+  // --- Project Mode + filter handling for Review report ---
 
-  $review_mode = droptickets_review_mode_get($user->uid);
+  $project_mode = droptickets_project_mode_get($user->uid);
+  // Only treat as active on this report if it was entered here.
+  $review_mode_active = $project_mode && !empty($project_mode['report']) && $project_mode['report'] === 'review';
 
   // Parse filter params from URL.
   $active_status_keys = array_keys(droptickets_status_options());
@@ -2406,28 +2691,37 @@ function droptickets_review_page() {
 
   // Handle mode toggle actions (GET params trigger a state change + redirect).
   if (isset($_GET['enter_mode'])) {
-    droptickets_review_mode_set($user->uid, $pid_filter, $tag_filter, $status_filter);
+    droptickets_project_mode_set($user->uid, 'review', t('Review'), 'drop/tickets/review', array(
+      'pid'    => $pid_filter ?: NULL,
+      'tag'    => $tag_filter ?: NULL,
+      'status' => $status_filter ?: NULL,
+    ));
     $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'status' => $status_filter ?: NULL));
     backdrop_goto('drop/tickets/review', array('query' => $rq));
     return;
   }
   if (isset($_GET['exit_mode'])) {
-    droptickets_review_mode_clear($user->uid);
+    droptickets_project_mode_clear($user->uid);
     $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'tag' => $tag_filter ?: NULL, 'status' => $status_filter ?: NULL));
     backdrop_goto('drop/tickets/review', array('query' => $rq));
     return;
   }
 
-  // If in review mode and no URL filter params, load saved filter values.
-  if ($review_mode && !isset($_GET['pid']) && !isset($_GET['tag']) && !isset($_GET['status'])) {
-    $pid_filter    = $review_mode['pid'];
-    $tag_filter    = $review_mode['tag'];
-    $status_filter = isset($review_mode['status']) ? $review_mode['status'] : '';
+  // If in project mode on this report and no URL filter params, load saved values.
+  if ($review_mode_active && !isset($_GET['pid']) && !isset($_GET['tag']) && !isset($_GET['status'])) {
+    $filters       = $project_mode['filters'];
+    $pid_filter    = !empty($filters['pid'])    ? (int) $filters['pid']      : 0;
+    $tag_filter    = !empty($filters['tag'])    ? (int) $filters['tag']      : 0;
+    $status_filter = !empty($filters['status']) ? (string) $filters['status'] : '';
   }
-  // If in review mode and user changed filters via URL, save updated values.
-  elseif ($review_mode && (isset($_GET['pid']) || isset($_GET['tag']) || isset($_GET['status']))) {
-    droptickets_review_mode_set($user->uid, $pid_filter, $tag_filter, $status_filter);
-    $review_mode = droptickets_review_mode_get($user->uid);
+  // If in project mode on this report and user changed filters via URL, update saved values.
+  elseif ($review_mode_active && (isset($_GET['pid']) || isset($_GET['tag']) || isset($_GET['status']))) {
+    droptickets_project_mode_set($user->uid, 'review', t('Review'), 'drop/tickets/review', array(
+      'pid'    => $pid_filter ?: NULL,
+      'tag'    => $tag_filter ?: NULL,
+      'status' => $status_filter ?: NULL,
+    ));
+    $project_mode = droptickets_project_mode_get($user->uid);
   }
 
   // Build project dropdown (all projects that have tickets).
@@ -2476,17 +2770,17 @@ function droptickets_review_page() {
     'tag'    => $tag_filter ?: NULL,
     'status' => $status_filter ?: NULL,
   ));
-  if ($review_mode) {
+  if ($review_mode_active) {
     $exit_url = url('drop/tickets/review', array('query' => array('exit_mode' => 1) + $mode_query));
-    $mode_btn = '<a href="' . $exit_url . '" class="droptickets-review-mode-btn droptickets-review-mode-btn--active">'
+    $mode_btn = '<a href="' . $exit_url . '" class="droptickets-project-mode-btn droptickets-project-mode-btn--active" title="' . t('Project Mode is active. Current filters are frozen. Click to exit.') . '">'
       . icon('x-circle', array('attributes' => array('width' => 14, 'height' => 14)))
-      . ' ' . t('Exit Review Mode') . '</a>';
+      . ' ' . t('Exit Project Mode') . '</a>';
   }
   else {
     $enter_url = url('drop/tickets/review', array('query' => array('enter_mode' => 1) + $mode_query));
-    $mode_btn = '<a href="' . $enter_url . '" class="droptickets-review-mode-btn">'
+    $mode_btn = '<a href="' . $enter_url . '" class="droptickets-project-mode-btn" title="' . t('Enter Project Mode to freeze the current filters. A persistent back link will appear on each ticket, making it easy to work through this list.') . '">'
       . icon('play-circle', array('attributes' => array('width' => 14, 'height' => 14)))
-      . ' ' . t('Enter Review Mode') . '</a>';
+      . ' ' . t('Enter Project Mode') . '</a>';
   }
 
   // Filter form.

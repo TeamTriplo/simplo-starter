@@ -956,13 +956,14 @@ function droptickets_review_clear_all($uid) {
 }
 
 /**
- * Returns the review mode state for a user, or FALSE if not active.
+ * Returns the project mode state for a user, or FALSE if not active.
  *
  * @param int $uid
- * @return array|false  Array with keys 'active', 'pid', 'tag', or FALSE.
+ * @return array|false  Array with keys 'active', 'report', 'label', 'path',
+ *   'filters', or FALSE if project mode is not active.
  */
-function droptickets_review_mode_get($uid) {
-  $state = state_get('droptickets.review_mode.' . $uid, array());
+function droptickets_project_mode_get($uid) {
+  $state = state_get('droptickets.project_mode.' . $uid, array());
   if (empty($state['active'])) {
     return FALSE;
   }
@@ -970,28 +971,54 @@ function droptickets_review_mode_get($uid) {
 }
 
 /**
- * Activates review mode for a user, saving optional filter values.
+ * Activates project mode for a user on a given report.
+ *
+ * @param int    $uid     User ID.
+ * @param string $report  Machine name of the report (e.g. 'review', 'all').
+ * @param string $label   Human-readable report label shown in the back bar.
+ * @param string $path    Backdrop path for the back link (e.g. 'drop/tickets').
+ * @param array  $filters Associative array of frozen filter values.
+ */
+function droptickets_project_mode_set($uid, $report, $label, $path, array $filters = array()) {
+  state_set('droptickets.project_mode.' . $uid, array(
+    'active'  => TRUE,
+    'report'  => $report,
+    'label'   => $label,
+    'path'    => $path,
+    'filters' => $filters,
+  ));
+}
+
+/**
+ * Deactivates project mode for a user.
  *
  * @param int $uid
- * @param int $pid  Project ID filter (0 = all).
- * @param int $tag  Tag term ID filter (0 = all).
  */
+function droptickets_project_mode_clear($uid) {
+  state_del('droptickets.project_mode.' . $uid);
+}
+
+// ---------------------------------------------------------------------------
+// Legacy review_mode wrappers — kept for any external callers.
+// ---------------------------------------------------------------------------
+
+/** @deprecated Use droptickets_project_mode_get(). */
+function droptickets_review_mode_get($uid) {
+  return droptickets_project_mode_get($uid);
+}
+
+/** @deprecated Use droptickets_project_mode_set(). */
 function droptickets_review_mode_set($uid, $pid = 0, $tag = 0, $status = '') {
-  state_set('droptickets.review_mode.' . $uid, array(
-    'active' => TRUE,
+  droptickets_project_mode_set($uid, 'review', t('Review'), 'drop/tickets/review', array(
     'pid'    => (int) $pid,
     'tag'    => (int) $tag,
     'status' => (string) $status,
   ));
 }
 
-/**
- * Deactivates review mode for a user.
- *
- * @param int $uid
- */
+/** @deprecated Use droptickets_project_mode_clear(). */
 function droptickets_review_mode_clear($uid) {
-  state_del('droptickets.review_mode.' . $uid);
+  droptickets_project_mode_clear($uid);
 }
 
 /**
