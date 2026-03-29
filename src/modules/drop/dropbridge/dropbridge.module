@@ -5,6 +5,58 @@
  */
 
 // ---------------------------------------------------------------------------
+// Config info
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_config_info().
+ */
+function dropbridge_config_info() {
+  return array(
+    'dropbridge.settings' => array(
+      'label' => t('DropBridge settings'),
+      'group' => t('Configuration'),
+    ),
+    'dropbridge.inbound' => array(
+      'label' => t('DropBridge inbound email settings'),
+      'group' => t('Configuration'),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Mail
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_mail().
+ *
+ * Handles the 'inbound_forward' key — a copy of an inbound email forwarded
+ * to the configured support address with a link to the ticket.
+ */
+function dropbridge_mail($key, &$message, $params) {
+  if ($key !== 'inbound_forward') {
+    return;
+  }
+
+  $sender_label = !empty($params['original_name'])
+    ? $params['original_name'] . ' <' . $params['original_from'] . '>'
+    : $params['original_from'];
+
+  $message['subject'] = '[FWD] ' . $params['subject'];
+
+  $body  = t('--- Forwarded inbound email ---') . "\n\n";
+  $body .= t('From: @sender', array('@sender' => $sender_label)) . "\n";
+  $body .= t('To: @to', array('@to' => $params['original_to'])) . "\n";
+  $body .= t('Subject: @subject', array('@subject' => $params['subject'])) . "\n\n";
+  $body .= $params['body'];
+  $body .= "\n\n--- " . t('Ticket link') . " ---\n";
+  $body .= $params['ticket_url'];
+
+  $message['body'][] = $body;
+}
+
+// ---------------------------------------------------------------------------
 // Permissions
 // ---------------------------------------------------------------------------
 
@@ -126,6 +178,46 @@ function dropbridge_menu() {
     'file'             => 'dropbridge.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 5,
+  );
+
+  // Inbound email settings tab.
+  $items['drop/settings/inbound'] = array(
+    'title'            => 'Inbound Email',
+    'page callback'    => 'backdrop_get_form',
+    'page arguments'   => array('dropbridge_inbound_settings_form'),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'file'             => 'dropbridge.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 10,
+  );
+
+  // Unverified tickets report.
+  $items['drop/tickets/unverified'] = array(
+    'title'            => 'Unverified tickets',
+    'page callback'    => 'dropbridge_unverified_tickets_page',
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer droptickets'),
+    'file'             => 'dropbridge.admin.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  // Verify sender action (AJAX-friendly).
+  $items['drop/tickets/verify-sender/%'] = array(
+    'page callback'    => 'dropbridge_verify_sender',
+    'page arguments'   => array(3),
+    'access callback'  => 'user_access',
+    'access arguments' => array('administer droptickets'),
+    'file'             => 'dropbridge.admin.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  // SendGrid inbound parse webhook — no user auth, validated by token.
+  $items['dropbridge/inbound-email'] = array(
+    'page callback'  => 'dropbridge_inbound_email_webhook',
+    'access callback' => TRUE,
+    'file'           => 'dropbridge.inbound.inc',
+    'type'           => MENU_CALLBACK,
   );
 
   return $items;

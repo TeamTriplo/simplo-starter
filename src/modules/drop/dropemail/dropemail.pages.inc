@@ -457,16 +457,32 @@ function dropemail_ticket_form_submit($form, &$form_state) {
   $subject    = $form_state['values']['subject'];
   $body       = $form_state['values']['body'];
 
+  // Append a [DROP-PID-NUM] threading tag to the subject so that inbound
+  // replies can be automatically routed back to this ticket.
+  $tagged_subject = $subject;
+  if (!empty($ticket->pid) && !empty($ticket->ticket_number)) {
+    $tag = '[DROP-' . $ticket->pid . '-' . $ticket->ticket_number . ']';
+    // Only add if not already present.
+    if (strpos($tagged_subject, '[DROP-') === FALSE) {
+      $tagged_subject = $tagged_subject . ' ' . $tag;
+    }
+  }
+
+  // Append a reply-separator footer so that inbound processing can strip it.
+  $footer  = "\n\n-- [DROP REPLY SEPARATOR] --\n";
+  $footer .= t('When replying, please do not change the subject line — it is used to route your reply to the correct ticket.');
+  $body_with_footer = $body . $footer;
+
   $sent_count = 0;
   $eids       = array();
   foreach ($recipients as $r) {
     $eid = dropemail_send_and_log(array(
-      'to'         => $r['email'],
-      'from_email' => $from_email,
-      'subject'    => $subject,
-      'body'       => $body,
-      'cid'        => $r['cid'],
-      'tid'        => $ticket->tid,
+      'to'            => $r['email'],
+      'from_email'    => $from_email,
+      'subject'       => $tagged_subject,
+      'body'          => $body_with_footer,
+      'cid'           => $r['cid'],
+      'tid'           => $ticket->tid,
       'skip_activity' => TRUE,
     ));
     if ($eid) {
@@ -481,7 +497,7 @@ function dropemail_ticket_form_submit($form, &$form_state) {
     $lang     = LANGUAGE_NONE;
     $activity = entity_create('crm_activity', array(
       'type'          => 'email',
-      'subject'       => $subject,
+      'subject'       => $tagged_subject,
       'status'        => 'completed',
       'direction'     => 'outbound',
       'activity_date' => REQUEST_TIME,

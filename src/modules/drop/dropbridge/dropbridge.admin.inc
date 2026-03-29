@@ -230,3 +230,218 @@ function dropbridge_permissions_form_submit($form, &$form_state) {
   }
   backdrop_set_message(t('Permissions saved.'));
 }
+
+// ---------------------------------------------------------------------------
+// Inbound email settings
+// ---------------------------------------------------------------------------
+
+/**
+ * Form: inbound email settings.
+ */
+function dropbridge_inbound_settings_form($form, &$form_state) {
+  $config = config('dropbridge.inbound');
+
+  $form['enabled'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Enable inbound email processing'),
+    '#default_value' => $config->get('enabled'),
+    '#description'   => t('When enabled, the webhook endpoint accepts POSTs from SendGrid and creates or updates tickets.'),
+  );
+
+  // Auto-generate a token if none exists yet.
+  $token = $config->get('webhook_token');
+  if (empty($token)) {
+    $token = backdrop_random_key(32);
+  }
+
+  $webhook_url = url('dropbridge/inbound-email', array(
+    'absolute' => TRUE,
+    'query'    => array('token' => $token),
+  ));
+
+  $form['webhook_token'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Webhook token'),
+    '#default_value' => $token,
+    '#description'   => t('Shared secret appended as <code>?token=…</code> to the webhook URL. Regenerate by clearing this field and saving.'),
+    '#required'      => TRUE,
+    '#attributes'    => array('autocomplete' => 'off'),
+  );
+
+  $form['webhook_url_display'] = array(
+    '#type'   => 'item',
+    '#title'  => t('Webhook URL'),
+    '#markup' => '<code>' . check_plain($webhook_url) . '</code>',
+    '#description' => t('Enter this URL in the SendGrid Inbound Parse settings. Configure an MX record for the inbound subdomain first.'),
+  );
+
+  $form['forward_to'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Forward copy to'),
+    '#default_value' => $config->get('forward_to'),
+    '#description'   => t('Every inbound email is forwarded to this address with a link to the ticket. Leave blank to disable forwarding.'),
+    '#placeholder'   => 'support@example.com',
+    '#size'          => 40,
+  );
+
+  // Build project options.
+  $project_options = array(0 => t('— None —'));
+  if (module_exists('droptickets')) {
+    $projects = db_select('drop_project', 'p')
+      ->fields('p', array('pid', 'title'))
+      ->orderBy('p.title')
+      ->execute()
+      ->fetchAllKeyed();
+    $project_options += $projects;
+  }
+
+  $form['default_pid'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Default project'),
+    '#default_value' => (int) $config->get('default_pid'),
+    '#options'       => $project_options,
+    '#description'   => t('New tickets created from inbound email are assigned to this project. Choose "None" to leave unassigned.'),
+  );
+
+  $form['drop_unverified'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Drop emails from unverified senders'),
+    '#default_value' => $config->get('drop_unverified'),
+    '#description'   => t('When checked, emails from senders not on the allowlist are silently discarded. When unchecked, they create tickets marked as unverified.'),
+  );
+
+  $allowlist = $config->get('allowlist') ?: array();
+  $form['allowlist'] = array(
+    '#type'          => 'textarea',
+    '#title'         => t('Sender allowlist'),
+    '#default_value' => implode("\n", $allowlist),
+    '#rows'          => 6,
+    '#description'   => t('One email address per line. If this list is empty, all senders are accepted (and all tickets are marked verified). If populated, only listed senders create verified tickets — others are either dropped or marked unverified depending on the setting above.'),
+  );
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type'  => 'submit',
+    '#value' => t('Save settings'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler for dropbridge_inbound_settings_form().
+ */
+function dropbridge_inbound_settings_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  $config = config('dropbridge.inbound');
+
+  // Parse allowlist textarea into an array.
+  $allowlist_raw = $values['allowlist'];
+  $allowlist = array_values(array_filter(array_map('trim', explode("\n", $allowlist_raw))));
+
+  $config->set('enabled', !empty($values['enabled']));
+  $config->set('webhook_token', trim($values['webhook_token']));
+  $config->set('forward_to', trim($values['forward_to']));
+  $config->set('default_pid', (int) $values['default_pid']);
+  $config->set('drop_unverified', !empty($values['drop_unverified']));
+  $config->set('allowlist', $allowlist);
+  $config->save();
+
+  backdrop_set_message(t('Inbound email settings saved.'));
+}
+
+// ---------------------------------------------------------------------------
+// Unverified tickets report
+// ---------------------------------------------------------------------------
+
+/**
+ * Page callback: list all unverified tickets.
+ */
+function dropbridge_unverified_tickets_page() {
+  if (!module_exists('droptickets')) {
+    return t('DropTickets is not enabled.');
+  }
+
+  $header = array(
+    t('Ticket'),
+    t('From'),
+    t('Created'),
+    t('Actions'),
+  );
+
+  $query = db_select('drop_ticket', 't')
+    ->fields('t', array('tid', 'title', 'inbound_email', 'created', 'pid', 'ticket_number'))
+    ->condition('t.is_verified', 0)
+    ->orderBy('t.created', 'DESC');
+
+  $tickets = $query->execute()->fetchAll();
+
+  $rows = array();
+  foreach ($tickets as $t) {
+    $ticket_label = '#' . ($t->pid ? $t->pid . '-' . $t->ticket_number : $t->tid);
+    $actions  = array();
+    $actions[] = l(t('View ticket'), 'drop/tickets/' . $t->tid);
+    $actions[] = l(t('Verify sender'), 'drop/tickets/verify-sender/' . $t->tid,
+      array('query' => array('destination' => 'drop/tickets/unverified')));
+
+    $rows[] = array(
+      l($ticket_label . ': ' . check_plain($t->title), 'drop/tickets/' . $t->tid),
+      check_plain($t->inbound_email ?: '—'),
+      format_date($t->created, 'short'),
+      implode(' | ', $actions),
+    );
+  }
+
+  $output  = '<h2>' . t('Unverified tickets') . '</h2>';
+  $output .= '<p>' . t('These tickets were created by email senders not on the allowlist. Verify a sender to add them to the allowlist and mark all their tickets as verified.') . '</p>';
+  $output .= theme('table', array(
+    'header' => $header,
+    'rows'   => $rows,
+    'empty'  => t('No unverified tickets.'),
+  ));
+
+  return $output;
+}
+
+// ---------------------------------------------------------------------------
+// Verify sender
+// ---------------------------------------------------------------------------
+
+/**
+ * Page callback: add a ticket's inbound sender to the allowlist and mark
+ * all their tickets as verified.
+ *
+ * @param int $tid
+ *   The ticket ID whose sender should be verified.
+ */
+function dropbridge_verify_sender($tid) {
+  $ticket = drop_ticket_load((int) $tid);
+  if (!$ticket || empty($ticket->inbound_email)) {
+    backdrop_set_message(t('Ticket not found or has no inbound email address.'), 'error');
+    backdrop_goto('drop/tickets/unverified');
+  }
+
+  $email = strtolower(trim($ticket->inbound_email));
+
+  // Add to allowlist (de-duplicate).
+  $config    = config('dropbridge.inbound');
+  $allowlist = $config->get('allowlist') ?: array();
+  $allowlist_lower = array_map('strtolower', $allowlist);
+  if (!in_array($email, $allowlist_lower)) {
+    $allowlist[] = $email;
+    $config->set('allowlist', $allowlist);
+    $config->save();
+  }
+
+  // Mark all unverified tickets from this email as verified.
+  $count = db_update('drop_ticket')
+    ->fields(array('is_verified' => 1))
+    ->condition('inbound_email', $email)
+    ->condition('is_verified', 0)
+    ->execute();
+
+  backdrop_set_message(t('@email added to the allowlist. @count ticket(s) marked as verified.',
+    array('@email' => $email, '@count' => $count)));
+
+  backdrop_goto(isset($_GET['destination']) ? $_GET['destination'] : 'drop/tickets/unverified');
+}
