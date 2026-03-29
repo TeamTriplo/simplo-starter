@@ -1,21 +1,50 @@
 <?php
 /**
  * @file
- * Tags outgoing SimpleNews emails with SendGrid X-SMTPAPI categories.
+ * Tags outgoing SimpleNews emails with SendGrid X-SMTPAPI categories and
+ * provides a per-newsletter stats report pulled from the SendGrid Stats API.
  *
- * This allows per-newsletter open and click stats to appear in the SendGrid
- * dashboard under Stats → Categories, rather than being invisible in the
- * aggregate transactional stream.
+ * Category tagging allows per-newsletter open and click stats to appear in
+ * the SendGrid dashboard under Stats → Categories.
  *
  * Each newsletter email is tagged with:
  *   - The newsletter category name (e.g. "Demo Newsletter")
  *   - The node title of the specific issue (e.g. "March 2026 Update")
  *
- * SendGrid category names are capped at 255 characters and the API allows
- * a maximum of 10 categories per message.
- *
  * @see https://docs.sendgrid.com/for-developers/sending-email/categories
+ * @see https://docs.sendgrid.com/api-reference/category-statistics/
  */
+
+// ---------------------------------------------------------------------------
+// Menu
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_menu().
+ */
+function simplenews_sendgrid_menu() {
+  $items['admin/config/services/simplenews/stats'] = array(
+    'title'            => 'Newsletter stats',
+    'description'      => 'Per-newsletter open and click statistics from SendGrid.',
+    'page callback'    => 'simplenews_sendgrid_stats_page',
+    'access arguments' => array('administer simplenews'),
+    'file'             => 'simplenews_sendgrid.pages.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 10,
+  );
+  $items['admin/config/services/simplenews/stats/refresh'] = array(
+    'title'            => 'Refresh newsletter stats',
+    'page callback'    => 'simplenews_sendgrid_stats_refresh',
+    'access arguments' => array('administer simplenews'),
+    'file'             => 'simplenews_sendgrid.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+// ---------------------------------------------------------------------------
+// Mail alter — inject X-SMTPAPI category header
+// ---------------------------------------------------------------------------
 
 /**
  * Implements hook_mail_alter().
@@ -25,7 +54,6 @@
  * other SimpleNews transactional mails are left untagged.
  */
 function simplenews_sendgrid_mail_alter(&$message) {
-  // Only act on SimpleNews newsletter sends, not subscription confirmations.
   if ($message['module'] !== 'simplenews' || $message['key'] !== 'node') {
     return;
   }
@@ -40,13 +68,11 @@ function simplenews_sendgrid_mail_alter(&$message) {
 
   $categories = array();
 
-  // Tag with the newsletter category name (e.g. "Demo Newsletter").
   $category = $source->getCategory();
   if ($category && !empty($category->name)) {
     $categories[] = _simplenews_sendgrid_clean_category($category->name);
   }
 
-  // Tag with the individual issue title (e.g. "March 2026 Update").
   $node = $source->getNode();
   if ($node && !empty($node->title)) {
     $categories[] = _simplenews_sendgrid_clean_category($node->title);
@@ -56,26 +82,71 @@ function simplenews_sendgrid_mail_alter(&$message) {
     return;
   }
 
-  // Merge with any existing X-SMTPAPI header (e.g. set by another module).
   $existing = isset($message['headers']['X-SMTPAPI'])
     ? json_decode($message['headers']['X-SMTPAPI'], TRUE)
     : array();
 
   $existing_categories = isset($existing['category']) ? $existing['category'] : array();
   $merged = array_values(array_unique(array_merge($existing_categories, $categories)));
-
-  // SendGrid enforces a maximum of 10 categories per message.
   $merged = array_slice($merged, 0, 10);
 
   $existing['category'] = $merged;
   $message['headers']['X-SMTPAPI'] = json_encode($existing);
 }
 
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches per-category stats from the SendGrid API.
+ *
+ * Uses a 365-day lookback window so all historical newsletter issues appear.
+ * Results are stored in state for manual refresh on demand.
+ *
+ * @return array|false  Parsed stats array on success, FALSE on failure.
+ */
+function simplenews_sendgrid_fetch_stats() {
+  $api_key = config_get('sendgrid_integration.settings', 'sendgrid_integration_apikey');
+  if (empty($api_key)) {
+    return FALSE;
+  }
+
+  $start_date = date('Y-m-d', strtotime('-365 days'));
+  $end_date   = date('Y-m-d');
+
+  $url = 'https://api.sendgrid.com/v3/categories/stats/sums'
+    . '?start_date=' . $start_date
+    . '&end_date=' . $end_date
+    . '&sort_by_metric=delivered'
+    . '&sort_by_direction=desc'
+    . '&limit=50';
+
+  $response = backdrop_http_request($url, array(
+    'headers' => array(
+      'Authorization' => 'Bearer ' . $api_key,
+      'Content-Type'  => 'application/json',
+    ),
+    'timeout' => 15,
+  ));
+
+  if ($response->code != 200) {
+    watchdog('simplenews_sendgrid', 'SendGrid API request failed: @code @error',
+      array('@code' => $response->code, '@error' => isset($response->error) ? $response->error : ''),
+      WATCHDOG_ERROR);
+    return FALSE;
+  }
+
+  $data = json_decode($response->data, TRUE);
+  if (!is_array($data)) {
+    return FALSE;
+  }
+
+  return $data;
+}
+
 /**
  * Sanitises a string for use as a SendGrid category name.
- *
- * SendGrid categories must be strings, max 255 characters.
- * We strip leading/trailing whitespace and truncate if necessary.
  *
  * @param string $name
  * @return string

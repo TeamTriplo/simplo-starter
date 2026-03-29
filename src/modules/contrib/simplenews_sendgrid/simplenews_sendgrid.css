@@ -1,0 +1,52 @@
+/**
+ * @file
+ * Styles for the SimpleNews SendGrid stats page.
+ */
+
+.sn-sendgrid-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.sn-sendgrid-last-fetched {
+  font-size: 0.88em;
+  color: #777;
+}
+
+.sn-sendgrid-refresh-btn {
+  font-size: 0.85em;
+}
+
+.sn-sendgrid-stats-table {
+  width: 100%;
+}
+
+.sn-sendgrid-stats-table th,
+.sn-sendgrid-stats-table td {
+  white-space: nowrap;
+}
+
+.sn-sendgrid-stats-table td:first-child {
+  white-space: normal;
+  min-width: 180px;
+}
+
+.sn-sendgrid-rate {
+  color: #888;
+  font-size: 0.88em;
+}
+
+.sn-sendgrid-spam {
+  color: #c62828;
+  font-weight: bold;
+}
+
+.sn-sendgrid-note {
+  font-size: 0.85em;
+  color: #777;
+  margin-top: 1rem;
+}
