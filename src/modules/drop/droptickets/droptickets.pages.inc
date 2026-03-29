@@ -1322,7 +1322,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
   }
 
   if (droptickets_ticket_access('update', $ticket)) {
-    $main .= '<p class="droptickets-related-add">' . l(t('+ Add relation'), 'drop/tickets/' . $ticket->tid . '/relate') . '</p>';
+    $main .= '<p class="droptickets-related-add">' . l(t('+ Add related ticket'), 'drop/tickets/' . $ticket->tid . '/relate') . '</p>';
   }
   $main .= '</details>';
 

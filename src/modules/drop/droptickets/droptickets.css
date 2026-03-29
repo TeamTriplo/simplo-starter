@@ -283,6 +283,7 @@
 .droptickets-card {
   background: #fff;
   border: 1px solid #cbc7c2;
+  border-top: 3px solid #9e9e9e;
   border-radius: 5px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1rem;
@@ -296,6 +297,7 @@
 .droptickets-body p:last-child {
   margin-bottom: 0;
 }
+
 
 /* Sidebar — white card with flat dividers */
 .droptickets-view-sidebar {
@@ -385,7 +387,9 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 0.9rem;
+  padding-top: 0.6rem;
   padding-bottom: 0.5rem;
+  border-top: 3px solid #9e9e9e;
   border-bottom: 1px solid #e0ddd8;
 }
 
