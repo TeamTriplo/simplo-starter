@@ -1822,6 +1822,29 @@ function droptickets_active_statuses() {
 }
 
 /**
+ * Builds the HTML <option> list for a standard status filter dropdown.
+ *
+ * Options produced:
+ *   ""            → "— All active —"  (default; queries active statuses only)
+ *   <status key>  → individual status label
+ *   "all_tickets" → "All tickets"     (no status filter applied)
+ *
+ * @param string $selected  The currently selected value.
+ * @return string  Raw HTML <option> elements, ready for a <select>.
+ */
+function _droptickets_status_select_html($selected) {
+  $html = '<option value=""' . ($selected === '' ? ' selected' : '') . '>' . t('— All active —') . '</option>';
+  $html .= '<optgroup label="' . t('By status') . '">';
+  foreach (droptickets_status_options() as $skey => $slabel) {
+    $html .= '<option value="' . check_plain($skey) . '"' . ($selected === $skey ? ' selected' : '') . '>'
+      . check_plain($slabel) . '</option>';
+  }
+  $html .= '</optgroup>';
+  $html .= '<option value="all_tickets"' . ($selected === 'all_tickets' ? ' selected' : '') . '>' . t('All tickets') . '</option>';
+  return $html;
+}
+
+/**
  * Returns the statuses shown on the Kanban board (in column order).
  */
 function droptickets_kanban_statuses() {

@@ -2079,8 +2079,8 @@ function droptickets_recent_page() {
   // Filters.
   $pid_filter      = (!empty($_GET['pid'])      && is_numeric($_GET['pid']))      ? (int) $_GET['pid']      : 0;
   $assignee_filter = (!empty($_GET['assignee']) && is_numeric($_GET['assignee'])) ? (int) $_GET['assignee'] : 0;
-  $active_status_keys = array_keys(droptickets_status_options());
-  $status_filter   = (isset($_GET['status']) && in_array($_GET['status'], $active_status_keys)) ? $_GET['status'] : '';
+  $valid_status_keys = array_merge(array('', 'all_tickets'), array_keys(droptickets_status_options()));
+  $status_filter   = (isset($_GET['status']) && in_array($_GET['status'], $valid_status_keys)) ? $_GET['status'] : '';
 
   // --- Project Mode ---
   $project_mode       = droptickets_project_mode_get($user->uid);
@@ -2151,10 +2151,7 @@ function droptickets_recent_page() {
   }
 
   // Build status dropdown.
-  $status_opts_html = '<option value=""' . (!$status_filter ? ' selected' : '') . '>' . t('— All statuses —') . '</option>';
-  foreach (droptickets_status_options() as $skey => $slabel) {
-    $status_opts_html .= '<option value="' . check_plain($skey) . '"' . ($status_filter === $skey ? ' selected' : '') . '>' . check_plain($slabel) . '</option>';
-  }
+  $status_opts_html = _droptickets_status_select_html($status_filter);
 
   // Mode button.
   $recent_mode_query = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL, 'status' => $status_filter ?: NULL));
@@ -2199,8 +2196,14 @@ function droptickets_recent_page() {
   if ($assignee_filter) {
     $query->condition('t.assignee_uid', $assignee_filter);
   }
-  if ($status_filter) {
+  if ($status_filter === 'all_tickets') {
+    // No status condition — show everything.
+  }
+  elseif ($status_filter) {
     $query->condition('t.status', $status_filter);
+  }
+  else {
+    $query->condition('t.status', droptickets_active_statuses(), 'IN');
   }
   $query->orderBy('last_activity', 'DESC');
   $query->range(0, 50);
@@ -2484,6 +2487,8 @@ function droptickets_stale_report_page() {
   // Filters.
   $pid_filter      = (!empty($_GET['pid'])      && is_numeric($_GET['pid']))      ? (int) $_GET['pid']      : 0;
   $assignee_filter = (!empty($_GET['assignee']) && is_numeric($_GET['assignee'])) ? (int) $_GET['assignee'] : 0;
+  $valid_status_keys = array_merge(array('', 'all_tickets'), array_keys(droptickets_status_options()));
+  $status_filter   = (isset($_GET['status']) && in_array($_GET['status'], $valid_status_keys)) ? $_GET['status'] : '';
 
   // --- Project Mode ---
   $project_mode     = droptickets_project_mode_get($user->uid);
@@ -2493,26 +2498,29 @@ function droptickets_stale_report_page() {
     droptickets_project_mode_set($user->uid, 'stale', t('Stale'), 'drop/tickets/stale', array(
       'pid'      => $pid_filter ?: NULL,
       'assignee' => $assignee_filter ?: NULL,
+      'status'   => $status_filter ?: NULL,
     ));
-    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL, 'status' => $status_filter ?: NULL));
     backdrop_goto('drop/tickets/stale', array('query' => $rq));
     return;
   }
   if (isset($_GET['exit_mode'])) {
     droptickets_project_mode_clear($user->uid);
-    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+    $rq = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL, 'status' => $status_filter ?: NULL));
     backdrop_goto('drop/tickets/stale', array('query' => $rq));
     return;
   }
-  if ($stale_mode_active && !isset($_GET['pid']) && !isset($_GET['assignee'])) {
+  if ($stale_mode_active && !isset($_GET['pid']) && !isset($_GET['assignee']) && !isset($_GET['status'])) {
     $f               = $project_mode['filters'];
-    $pid_filter      = !empty($f['pid'])      ? (int) $f['pid']      : 0;
-    $assignee_filter = !empty($f['assignee']) ? (int) $f['assignee'] : 0;
+    $pid_filter      = !empty($f['pid'])      ? (int) $f['pid']         : 0;
+    $assignee_filter = !empty($f['assignee']) ? (int) $f['assignee']    : 0;
+    $status_filter   = !empty($f['status'])   ? (string) $f['status']   : '';
   }
-  elseif ($stale_mode_active && (isset($_GET['pid']) || isset($_GET['assignee']))) {
+  elseif ($stale_mode_active && (isset($_GET['pid']) || isset($_GET['assignee']) || isset($_GET['status']))) {
     droptickets_project_mode_set($user->uid, 'stale', t('Stale'), 'drop/tickets/stale', array(
       'pid'      => $pid_filter ?: NULL,
       'assignee' => $assignee_filter ?: NULL,
+      'status'   => $status_filter ?: NULL,
     ));
     $project_mode      = droptickets_project_mode_get($user->uid);
     $stale_mode_active = TRUE;
@@ -2551,7 +2559,7 @@ function droptickets_stale_report_page() {
   }
 
   // Mode button.
-  $stale_mode_query = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL));
+  $stale_mode_query = array_filter(array('pid' => $pid_filter ?: NULL, 'assignee' => $assignee_filter ?: NULL, 'status' => $status_filter ?: NULL));
   if ($stale_mode_active) {
     $exit_url  = url('drop/tickets/stale', array('query' => array('exit_mode' => 1) + $stale_mode_query));
     $mode_btn  = '<a href="' . $exit_url . '" class="droptickets-project-mode-btn droptickets-project-mode-btn--active" title="' . t('Project Mode is active. Current filters are frozen. Click to exit.') . '">'
@@ -2565,6 +2573,7 @@ function droptickets_stale_report_page() {
 
   // Filter form.
   $filter_form = '<form method="get" action="' . url('drop/tickets/stale') . '" class="droptickets-filter-form">'
+    . '<select name="status" class="droptickets-filter-select" onchange="this.form.submit()">' . _droptickets_status_select_html($status_filter) . '</select>'
     . '<select name="pid" class="droptickets-filter-select" onchange="this.form.submit()">' . $proj_opts_html . '</select>'
     . '<select name="assignee" class="droptickets-filter-select" onchange="this.form.submit()">' . $assignee_opts_html . '</select>'
     . '</form>';
@@ -2578,11 +2587,20 @@ function droptickets_stale_report_page() {
 
   $query = db_select('drop_ticket', 't')
     ->fields('t')
-    ->condition('t.status', 'done', '!=')
     ->condition('t.changed', $cutoff, '<')
     ->isNull('t.import_id')
     ->orderBy('t.changed', 'ASC');
 
+  if ($status_filter === 'all_tickets') {
+    // No status condition — show all stale tickets regardless of status.
+  }
+  elseif ($status_filter) {
+    $query->condition('t.status', $status_filter);
+  }
+  else {
+    // Default: active statuses only (excludes Icebox and Closed).
+    $query->condition('t.status', droptickets_active_statuses(), 'IN');
+  }
   if ($pid_filter) {
     $query->condition('t.pid', $pid_filter);
   }
@@ -2683,10 +2701,10 @@ function droptickets_review_page() {
   $review_mode_active = $project_mode && !empty($project_mode['report']) && $project_mode['report'] === 'review';
 
   // Parse filter params from URL.
-  $active_status_keys = array_keys(droptickets_status_options());
+  $valid_status_keys = array_merge(array('', 'all_tickets'), array_keys(droptickets_status_options()));
   $pid_filter    = (!empty($_GET['pid']) && is_numeric($_GET['pid'])) ? (int) $_GET['pid'] : 0;
   $tag_filter    = (!empty($_GET['tag']) && is_numeric($_GET['tag'])) ? (int) $_GET['tag'] : 0;
-  $status_filter = (isset($_GET['status']) && in_array($_GET['status'], $active_status_keys))
+  $status_filter = (isset($_GET['status']) && in_array($_GET['status'], $valid_status_keys))
     ? $_GET['status'] : '';
 
   // Handle mode toggle actions (GET params trigger a state change + redirect).
@@ -2757,12 +2775,7 @@ function droptickets_review_page() {
   }
 
   // Build status dropdown.
-  $status_opts_html = '<option value=""' . (!$status_filter ? ' selected' : '') . '>' . t('— All active —') . '</option>';
-  foreach (droptickets_status_options() as $skey => $slabel) {
-    $status_opts_html .= '<option value="' . check_plain($skey) . '"'
-      . ($status_filter === $skey ? ' selected' : '') . '>'
-      . check_plain($slabel) . '</option>';
-  }
+  $status_opts_html = _droptickets_status_select_html($status_filter);
 
   // Mode button — Enter or Exit.
   $mode_query = array_filter(array(
@@ -2801,7 +2814,10 @@ function droptickets_review_page() {
     ->orderBy('t.priority', 'DESC')
     ->orderBy('t.tid', 'ASC');
 
-  if ($status_filter) {
+  if ($status_filter === 'all_tickets') {
+    // No status condition — show everything.
+  }
+  elseif ($status_filter) {
     $query->condition('t.status', $status_filter);
   }
   else {
