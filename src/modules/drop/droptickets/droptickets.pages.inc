@@ -1053,12 +1053,11 @@ function droptickets_ticket_view(DropTicket $ticket) {
   $meta_items = array(
     t('Project')  => $proj_name,
     t('Status')   => $status_field,
-    t('Type')     => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>',
-    t('Priority') => check_plain($priority_label),
     t('Assignee') => _droptickets_assignee_field($ticket),
+    t('Type')     => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>',
     t('Due')      => $due,
+    t('Priority') => check_plain($priority_label),
   );
-  // Parent ticket is shown in the main content column near child tickets.
   if ($tag_html) {
     $meta_items[t('Tags')] = $tag_html;
   }

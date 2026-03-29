@@ -232,7 +232,7 @@ function droptickets_menu() {
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
     'file'             => 'droptickets.admin.inc',
-    'type'             => MENU_LOCAL_ACTION,
+    'type'             => MENU_CALLBACK,
   );
 
   // View ticket.
