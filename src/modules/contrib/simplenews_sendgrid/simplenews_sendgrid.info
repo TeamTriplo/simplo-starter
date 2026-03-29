@@ -1,0 +1,7 @@
+name = SimpleNews SendGrid Categories
+description = Tags outgoing SimpleNews newsletter emails with SendGrid categories so per-newsletter open and click stats appear in the SendGrid dashboard.
+package = SimpleNews
+type = module
+backdrop = 1.x
+
+dependencies[] = simplenews

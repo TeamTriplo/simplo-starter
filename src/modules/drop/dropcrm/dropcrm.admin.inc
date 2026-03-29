@@ -2180,10 +2180,12 @@ function dropcrm_project_list() {
 function dropcrm_project_view($project) {
   backdrop_set_title(check_plain($project->name));
 
+  $css = array(backdrop_get_path('module', 'dropcrm') . '/dropcrm.admin.css');
+  if (module_exists('droptickets')) {
+    $css[] = backdrop_get_path('module', 'droptickets') . '/droptickets.css';
+  }
   $output = array(
-    '#attached' => array(
-      'css' => array(backdrop_get_path('module', 'dropcrm') . '/dropcrm.admin.css'),
-    ),
+    '#attached' => array('css' => $css),
   );
 
   // Meta bar — color swatch, prefix, contact, status.
@@ -2214,11 +2216,10 @@ function dropcrm_project_view($project) {
 
   $actions = '';
   if (user_access('administer crm')) {
-    $actions = '<p class="dropcrm-project-actions">'
+    $actions = '<div class="drop-page-actions">'
       . l(t('Edit project'), 'drop/crm/projects/' . $project->pid . '/edit')
-      . ' · '
       . l(t('Delete'), 'drop/crm/projects/' . $project->pid . '/delete')
-      . '</p>';
+      . '</div>';
   }
 
   $output['meta'] = array(
@@ -2285,33 +2286,32 @@ function dropcrm_project_view($project) {
       ->condition('t.pid', $project->pid);
     $ticket_count = $ticket_count_q->countQuery()->execute()->fetchField();
 
+    $add_link = l(t('+ New ticket'), 'drop/tickets/add',
+      array('query' => array('pid' => $project->pid), 'attributes' => array('class' => array('drop-section-add'))));
+
     $output['ticket_tabs'] = array(
-      '#markup' => '<h2>' . t('Tickets (@total)', array('@total' => $ticket_count)) . '</h2>'
-        . '<div class="droptickets-status-tabs">' . $tabs . '</div>',
+      '#markup' => '<div class="drop-section-header">'
+        . '<h2>' . t('Tickets (@total)', array('@total' => $ticket_count)) . '</h2>'
+        . '<div class="drop-section-add-group">' . $add_link . '</div>'
+        . '</div>'
+        . '<div class="dropcrm-project-status-tabs">' . $tabs . '</div>',
       '#weight' => 0,
     );
 
     if (empty($rows)) {
-      $output['ticket_empty'] = array(
-        '#markup' => '<p class="droptickets-empty">' . t('No tickets with this status.') . '</p>',
-        '#weight' => 1,
+      $rows[] = array(
+        array('data' => t('No tickets yet.'), 'colspan' => 6, 'class' => array('droptickets-empty')),
       );
-    }
-    else {
-      $output['ticket_table'] = array(
-        '#theme'      => 'table',
-        '#header'     => array(t('ID'), t('Title'), t('Type'), t('Status'), t('Assignee'), t('Actions')),
-        '#rows'       => $rows,
-        '#attributes' => array('class' => array('droptickets-list')),
-        '#weight'     => 1,
-      );
-      $output['pager'] = array('#theme' => 'pager', '#weight' => 10);
     }
 
-    $output['add_ticket'] = array(
-      '#markup' => '<p>' . l(t('+ Add ticket for this project'), 'drop/tickets/add', array('query' => array('pid' => $project->pid))) . '</p>',
-      '#weight' => 11,
+    $output['ticket_table'] = array(
+      '#theme'      => 'table',
+      '#header'     => array(t('ID'), t('Title'), t('Type'), t('Status'), t('Assignee'), t('Actions')),
+      '#rows'       => $rows,
+      '#attributes' => array('class' => array('droptickets-list')),
+      '#weight'     => 1,
     );
+    $output['pager'] = array('#theme' => 'pager', '#weight' => 10);
   }
 
   $output['back'] = array(
