@@ -150,6 +150,48 @@
   };
 
   /**
+   * Inline assignee select on the ticket view page.
+   *
+   * On change, POSTs the new assignee value to the inline-assignee endpoint.
+   * Reverts on failure.
+   */
+  Backdrop.behaviors.dropticketsInlineAssignee = {
+    attach: function (context, settings) {
+      $('.droptickets-assignee-select', context).once('droptickets-inline-assignee').on('change', function () {
+        var $select  = $(this);
+        var newVal   = $select.val();
+        var prevVal  = $select.data('current');
+        var endpoint = $select.data('endpoint');
+        var token    = $select.data('token');
+
+        $select.prop('disabled', true).addClass('droptickets-saving');
+
+        $.ajax({
+          url:      endpoint,
+          type:     'POST',
+          data:     { assignee: newVal, token: token },
+          dataType: 'json',
+          success: function (resp) {
+            if (resp.ok) {
+              $select.data('current', newVal);
+            }
+            else {
+              $select.val(prevVal);
+              if (resp.message) { alert(resp.message); }
+            }
+          },
+          error: function () {
+            $select.val(prevVal);
+          },
+          complete: function () {
+            $select.prop('disabled', false).removeClass('droptickets-saving');
+          }
+        });
+      });
+    }
+  };
+
+  /**
    * Review / triage toggle buttons.
    *
    * POSTs to the toggle endpoint and updates the button + row class in place

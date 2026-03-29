@@ -230,6 +230,27 @@
   cursor: wait;
 }
 
+.droptickets-assignee-select {
+  appearance: auto;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 0.88em;
+  cursor: pointer;
+  width: 100%;
+  background: #fff;
+}
+
+.droptickets-assignee-select:focus {
+  outline: 2px solid #90caf9;
+  outline-offset: 1px;
+}
+
+.droptickets-assignee-select.droptickets-saving {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 /* ---------------------------------------------------------------------------
    Ticket view — page wrapper, two-column layout, cards
    --------------------------------------------------------------------------- */
@@ -693,21 +714,75 @@ details.droptickets-related[open] > summary::after {
   margin-bottom: 0.5rem;
 }
 
-.droptickets-sidebar-watchers .form-checkboxes {
-  margin: 0 0 0.5rem;
+.droptickets-watchers-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.droptickets-sidebar-watchers .form-item {
+.droptickets-watch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82em;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #555;
+  text-decoration: none;
+  background: #f8f8f8;
+  align-self: flex-start;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.droptickets-watch-btn:hover {
+  background: #eee;
+  border-color: #aaa;
+  text-decoration: none;
+}
+
+.droptickets-watch-btn.is-watching {
+  background: #e3f2fd;
+  border-color: #90caf9;
+  color: #1565c0;
+}
+
+.droptickets-watcher-names {
+  font-size: 0.8em;
+  color: #888;
+  line-height: 1.3;
+}
+
+.droptickets-watchers-manage {
+  margin-top: 0.25rem;
+}
+
+.droptickets-watchers-manage summary {
+  font-size: 0.78em;
+  color: #aaa;
+  cursor: pointer;
+  user-select: none;
+}
+
+.droptickets-watchers-manage summary:hover {
+  color: #666;
+}
+
+.droptickets-watchers-manage .form-checkboxes {
+  margin: 0.4rem 0 0.4rem;
+}
+
+.droptickets-watchers-manage .form-item {
   margin: 0.2rem 0;
 }
 
-.droptickets-sidebar-watchers .form-item label {
-  font-size: 0.88em;
+.droptickets-watchers-manage .form-item label {
+  font-size: 0.85em;
 }
 
-.droptickets-sidebar-watchers .form-submit {
-  font-size: 0.8em;
-  padding: 0.25rem 0.6rem;
+.droptickets-watchers-manage .form-submit {
+  font-size: 0.78em;
+  padding: 0.2rem 0.5rem;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1450,6 +1525,32 @@ tr.droptickets-review-row--done .droptickets-review-btn {
 /* ---------------------------------------------------------------------------
    Parent ticket indicator on list rows and Kanban cards
    --------------------------------------------------------------------------- */
+
+.droptickets-child-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: #5c6bc0;
+  background: #ede7f6;
+  border-radius: 10px;
+  padding: 1px 6px;
+  margin-left: 5px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.droptickets-show-children-label {
+  font-size: 0.85em;
+  color: var(--drop-text-secondary, #666);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  cursor: pointer;
+  margin-left: 0.25rem;
+}
 
 .droptickets-parent-indicator {
   font-size: 0.75em;

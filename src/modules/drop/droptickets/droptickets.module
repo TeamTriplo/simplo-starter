@@ -396,6 +396,15 @@ function droptickets_menu() {
   );
 
   // Toggle flag on a ticket.
+  $items['drop/tickets/%drop_ticket/watch'] = array(
+    'page callback'    => 'droptickets_watch_toggle',
+    'page arguments'   => array(2),
+    'access callback'  => 'user_access',
+    'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
   $items['drop/tickets/%drop_ticket/flag'] = array(
     'page callback'    => 'droptickets_ticket_flag_toggle',
     'page arguments'   => array(2),
@@ -532,6 +541,16 @@ function droptickets_menu() {
     'page callback'    => 'droptickets_kanban_page',
     'access callback'  => 'user_access',
     'access arguments' => array('access droptickets'),
+    'file'             => 'droptickets.pages.inc',
+    'type'             => MENU_CALLBACK,
+  );
+
+  // AJAX endpoint: inline assignee update from the ticket view page.
+  $items['drop/tickets/%drop_ticket/inline-assignee'] = array(
+    'page callback'    => 'droptickets_inline_set_assignee',
+    'page arguments'   => array(2),
+    'access callback'  => 'droptickets_ticket_access',
+    'access arguments' => array('update', 2),
     'file'             => 'droptickets.pages.inc',
     'type'             => MENU_CALLBACK,
   );
@@ -1902,6 +1921,20 @@ function droptickets_drop_nav_links() {
       'permission' => 'access droptickets',
       'weight'     => 30,
     ),
+  );
+}
+
+/**
+ * Implements hook_drop_section_nav_extras().
+ */
+function droptickets_drop_section_nav_extras($section) {
+  if ($section !== 'tickets' || !user_access('access droptickets')) {
+    return array();
+  }
+  return array(
+    l(t('+ New Ticket'), 'drop/tickets/add', array(
+      'attributes' => array('class' => array('drop-snav__action-btn')),
+    )),
   );
 }
 

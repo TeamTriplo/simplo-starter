@@ -318,7 +318,12 @@ function _drop_base_section_nav_block() {
   }
 
   uasort($links, 'drupal_sort_weight');
-  return _drop_base_render_section_nav($links);
+
+  // Allow modules to add extras (e.g. action buttons) to the right side of
+  // the section nav by implementing hook_drop_section_nav_extras($section).
+  $extras = module_invoke_all('drop_section_nav_extras', $section);
+
+  return _drop_base_render_section_nav($links, $extras);
 }
 
 /**
@@ -363,11 +368,13 @@ function _drop_base_report_in_section(array $report, $section) {
  *
  * @param array $links
  *   Sorted array of link definition arrays (see hook_drop_section_links).
+ * @param array $extras
+ *   Optional HTML strings to render flush-right in the nav bar.
  *
  * @return string|false
  *   Rendered nav HTML, or FALSE if no items to display.
  */
-function _drop_base_render_section_nav(array $links) {
+function _drop_base_render_section_nav(array $links, array $extras = array()) {
   $current = current_path();
   $items   = array();
 
@@ -410,8 +417,13 @@ function _drop_base_render_section_nav(array $links) {
     return FALSE;
   }
 
+  $extras_html = !empty($extras)
+    ? '<div class="drop-snav__extras">' . implode('', $extras) . '</div>'
+    : '';
+
   return '<nav class="drop-snav" aria-label="' . t('Section navigation') . '">'
     . '<ul class="drop-snav__list">' . implode('', $items) . '</ul>'
+    . $extras_html
     . '</nav>';
 }
 

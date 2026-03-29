@@ -5,6 +5,76 @@
  */
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a child-count badge HTML string for use in ticket list rows.
+ *
+ * @param array $child_counts
+ *   Map of tid => child count, from a bulk query.
+ * @param int $tid
+ *   The ticket ID to look up.
+ *
+ * @return string
+ */
+function _droptickets_child_count_badge(array $child_counts, $tid) {
+  if (empty($child_counts[$tid])) {
+    return '';
+  }
+  $count = (int) $child_counts[$tid];
+  return ' <span class="droptickets-child-count" title="' . format_plural($count, '1 subtask', '@count subtasks') . '">'
+    . icon('git-branch', array('attributes' => array('width' => 11, 'height' => 11)))
+    . ' ' . $count
+    . '</span>';
+}
+
+/**
+ * Returns the assignee field HTML for the ticket view sidebar.
+ *
+ * Editors get an inline SELECT; viewers get a static label.
+ *
+ * @param DropTicket $ticket
+ *
+ * @return string
+ */
+function _droptickets_assignee_field(DropTicket $ticket) {
+  if (!droptickets_ticket_access('update', $ticket)) {
+    return droptickets_assignee_label($ticket);
+  }
+
+  // Encode the current ticket value as a select option value.
+  if ($ticket->assignee_mode === 'team') {
+    $current_val = 'team';
+  }
+  elseif ($ticket->assignee_mode === 'on_hold') {
+    $current_val = 'on_hold';
+  }
+  elseif (!empty($ticket->assignee_uid)) {
+    $current_val = (string) (int) $ticket->assignee_uid;
+  }
+  else {
+    $current_val = '';
+  }
+
+  $team = droptickets_assignee_options();
+
+  $select = '<select class="droptickets-assignee-select"'
+    . ' data-endpoint="' . url('drop/tickets/' . $ticket->tid . '/inline-assignee') . '"'
+    . ' data-token="' . backdrop_get_token('droptickets_inline_assignee') . '"'
+    . ' data-current="' . check_plain($current_val) . '">';
+  $select .= '<option value=""' . ($current_val === '' ? ' selected' : '') . '>— ' . t('Unassigned') . ' —</option>';
+  $select .= '<option value="team"' . ($current_val === 'team' ? ' selected' : '') . '>' . t('The Team') . '</option>';
+  $select .= '<option value="on_hold"' . ($current_val === 'on_hold' ? ' selected' : '') . '>' . t('On Hold') . '</option>';
+  foreach ($team as $uid => $name) {
+    $select .= '<option value="' . (int) $uid . '"' . ($current_val === (string) $uid ? ' selected' : '') . '>' . check_plain($name) . '</option>';
+  }
+  $select .= '</select>';
+
+  return $select;
+}
+
+// ---------------------------------------------------------------------------
 // Ticket list
 // ---------------------------------------------------------------------------
 
@@ -41,6 +111,9 @@ function droptickets_list_page() {
 
   // Tag filter.
   $tag_filter = (!empty($_GET['tag']) && is_numeric($_GET['tag'])) ? (int) $_GET['tag'] : 0;
+
+  // Show child tickets toggle.
+  $show_children = !empty($_GET['show_children']);
 
   // Combined filter row: status dropdown + project dropdown + search + add link.
 
@@ -84,6 +157,7 @@ function droptickets_list_page() {
       $clear_q = array('status' => $status);
       if ($pid_filter) { $clear_q['pid'] = $pid_filter; }
       if ($search !== '') { $clear_q['search'] = $search; }
+      if ($show_children) { $clear_q['show_children'] = 1; }
       $tag_badge = ' <a href="' . url('drop/tickets', array('query' => $clear_q)) . '" class="droptickets-tag-badge">'
         . check_plain($term->name) . ' ×</a>';
     }
@@ -100,6 +174,10 @@ function droptickets_list_page() {
 
   $filter_form .= '<input type="search" name="search" value="' . check_plain($search) . '" placeholder="' . t('Search tickets…') . '" class="droptickets-search-input">'
     . '<button type="submit" class="droptickets-search-btn">' . icon('magnifying-glass', array('attributes' => array('width' => 15, 'height' => 15))) . '</button>'
+    . '<label class="droptickets-show-children-label">'
+    . '<input type="checkbox" name="show_children" value="1"' . ($show_children ? ' checked' : '') . ' onchange="this.form.submit()">'
+    . ' ' . t('Show subtasks')
+    . '</label>'
     . '</form>';
 
   $output['filters'] = array(
@@ -118,13 +196,16 @@ function droptickets_list_page() {
     $query->isNotNull('t.import_id');
   }
   else {
-    // All normal views exclude imported tickets and child tickets.
+    // All normal views exclude imported tickets.
     $query->isNull('t.import_id');
-    $query->condition(
-      db_or()
-        ->condition('t.parent_tid', 0)
-        ->isNull('t.parent_tid')
-    );
+    // Exclude child tickets unless the toggle is on.
+    if (!$show_children) {
+      $query->condition(
+        db_or()
+          ->condition('t.parent_tid', 0)
+          ->isNull('t.parent_tid')
+      );
+    }
 
     if ($status === 'all') {
       // Default: all active tickets — everything except Icebox and Closed.
@@ -175,6 +256,19 @@ function droptickets_list_page() {
     $count_query->addExpression('COUNT(*)', 'cnt');
     foreach ($count_query->execute()->fetchAll() as $cr) {
       $comment_counts[$cr->tid] = (int) $cr->cnt;
+    }
+  }
+
+  // Load child counts for tickets on this page that are parents.
+  $child_counts = array();
+  if ($ticket_tids) {
+    $child_count_query = db_select('drop_ticket', 'ch')
+      ->fields('ch', array('parent_tid'))
+      ->condition('ch.parent_tid', $ticket_tids, 'IN');
+    $child_count_query->addExpression('COUNT(*)', 'cnt');
+    $child_count_query->groupBy('ch.parent_tid');
+    foreach ($child_count_query->execute()->fetchAll() as $cr) {
+      $child_counts[(int) $cr->parent_tid] = (int) $cr->cnt;
     }
   }
 
@@ -260,7 +354,7 @@ function droptickets_list_page() {
       array('data' => $flag_cell, 'class' => array('droptickets-col-flag')),
       array('data' => '<span class="droptickets-ticket-id">' . check_plain($label) . '</span>', 'class' => array('droptickets-col-id')),
       array('data' => $proj_name, 'class' => array('droptickets-col-project')),
-      array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid) . $parent_indicator, 'class' => array('droptickets-col-title')),
+      array('data' => l($ticket->title, 'drop/tickets/' . $ticket->tid) . _droptickets_child_count_badge($child_counts, $ticket->tid) . $parent_indicator, 'class' => array('droptickets-col-title')),
       array('data' => $priority_dot, 'class' => array('droptickets-col-priority')),
       array('data' => '<span class="droptickets-status droptickets-status--' . check_plain($ticket->status) . '">' . check_plain($status_label) . '</span>'),
     );
@@ -737,6 +831,59 @@ function droptickets_inline_set_status(DropTicket $ticket) {
 }
 
 /**
+ * AJAX callback: inline assignee update from the ticket view page.
+ *
+ * Expects POST fields: assignee (encoded value), token.
+ * Returns JSON: {ok: true, label: '...'} or {ok: false, message: '...'}.
+ */
+function droptickets_inline_set_assignee(DropTicket $ticket) {
+  backdrop_add_http_header('Content-Type', 'application/json');
+
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'POST required.'));
+    exit();
+  }
+
+  $token = isset($_POST['token']) ? $_POST['token'] : '';
+  if (!backdrop_valid_token($token, 'droptickets_inline_assignee')) {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid token.'));
+    exit();
+  }
+
+  $value = isset($_POST['assignee']) ? $_POST['assignee'] : '';
+
+  if ($value === 'team') {
+    $ticket->assignee_mode = 'team';
+    $ticket->assignee_uid  = NULL;
+  }
+  elseif ($value === 'on_hold') {
+    $ticket->assignee_mode = 'on_hold';
+    $ticket->assignee_uid  = NULL;
+  }
+  elseif (is_numeric($value) && (int) $value > 0) {
+    $valid_uids = array_keys(droptickets_assignee_options());
+    if (!in_array((int) $value, $valid_uids)) {
+      print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid assignee.'));
+      exit();
+    }
+    $ticket->assignee_mode = 'user';
+    $ticket->assignee_uid  = (int) $value;
+  }
+  elseif ($value === '' || $value === '0') {
+    $ticket->assignee_mode = 'user';
+    $ticket->assignee_uid  = NULL;
+  }
+  else {
+    print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid assignee.'));
+    exit();
+  }
+
+  $ticket->save();
+  print backdrop_json_encode(array('ok' => TRUE, 'label' => strip_tags(droptickets_assignee_label($ticket))));
+  exit();
+}
+
+/**
  * AJAX callback: update a ticket's status from the Kanban drag-and-drop.
  *
  * Expects POST fields: status, token.
@@ -908,7 +1055,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
     t('Status')   => $status_field,
     t('Type')     => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>',
     t('Priority') => check_plain($priority_label),
-    t('Assignee') => droptickets_assignee_label($ticket),
+    t('Assignee') => _droptickets_assignee_field($ticket),
     t('Due')      => $due,
   );
   // Parent ticket is shown in the main content column near child tickets.
@@ -938,12 +1085,52 @@ function droptickets_ticket_view(DropTicket $ticket) {
 
 
   // Watchers section.
-  module_load_include('inc', 'droptickets', 'droptickets.admin');
-  $watchers_form = backdrop_get_form('droptickets_watchers_form', $ticket);
-  $watchers_html = backdrop_render($watchers_form);
+  global $user;
+  $watcher_uids    = array_map('intval', droptickets_watchers_get($ticket->tid));
+  $is_watching     = in_array((int) $user->uid, $watcher_uids);
+  $ticket_path     = 'drop/tickets/' . $ticket->tid;
+  $watch_dest      = $ticket_path;
+  $watch_label     = $is_watching ? t('Watching') : t('Watch');
+  $watch_icon      = icon('eye' . ($is_watching ? '-slash' : ''), array('attributes' => array('width' => 13, 'height' => 13)));
+  $watch_toggle    = l($watch_icon . ' ' . $watch_label, 'drop/tickets/' . $ticket->tid . '/watch', array(
+    'html'       => TRUE,
+    'query'      => array('destination' => $watch_dest),
+    'attributes' => array('class' => array($is_watching ? 'droptickets-watch-btn is-watching' : 'droptickets-watch-btn')),
+  ));
+
+  // Compact watcher names list.
+  $watcher_names = '';
+  if (!empty($watcher_uids)) {
+    $watcher_accounts = user_load_multiple($watcher_uids);
+    $names = array();
+    foreach ($watcher_accounts as $wa) {
+      $names[] = check_plain(format_username($wa));
+    }
+    $watcher_names = '<span class="droptickets-watcher-names">' . implode(', ', $names) . '</span>';
+  }
+
   $sidebar .= '<div class="droptickets-sidebar-watchers">';
   $sidebar .= '<div class="droptickets-sidebar-section-label">' . t('Watchers') . '</div>';
-  $sidebar .= $watchers_html;
+  $sidebar .= '<div class="droptickets-watchers-compact">';
+  $sidebar .= $watch_toggle;
+  if ($watcher_names) {
+    $sidebar .= $watcher_names;
+  }
+
+  // PMs get an accordion to manage the full watcher list.
+  if (user_access('administer droptickets')) {
+    module_load_include('inc', 'droptickets', 'droptickets.admin');
+    $watchers_form = backdrop_get_form('droptickets_watchers_form', $ticket);
+    $watchers_html = backdrop_render($watchers_form);
+    $watcher_count = count($watcher_uids);
+    $summary_label = t('Manage') . ($watcher_count ? ' (' . $watcher_count . ')' : '');
+    $sidebar .= '<details class="droptickets-watchers-manage">'
+      . '<summary>' . check_plain($summary_label) . '</summary>'
+      . $watchers_html
+      . '</details>';
+  }
+
+  $sidebar .= '</div>';
   $sidebar .= '</div>';
 
   $sidebar .= '</div>';
@@ -1760,6 +1947,25 @@ function droptickets_notification_log_page() {
 
 /**
  * Page callback: toggle a ticket's flagged state and redirect back.
+ */
+/**
+ * Page callback: toggle watch status for the current user on a ticket.
+ */
+function droptickets_watch_toggle(DropTicket $ticket) {
+  global $user;
+  $watching = in_array($user->uid, droptickets_watchers_get($ticket->tid));
+  if ($watching) {
+    droptickets_watcher_remove($ticket->tid, $user->uid);
+  }
+  else {
+    droptickets_watcher_add($ticket->tid, $user->uid);
+  }
+  $destination = isset($_GET['destination']) ? $_GET['destination'] : 'drop/tickets/' . $ticket->tid;
+  backdrop_goto($destination);
+}
+
+/**
+ * Page callback: toggle flag on a ticket.
  */
 function droptickets_ticket_flag_toggle(DropTicket $ticket) {
   $is_flagged = db_select('drop_ticket_flag', 'f')
