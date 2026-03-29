@@ -923,6 +923,9 @@ function simplenews_unsubscribe_blocked_accounts(array $uids = array()) {
     ->fields('ss', array('snid'));
   $query->join('users', 'u', 'u.uid = ss.uid');
   $query->condition('u.status', 0);
+  // Exclude anonymous subscribers (uid=0). The anonymous user record always
+  // has status=0, which would incorrectly match all non-registered subscribers.
+  $query->condition('ss.uid', 0, '<>');
   if ($uids) {
     $query->condition('u.uid', $uids, 'IN');
   }
