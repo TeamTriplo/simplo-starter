@@ -126,17 +126,36 @@ function simplenews_sendgrid_fetch_stats() {
     'timeout' => 15,
   ));
 
+  watchdog('simplenews_sendgrid', 'SendGrid API request: @code — URL: @url',
+    array('@code' => $response->code, '@url' => $url),
+    WATCHDOG_DEBUG);
+
   if ($response->code != 200) {
-    watchdog('simplenews_sendgrid', 'SendGrid API request failed: @code @error',
-      array('@code' => $response->code, '@error' => isset($response->error) ? $response->error : ''),
+    watchdog('simplenews_sendgrid', 'SendGrid API request failed: @code @error — Body: @body',
+      array(
+        '@code'  => $response->code,
+        '@error' => isset($response->error) ? $response->error : '',
+        '@body'  => isset($response->data) ? $response->data : '',
+      ),
       WATCHDOG_ERROR);
     return FALSE;
   }
 
+  watchdog('simplenews_sendgrid', 'SendGrid API raw response: @body',
+    array('@body' => $response->data),
+    WATCHDOG_DEBUG);
+
   $data = json_decode($response->data, TRUE);
   if (!is_array($data)) {
+    watchdog('simplenews_sendgrid', 'SendGrid API response could not be decoded as JSON: @body',
+      array('@body' => $response->data),
+      WATCHDOG_ERROR);
     return FALSE;
   }
+
+  watchdog('simplenews_sendgrid', 'SendGrid API returned @count items.',
+    array('@count' => count($data)),
+    WATCHDOG_INFO);
 
   return $data;
 }
