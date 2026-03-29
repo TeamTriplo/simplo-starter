@@ -1939,24 +1939,21 @@ function droptickets_dropcrm_contact_view_alter(&$output, $contact) {
   }
 
   $output['tickets'] = array(
-    '#type'   => 'container',
-    '#weight' => 30,
-    '#attached' => array(
-      'css' => array(backdrop_get_path('module', 'droptickets') . '/droptickets.css'),
-    ),
-  );
-  $output['tickets']['heading'] = array(
-    '#markup' => drop_base_section_header(
+    '#weight'   => 30,
+    '#prefix'   => dropcrm_accordion_prefix(
       t('Open Tickets'),
       l(t('+ Add ticket'), 'drop/tickets/add', array('attributes' => array('class' => array('drop-section-add'))))
     ),
-    '#weight' => -5,
-  );
-  $output['tickets']['table'] = array(
-    '#theme'  => 'table',
-    '#header' => array(t('ID'), t('Title'), t('Project'), t('Status')),
-    '#rows'   => $rows,
-    '#empty'  => t('No open tickets on projects linked to this contact.'),
+    '#suffix'   => dropcrm_accordion_suffix(),
+    '#attached' => array(
+      'css' => array(backdrop_get_path('module', 'droptickets') . '/droptickets.css'),
+    ),
+    'table'     => array(
+      '#theme'  => 'table',
+      '#header' => array(t('ID'), t('Title'), t('Project'), t('Status')),
+      '#rows'   => $rows,
+      '#empty'  => t('No open tickets on projects linked to this contact.'),
+    ),
   );
 }
 

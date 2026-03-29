@@ -479,17 +479,14 @@ function droptime_dropcrm_contact_view_alter(&$output, $contact) {
   }
 
   $output['projects'] = array(
-    '#type'   => 'container',
     '#weight' => 25,
-  );
-  $output['projects']['heading'] = array(
-    '#markup' => drop_base_section_header(t('Projects')),
-    '#weight' => -5,
-  );
-  $output['projects']['table'] = array(
-    '#theme'  => 'table',
-    '#header' => array(t('Project'), t('Status')),
-    '#rows'   => $rows,
-    '#empty'  => t('No projects linked to this contact.'),
+    '#prefix' => dropcrm_accordion_prefix(t('Projects')),
+    '#suffix' => dropcrm_accordion_suffix(),
+    'table'   => array(
+      '#theme'  => 'table',
+      '#header' => array(t('Project'), t('Status')),
+      '#rows'   => $rows,
+      '#empty'  => t('No projects linked to this contact.'),
+    ),
   );
 }

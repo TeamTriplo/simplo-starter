@@ -1,0 +1,78 @@
+/**
+ * @file
+ * Styles for the Drop Newsletter subscription management form.
+ */
+
+.dropnewsletter-list {
+  border: 1px solid #e0e0e0;
+  border-top: 3px solid #0891b2;
+  border-radius: 3px;
+  background: #fff;
+  margin-bottom: 1rem;
+}
+
+.dropnewsletter-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dropnewsletter-row:last-child {
+  border-bottom: none;
+}
+
+.dropnewsletter-row input[type="checkbox"] {
+  margin-top: 3px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.dropnewsletter-row label {
+  font-weight: 600;
+  font-size: 0.95em;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.dropnewsletter-row .description {
+  font-size: 0.85em;
+  color: #777;
+  margin-top: 0.2rem;
+}
+
+.dropnewsletter-row--unsubscribed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.dropnewsletter-row--unsubscribed:last-child {
+  border-bottom: none;
+}
+
+.dropnewsletter-name {
+  font-weight: 600;
+  font-size: 0.95em;
+  color: #999;
+}
+
+.dropnewsletter-badge {
+  font-size: 0.78em;
+  font-weight: 600;
+  color: #c62828;
+  background: #fdecea;
+  border: 1px solid #f5c6c6;
+  border-radius: 2em;
+  padding: 0.2em 0.7em;
+  white-space: nowrap;
+}
+
+.dropnewsletter-meta {
+  font-size: 0.85em;
+  color: #888;
+  margin-bottom: 1rem;
+}

@@ -1146,6 +1146,13 @@ function dropcrm_menu_alter(&$items) {
     $items['drop/crm/contact-methods']['type']   = MENU_CALLBACK;
     $items['drop/crm/contact-methods']['title']  = 'Contact Details';
   }
+  // Redirect the entity_ui view path (contacts/N) to our custom view (contact/N).
+  // This ensures the "View" tab on the edit form never lands on the wrong page.
+  if (isset($items['drop/crm/contacts/%crm_contact'])) {
+    $items['drop/crm/contacts/%crm_contact']['page callback']  = 'dropcrm_contact_view_redirect';
+    $items['drop/crm/contacts/%crm_contact']['page arguments'] = array(3);
+    $items['drop/crm/contacts/%crm_contact']['file']           = '';
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1753,4 +1760,44 @@ function dropcrm_drop_section_links($section) {
   );
 
   return $links;
+}
+
+/**
+ * Page callback: redirects entity_ui's contacts/N path to our contact/N view.
+ */
+function dropcrm_contact_view_redirect($contact) {
+  backdrop_goto('drop/crm/contact/' . $contact->cid);
+}
+
+// ---------------------------------------------------------------------------
+// Contact view accordion helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the opening HTML for an accordion section on the contact view page.
+ *
+ * @param string $title
+ *   Section title (plain text, will be escaped).
+ * @param string $extra_html
+ *   Optional HTML to append inside the <summary> (e.g. add-links).
+ * @param bool $open
+ *   Whether the section should be expanded by default.
+ *
+ * @return string
+ */
+function dropcrm_accordion_prefix($title, $extra_html = '', $open = FALSE) {
+  $open_attr = $open ? ' open' : '';
+  return '<details class="crm-section-accordion"' . $open_attr . '>'
+    . '<summary class="crm-section-summary">'
+    . '<span class="crm-section-title">' . check_plain($title) . '</span>'
+    . ($extra_html ? $extra_html : '')
+    . '</summary>'
+    . '<div class="crm-section-body">';
+}
+
+/**
+ * Returns the closing HTML for an accordion section on the contact view page.
+ */
+function dropcrm_accordion_suffix() {
+  return '</div></details>';
 }

@@ -320,7 +320,7 @@ function droptasks_task_view(DroptTask $task) {
     $contacts = entity_load('crm_contact', array($task->contact_id));
     $contact  = $contacts ? reset($contacts) : NULL;
     if ($contact) {
-      $rows[] = array(t('Contact'), l(entity_label('crm_contact', $contact), 'crm/contacts/' . $task->contact_id));
+      $rows[] = array(t('Contact'), l(entity_label('crm_contact', $contact), 'drop/crm/contact/' . $task->contact_id));
     }
   }
 

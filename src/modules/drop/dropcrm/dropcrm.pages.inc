@@ -26,31 +26,26 @@ function dropcrm_contact_view(CrmContact $contact) {
   $output = array();
   $output['#attached']['css'][] = backdrop_get_path('module', 'dropcrm') . '/dropcrm.admin.css';
 
-  // --- Action links bar (edit + bundle-specific quick actions) ---
-  $actions = array();
-  if (dropcrm_contact_access('edit', $contact)) {
-    $bundle_labels = array(
-      'crm_person'       => t('Edit person'),
-      'crm_organization' => t('Edit organization'),
-      'crm_household'    => t('Edit household'),
-    );
-    $edit_label = isset($bundle_labels[$contact->bundle()]) ? $bundle_labels[$contact->bundle()] : t('Edit');
-    $actions[] = l($edit_label, 'drop/crm/contacts/' . $contact->cid . '/edit');
-  }
-  if (dropcrm_contact_access('delete', $contact)) {
-    $actions[] = l(t('Delete'), 'drop/crm/contacts/' . $contact->cid . '/delete');
-  }
-  $output['actions'] = array(
-    '#markup' => drop_base_page_actions($actions),
-    '#weight' => -100,
-  );
-
-  // --- Core details ---
+  // --- Hero section (replaces separate action bar + details block) ---
   if ($contact->bundle() === 'crm_person') {
-    $output['details'] = _dropcrm_person_details($contact);
-    $output['details']['#weight'] = 0;
+    $output['hero'] = _dropcrm_contact_hero($contact);
+    $output['hero']['#weight'] = -90;
   }
   else {
+    // Non-person contacts: simple action bar + entity view.
+    $actions = array();
+    if (dropcrm_contact_access('edit', $contact)) {
+      $bundle_labels = array(
+        'crm_organization' => t('Edit organization'),
+        'crm_household'    => t('Edit household'),
+      );
+      $edit_label = isset($bundle_labels[$contact->bundle()]) ? $bundle_labels[$contact->bundle()] : t('Edit');
+      $actions[] = l($edit_label, 'drop/crm/contacts/' . $contact->cid . '/edit');
+    }
+    if (dropcrm_contact_access('delete', $contact)) {
+      $actions[] = l(t('Delete'), 'drop/crm/contacts/' . $contact->cid . '/delete');
+    }
+    $output['actions'] = array('#markup' => drop_base_page_actions($actions), '#weight' => -100);
     $output['details'] = entity_view($contact, 'full');
     $output['details']['#weight'] = 0;
   }
@@ -64,32 +59,23 @@ function dropcrm_contact_view(CrmContact $contact) {
         l(entity_label('crm_contact', $person), 'drop/crm/contact/' . $person->cid),
       );
     }
+    $add_person_link = l(t('+ Add person'), 'drop/crm/contacts/add/crm_person',
+      array('attributes' => array('class' => array('drop-section-add')),
+            'query'      => array('org' => $contact->cid)));
     $output['affiliated_contacts'] = array(
-      '#type'   => 'container',
       '#weight' => 5,
-    );
-    $output['affiliated_contacts']['heading'] = array(
-      '#markup' => drop_base_section_header(
-        t('Affiliated People'),
-        l(t('+ Add person'), 'drop/crm/contacts/add/crm_person',
-          array('attributes' => array('class' => array('drop-section-add')),
-                'query'      => array('org' => $contact->cid)))
+      '#prefix' => dropcrm_accordion_prefix(t('Affiliated People'), $add_person_link, TRUE),
+      '#suffix' => dropcrm_accordion_suffix(),
+      'table'   => array(
+        '#theme'  => 'table',
+        '#header' => array(t('Name')),
+        '#rows'   => $aff_rows,
+        '#empty'  => t('No people affiliated with this organization yet.'),
       ),
-      '#weight' => -5,
-    );
-    $output['affiliated_contacts']['table'] = array(
-      '#theme'  => 'table',
-      '#header' => array(t('Name')),
-      '#rows'   => $aff_rows,
-      '#empty'  => t('No people affiliated with this organization yet.'),
     );
   }
 
   // --- Contact details (phone, email, address) ---
-  $output['contact_methods'] = array(
-    '#type'   => 'container',
-    '#weight' => 10,
-  );
   $add_links = array();
   foreach (array(
     'email'     => t('Email'),
@@ -101,12 +87,12 @@ function dropcrm_contact_view(CrmContact $contact) {
       array('attributes' => array('class' => array('drop-section-add')),
             'query'      => array('contact' => $contact->cid)));
   }
-  $output['contact_methods']['heading'] = array(
-    '#markup' => drop_base_section_header(
-      t('Contact Details'),
-      '<span class="drop-section-add-group">' . implode(' ', $add_links) . '</span>'
-    ),
-    '#weight' => -5,
+  $add_links_html = '<span class="crm-section-add-group">' . implode(' ', $add_links) . '</span>';
+
+  $output['contact_methods'] = array(
+    '#weight' => 10,
+    '#prefix' => dropcrm_accordion_prefix(t('Contact Details'), $add_links_html, TRUE),
+    '#suffix' => dropcrm_accordion_suffix(),
   );
   $methods = _dropcrm_load_contact_methods($contact->cid);
   foreach ($methods as $type => $type_methods) {
@@ -130,15 +116,15 @@ function dropcrm_contact_view(CrmContact $contact) {
   }
 
   // --- Relationships ---
-  $output['relationships'] = array('#type' => 'container', '#weight' => 15);
-  $output['relationships']['heading'] = array(
-    '#markup' => drop_base_section_header(
+  $output['relationships'] = array(
+    '#weight' => 15,
+    '#prefix' => dropcrm_accordion_prefix(
       t('Relationships'),
       l(t('+ Add relationship'), 'drop/crm/relationships/add',
         array('attributes' => array('class' => array('drop-section-add')),
               'query'      => array('contact' => $contact->cid)))
     ),
-    '#weight' => -5,
+    '#suffix' => dropcrm_accordion_suffix(),
   );
   $relationships  = _dropcrm_load_contact_relationships($contact->cid);
   $type_options   = _dropcrm_relationship_type_options();
@@ -167,17 +153,15 @@ function dropcrm_contact_view(CrmContact $contact) {
 
   // --- Activities ---
   $output['activities'] = array(
-    '#type'   => 'container',
     '#weight' => 20,
-  );
-  $output['activities']['heading'] = array(
-    '#markup' => drop_base_section_header(
+    '#prefix' => dropcrm_accordion_prefix(
       t('Activities'),
       l(t('+ Add activity'), 'drop/crm/activities/add',
         array('attributes' => array('class' => array('drop-section-add')),
-              'query'      => array('contact' => $contact->cid)))
+              'query'      => array('contact' => $contact->cid))),
+      TRUE
     ),
-    '#weight' => -5,
+    '#suffix' => dropcrm_accordion_suffix(),
   );
   $activities = _dropcrm_load_contact_activities($contact->cid);
   $type_options   = _dropcrm_activity_type_options();
@@ -568,6 +552,117 @@ function _dropcrm_contact_method_bundle_label($type) {
     'url'       => t('Website & Social'),
   );
   return isset($labels[$type]) ? $labels[$type] : ucfirst($type);
+}
+
+/**
+ * Builds the hero header block for a crm_person contact view page.
+ *
+ * Shows rating, job title, organizations, tags, status badge, and action links
+ * in a unified card above the accordion sections.
+ *
+ * @param CrmContact $contact
+ *   A contact entity with bundle crm_person.
+ *
+ * @return array
+ *   A render array for the hero block.
+ */
+function _dropcrm_contact_hero(CrmContact $contact) {
+  // Action links.
+  $action_items = array();
+  if (dropcrm_contact_access('edit', $contact)) {
+    $action_items[] = l(t('Edit person'), 'drop/crm/contacts/' . $contact->cid . '/edit');
+  }
+  if (dropcrm_contact_access('delete', $contact)) {
+    $action_items[] = l(t('Delete'), 'drop/crm/contacts/' . $contact->cid . '/delete');
+  }
+  $actions_html = '';
+  if ($action_items) {
+    $actions_html = '<div class="crm-hero-actions">' . implode(' ', $action_items) . '</div>';
+  }
+
+  $meta_html = '';
+  try {
+    $w = entity_metadata_wrapper('crm_contact', $contact);
+  }
+  catch (EntityMetadataWrapperException $e) {
+    $w = NULL;
+  }
+
+  // Rating.
+  $rating_html = '';
+  $rating_items = field_get_items('crm_contact', $contact, 'field_crm_rating');
+  if ($rating_items && !empty($rating_items[0]['value'])) {
+    $stars = _dropcrm_render_stars((int) $rating_items[0]['value']);
+    if ($stars) {
+      $rating_html = '<div class="crm-hero-rating">' . $stars . '</div>';
+    }
+  }
+
+  // Job title and organizations on one subtitle line.
+  $subtitle_parts = array();
+  if ($w) {
+    try {
+      $job = $w->field_crm_job_title->value();
+      if ($job) {
+        $subtitle_parts[] = '<span class="crm-hero-jobtitle">' . check_plain($job) . '</span>';
+      }
+    }
+    catch (EntityMetadataWrapperException $e) {}
+
+    try {
+      $org_links = array();
+      foreach ($w->field_crm_employer->getIterator() as $item) {
+        $org = $item->value();
+        if ($org) {
+          $org_links[] = l(entity_label('crm_contact', $org), 'drop/crm/contact/' . $org->cid);
+        }
+      }
+      if ($org_links) {
+        $subtitle_parts[] = '<span class="crm-hero-orgs">' . implode(', ', $org_links) . '</span>';
+      }
+    }
+    catch (EntityMetadataWrapperException $e) {}
+  }
+  $subtitle_html = '';
+  if ($subtitle_parts) {
+    $subtitle_html = '<div class="crm-hero-subtitle">' . implode(' &middot; ', $subtitle_parts) . '</div>';
+  }
+
+  // Tags.
+  $tags_html = '';
+  $tag_items = field_get_items('crm_contact', $contact, 'field_crm_tags');
+  if ($tag_items) {
+    $tag_links = array();
+    foreach ($tag_items as $item) {
+      if (!empty($item['tid'])) {
+        $term = taxonomy_term_load($item['tid']);
+        if ($term) {
+          $tag_links[] = l(check_plain($term->name), 'drop/crm/people',
+            array('query' => array('tag' => $item['tid']), 'attributes' => array('class' => array('crm-hero-tag'))));
+        }
+      }
+    }
+    if ($tag_links) {
+      $tags_html = '<div class="crm-hero-tags">' . implode('', $tag_links) . '</div>';
+    }
+  }
+
+  // Status badge — only when inactive.
+  $status_html = '';
+  if (!$contact->status) {
+    $status_html = '<span class="crm-hero-status-badge">' . t('Inactive') . '</span>';
+  }
+
+  $meta_html = $rating_html . $subtitle_html . $tags_html . $status_html;
+
+  $html = '<div class="crm-contact-hero">';
+  if ($meta_html) {
+    $html .= '<div class="crm-hero-meta">' . $meta_html . '</div>';
+  }
+  $html .= $actions_html;
+  $html .= '</div>';
+
+  return array('#markup' => $html, '#weight' => -90);
 }
 
 /**

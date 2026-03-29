@@ -173,23 +173,20 @@ function dropbridge_dropcrm_contact_view_alter(&$output, $contact) {
   }
 
   $output['tasks'] = array(
-    '#type'   => 'container',
     '#weight' => 25,
-  );
-  $output['tasks']['heading'] = array(
-    '#markup' => drop_base_section_header(
+    '#prefix' => dropcrm_accordion_prefix(
       t('Tasks'),
       l(t('+ Add task'), 'drop/tasks/add',
         array('attributes' => array('class' => array('drop-section-add')),
               'query'      => array('contact' => $contact->cid)))
     ),
-    '#weight' => -5,
-  );
-  $output['tasks']['table'] = array(
-    '#theme'  => 'table',
-    '#header' => array(t('Task'), t('Priority'), t('Due'), t('Status')),
-    '#rows'   => $rows,
-    '#empty'  => t('No tasks linked to this contact.'),
+    '#suffix' => dropcrm_accordion_suffix(),
+    'table'   => array(
+      '#theme'  => 'table',
+      '#header' => array(t('Task'), t('Priority'), t('Due'), t('Status')),
+      '#rows'   => $rows,
+      '#empty'  => t('No tasks linked to this contact.'),
+    ),
   );
 }
 

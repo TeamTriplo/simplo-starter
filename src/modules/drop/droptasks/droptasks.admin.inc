@@ -47,7 +47,7 @@ function droptasks_task_form($form, &$form_state, $task = NULL) {
       $form['contact_display'] = array(
         '#markup' => '<p class="droptasks-linked-contact">'
           . t('Linked contact:') . ' '
-          . l(entity_label('crm_contact', $contact), 'crm/contacts/' . $contact_id)
+          . l(entity_label('crm_contact', $contact), 'drop/crm/contact/' . $contact_id)
           . '</p>',
       );
     }
