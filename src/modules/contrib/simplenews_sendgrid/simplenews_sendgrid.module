@@ -27,7 +27,7 @@ function simplenews_sendgrid_menu() {
     'title'            => 'Newsletter stats',
     'description'      => 'Per-newsletter open and click statistics from SendGrid.',
     'page callback'    => 'simplenews_sendgrid_stats_page',
-    'access arguments' => array('administer simplenews'),
+    'access arguments' => array('administer simplenews subscriptions'),
     'file'             => 'simplenews_sendgrid.pages.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 10,
@@ -35,7 +35,7 @@ function simplenews_sendgrid_menu() {
   $items['admin/config/services/simplenews/stats/refresh'] = array(
     'title'            => 'Refresh newsletter stats',
     'page callback'    => 'simplenews_sendgrid_stats_refresh',
-    'access arguments' => array('administer simplenews'),
+    'access arguments' => array('administer simplenews subscriptions'),
     'file'             => 'simplenews_sendgrid.pages.inc',
     'type'             => MENU_CALLBACK,
   );
