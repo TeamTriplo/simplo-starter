@@ -63,7 +63,7 @@ function dropdocs_doc_view($node) {
     return MENU_NOT_FOUND;
   }
 
-  backdrop_set_title(check_plain($node->title));
+  backdrop_set_title($node->title);
 
   // Build breadcrumb with ancestor chain.
   $crumb = array(

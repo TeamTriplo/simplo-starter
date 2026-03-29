@@ -152,11 +152,11 @@ class DropStrategicProgressTest extends BackdropWebTestCase {
    * Three KRs of varying completion average correctly.
    */
   public function testThreeKrsAveragedCorrectly() {
-    $this->assertEqual(67, dropstrategic_calculate_progress(array(
+    $this->assertEqual(50, dropstrategic_calculate_progress(array(
       $this->makeKr(TRUE),               // 100%
       $this->makeKr(FALSE, '100', '50'), // 50%
       $this->makeKr(FALSE),              // 0%
-    )), 'Three KRs at 100%, 50%, 0% average to 67%.');
+    )), 'Three KRs at 100%, 50%, 0% average to 50%.');
   }
 }
 
@@ -185,7 +185,7 @@ class DropStrategicAccessTest extends BackdropWebTestCase {
    * Anonymous users cannot access the strategic goals dashboard.
    */
   public function testAnonymousCannotAccessDashboard() {
-    $this->backdropGet('admin/drop/strategic');
+    $this->backdropGet('drop/strategic');
     $this->assertResponse(403);
   }
 
@@ -195,7 +195,7 @@ class DropStrategicAccessTest extends BackdropWebTestCase {
   public function testViewerCanAccessDashboard() {
     $viewer = $this->backdropCreateUser(array('view strategic goals'));
     $this->backdropLogin($viewer);
-    $this->backdropGet('admin/drop/strategic');
+    $this->backdropGet('drop/strategic');
     $this->assertResponse(200);
   }
 
@@ -205,7 +205,7 @@ class DropStrategicAccessTest extends BackdropWebTestCase {
   public function testUserWithoutPermissionDeniedDashboard() {
     $noAccess = $this->backdropCreateUser(array());
     $this->backdropLogin($noAccess);
-    $this->backdropGet('admin/drop/strategic');
+    $this->backdropGet('drop/strategic');
     $this->assertResponse(403);
   }
 
@@ -218,7 +218,7 @@ class DropStrategicAccessTest extends BackdropWebTestCase {
       'create strategic goals',
     ));
     $this->backdropLogin($creator);
-    $this->backdropGet('admin/drop/strategic/add');
+    $this->backdropGet('drop/strategic/add');
     $this->assertResponse(200);
   }
 
@@ -228,7 +228,7 @@ class DropStrategicAccessTest extends BackdropWebTestCase {
   public function testUserWithoutCreatePermissionDeniedAddForm() {
     $viewer = $this->backdropCreateUser(array('view strategic goals'));
     $this->backdropLogin($viewer);
-    $this->backdropGet('admin/drop/strategic/add');
+    $this->backdropGet('drop/strategic/add');
     $this->assertResponse(403);
   }
 }

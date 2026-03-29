@@ -118,8 +118,13 @@ function droptickets_list_page() {
     $query->isNotNull('t.import_id');
   }
   else {
-    // All normal views exclude imported tickets.
+    // All normal views exclude imported tickets and child tickets.
     $query->isNull('t.import_id');
+    $query->condition(
+      db_or()
+        ->condition('t.parent_tid', 0)
+        ->isNull('t.parent_tid')
+    );
 
     if ($status === 'all') {
       // Default: all active tickets — everything except Icebox and Closed.

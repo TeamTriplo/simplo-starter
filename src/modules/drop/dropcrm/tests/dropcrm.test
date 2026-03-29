@@ -117,7 +117,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $this->createTestOrg('Acme Corp');
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/contacts');
+    $this->backdropGet('drop/crm/contacts');
 
     $this->assertResponse(200);
     $this->assertText('Acme Corp');
@@ -130,7 +130,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $contact = $this->createTestOrg('View Test Org');
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/contact/' . $contact->cid);
+    $this->backdropGet('drop/crm/contact/' . $contact->cid);
 
     $this->assertResponse(200);
     $this->assertText('View Test Org');
@@ -146,7 +146,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $this->assertEqual('Alice Smith', $contact->name, 'Display name computed from first + last.');
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/contact/' . $contact->cid);
+    $this->backdropGet('drop/crm/contact/' . $contact->cid);
     $this->assertText('Alice Smith');
   }
 
@@ -157,7 +157,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $contact = $this->createTestPerson('Bob', 'Jones');
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/contact/' . $contact->cid);
+    $this->backdropGet('drop/crm/contact/' . $contact->cid);
 
     $this->assertResponse(200);
     $this->assertText('Bob Jones');
@@ -170,7 +170,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $contact = $this->createTestOrg('Old Name Org');
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropPost('admin/drop/crm/contacts/' . $contact->cid . '/edit', array(
+    $this->backdropPost('drop/crm/contacts/' . $contact->cid . '/edit', array(
       'name' => 'New Name Org',
     ), t('Save Contact'));
 
@@ -196,7 +196,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $this->backdropLogin($this->crmUser);
 
     // Confirm the delete page is accessible.
-    $this->backdropGet('admin/drop/crm/contacts/' . $cid . '/delete');
+    $this->backdropGet('drop/crm/contacts/' . $cid . '/delete');
     $this->assertResponse(200);
     $this->assertText('Delete Me Org');
 
@@ -211,7 +211,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
    */
   public function testAddOrganizationViaForm() {
     $this->backdropLogin($this->crmUser);
-    $this->backdropPost('admin/drop/crm/contacts/add/crm_organization', array(
+    $this->backdropPost('drop/crm/contacts/add/crm_organization', array(
       'name' => 'Form Created Org',
     ), t('Add Contact'));
 
@@ -233,7 +233,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $contact->save();
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/contact/' . $contact->cid);
+    $this->backdropGet('drop/crm/contact/' . $contact->cid);
 
     $this->assertResponse(200);
     $this->assertText('Inactive');
@@ -248,7 +248,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $this->createTestOrg('Gamma Corp');
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/contacts');
+    $this->backdropGet('drop/crm/contacts');
 
     $this->assertText('Alpha Corp');
     $this->assertText('Beta Corp');
@@ -267,7 +267,7 @@ class DropCRMContactCRUDTest extends DropCRMTestBase {
     $contact->save();
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/contact/' . $contact->cid);
+    $this->backdropGet('drop/crm/contact/' . $contact->cid);
 
     $this->assertResponse(200);
     $this->assertText('The Smith Household');
@@ -310,7 +310,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
     $this->createTestActivity(array('subject' => 'Listed activity'));
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/activities');
+    $this->backdropGet('drop/crm/activities');
 
     $this->assertResponse(200);
     $this->assertText('Listed activity');
@@ -323,7 +323,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
     $activity = $this->createTestActivity(array('subject' => 'View page activity'));
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/activity/' . $activity->aid);
+    $this->backdropGet('drop/crm/activity/' . $activity->aid);
 
     $this->assertResponse(200);
     $this->assertText('View page activity');
@@ -355,13 +355,13 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
 
     $this->backdropLogin($this->crmUser);
     // Activity entity_ui uses /manage/{aid}/edit (EntityDefaultUIController format).
-    $this->backdropPost('admin/drop/crm/activities/manage/' . $activity->aid . '/edit', array(
+    $this->backdropPost('drop/crm/activities/manage/' . $activity->aid . '/edit', array(
       'subject'       => 'Updated subject',
       'activity_date' => date('Y-m-d'),
     ), t('Save Activity'));
 
     $this->assertText('saved');
-    $this->backdropGet('admin/drop/crm/activity/' . $activity->aid);
+    $this->backdropGet('drop/crm/activity/' . $activity->aid);
     $this->assertText('Updated subject');
     $this->assertNoText('Original subject');
   }
@@ -376,7 +376,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
     $this->backdropLogin($this->crmUser);
 
     // Confirm the delete page is accessible.
-    $this->backdropGet('admin/drop/crm/activities/' . $aid . '/delete');
+    $this->backdropGet('drop/crm/activities/' . $aid . '/delete');
     $this->assertResponse(200);
     $this->assertText('Delete me activity');
 
@@ -391,7 +391,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
    */
   public function testAddActivityViaForm() {
     $this->backdropLogin($this->crmUser);
-    $this->backdropPost('admin/drop/crm/activities/add', array(
+    $this->backdropPost('drop/crm/activities/add', array(
       'subject'       => 'Form created activity',
       'type'          => 'note',
       'status'        => 'completed',
@@ -405,7 +405,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
       ->execute()
       ->fetchField();
     $this->assertTrue($aid > 0, 'Activity was saved to the database.');
-    $this->backdropGet('admin/drop/crm/activity/' . $aid);
+    $this->backdropGet('drop/crm/activity/' . $aid);
     $this->assertText('Form created activity');
   }
 
@@ -420,7 +420,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
     ));
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/activity/' . $activity->aid);
+    $this->backdropGet('drop/crm/activity/' . $activity->aid);
 
     $this->assertText('Meeting');
     $this->assertText('Planned');
@@ -437,7 +437,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
     ));
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/activity/' . $activity->aid);
+    $this->backdropGet('drop/crm/activity/' . $activity->aid);
 
     $this->assertResponse(200);
     // The view page should indicate outreach status.
@@ -453,7 +453,7 @@ class DropCRMActivityCRUDTest extends DropCRMTestBase {
     $this->createTestActivity(array('subject' => 'Activity Gamma'));
 
     $this->backdropLogin($this->crmUser);
-    $this->backdropGet('admin/drop/crm/activities');
+    $this->backdropGet('drop/crm/activities');
 
     $this->assertText('Activity Alpha');
     $this->assertText('Activity Beta');
@@ -497,7 +497,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
    * Anonymous users cannot access the CRM.
    */
   public function testAnonymousCannotAccessCRM() {
-    $this->backdropGet('admin/drop/crm');
+    $this->backdropGet('drop/crm');
     $this->assertResponse(403);
   }
 
@@ -507,7 +507,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
   public function testUserWithoutPermissionDeniedContacts() {
     $noAccess = $this->backdropCreateUser(array());
     $this->backdropLogin($noAccess);
-    $this->backdropGet('admin/drop/crm/contacts');
+    $this->backdropGet('drop/crm/contacts');
     $this->assertResponse(403);
   }
 
@@ -519,7 +519,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $viewOnly = $this->backdropCreateUser(array('access crm'));
 
     $this->backdropLogin($viewOnly);
-    $this->backdropGet('admin/drop/crm/contacts');
+    $this->backdropGet('drop/crm/contacts');
     $this->assertResponse(200);
   }
 
@@ -531,7 +531,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $viewOnly = $this->backdropCreateUser(array('access crm'));
 
     $this->backdropLogin($viewOnly);
-    $this->backdropGet('admin/drop/crm/contact/' . $contact->cid);
+    $this->backdropGet('drop/crm/contact/' . $contact->cid);
     $this->assertResponse(200);
     $this->assertText('Detail Org');
   }
@@ -543,7 +543,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $viewOnly = $this->backdropCreateUser(array('access crm'));
 
     $this->backdropLogin($viewOnly);
-    $this->backdropGet('admin/drop/crm/contacts/add/crm_organization');
+    $this->backdropGet('drop/crm/contacts/add/crm_organization');
     $this->assertResponse(403);
   }
 
@@ -554,7 +554,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $creator = $this->backdropCreateUser(array('access crm', 'create crm contacts'));
 
     $this->backdropLogin($creator);
-    $this->backdropGet('admin/drop/crm/contacts/add/crm_organization');
+    $this->backdropGet('drop/crm/contacts/add/crm_organization');
     $this->assertResponse(200);
   }
 
@@ -566,7 +566,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $viewOnly = $this->backdropCreateUser(array('access crm'));
 
     $this->backdropLogin($viewOnly);
-    $this->backdropGet('admin/drop/crm/contacts/' . $contact->cid . '/edit');
+    $this->backdropGet('drop/crm/contacts/' . $contact->cid . '/edit');
     $this->assertResponse(403);
   }
 
@@ -578,7 +578,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $editor  = $this->backdropCreateUser(array('access crm', 'edit crm contacts'));
 
     $this->backdropLogin($editor);
-    $this->backdropGet('admin/drop/crm/contacts/' . $contact->cid . '/edit');
+    $this->backdropGet('drop/crm/contacts/' . $contact->cid . '/edit');
     $this->assertResponse(200);
   }
 
@@ -590,7 +590,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $viewOnly = $this->backdropCreateUser(array('access crm'));
 
     $this->backdropLogin($viewOnly);
-    $this->backdropGet('admin/drop/crm/contacts/' . $contact->cid . '/delete');
+    $this->backdropGet('drop/crm/contacts/' . $contact->cid . '/delete');
     $this->assertResponse(403);
   }
 
@@ -602,7 +602,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $deleter = $this->backdropCreateUser(array('access crm', 'delete crm contacts'));
 
     $this->backdropLogin($deleter);
-    $this->backdropGet('admin/drop/crm/contacts/' . $contact->cid . '/delete');
+    $this->backdropGet('drop/crm/contacts/' . $contact->cid . '/delete');
     $this->assertResponse(200);
   }
 
@@ -613,7 +613,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $viewOnly = $this->backdropCreateUser(array('access crm'));
 
     $this->backdropLogin($viewOnly);
-    $this->backdropGet('admin/drop/crm/activities/add');
+    $this->backdropGet('drop/crm/activities/add');
     $this->assertResponse(403);
   }
 
@@ -624,7 +624,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $creator = $this->backdropCreateUser(array('access crm', 'create crm activities'));
 
     $this->backdropLogin($creator);
-    $this->backdropGet('admin/drop/crm/activities/add');
+    $this->backdropGet('drop/crm/activities/add');
     $this->assertResponse(200);
   }
 
@@ -637,7 +637,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
 
     $this->backdropLogin($viewOnly);
     // Activity entity_ui uses /manage/{aid}/edit (EntityDefaultUIController format).
-    $this->backdropGet('admin/drop/crm/activities/manage/' . $activity->aid . '/edit');
+    $this->backdropGet('drop/crm/activities/manage/' . $activity->aid . '/edit');
     $this->assertResponse(403);
   }
 
@@ -650,7 +650,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
 
     $this->backdropLogin($editor);
     // Activity entity_ui uses /manage/{aid}/edit (EntityDefaultUIController format).
-    $this->backdropGet('admin/drop/crm/activities/manage/' . $activity->aid . '/edit');
+    $this->backdropGet('drop/crm/activities/manage/' . $activity->aid . '/edit');
     $this->assertResponse(200);
   }
 
@@ -663,22 +663,22 @@ class DropCRMAccessTest extends DropCRMTestBase {
 
     $this->backdropLogin($this->adminUser);
 
-    $this->backdropGet('admin/drop/crm/contact/' . $contact->cid);
+    $this->backdropGet('drop/crm/contact/' . $contact->cid);
     $this->assertResponse(200);
 
-    $this->backdropGet('admin/drop/crm/contacts/' . $contact->cid . '/edit');
+    $this->backdropGet('drop/crm/contacts/' . $contact->cid . '/edit');
     $this->assertResponse(200);
 
-    $this->backdropGet('admin/drop/crm/contacts/' . $contact->cid . '/delete');
+    $this->backdropGet('drop/crm/contacts/' . $contact->cid . '/delete');
     $this->assertResponse(200);
 
-    $this->backdropGet('admin/drop/crm/activity/' . $activity->aid);
+    $this->backdropGet('drop/crm/activity/' . $activity->aid);
     $this->assertResponse(200);
 
-    $this->backdropGet('admin/drop/crm/activities/manage/' . $activity->aid . '/edit');
+    $this->backdropGet('drop/crm/activities/manage/' . $activity->aid . '/edit');
     $this->assertResponse(200);
 
-    $this->backdropGet('admin/drop/crm/activities/manage/' . $activity->aid . '/delete');
+    $this->backdropGet('drop/crm/activities/manage/' . $activity->aid . '/delete');
     $this->assertResponse(200);
   }
 
@@ -690,7 +690,7 @@ class DropCRMAccessTest extends DropCRMTestBase {
     $noAccess = $this->backdropCreateUser(array());
 
     $this->backdropLogin($noAccess);
-    $this->backdropGet('admin/drop/crm/activity/' . $activity->aid);
+    $this->backdropGet('drop/crm/activity/' . $activity->aid);
     $this->assertResponse(403);
   }
 }

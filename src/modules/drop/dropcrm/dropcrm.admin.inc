@@ -215,7 +215,7 @@ function dropcrm_contact_list_page($bundle) {
     '#empty'  => t('No @type found.', array('@type' => strtolower($info['plural']))),
   );
 
-  $output['pager'] = array('#theme' => 'pager');
+  $output['pager'] = array('#theme' => 'pager', '#weight' => 10);
 
   return $output;
 }
@@ -2305,12 +2305,12 @@ function dropcrm_project_view($project) {
         '#attributes' => array('class' => array('droptickets-list')),
         '#weight'     => 1,
       );
-      $output['pager'] = array('#theme' => 'pager', '#weight' => 2);
+      $output['pager'] = array('#theme' => 'pager', '#weight' => 10);
     }
 
     $output['add_ticket'] = array(
       '#markup' => '<p>' . l(t('+ Add ticket for this project'), 'drop/tickets/add', array('query' => array('pid' => $project->pid))) . '</p>',
-      '#weight' => 3,
+      '#weight' => 11,
     );
   }
 

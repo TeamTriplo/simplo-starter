@@ -245,7 +245,7 @@ class DropDocsAccessTest extends DropDocsTestBase {
    * Anonymous users cannot access the docs index.
    */
   public function testAnonymousCannotAccessIndex() {
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertResponse(403);
   }
 
@@ -255,7 +255,7 @@ class DropDocsAccessTest extends DropDocsTestBase {
   public function testUserWithoutPermissionDeniedIndex() {
     $noAccess = $this->backdropCreateUser(array());
     $this->backdropLogin($noAccess);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertResponse(403);
   }
 
@@ -264,7 +264,7 @@ class DropDocsAccessTest extends DropDocsTestBase {
    */
   public function testViewerCanAccessIndex() {
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertResponse(200);
   }
 
@@ -275,7 +275,7 @@ class DropDocsAccessTest extends DropDocsTestBase {
     $doc = $this->createTestDoc('Viewer Doc Test');
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $doc->nid);
+    $this->backdropGet('drop/doc/' . $doc->nid);
     $this->assertResponse(200);
     $this->assertText('Viewer Doc Test');
   }
@@ -285,11 +285,11 @@ class DropDocsAccessTest extends DropDocsTestBase {
    */
   public function testReorderRequiresAdminPermission() {
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/docs/reorder');
+    $this->backdropGet('drop/docs/reorder');
     $this->assertResponse(403);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/docs/reorder');
+    $this->backdropGet('drop/docs/reorder');
     $this->assertResponse(200);
   }
 
@@ -298,7 +298,7 @@ class DropDocsAccessTest extends DropDocsTestBase {
    */
   public function testEditorSeesAddButton() {
     $this->backdropLogin($this->editorUser);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertText('Add doc');
   }
 
@@ -307,7 +307,7 @@ class DropDocsAccessTest extends DropDocsTestBase {
    */
   public function testViewerDoesNotSeeAddButton() {
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertNoText('Add doc');
   }
 }
@@ -349,7 +349,7 @@ class DropDocsCRUDTest extends DropDocsTestBase {
    */
   public function testIndexShowsEmptyMessage() {
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertText('No documentation yet.');
   }
 
@@ -360,7 +360,7 @@ class DropDocsCRUDTest extends DropDocsTestBase {
     $this->createTestDoc('Installation Guide');
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertText('Installation Guide');
   }
 
@@ -371,7 +371,7 @@ class DropDocsCRUDTest extends DropDocsTestBase {
     $doc = $this->createTestDoc('API Reference', NULL, 'Detailed API docs here.');
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $doc->nid);
+    $this->backdropGet('drop/doc/' . $doc->nid);
     $this->assertResponse(200);
     $this->assertText('API Reference');
     $this->assertText('Detailed API docs here.');
@@ -386,7 +386,7 @@ class DropDocsCRUDTest extends DropDocsTestBase {
     $this->createTestDoc('Third Doc');
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
     $this->assertText('First Doc');
     $this->assertText('Second Doc');
     $this->assertText('Third Doc');
@@ -399,7 +399,7 @@ class DropDocsCRUDTest extends DropDocsTestBase {
     $doc = $this->createTestDoc('Sidebar Test Doc');
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $doc->nid);
+    $this->backdropGet('drop/doc/' . $doc->nid);
     $this->assertText('Documentation');
     $this->assertRaw('dropdocs-sidebar');
   }
@@ -417,7 +417,7 @@ class DropDocsCRUDTest extends DropDocsTestBase {
     node_save($node);
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $node->nid);
+    $this->backdropGet('drop/doc/' . $node->nid);
     $this->assertResponse(404);
   }
 }
@@ -462,7 +462,7 @@ class DropDocsHierarchyTest extends DropDocsTestBase {
     $this->createTestDoc('Child Page', $parent->nid);
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/docs');
+    $this->backdropGet('drop/docs');
 
     // Both titles should appear; the HTML order shows parent before child.
     $content = $this->backdropGetContent();
@@ -481,7 +481,7 @@ class DropDocsHierarchyTest extends DropDocsTestBase {
     $child  = $this->createTestDoc('Active Child', $parent->nid);
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $child->nid);
+    $this->backdropGet('drop/doc/' . $child->nid);
 
     $this->assertRaw('dropdocs-tree-active');
   }
@@ -494,11 +494,11 @@ class DropDocsHierarchyTest extends DropDocsTestBase {
     $child  = $this->createTestDoc('Breadcrumb Child', $parent->nid);
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $child->nid);
+    $this->backdropGet('drop/doc/' . $child->nid);
 
     $this->assertText('Breadcrumb Parent');
     // The breadcrumb and/or sidebar should include a link to the parent doc.
-    $this->assertRaw('admin/drop/doc/' . $parent->nid);
+    $this->assertRaw('drop/doc/' . $parent->nid);
   }
 
   /**
@@ -508,10 +508,10 @@ class DropDocsHierarchyTest extends DropDocsTestBase {
     $root = $this->createTestDoc('Root Breadcrumb Doc');
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $root->nid);
+    $this->backdropGet('drop/doc/' . $root->nid);
 
     // Docs index link appears in the breadcrumb.
-    $this->assertRaw('admin/drop/docs');
+    $this->assertRaw('drop/docs');
   }
 
   /**
@@ -525,7 +525,7 @@ class DropDocsHierarchyTest extends DropDocsTestBase {
     $parent = $this->createTestDoc('Redirect Parent');
 
     $this->backdropLogin($creator);
-    $this->backdropGet('admin/drop/doc/' . $parent->nid . '/add-child');
+    $this->backdropGet('drop/doc/' . $parent->nid . '/add-child');
 
     // Should redirect to node/add/doc?parent={nid}.
     $this->assertUrl('node/add/doc', array('query' => array('parent' => $parent->nid)));
@@ -540,7 +540,7 @@ class DropDocsHierarchyTest extends DropDocsTestBase {
     $level3 = $this->createTestDoc('Deep Page', $level2->nid);
 
     $this->backdropLogin($this->viewerUser);
-    $this->backdropGet('admin/drop/doc/' . $level3->nid);
+    $this->backdropGet('drop/doc/' . $level3->nid);
 
     $this->assertText('Root Section');
     $this->assertText('Sub Section');
@@ -582,7 +582,7 @@ class DropDocsReorderTest extends DropDocsTestBase {
    */
   public function testReorderFormShowsEmptyMessage() {
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/docs/reorder');
+    $this->backdropGet('drop/docs/reorder');
     $this->assertText('No docs to reorder.');
   }
 
@@ -594,7 +594,7 @@ class DropDocsReorderTest extends DropDocsTestBase {
     $this->createTestDoc('Doc Beta');
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/docs/reorder');
+    $this->backdropGet('drop/docs/reorder');
     $this->assertText('Doc Alpha');
     $this->assertText('Doc Beta');
   }
@@ -606,7 +606,7 @@ class DropDocsReorderTest extends DropDocsTestBase {
     $doc = $this->createTestDoc('Reorder Save Test');
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropPost('admin/drop/docs/reorder', array(
+    $this->backdropPost('drop/docs/reorder', array(
       'groups[0][' . $doc->nid . '][weight]' => 5,
     ), t('Save order'));
 
@@ -620,7 +620,7 @@ class DropDocsReorderTest extends DropDocsTestBase {
     $doc = $this->createTestDoc('Weight Persist Test');
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropPost('admin/drop/docs/reorder', array(
+    $this->backdropPost('drop/docs/reorder', array(
       'groups[0][' . $doc->nid . '][weight]' => 7,
     ), t('Save order'));
 
@@ -641,7 +641,7 @@ class DropDocsReorderTest extends DropDocsTestBase {
     $this->createTestDoc('Grouped Doc');
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/docs/reorder');
+    $this->backdropGet('drop/docs/reorder');
     $this->assertText('Top-level pages');
   }
 
@@ -653,7 +653,7 @@ class DropDocsReorderTest extends DropDocsTestBase {
     $this->createTestDoc('Child in group', $parent->nid);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/docs/reorder');
+    $this->backdropGet('drop/docs/reorder');
     $this->assertText('Children of');
     $this->assertText('Parent Group Label');
   }

@@ -79,7 +79,7 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'My listed task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks');
+    $this->backdropGet('drop/tasks');
 
     $this->assertResponse(200);
     $this->assertText('My listed task');
@@ -92,7 +92,7 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'View page task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
 
     $this->assertResponse(200);
     $this->assertText('View page task');
@@ -109,7 +109,7 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
 
     $this->assertText('Pending');
     $this->assertText('Normal');
@@ -122,12 +122,12 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Original title'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropPost('admin/drop/tasks/' . $task->tid . '/edit', array(
+    $this->backdropPost('drop/tasks/' . $task->tid . '/edit', array(
       'title' => 'Updated title',
     ), t('Save task'));
 
     $this->assertText('Task saved.');
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
     $this->assertText('Updated title');
   }
 
@@ -138,10 +138,10 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Task to delete'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropPost('admin/drop/tasks/' . $task->tid . '/delete', array(), t('Delete'));
+    $this->backdropPost('drop/tasks/' . $task->tid . '/delete', array(), t('Delete'));
 
     $this->assertText('deleted');
-    $this->backdropGet('admin/drop/tasks');
+    $this->backdropGet('drop/tasks');
     $this->assertNoText('Task to delete');
   }
 
@@ -150,7 +150,7 @@ class DropTasksCRUDTest extends DropTasksTestBase {
    */
   public function testAddTaskViaForm() {
     $this->backdropLogin($this->regularUser);
-    $this->backdropPost('admin/drop/tasks/add', array(
+    $this->backdropPost('drop/tasks/add', array(
       'title' => 'New task via form',
     ), t('Add task'));
 
@@ -165,11 +165,11 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Toggle task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/complete');
 
     $this->assertText('marked complete');
     // Task should now appear in the Completed tab.
-    $this->backdropGet('admin/drop/tasks/completed');
+    $this->backdropGet('drop/tasks/completed');
     $this->assertText('Toggle task');
   }
 
@@ -183,11 +183,11 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/complete');
 
     $this->assertText('reopened');
     // Task should now appear in the Active tab.
-    $this->backdropGet('admin/drop/tasks');
+    $this->backdropGet('drop/tasks');
     $this->assertText('Reopen task');
   }
 
@@ -201,7 +201,7 @@ class DropTasksCRUDTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
 
     $this->assertText('Notes');
     $this->assertText('These are my important notes.');
@@ -212,7 +212,7 @@ class DropTasksCRUDTest extends DropTasksTestBase {
    */
   public function testDueDatePersistsViaForm() {
     $this->backdropLogin($this->regularUser);
-    $this->backdropPost('admin/drop/tasks/add', array(
+    $this->backdropPost('drop/tasks/add', array(
       'title'    => 'Due date task',
       'due_date' => '2030-06-15',
     ), t('Add task'));
@@ -225,7 +225,7 @@ class DropTasksCRUDTest extends DropTasksTestBase {
       ->execute()
       ->fetchField();
 
-    $this->backdropGet('admin/drop/tasks/' . $tid);
+    $this->backdropGet('drop/tasks/' . $tid);
     $this->assertText('Jun 15, 2030');
   }
 }
@@ -265,7 +265,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
    * Anonymous users cannot access the task list.
    */
   public function testAnonymousCannotAccessList() {
-    $this->backdropGet('admin/drop/tasks');
+    $this->backdropGet('drop/tasks');
     $this->assertResponse(403);
   }
 
@@ -275,7 +275,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
   public function testUserWithoutPermissionDeniedList() {
     $noAccess = $this->backdropCreateUser(array());
     $this->backdropLogin($noAccess);
-    $this->backdropGet('admin/drop/tasks');
+    $this->backdropGet('drop/tasks');
     $this->assertResponse(403);
   }
 
@@ -286,7 +286,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Own task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
     $this->assertResponse(200);
     $this->assertText('Own task');
   }
@@ -299,7 +299,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $noAccess = $this->backdropCreateUser(array());
 
     $this->backdropLogin($noAccess);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
     $this->assertResponse(403);
   }
 
@@ -311,7 +311,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $task  = $this->createTestTask($other->uid, array('title' => 'Other task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
     $this->assertResponse(403);
   }
 
@@ -322,7 +322,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Editable task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/edit');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/edit');
     $this->assertResponse(200);
   }
 
@@ -334,7 +334,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $task  = $this->createTestTask($other->uid, array('title' => 'Other editable task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/edit');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/edit');
     $this->assertResponse(403);
   }
 
@@ -345,7 +345,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $task = $this->createTestTask($this->regularUser->uid, array('title' => 'Deletable task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/delete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/delete');
     $this->assertResponse(200);
   }
 
@@ -357,7 +357,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $task  = $this->createTestTask($other->uid, array('title' => 'Other deletable task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/delete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/delete');
     $this->assertResponse(403);
   }
 
@@ -369,13 +369,13 @@ class DropTasksAccessTest extends DropTasksTestBase {
 
     $this->backdropLogin($this->adminUser);
 
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
     $this->assertResponse(200);
 
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/edit');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/edit');
     $this->assertResponse(200);
 
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/delete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/delete');
     $this->assertResponse(200);
   }
 
@@ -394,7 +394,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     ))->execute();
 
     $this->backdropLogin($assignee);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid);
+    $this->backdropGet('drop/tasks/' . $task->tid);
     $this->assertResponse(200);
     $this->assertText('Assigned task');
   }
@@ -413,7 +413,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     ))->execute();
 
     $this->backdropLogin($assignee);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/complete');
 
     // Should redirect (not 403) and set a success message.
     $this->assertNoText('Access denied');
@@ -429,7 +429,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $task      = $this->createTestTask($owner->uid, array('title' => 'Stranger task'));
 
     $this->backdropLogin($bystander);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/complete');
     $this->assertResponse(403);
   }
 
@@ -440,7 +440,7 @@ class DropTasksAccessTest extends DropTasksTestBase {
     $viewOnly = $this->backdropCreateUser(array('access tasks'));
 
     $this->backdropLogin($viewOnly);
-    $this->backdropGet('admin/drop/tasks/add');
+    $this->backdropGet('drop/tasks/add');
     $this->assertResponse(403);
   }
 
@@ -487,7 +487,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/active');
+    $this->backdropGet('drop/tasks/active');
     $this->assertText('Active task');
   }
 
@@ -501,7 +501,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/active');
+    $this->backdropGet('drop/tasks/active');
     $this->assertNoText('Complete task');
   }
 
@@ -515,7 +515,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/completed');
+    $this->backdropGet('drop/tasks/completed');
     $this->assertText('Done task');
   }
 
@@ -529,7 +529,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/completed');
+    $this->backdropGet('drop/tasks/completed');
     $this->assertNoText('Pending task');
   }
 
@@ -545,7 +545,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/today');
+    $this->backdropGet('drop/tasks/today');
     $this->assertText('Due today task');
   }
 
@@ -561,7 +561,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/today');
+    $this->backdropGet('drop/tasks/today');
     $this->assertNoText('Future task');
   }
 
@@ -577,7 +577,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/upcoming');
+    $this->backdropGet('drop/tasks/upcoming');
     $this->assertText('Soon due task');
   }
 
@@ -593,7 +593,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/upcoming');
+    $this->backdropGet('drop/tasks/upcoming');
     $this->assertNoText('Far future task');
   }
 
@@ -602,7 +602,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
    */
   public function testActiveTabEmptyMessage() {
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/active');
+    $this->backdropGet('drop/tasks/active');
     $this->assertText('No active tasks');
   }
 
@@ -615,7 +615,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     $this->createTestTask($this->regularUser->uid, array('title' => 'Own task'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/active');
+    $this->backdropGet('drop/tasks/active');
 
     $this->assertText('Own task');
     $this->assertNoText('Other user task');
@@ -633,7 +633,7 @@ class DropTasksListFilterTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/today');
+    $this->backdropGet('drop/tasks/today');
     $this->assertText('Overdue task');
     $this->assertText('overdue');
   }
@@ -837,7 +837,7 @@ class DropTasksRecurrenceTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/complete');
 
     $this->assertText('next due');
 
@@ -866,7 +866,7 @@ class DropTasksRecurrenceTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/complete');
 
     $this->assertText('next due');
 
@@ -897,7 +897,7 @@ class DropTasksRecurrenceTest extends DropTasksTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/tasks/' . $task->tid . '/complete');
+    $this->backdropGet('drop/tasks/' . $task->tid . '/complete');
 
     $this->assertText('next due');
 

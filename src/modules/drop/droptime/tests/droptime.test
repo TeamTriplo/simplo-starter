@@ -94,7 +94,7 @@ class DropTimeCRUDTest extends DropTimeTestBase {
     $this->createTestEntry($this->regularUser->uid, array('notes' => 'My logged work'));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time');
+    $this->backdropGet('drop/time');
 
     $this->assertResponse(200);
     $this->assertText('My logged work');
@@ -105,12 +105,12 @@ class DropTimeCRUDTest extends DropTimeTestBase {
    */
   public function testAddEntryViaForm() {
     $this->backdropLogin($this->regularUser);
-    $this->backdropPost('admin/drop/time', array(
+    $this->backdropPost('drop/time', array(
       'pid'        => $this->project->pid,
       'start_time' => '14:00',
       'end_time'   => '15:30',
       'notes'      => 'Form-created entry',
-    ), t('Log time'));
+    ), t('Add entry'));
 
     $this->assertText('Time entry saved.');
     $this->assertText('Form-created entry');
@@ -124,13 +124,13 @@ class DropTimeCRUDTest extends DropTimeTestBase {
 
     $this->backdropLogin($this->regularUser);
     $this->backdropPost(
-      'admin/drop/time/entry/' . $entry->eid . '/edit',
+      'drop/time/entry/' . $entry->eid . '/edit',
       array('notes' => 'Updated notes'),
-      t('Save')
+      t('Update entry')
     );
 
     $this->assertText('Time entry saved.');
-    $this->backdropGet('admin/drop/time');
+    $this->backdropGet('drop/time');
     $this->assertText('Updated notes');
   }
 
@@ -142,13 +142,13 @@ class DropTimeCRUDTest extends DropTimeTestBase {
 
     $this->backdropLogin($this->regularUser);
     $this->backdropPost(
-      'admin/drop/time/entry/' . $entry->eid . '/delete',
+      'drop/time/entry/' . $entry->eid . '/delete',
       array(),
       t('Delete')
     );
 
     $this->assertText('deleted');
-    $this->backdropGet('admin/drop/time');
+    $this->backdropGet('drop/time');
     $this->assertNoText('Entry to delete');
   }
 
@@ -169,7 +169,7 @@ class DropTimeCRUDTest extends DropTimeTestBase {
     ));
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time');
+    $this->backdropGet('drop/time');
 
     $this->assertText('2h', 'Total duration of 2h appears on the timesheet.');
   }
@@ -186,7 +186,8 @@ class DropTimeCRUDTest extends DropTimeTestBase {
       'billable'   => 1,
     ));
 
-    $loaded = entity_load_single('drop_time_entry', $entry->eid);
+    $entities = entity_load('drop_time_entry', array($entry->eid));
+    $loaded = reset($entities);
     $this->assertEqual('13:00', $loaded->start_time);
     $this->assertEqual('14:30', $loaded->end_time);
     $this->assertEqual(90, (int) $loaded->duration);
@@ -229,7 +230,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
    * Anonymous users cannot access the time tracker.
    */
   public function testAnonymousCannotAccessTimeTracker() {
-    $this->backdropGet('admin/drop/time');
+    $this->backdropGet('drop/time');
     $this->assertResponse(403);
   }
 
@@ -239,7 +240,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
   public function testUserWithoutPermissionDenied() {
     $noAccess = $this->backdropCreateUser(array());
     $this->backdropLogin($noAccess);
-    $this->backdropGet('admin/drop/time');
+    $this->backdropGet('drop/time');
     $this->assertResponse(403);
   }
 
@@ -248,7 +249,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
    */
   public function testUserWithPermissionCanAccess() {
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time');
+    $this->backdropGet('drop/time');
     $this->assertResponse(200);
   }
 
@@ -259,7 +260,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
     $entry = $this->createTestEntry($this->regularUser->uid);
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time/entry/' . $entry->eid . '/edit');
+    $this->backdropGet('drop/time/entry/' . $entry->eid . '/edit');
     $this->assertResponse(200);
   }
 
@@ -271,7 +272,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
     $entry = $this->createTestEntry($other->uid);
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time/entry/' . $entry->eid . '/edit');
+    $this->backdropGet('drop/time/entry/' . $entry->eid . '/edit');
     $this->assertResponse(403);
   }
 
@@ -282,7 +283,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
     $entry = $this->createTestEntry($this->regularUser->uid);
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time/entry/' . $entry->eid . '/delete');
+    $this->backdropGet('drop/time/entry/' . $entry->eid . '/delete');
     $this->assertResponse(200);
   }
 
@@ -294,7 +295,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
     $entry = $this->createTestEntry($other->uid);
 
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time/entry/' . $entry->eid . '/delete');
+    $this->backdropGet('drop/time/entry/' . $entry->eid . '/delete');
     $this->assertResponse(403);
   }
 
@@ -305,7 +306,7 @@ class DropTimeAccessTest extends DropTimeTestBase {
     $entry = $this->createTestEntry($this->regularUser->uid);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/time/entry/' . $entry->eid . '/edit');
+    $this->backdropGet('drop/time/entry/' . $entry->eid . '/edit');
     $this->assertResponse(200);
   }
 
@@ -314,11 +315,11 @@ class DropTimeAccessTest extends DropTimeTestBase {
    */
   public function testTeamReportsRequiresAdmin() {
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time/reports/team');
+    $this->backdropGet('drop/time/reports/team');
     $this->assertResponse(403);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/time/reports/team');
+    $this->backdropGet('drop/time/reports/team');
     $this->assertResponse(200);
   }
 
@@ -327,11 +328,11 @@ class DropTimeAccessTest extends DropTimeTestBase {
    */
   public function testReassignRequiresAdmin() {
     $this->backdropLogin($this->regularUser);
-    $this->backdropGet('admin/drop/time/reassign');
+    $this->backdropGet('drop/time/reassign');
     $this->assertResponse(403);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/time/reassign');
+    $this->backdropGet('drop/time/reassign');
     $this->assertResponse(200);
   }
 }
@@ -434,13 +435,13 @@ class DropTimeReassignTest extends DropTimeTestBase {
     $this->backdropLogin($this->adminUser);
 
     // Step 1: preview form.
-    $this->backdropPost('admin/drop/time/reassign', array(
+    $this->backdropPost('drop/time/reassign', array(
       'from_uid' => $source->uid,
       'to_uid'   => $dest->uid,
     ), t('Preview'));
 
     // Step 2: confirm.
-    $this->backdropGet('admin/drop/time/reassign/confirm', array(
+    $this->backdropGet('drop/time/reassign/confirm', array(
       'query' => array(
         'from' => $source->uid,
         'to'   => $dest->uid,
@@ -470,7 +471,7 @@ class DropTimeReassignTest extends DropTimeTestBase {
     $this->createTestEntry($this->regularUser->uid);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropPost('admin/drop/time/reassign', array(
+    $this->backdropPost('drop/time/reassign', array(
       'from_uid' => $this->regularUser->uid,
       'to_uid'   => $this->regularUser->uid,
     ), t('Preview'));
@@ -492,7 +493,7 @@ class DropTimeReassignTest extends DropTimeTestBase {
 
     $this->backdropLogin($this->adminUser);
 
-    $this->backdropGet('admin/drop/time/reassign/confirm', array(
+    $this->backdropGet('drop/time/reassign/confirm', array(
       'query' => array(
         'from'      => $source->uid,
         'to'        => $dest->uid,
@@ -521,7 +522,7 @@ class DropTimeReassignTest extends DropTimeTestBase {
    */
   public function testReassignFormShowsEmptyMessage() {
     $this->backdropLogin($this->adminUser);
-    $this->backdropGet('admin/drop/time/reassign');
+    $this->backdropGet('drop/time/reassign');
     $this->assertText('No time entries found.');
   }
 }
