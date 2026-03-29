@@ -55,9 +55,15 @@ function simplenews_sendgrid_stats_page() {
   }
 
   // Build the stats table.
+  // Exclude categories that look like Backdrop/Drupal module IDs (lowercase
+  // with underscores only) — these are system emails, not newsletters.
   $rows = array();
   foreach ($stored as $item) {
     if (empty($item['name']) || empty($item['metrics'])) {
+      continue;
+    }
+    // Skip snake_case-only names (e.g. "simplenews_node", "user_password_reset").
+    if (preg_match('/^[a-z][a-z0-9_]*$/', $item['name'])) {
       continue;
     }
     $m = $item['metrics'];

@@ -153,15 +153,14 @@ function simplenews_sendgrid_fetch_stats() {
     return FALSE;
   }
 
-  watchdog('simplenews_sendgrid', 'SendGrid API returned @count items. Keys: @keys — Full: @full',
-    array(
-      '@count' => count($data),
-      '@keys'  => implode(', ', array_keys($data)),
-      '@full'  => print_r($data, TRUE),
-    ),
+  // The sums endpoint returns a single {date, stats[]} object, not an array.
+  $items = isset($data['stats']) ? $data['stats'] : array();
+
+  watchdog('simplenews_sendgrid', 'SendGrid API returned @count category items.',
+    array('@count' => count($items)),
     WATCHDOG_INFO);
 
-  return $data;
+  return $items;
 }
 
 /**
