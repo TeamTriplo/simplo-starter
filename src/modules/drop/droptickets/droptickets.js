@@ -59,7 +59,7 @@
           $btn.addClass('is-loading');
 
           $.ajax({
-            url: Backdrop.settings.basePath + 'admin/drop/tickets/react/' + entityType + '/' + entityId,
+            url: Backdrop.settings.basePath + 'drop/tickets/react/' + entityType + '/' + entityId,
             type: 'POST',
             data: { emoji: emoji },
             dataType: 'json',
