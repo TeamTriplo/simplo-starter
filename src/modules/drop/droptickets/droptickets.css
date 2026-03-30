@@ -352,6 +352,31 @@
   color: #2e7d32;
 }
 
+.droptickets-sidebar-flag {
+  padding: 0.4rem 1rem;
+  border-bottom: 1px solid #cbc7c2;
+  font-size: 0.85em;
+}
+
+.droptickets-sidebar-flag .droptickets-flag-off {
+  color: var(--drop-text-secondary, #666);
+}
+
+.droptickets-sidebar-flag .droptickets-flag-off:hover {
+  color: #e65100;
+  text-decoration: none;
+}
+
+.droptickets-sidebar-flag .droptickets-flag-on {
+  color: #e65100;
+  font-weight: 600;
+}
+
+.droptickets-sidebar-flag .droptickets-flag-on:hover {
+  color: #bf360c;
+  text-decoration: none;
+}
+
 .droptickets-sidebar-close {
   font-size: 0.85em;
   color: #757575;

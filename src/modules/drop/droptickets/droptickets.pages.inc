@@ -1094,6 +1094,21 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $sidebar .= '</div>';
   }
 
+  // Flag toggle — visible to anyone with 'flag droptickets' permission.
+  if (user_access('flag droptickets')) {
+    $is_flagged = (bool) db_select('drop_ticket_flag', 'f')
+      ->condition('f.tid', $ticket->tid)
+      ->countQuery()->execute()->fetchField();
+    $flag_icon  = icon($is_flagged ? 'flag-fill' : 'flag', array('attributes' => array('width' => 14, 'height' => 14)));
+    $flag_label = $is_flagged ? t('Remove flag') : t('Add flag');
+    $sidebar .= '<div class="droptickets-sidebar-flag">'
+      . l($flag_icon . ' ' . $flag_label, 'drop/tickets/' . $ticket->tid . '/flag', array(
+          'html'       => TRUE,
+          'attributes' => array('class' => array($is_flagged ? 'droptickets-flag-on' : 'droptickets-flag-off')),
+        ))
+      . '</div>';
+  }
+
   // Build status field: inline select for editors, static badge for viewers.
   if (droptickets_ticket_access('update', $ticket)) {
     $status_options_all = droptickets_status_options();
