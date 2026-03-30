@@ -55,8 +55,14 @@ function dropbridge_inbound_email_webhook() {
     backdrop_exit();
   }
 
-  watchdog('dropbridge', 'Inbound email received: from=@from subject=@subject.',
-    array('@from' => $email['from_email'], '@subject' => $email['subject']), WATCHDOG_INFO);
+  watchdog('dropbridge', 'Inbound email received: from=@from subject=@subject body_len=@len text_field=@text html_field=@html.',
+    array(
+      '@from'    => $email['from_email'],
+      '@subject' => $email['subject'],
+      '@len'     => strlen($email['body']),
+      '@text'    => isset($_POST['text']) ? strlen($_POST['text']) . ' chars' : 'absent',
+      '@html'    => isset($_POST['html']) ? strlen($_POST['html']) . ' chars' : 'absent',
+    ), WATCHDOG_INFO);
 
   // Check allow-list.
   $allowlist       = $config->get('allowlist') ?: array();
