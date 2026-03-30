@@ -1168,7 +1168,7 @@ function dropcrm_update_1020() {
 
     if (!in_array((int) $row->org_cid, $existing)) {
       $person->field_crm_employer[$lang][] = array('target_id' => (int) $row->org_cid);
-      entity_save('crm_contact', $person);
+      $person->save();
       $migrated++;
     }
   }
