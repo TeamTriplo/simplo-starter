@@ -177,18 +177,17 @@ function droptickets_list_page() {
   $status_opts_html .= '<option value="imported"' . ($status === 'imported' ? ' selected' : '') . '>' . t('Imported') . '</option>';
   $status_opts_html .= '</optgroup>';
 
-  // Project select — only projects that have non-imported tickets.
-  $project_pids = db_select('drop_ticket', 't')
-    ->fields('t', array('pid'))
-    ->isNull('t.import_id')
-    ->distinct()
-    ->execute()->fetchCol();
+  // Project select — all active projects.
+  $all_projects = db_select('drop_project', 'p')
+    ->fields('p', array('pid', 'name'))
+    ->condition('p.active', 1)
+    ->orderBy('p.name')
+    ->execute()
+    ->fetchAllAssoc('pid');
 
   $proj_opts_html = '<option value="0"' . (!$pid_filter ? ' selected' : '') . '>' . t('— All projects —') . '</option>';
   $show_proj_select = FALSE;
-  if (!empty($project_pids)) {
-    $all_projects = entity_load('drop_project', $project_pids);
-    uasort($all_projects, function($a, $b) { return strcasecmp($a->name, $b->name); });
+  if (!empty($all_projects)) {
     foreach ($all_projects as $proj) {
       $proj_opts_html .= '<option value="' . (int) $proj->pid . '"' . ($pid_filter === (int) $proj->pid ? ' selected' : '') . '>' . check_plain($proj->name) . '</option>';
     }
