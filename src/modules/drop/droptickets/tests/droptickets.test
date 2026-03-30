@@ -647,6 +647,113 @@ class DropTicketsCommentsTest extends DropTicketsTestBase {
 /**
  * Tests status transitions, the close route, Kanban visibility, and cron auto-close.
  */
+// ---------------------------------------------------------------------------
+// Emoji reaction tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests emoji reactions: toggle on/off, correct AJAX route, and DB persistence.
+ */
+class DropTicketsReactionsTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Emoji Reactions',
+      'description' => 'Emoji reactions can be added and removed via the correct AJAX endpoint.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+    ));
+    config_set('droptickets.settings', 'reactions_enabled', TRUE);
+  }
+
+  /**
+   * POSTing to the reaction endpoint adds a reaction row to the database.
+   */
+  public function testReactionIsStoredInDatabase() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropPost(
+      'drop/tickets/react/ticket/' . $ticket->tid,
+      array('emoji' => 'thumbs_up'),
+      NULL
+    );
+
+    $count = db_select('drop_ticket_reaction', 'r')
+      ->condition('r.tid', $ticket->tid)
+      ->condition('r.tcid', 0)
+      ->condition('r.emoji', 'thumbs_up')
+      ->condition('r.uid', $this->adminUser->uid)
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(1, (int) $count, 'Reaction row inserted after first click.');
+  }
+
+  /**
+   * POSTing the same emoji twice removes the reaction (toggle behaviour).
+   */
+  public function testReactionToggleRemovesRow() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+
+    $this->backdropLogin($this->adminUser);
+    // First click — add.
+    $this->backdropPost('drop/tickets/react/ticket/' . $ticket->tid, array('emoji' => 'thumbs_up'), NULL);
+    // Second click — remove.
+    $this->backdropPost('drop/tickets/react/ticket/' . $ticket->tid, array('emoji' => 'thumbs_up'), NULL);
+
+    $count = db_select('drop_ticket_reaction', 'r')
+      ->condition('r.tid', $ticket->tid)
+      ->condition('r.uid', $this->adminUser->uid)
+      ->condition('r.emoji', 'thumbs_up')
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(0, (int) $count, 'Reaction row removed after second click (toggle).');
+  }
+
+  /**
+   * The old admin/drop path returns 404; only the drop/ path is valid.
+   */
+  public function testOldAdminPathIsGone() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('admin/drop/tickets/react/ticket/' . $ticket->tid);
+    $this->assertResponse(404, 'Old admin/drop/tickets/react path returns 404.');
+  }
+
+  /**
+   * An invalid emoji is rejected with an error response.
+   */
+  public function testInvalidEmojiIsRejected() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropPost(
+      'drop/tickets/react/ticket/' . $ticket->tid,
+      array('emoji' => 'not_a_real_emoji'),
+      NULL
+    );
+
+    $data = json_decode($this->backdropGetContent(), TRUE);
+    $this->assertEqual('invalid emoji', isset($data['error']) ? $data['error'] : '', 'Invalid emoji returns error.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Workflow tests
+// ---------------------------------------------------------------------------
+
 class DropTicketsWorkflowTest extends DropTicketsTestBase {
 
   public static function getInfo() {
