@@ -316,9 +316,10 @@ function _dropbridge_create_ticket_from_email($email, $config, $is_verified) {
   }
 
   $note = t('This ticket was submitted by email from @email.', array('@email' => $email['from_email']));
+  $divider = '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -';
   // Strip [image: filename] placeholders inserted by email clients for inline images.
   $clean_body = preg_replace('/\[image:[^\]]*\]\s*/i', '', $email['body']);
-  $body = $note . "\n\n" . trim($clean_body);
+  $body = $note . "\n" . $divider . "\n\n" . trim($clean_body);
 
   $ticket = entity_create('drop_ticket', array(
     'title'         => $title,
