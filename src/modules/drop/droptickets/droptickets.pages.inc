@@ -1468,7 +1468,13 @@ function droptickets_ticket_view(DropTicket $ticket) {
       $main .= '<div class="droptickets-event">';
       $main .= '<span class="droptickets-event-dot"></span>';
       $main .= '<span class="droptickets-event-text">';
-      $main .= '<strong>' . $author . '</strong> ' . check_plain($item['data']->message);
+      if ($item['data']->uid == 0) {
+        // uid=0 means anonymous/system — the message contains full context (e.g. sender email).
+        $main .= check_plain($item['data']->message);
+      }
+      else {
+        $main .= '<strong>' . $author . '</strong> ' . check_plain($item['data']->message);
+      }
       $main .= '</span>';
       $main .= '<span class="droptickets-event-date">' . $date . '</span>';
       $main .= '</div>';
