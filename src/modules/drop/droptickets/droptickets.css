@@ -1480,15 +1480,16 @@ tr.droptickets-review-row--done .droptickets-review-btn {
 }
 
 .droptickets-board-pill--active {
-  background: var(--drop-primary, #1565c0);
+  background: var(--drop-highlight, #e3f2fd);
   border-color: var(--drop-primary, #1565c0);
-  color: #fff;
+  color: var(--drop-primary, #1565c0);
   font-weight: 700;
 }
 
 .droptickets-board-pill--active:hover {
-  background: var(--drop-primary, #1565c0);
-  color: #fff;
+  background: #bbdefb;
+  border-color: var(--drop-primary, #1565c0);
+  color: var(--drop-primary, #1565c0);
 }
 
 /* ---------------------------------------------------------------------------
