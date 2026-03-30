@@ -288,8 +288,8 @@ function dropbridge_inbound_settings_form($form, &$form_state) {
   $project_options = array(0 => t('— None —'));
   if (module_exists('droptickets')) {
     $projects = db_select('drop_project', 'p')
-      ->fields('p', array('pid', 'title'))
-      ->orderBy('p.title')
+      ->fields('p', array('pid', 'name'))
+      ->orderBy('p.name')
       ->execute()
       ->fetchAllKeyed();
     $project_options += $projects;
