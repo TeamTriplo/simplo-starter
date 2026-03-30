@@ -248,10 +248,12 @@ function dropbridge_inbound_settings_form($form, &$form_state) {
     '#description'   => t('When enabled, the webhook endpoint accepts POSTs from SendGrid and creates or updates tickets.'),
   );
 
-  // Auto-generate a token if none exists yet.
+  // Auto-generate and immediately persist a token if none exists yet.
   $token = $config->get('webhook_token');
   if (empty($token)) {
     $token = backdrop_random_key(32);
+    $config->set('webhook_token', $token);
+    $config->save();
   }
 
   $webhook_url = url('dropbridge/inbound-email', array(
