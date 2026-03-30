@@ -71,8 +71,9 @@ class DropTicketController extends EntityPlusController {
     if (empty($entity->created)) {
       $entity->created = REQUEST_TIME;
 
-      // Assign the next ticket number for this project on insert.
+      // Assign the next ticket number on insert.
       if (!empty($entity->pid)) {
+        // Project-scoped counter stored on the project row.
         db_update('drop_project')
           ->expression('ticket_counter', 'ticket_counter + 1')
           ->condition('pid', $entity->pid)
@@ -83,6 +84,12 @@ class DropTicketController extends EntityPlusController {
           ->condition('pid', $entity->pid)
           ->execute()
           ->fetchField();
+      }
+      else {
+        // No project assigned — use a global counter via state API.
+        $next = (int) state_get('droptickets_unassigned_counter', 0) + 1;
+        state_set('droptickets_unassigned_counter', $next);
+        $entity->ticket_number = $next;
       }
     }
 
