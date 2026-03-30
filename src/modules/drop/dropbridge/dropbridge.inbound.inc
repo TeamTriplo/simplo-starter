@@ -69,6 +69,9 @@ function dropbridge_inbound_email_webhook() {
   // Check allow-list.
   $allowlist       = $config->get('allowlist') ?: array();
   $drop_unverified = (bool) $config->get('drop_unverified');
+  $default_pid     = (int) $config->get('default_pid');
+  watchdog('dropbridge', 'Inbound config: default_pid=@pid allowlist_count=@count drop_unverified=@drop.',
+    array('@pid' => $default_pid, '@count' => count($allowlist), '@drop' => $drop_unverified ? 'yes' : 'no'), WATCHDOG_INFO);
 
   // An empty allowlist means "accept all"; a populated list restricts senders.
   $is_verified = empty($allowlist)
