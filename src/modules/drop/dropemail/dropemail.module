@@ -121,10 +121,7 @@ function _dropemail_contact_access($contact) {
  * Access callback for the ticket email form.
  */
 function _dropemail_ticket_access($ticket) {
-  if (!user_access('send dropemail')) {
-    return FALSE;
-  }
-  return (bool) dropemail_get_ticket_client_email($ticket);
+  return user_access('send dropemail');
 }
 
 // ---------------------------------------------------------------------------
@@ -259,6 +256,11 @@ function dropemail_get_contact_primary_email($contact) {
  * @return string|NULL
  */
 function dropemail_get_ticket_client_email($ticket) {
+  // For inbound tickets, the sender's address is always available.
+  if (!empty($ticket->inbound_email)) {
+    return $ticket->inbound_email;
+  }
+
   if (empty($ticket->pid)) {
     return NULL;
   }
@@ -274,7 +276,25 @@ function dropemail_get_ticket_client_email($ticket) {
   if (!$contact) {
     return NULL;
   }
-  return dropemail_get_contact_primary_email($contact);
+
+  // Try the contact's own primary email first.
+  $email = dropemail_get_contact_primary_email($contact);
+  if ($email) {
+    return $email;
+  }
+
+  // For organizations, fall back to the first affiliated person with an email.
+  if ($contact->bundle() === 'crm_organization') {
+    $affiliated = _dropcrm_load_org_contacts($cid);
+    foreach ($affiliated as $person) {
+      $person_email = dropemail_get_contact_primary_email($person);
+      if ($person_email) {
+        return $person_email;
+      }
+    }
+  }
+
+  return NULL;
 }
 
 /**

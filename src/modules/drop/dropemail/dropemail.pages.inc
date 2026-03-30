@@ -139,9 +139,13 @@ function dropemail_ticket_form($form, &$form_state, $ticket) {
   $count = isset($form_state['recipient_count']) ? (int) $form_state['recipient_count'] : 1;
 
   // Default value for the first recipient.
+  // Prefer the linked CRM contact; fall back to the inbound sender email.
   $first_default = '';
   if ($contact) {
     $first_default = entity_label('crm_contact', $contact) . ' [cid:' . $contact->cid . ']';
+  }
+  elseif (!empty($ticket->inbound_email)) {
+    $first_default = check_plain($ticket->inbound_email);
   }
 
   // Warning banner shown after a failed association check.
