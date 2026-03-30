@@ -315,8 +315,10 @@ function _dropbridge_create_ticket_from_email($email, $config, $is_verified) {
     $title = '(No subject)';
   }
 
-  $note   = t('This ticket was submitted by email from @email.', array('@email' => $email['from_email']));
-  $body   = $note . "\n\n" . $email['body'];
+  $note = t('This ticket was submitted by email from @email.', array('@email' => $email['from_email']));
+  // Strip [image: filename] placeholders inserted by email clients for inline images.
+  $clean_body = preg_replace('/\[image:[^\]]*\]\s*/i', '', $email['body']);
+  $body = $note . "\n\n" . trim($clean_body);
 
   $ticket = entity_create('drop_ticket', array(
     'title'         => $title,
@@ -332,7 +334,82 @@ function _dropbridge_create_ticket_from_email($email, $config, $is_verified) {
 
   $ticket->save();
 
+  // Attach any files/images from the email.
+  _dropbridge_attach_email_files($ticket);
+
   return $ticket;
+}
+
+/**
+ * Saves SendGrid email attachments as managed files on a ticket.
+ *
+ * SendGrid sends attachments in $_FILES as attachment1, attachment2, etc.
+ * Metadata (original filenames, MIME types) is in $_POST['attachment-info']
+ * as a JSON object keyed by the same names.
+ *
+ * @param object $ticket
+ *   The DropTicket entity to attach files to.
+ */
+function _dropbridge_attach_email_files($ticket) {
+  if (empty($_FILES)) {
+    return;
+  }
+
+  // Parse attachment metadata from SendGrid.
+  $attachment_info = array();
+  if (!empty($_POST['attachment-info'])) {
+    $decoded = json_decode($_POST['attachment-info'], TRUE);
+    if (is_array($decoded)) {
+      $attachment_info = $decoded;
+    }
+  }
+
+  $lang     = LANGUAGE_NONE;
+  $existing = isset($ticket->field_ticket_files[$lang]) ? $ticket->field_ticket_files[$lang] : array();
+  $added    = FALSE;
+
+  foreach ($_FILES as $key => $file_data) {
+    // Only process sendgrid attachment fields (attachment1, attachment2, …).
+    if (strpos($key, 'attachment') !== 0) {
+      continue;
+    }
+    if (empty($file_data['tmp_name']) || !is_uploaded_file($file_data['tmp_name'])) {
+      continue;
+    }
+
+    // Determine original filename from SendGrid metadata, falling back to $_FILES name.
+    $filename = $file_data['name'];
+    if (!empty($attachment_info[$key]['filename'])) {
+      $filename = $attachment_info[$key]['filename'];
+    }
+    $filename = file_munge_filename(basename($filename), 'jpg jpeg png gif pdf doc docx xls xlsx zip txt');
+
+    $dest = 'public://ticket-attachments/' . $ticket->tid . '/';
+    file_prepare_directory($dest, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+
+    $file_contents = file_get_contents($file_data['tmp_name']);
+    if ($file_contents === FALSE) {
+      continue;
+    }
+
+    $file = file_save_data($file_contents, $dest . $filename, FILE_EXISTS_RENAME);
+    if (!$file) {
+      watchdog('dropbridge', 'Failed to save attachment @name for ticket @tid.', array('@name' => $filename, '@tid' => $ticket->tid), WATCHDOG_WARNING);
+      continue;
+    }
+
+    $file->status = FILE_STATUS_PERMANENT;
+    file_save($file);
+    file_usage_add($file, 'droptickets', 'drop_ticket', $ticket->tid);
+
+    $existing[] = array('fid' => $file->fid, 'display' => 1, 'description' => '');
+    $added = TRUE;
+  }
+
+  if ($added) {
+    $ticket->field_ticket_files[$lang] = $existing;
+    $ticket->save();
+  }
 }
 
 /**
