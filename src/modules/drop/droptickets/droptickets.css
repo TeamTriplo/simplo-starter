@@ -91,6 +91,26 @@
   color: #c62828;
 }
 
+.droptickets-unverified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  background: #fff3e0;
+  border: 1px solid #e65100;
+  border-radius: 999px;
+  font-size: 0.82em;
+  color: #e65100;
+  text-decoration: none;
+  margin-left: 0.5rem;
+}
+
+.droptickets-unverified-badge:hover {
+  background: #ffebee;
+  border-color: #c62828;
+  color: #c62828;
+}
+
 /* De-emphasised admin-only tabs (Stale, Manage Fields, etc.). */
 .tabs a.droptickets-tab-admin {
   color: var(--color-gray-500, #9e9e9e);

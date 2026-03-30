@@ -248,8 +248,21 @@ function droptickets_list_page() {
       . ' ' . t('Enter Project Mode') . '</a>';
   }
 
+  // Unverified tickets badge — only shown when inbound email is enabled and
+  // there is at least one ticket awaiting review.
+  $unverified_badge = '';
+  if (config_get('dropbridge.inbound', 'enabled')) {
+    $unverified_count = db_query("SELECT COUNT(*) FROM {drop_ticket} WHERE is_verified = 0")->fetchField();
+    if ($unverified_count > 0) {
+      $unverified_badge = ' <a href="' . url('drop/tickets/unverified') . '" class="droptickets-unverified-badge" title="' . t('Tickets from unrecognized senders awaiting review') . '">'
+        . icon('warning', array('attributes' => array('width' => 14, 'height' => 14)))
+        . ' ' . t('!count unverified', array('!count' => $unverified_count))
+        . '</a>';
+    }
+  }
+
   $output['filters'] = array(
-    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $tag_badge . $all_mode_btn . '</div>',
+    '#markup' => '<div class="droptickets-filter-row">' . $filter_form . $tag_badge . $all_mode_btn . $unverified_badge . '</div>',
     '#weight' => -18,
   );
 
