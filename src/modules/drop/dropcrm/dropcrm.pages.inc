@@ -66,6 +66,10 @@ function dropcrm_contact_view(CrmContact $contact) {
       '#weight' => 5,
       '#prefix' => dropcrm_accordion_prefix(t('Affiliated People'), $add_person_link, TRUE),
       '#suffix' => dropcrm_accordion_suffix(),
+      'help'    => array(
+        '#markup' => '<p class="crm-section-help">' . t('People who list this organization as their employer. To add someone, edit their contact profile and set the <strong>Employer</strong> field.') . '</p>',
+        '#weight' => -1,
+      ),
       'table'   => array(
         '#theme'  => 'table',
         '#header' => array(t('Name')),
@@ -128,15 +132,22 @@ function dropcrm_contact_view(CrmContact $contact) {
   }
 
   // --- Relationships ---
+  // Relationships link two people (family, colleagues, etc.).
+  // Organizations use "Affiliated People" (via the Employer field) instead.
+  $rel_add_link = '';
+  if ($contact->bundle() !== 'crm_organization') {
+    $rel_add_link = l(t('+ Add relationship'), 'drop/crm/relationships/add',
+      array('attributes' => array('class' => array('drop-section-add')),
+            'query'      => array('contact' => $contact->cid)));
+  }
   $output['relationships'] = array(
     '#weight' => 15,
-    '#prefix' => dropcrm_accordion_prefix(
-      t('Relationships'),
-      l(t('+ Add relationship'), 'drop/crm/relationships/add',
-        array('attributes' => array('class' => array('drop-section-add')),
-              'query'      => array('contact' => $contact->cid)))
-    ),
+    '#prefix' => dropcrm_accordion_prefix(t('Relationships'), $rel_add_link),
     '#suffix' => dropcrm_accordion_suffix(),
+    'help'    => array(
+      '#markup' => '<p class="crm-section-help">' . t('Relationships connect two people — family members, colleagues, and so on. To link a person to an organization, use the <strong>Employer</strong> field on the person\'s profile.') . '</p>',
+      '#weight' => -1,
+    ),
   );
   $relationships  = _dropcrm_load_contact_relationships($contact->cid);
   $type_options   = _dropcrm_relationship_type_options();

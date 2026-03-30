@@ -1643,6 +1643,12 @@ function _dropcrm_relationship_type_options() {
 function dropcrm_relationship_form($form, &$form_state, $rid_or_object = NULL) {
   $form['#attached']['css'][] = backdrop_get_path('module', 'dropcrm') . '/dropcrm.admin.css';
 
+  $form['relationship_help'] = array(
+    '#type'   => 'markup',
+    '#markup' => '<p class="crm-section-help">' . t('Relationships link two <strong>people</strong> — family members, colleagues, and similar connections. To associate a person with an organization, edit the person\'s contact profile and set the <strong>Employer</strong> field instead.') . '</p>',
+    '#weight' => -10,
+  );
+
   // Resolve to an existing record or set defaults.
   $relationship = NULL;
   $rid = 0;
@@ -1755,6 +1761,17 @@ function dropcrm_relationship_form_validate($form, &$form_state) {
   if ($cid_a === $cid_b) {
     form_set_error('contact_b', t('A contact cannot be related to themselves.'));
     return;
+  }
+
+  // Prevent person-to-organization relationships. Use the Employer field instead.
+  $contact_a = crm_contact_load($cid_a);
+  $contact_b = crm_contact_load($cid_b);
+  if ($contact_a && $contact_b) {
+    $bundles = array($contact_a->bundle(), $contact_b->bundle());
+    if (in_array('crm_organization', $bundles)) {
+      form_set_error('contact_b', t('Relationships can only link two people. To associate a person with an organization, edit the person\'s profile and set the <strong>Employer</strong> field.', array(), array('context' => 'relationship form')));
+      return;
+    }
   }
 
   // Check for duplicate (same pair, same type), skipping this rid when editing.
@@ -2746,24 +2763,19 @@ function dropcrm_email_audit_form($form, &$form_state) {
     }
   }
   if ($org_cids) {
-    $result = db_query(
-      "SELECT org_cid, COUNT(DISTINCT person_cid) AS cnt FROM (
-         SELECT r.cid_a AS org_cid, r.cid_b AS person_cid
-         FROM {crm_relationship} r
-         INNER JOIN {crm_contact} pc ON pc.cid = r.cid_b AND pc.type = 'crm_person'
-         WHERE r.cid_a IN (:org_cids_a)
-         UNION ALL
-         SELECT r.cid_b AS org_cid, r.cid_a AS person_cid
-         FROM {crm_relationship} r
-         INNER JOIN {crm_contact} pc ON pc.cid = r.cid_a AND pc.type = 'crm_person'
-         WHERE r.cid_b IN (:org_cids_b)
-       ) combined GROUP BY org_cid",
-      array(':org_cids_a' => $org_cids, ':org_cids_b' => $org_cids)
-    );
+    // Count people linked via the Employer field (field_crm_employer on crm_person).
+    $result = db_select('field_data_field_crm_employer', 'fe')
+      ->fields('fe', array('field_crm_employer_target_id'))
+      ->addExpression('COUNT(DISTINCT fe.entity_id)', 'cnt')
+      ->condition('fe.entity_type', 'crm_contact')
+      ->condition('fe.deleted', 0)
+      ->condition('fe.field_crm_employer_target_id', $org_cids, 'IN')
+      ->groupBy('fe.field_crm_employer_target_id')
+      ->execute();
     foreach ($result as $row) {
-      $org_contact_counts[$row->org_cid] = (int) $row->cnt;
+      $org_contact_counts[$row->field_crm_employer_target_id] = (int) $row->cnt;
     }
-    // Orgs with no relationships won't appear in the result — default to 0.
+    // Orgs with no linked people won't appear in the result — default to 0.
     foreach ($org_cids as $ocid) {
       if (!isset($org_contact_counts[$ocid])) {
         $org_contact_counts[$ocid] = 0;

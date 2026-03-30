@@ -1123,3 +1123,65 @@ function dropcrm_update_1019() {
     field_update_instance($instance);
   }
 }
+
+/**
+ * Migrate person-to-organization entries from crm_relationship to
+ * field_crm_employer, then delete those relationship rows.
+ *
+ * Relationships should only link two people. The field_crm_employer entity
+ * reference field on crm_person contacts is the correct way to associate a
+ * person with an organization.
+ */
+function dropcrm_update_1020() {
+  // Find all rows in crm_relationship where one side is a person and the other
+  // is an organization.
+  $result = db_query("
+    SELECT r.rid,
+      CASE WHEN ca.type = 'crm_person' THEN r.cid_a ELSE r.cid_b END AS person_cid,
+      CASE WHEN ca.type = 'crm_organization' THEN r.cid_a ELSE r.cid_b END AS org_cid
+    FROM {crm_relationship} r
+    INNER JOIN {crm_contact} ca ON ca.cid = r.cid_a
+    INNER JOIN {crm_contact} cb ON cb.cid = r.cid_b
+    WHERE (ca.type = 'crm_person' AND cb.type = 'crm_organization')
+       OR (ca.type = 'crm_organization' AND cb.type = 'crm_person')
+  ");
+
+  $rids     = array();
+  $migrated = 0;
+  $lang     = LANGUAGE_NONE;
+
+  foreach ($result as $row) {
+    $rids[] = (int) $row->rid;
+
+    $person = crm_contact_load((int) $row->person_cid);
+    if (!$person) {
+      continue;
+    }
+
+    // Collect existing employer target IDs to avoid duplicates.
+    $existing = array();
+    if (!empty($person->field_crm_employer[$lang])) {
+      foreach ($person->field_crm_employer[$lang] as $item) {
+        $existing[] = (int) $item['target_id'];
+      }
+    }
+
+    if (!in_array((int) $row->org_cid, $existing)) {
+      $person->field_crm_employer[$lang][] = array('target_id' => (int) $row->org_cid);
+      entity_save('crm_contact', $person);
+      $migrated++;
+    }
+  }
+
+  // Remove the now-migrated relationship rows.
+  if ($rids) {
+    db_delete('crm_relationship')
+      ->condition('rid', $rids, 'IN')
+      ->execute();
+  }
+
+  return t('Migrated @m person–organization relationship(s) to the Employer field; deleted @d relationship row(s).', array(
+    '@m' => $migrated,
+    '@d' => count($rids),
+  ));
+}
