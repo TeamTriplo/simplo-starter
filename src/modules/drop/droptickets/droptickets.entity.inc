@@ -93,6 +93,26 @@ class DropTicketController extends EntityPlusController {
       }
     }
 
+    // On update: if pid changed, assign a fresh ticket number for the new project.
+    if (!empty($entity->tid) && !empty($entity->created) && !empty($entity->pid)) {
+      $old_pid = (int) db_select('drop_ticket', 't')
+        ->fields('t', array('pid'))
+        ->condition('tid', $entity->tid)
+        ->execute()
+        ->fetchField();
+      if ($old_pid !== (int) $entity->pid) {
+        db_update('drop_project')
+          ->expression('ticket_counter', 'ticket_counter + 1')
+          ->condition('pid', $entity->pid)
+          ->execute();
+        $entity->ticket_number = (int) db_select('drop_project', 'p')
+          ->fields('p', array('ticket_counter'))
+          ->condition('pid', $entity->pid)
+          ->execute()
+          ->fetchField();
+      }
+    }
+
     $entity->changed = REQUEST_TIME;
 
     if (empty($entity->uid)) {
