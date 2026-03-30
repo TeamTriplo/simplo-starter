@@ -473,7 +473,7 @@ function droptime_dropcrm_contact_view_alter(&$output, $contact) {
   $rows = array();
   foreach ($projects as $project) {
     $rows[] = array(
-      l(check_plain($project->name), 'drop/crm/projects/' . $project->pid . '/edit'),
+      l(check_plain($project->name), 'drop/crm/projects/' . $project->pid),
       $project->active ? t('Active') : t('Inactive'),
     );
   }
