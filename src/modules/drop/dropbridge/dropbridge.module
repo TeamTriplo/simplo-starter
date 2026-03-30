@@ -162,34 +162,16 @@ function dropbridge_menu() {
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 20,
   );
-  $items['drop/settings/general'] = array(
-    'title'  => 'General',
-    'type'   => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => 0,
-  );
-
-  // Permissions tab on settings page.
-  $items['drop/settings/permissions'] = array(
-    'title'            => 'Permissions',
-    'page callback'    => 'backdrop_get_form',
-    'page arguments'   => array('dropbridge_permissions_form'),
-    'access callback'  => 'user_access',
-    'access arguments' => array('administer site configuration'),
-    'file'             => 'dropbridge.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 5,
-  );
-
-  // Inbound email settings tab.
-  $items['drop/settings/inbound'] = array(
+  // Inbound email settings — in the admin menu under Drop Suite.
+  $items['admin/drop/inbound-email'] = array(
     'title'            => 'Inbound Email',
+    'description'      => 'Configure SendGrid inbound email processing and allowlist.',
     'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('dropbridge_inbound_settings_form'),
     'access callback'  => 'user_access',
     'access arguments' => array('administer site configuration'),
     'file'             => 'dropbridge.admin.inc',
-    'type'             => MENU_LOCAL_TASK,
-    'weight'           => 10,
+    'type'             => MENU_NORMAL_ITEM,
   );
 
   // Unverified tickets report.
