@@ -175,13 +175,20 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#weight'        => -16,
   );
 
+  $is_discussion = $is_edit && ($ticket->type === 'discussion');
+
   if ($is_edit) {
-    $status_options = droptickets_status_options();
-    if (!droptickets_done_access($ticket)) {
-      unset($status_options['done']);
+    if ($is_discussion) {
+      $status_options = droptickets_discussion_status_options();
     }
-    if (!droptickets_close_access($ticket)) {
-      unset($status_options['closed']);
+    else {
+      $status_options = droptickets_status_options();
+      if (!droptickets_done_access($ticket)) {
+        unset($status_options['done']);
+      }
+      if (!droptickets_close_access($ticket)) {
+        unset($status_options['closed']);
+      }
     }
     $form['status'] = array(
       '#type'          => 'select',
@@ -220,8 +227,8 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
 
   $form['assignee_uid'] = array(
     '#type'          => 'select',
-    '#title'         => t('Assignee'),
-    '#description'   => t('Who needs to act on this right now.'),
+    '#title'         => $is_discussion ? t('Facilitator') : t('Assignee'),
+    '#description'   => $is_discussion ? t('Who is facilitating this discussion.') : t('Who needs to act on this right now.'),
     '#options'       => $assignee_options,
     '#empty_option'  => t('— Unassigned —'),
     '#default_value' => $default_assignee,
@@ -230,7 +237,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
 
   $form['due_date'] = array(
     '#type'          => 'textfield',
-    '#title'         => t('Due date'),
+    '#title'         => $is_discussion ? t('Decision by') : t('Due date'),
     '#default_value' => ($is_edit && $ticket->due_date) ? format_date($ticket->due_date, 'custom', 'Y-m-d') : '',
     '#size'          => 12,
     '#maxlength'     => 10,
@@ -450,6 +457,14 @@ function droptickets_ticket_form_submit($form, &$form_state) {
   }
 
   $is_new = empty($values['tid']);
+
+  // New discussion tickets: set disc_open status and a 7-day default decision date.
+  if ($is_new && $ticket->type === 'discussion') {
+    $ticket->status = 'disc_open';
+    if (empty($ticket->due_date)) {
+      $ticket->due_date = strtotime('+7 days 00:00:00');
+    }
+  }
 
   field_attach_submit('drop_ticket', $ticket, $form, $form_state);
 

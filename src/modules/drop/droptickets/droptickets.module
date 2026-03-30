@@ -1801,6 +1801,18 @@ function droptickets_type_options() {
     'feature'     => t('Feature'),
     'task'        => t('Task'),
     'improvement' => t('Improvement'),
+    'discussion'  => t('Discussion'),
+  );
+}
+
+/**
+ * Returns status options for discussion-type tickets.
+ */
+function droptickets_discussion_status_options() {
+  return array(
+    'disc_open'      => t('Open'),
+    'disc_active'    => t('Active'),
+    'disc_concluded' => t('Concluded'),
   );
 }
 

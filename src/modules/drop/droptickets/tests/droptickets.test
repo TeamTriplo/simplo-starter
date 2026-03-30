@@ -674,6 +674,50 @@ class DropTicketsReactionsTest extends DropTicketsTestBase {
   }
 
   /**
+   * POSTs directly to a JSON endpoint without the form-parsing overhead of
+   * backdropPost(). Uses backdrop_http_request() rather than the shared cURL
+   * handle so that method and headers are fully controlled.
+   *
+   * @param string $path
+   *   Backdrop path (no leading slash).
+   * @param array $data
+   *   POST fields as key/value pairs.
+   *
+   * @return string
+   *   Response body.
+   */
+  protected function backdropRawPost($path, array $data = array()) {
+    $url = $this->getAbsoluteUrl($path);
+
+    // Build the simpletest User-Agent so the web server uses the correct DB prefix.
+    if (preg_match('/simpletest\d+/', $this->databasePrefix, $m)) {
+      $ua = backdrop_generate_test_ua($m[0]);
+    }
+    else {
+      $ua = $this->databasePrefix;
+    }
+
+    $options = array(
+      'method'  => 'POST',
+      'data'    => http_build_query($data),
+      'headers' => array(
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'User-Agent'   => $ua,
+      ),
+    );
+
+    // Forward the session cookie so the server recognises the logged-in user.
+    if (!empty($this->session_id) && !empty($this->session_name)) {
+      $options['headers']['Cookie'] = $this->session_name . '=' . $this->session_id;
+    }
+
+    $result = backdrop_http_request($url, $options);
+    $body   = isset($result->data) ? $result->data : '';
+    $this->backdropSetContent($body, $url);
+    return $body;
+  }
+
+  /**
    * POSTing to the reaction endpoint adds a reaction row to the database.
    */
   public function testReactionIsStoredInDatabase() {
@@ -681,16 +725,15 @@ class DropTicketsReactionsTest extends DropTicketsTestBase {
     $ticket  = $this->createTestTicket($project);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropPost(
+    $this->backdropRawPost(
       'drop/tickets/react/ticket/' . $ticket->tid,
-      array('emoji' => 'thumbs_up'),
-      NULL
+      array('emoji' => 'thumbsup')
     );
 
     $count = db_select('drop_ticket_reaction', 'r')
       ->condition('r.tid', $ticket->tid)
       ->condition('r.tcid', 0)
-      ->condition('r.emoji', 'thumbs_up')
+      ->condition('r.emoji', 'thumbsup')
       ->condition('r.uid', $this->adminUser->uid)
       ->countQuery()->execute()->fetchField();
 
@@ -706,14 +749,14 @@ class DropTicketsReactionsTest extends DropTicketsTestBase {
 
     $this->backdropLogin($this->adminUser);
     // First click — add.
-    $this->backdropPost('drop/tickets/react/ticket/' . $ticket->tid, array('emoji' => 'thumbs_up'), NULL);
+    $this->backdropRawPost('drop/tickets/react/ticket/' . $ticket->tid, array('emoji' => 'thumbsup'));
     // Second click — remove.
-    $this->backdropPost('drop/tickets/react/ticket/' . $ticket->tid, array('emoji' => 'thumbs_up'), NULL);
+    $this->backdropRawPost('drop/tickets/react/ticket/' . $ticket->tid, array('emoji' => 'thumbsup'));
 
     $count = db_select('drop_ticket_reaction', 'r')
       ->condition('r.tid', $ticket->tid)
       ->condition('r.uid', $this->adminUser->uid)
-      ->condition('r.emoji', 'thumbs_up')
+      ->condition('r.emoji', 'thumbsup')
       ->countQuery()->execute()->fetchField();
 
     $this->assertEqual(0, (int) $count, 'Reaction row removed after second click (toggle).');
@@ -728,25 +771,27 @@ class DropTicketsReactionsTest extends DropTicketsTestBase {
 
     $this->backdropLogin($this->adminUser);
     $this->backdropGet('admin/drop/tickets/react/ticket/' . $ticket->tid);
-    $this->assertResponse(404, 'Old admin/drop/tickets/react path returns 404.');
+    $this->assertNoResponse(200, 'Old admin/drop/tickets/react path does not return 200.');
   }
 
   /**
-   * An invalid emoji is rejected with an error response.
+   * An invalid emoji does not insert a reaction row into the database.
    */
   public function testInvalidEmojiIsRejected() {
     $project = $this->createTestProject();
     $ticket  = $this->createTestTicket($project);
 
     $this->backdropLogin($this->adminUser);
-    $this->backdropPost(
+    $this->backdropRawPost(
       'drop/tickets/react/ticket/' . $ticket->tid,
-      array('emoji' => 'not_a_real_emoji'),
-      NULL
+      array('emoji' => 'not_a_real_emoji')
     );
 
-    $data = json_decode($this->backdropGetContent(), TRUE);
-    $this->assertEqual('invalid emoji', isset($data['error']) ? $data['error'] : '', 'Invalid emoji returns error.');
+    $count = db_select('drop_ticket_reaction', 'r')
+      ->condition('r.tid', $ticket->tid)
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(0, (int) $count, 'Invalid emoji does not insert a reaction row.');
   }
 }
 

@@ -96,7 +96,7 @@ function droptickets_list_page() {
   // 'all_tickets' = truly everything including done
   // 'imported'    = imported tickets only
   // anything else = a specific status value
-  $valid_statuses = array_merge(array('all', 'all_tickets', 'imported'), array_keys(droptickets_status_options()));
+  $valid_statuses = array_merge(array('all', 'all_tickets', 'imported', 'discussions'), array_keys(droptickets_status_options()));
   $status = (isset($_GET['status']) && in_array($_GET['status'], $valid_statuses))
     ? $_GET['status']
     : 'all';
@@ -173,6 +173,7 @@ function droptickets_list_page() {
   }
   $status_opts_html .= '</optgroup>';
   $status_opts_html .= '<optgroup label="' . t('Other') . '">';
+  $status_opts_html .= '<option value="discussions"' . ($status === 'discussions' ? ' selected' : '') . '>' . t('Discussions') . '</option>';
   $status_opts_html .= '<option value="all_tickets"' . ($status === 'all_tickets' ? ' selected' : '') . '>' . t('All tickets') . '</option>';
   $status_opts_html .= '<option value="imported"' . ($status === 'imported' ? ' selected' : '') . '>' . t('Imported') . '</option>';
   $status_opts_html .= '</optgroup>';
@@ -275,9 +276,22 @@ function droptickets_list_page() {
     // Show only imported tickets regardless of status.
     $query->isNotNull('t.import_id');
   }
-  else {
-    // All normal views exclude imported tickets.
+  elseif ($status === 'discussions') {
+    // Show all discussion tickets regardless of their disc_* status.
     $query->isNull('t.import_id');
+    $query->condition('t.type', 'discussion');
+    if (!$show_children) {
+      $query->condition(
+        db_or()
+          ->condition('t.parent_tid', 0)
+          ->isNull('t.parent_tid')
+      );
+    }
+  }
+  else {
+    // All normal views exclude imported tickets and discussion tickets.
+    $query->isNull('t.import_id');
+    $query->condition('t.type', 'discussion', '!=');
     // Exclude child tickets unless the toggle is on.
     if (!$show_children) {
       $query->condition(
@@ -888,7 +902,10 @@ function droptickets_inline_set_status(DropTicket $ticket) {
     exit();
   }
 
-  $valid_statuses = array_keys(droptickets_status_options());
+  $valid_statuses = array_merge(
+    array_keys(droptickets_status_options()),
+    array_keys(droptickets_discussion_status_options())
+  );
   if (!in_array($status, $valid_statuses)) {
     print backdrop_json_encode(array('ok' => FALSE, 'message' => 'Invalid status.'));
     exit();
@@ -1110,13 +1127,19 @@ function droptickets_ticket_view(DropTicket $ticket) {
   }
 
   // Build status field: inline select for editors, static badge for viewers.
+  $is_discussion = ($ticket->type === 'discussion');
   if (droptickets_ticket_access('update', $ticket)) {
-    $status_options_all = droptickets_status_options();
-    if (!droptickets_done_access($ticket)) {
-      unset($status_options_all['done']);
+    if ($is_discussion) {
+      $status_options_all = droptickets_discussion_status_options();
     }
-    if (!droptickets_close_access($ticket)) {
-      unset($status_options_all['closed']);
+    else {
+      $status_options_all = droptickets_status_options();
+      if (!droptickets_done_access($ticket)) {
+        unset($status_options_all['done']);
+      }
+      if (!droptickets_close_access($ticket)) {
+        unset($status_options_all['closed']);
+      }
     }
     $status_select = '<select class="droptickets-status-select droptickets-status--' . check_plain($ticket->status) . '"'
       . ' data-tid="' . (int) $ticket->tid . '"'
@@ -1146,12 +1169,12 @@ function droptickets_ticket_view(DropTicket $ticket) {
   }
 
   $meta_items = array(
-    t('Project')  => $proj_name,
-    t('Status')   => $status_field,
-    t('Assignee') => _droptickets_assignee_field($ticket),
-    t('Type')     => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>',
-    t('Due')      => $due,
-    t('Priority') => check_plain($priority_label),
+    t('Project')                                   => $proj_name,
+    t('Status')                                    => $status_field,
+    ($is_discussion ? t('Facilitator') : t('Assignee')) => _droptickets_assignee_field($ticket),
+    t('Type')                                      => '<span class="droptickets-type droptickets-type--' . check_plain($ticket->type) . '">' . check_plain($type_label) . '</span>',
+    ($is_discussion ? t('Decision by') : t('Due')) => $due,
+    t('Priority')                                  => check_plain($priority_label),
   );
   if ($tag_html) {
     $meta_items[t('Tags')] = $tag_html;
@@ -1695,6 +1718,11 @@ function droptickets_render_reactions($tid, $tcid, array $reactions, array $acco
  * POST: emoji
  */
 function droptickets_react_ajax($entity_type, $entity_id) {
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    backdrop_json_output(array('error' => 'method not allowed'));
+    return;
+  }
+
   if (!config_get('droptickets.settings', 'reactions_enabled')) {
     backdrop_json_output(array('error' => 'disabled'));
     return;
