@@ -315,9 +315,12 @@ function _dropbridge_create_ticket_from_email($email, $config, $is_verified) {
     $title = '(No subject)';
   }
 
+  $note   = t('This ticket was submitted by email from @email.', array('@email' => $email['from_email']));
+  $body   = $note . "\n\n" . $email['body'];
+
   $ticket = entity_create('drop_ticket', array(
     'title'         => $title,
-    'body'          => $email['body'],
+    'body'          => $body,
     'body_format'   => 'plain_text',
     'type'          => 'task',
     'status'        => 'open',
