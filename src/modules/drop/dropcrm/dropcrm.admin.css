@@ -704,6 +704,25 @@ a.crm-method-edit-link:hover {
   padding: 0.2rem 0.5rem;
 }
 
+.audit-col-people {
+  text-align: center;
+  width: 60px;
+  white-space: nowrap;
+}
+
+.audit-col-people-na {
+  color: #d1d5db;
+}
+
+.audit-people-none {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.dropcrm-audit-table tr.audit-people-missing td {
+  /* intentionally no background — email highlight takes priority */
+}
+
 .audit-nl-noemail {
   color: #d1d5db;
 }

@@ -804,6 +804,12 @@ function dropbridge_drop_nav_links() {
       'permission' => 'access dropbridge',
       'weight'     => 0,
     ),
+    array(
+      'title'      => t('Settings'),
+      'path'       => 'drop/settings',
+      'permission' => 'administer site configuration',
+      'weight'     => 100,
+    ),
   );
 }
 

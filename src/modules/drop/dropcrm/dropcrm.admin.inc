@@ -2737,6 +2737,40 @@ function dropcrm_email_audit_form($form, &$form_state) {
 
   $token = backdrop_get_token('dropcrm_email_audit');
 
+  // Count linked people for each organization.
+  $org_contact_counts = array();
+  $org_cids = array();
+  foreach ($contacts as $c) {
+    if ($c->type === 'crm_organization') {
+      $org_cids[] = $c->cid;
+    }
+  }
+  if ($org_cids) {
+    $result = db_query(
+      "SELECT org_cid, COUNT(DISTINCT person_cid) AS cnt FROM (
+         SELECT r.cid_a AS org_cid, r.cid_b AS person_cid
+         FROM {crm_relationship} r
+         INNER JOIN {crm_contact} pc ON pc.cid = r.cid_b AND pc.type = 'crm_person'
+         WHERE r.cid_a IN (:org_cids_a)
+         UNION ALL
+         SELECT r.cid_b AS org_cid, r.cid_a AS person_cid
+         FROM {crm_relationship} r
+         INNER JOIN {crm_contact} pc ON pc.cid = r.cid_a AND pc.type = 'crm_person'
+         WHERE r.cid_b IN (:org_cids_b)
+       ) combined GROUP BY org_cid",
+      array(':org_cids_a' => $org_cids, ':org_cids_b' => $org_cids)
+    );
+    foreach ($result as $row) {
+      $org_contact_counts[$row->org_cid] = (int) $row->cnt;
+    }
+    // Orgs with no relationships won't appear in the result — default to 0.
+    foreach ($org_cids as $ocid) {
+      if (!isset($org_contact_counts[$ocid])) {
+        $org_contact_counts[$ocid] = 0;
+      }
+    }
+  }
+
   // Build table header.
   $nl_headers = array();
   foreach ($newsletters as $tid => $nl_name) {
@@ -2746,6 +2780,7 @@ function dropcrm_email_audit_form($form, &$form_state) {
     array(
       array('data' => t('Contact'), 'class' => array('audit-col-name')),
       array('data' => t('Type'),    'class' => array('audit-col-type')),
+      array('data' => t('People'),  'class' => array('audit-col-people')),
       array('data' => t('Email'),   'class' => array('audit-col-email')),
     ),
     $nl_headers
@@ -2758,6 +2793,26 @@ function dropcrm_email_audit_form($form, &$form_state) {
 
     // Name cell.
     $name_cell = l(check_plain($contact->name), 'drop/crm/contact/' . $contact->cid, array('html' => TRUE));
+
+    // People cell — only meaningful for organisations.
+    if ($contact->type === 'crm_organization') {
+      $count = isset($org_contact_counts[$contact->cid]) ? $org_contact_counts[$contact->cid] : 0;
+      if ($count === 0) {
+        $people_cell = array(
+          'data'  => '<span class="audit-people-none" title="' . t('No linked contacts') . '">0 !</span>',
+          'class' => array('audit-col-people', 'audit-people-missing'),
+        );
+      }
+      else {
+        $people_cell = array(
+          'data'  => '<span class="audit-people-count">' . $count . '</span>',
+          'class' => array('audit-col-people'),
+        );
+      }
+    }
+    else {
+      $people_cell = array('data' => '—', 'class' => array('audit-col-people', 'audit-col-people-na'));
+    }
 
     // Email cell — show address or an inline add form.
     if ($email) {
@@ -2796,6 +2851,7 @@ function dropcrm_email_audit_form($form, &$form_state) {
       array(
         array('data' => $name_cell,  'class' => array('audit-col-name')),
         array('data' => $type_label, 'class' => array('audit-col-type')),
+        $people_cell,
         array('data' => $email_cell, 'class' => array('audit-col-email')),
       ),
       $nl_cells
