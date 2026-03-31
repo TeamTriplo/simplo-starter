@@ -2764,14 +2764,14 @@ function dropcrm_email_audit_form($form, &$form_state) {
   }
   if ($org_cids) {
     // Count people linked via the Employer field (field_crm_employer on crm_person).
-    $result = db_select('field_data_field_crm_employer', 'fe')
+    $org_query = db_select('field_data_field_crm_employer', 'fe')
       ->fields('fe', array('field_crm_employer_target_id'))
-      ->addExpression('COUNT(DISTINCT fe.entity_id)', 'cnt')
       ->condition('fe.entity_type', 'crm_contact')
       ->condition('fe.deleted', 0)
       ->condition('fe.field_crm_employer_target_id', $org_cids, 'IN')
-      ->groupBy('fe.field_crm_employer_target_id')
-      ->execute();
+      ->groupBy('fe.field_crm_employer_target_id');
+    $org_query->addExpression('COUNT(DISTINCT fe.entity_id)', 'cnt');
+    $result = $org_query->execute();
     foreach ($result as $row) {
       $org_contact_counts[$row->field_crm_employer_target_id] = (int) $row->cnt;
     }
