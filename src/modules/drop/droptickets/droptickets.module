@@ -819,8 +819,25 @@ function droptickets_watcher_remove($tid, $uid) {
 
 /**
  * Creates a single notification record.
+ *
+ * Deduplicates: if an unread notification already exists for the same user
+ * and ticket within the last 3 minutes, the new one is skipped.
  */
 function droptickets_notify_create($uid, $tid, $tcid, $type, $actor_uid) {
+  $window = 180; // 3 minutes in seconds.
+  $recent = db_select('drop_notification', 'n')
+    ->condition('n.uid', $uid)
+    ->condition('n.tid', $tid)
+    ->condition('n.is_read', 0)
+    ->condition('n.created', REQUEST_TIME - $window, '>=')
+    ->countQuery()
+    ->execute()
+    ->fetchField();
+
+  if ($recent) {
+    return;
+  }
+
   db_insert('drop_notification')
     ->fields(array(
       'uid'       => $uid,

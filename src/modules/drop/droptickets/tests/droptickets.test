@@ -1778,6 +1778,48 @@ class DropTicketsNotificationsTest extends DropTicketsTestBase {
   }
 
   /**
+   * Multiple notifications for the same user+ticket within 3 minutes collapse to one.
+   */
+  public function testNotificationDeduplicationWithinWindow() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $uid     = $this->adminUser->uid;
+    $actor   = $this->backdropCreateUser(array('access droptickets'));
+
+    // Three events on the same ticket in rapid succession.
+    droptickets_notify_create($uid, $ticket->tid, NULL, 'commented',  $actor->uid);
+    droptickets_notify_create($uid, $ticket->tid, NULL, 'mentioned',  $actor->uid);
+    droptickets_notify_create($uid, $ticket->tid, NULL, 'updated',    $actor->uid);
+
+    $count = db_select('drop_notification', 'n')
+      ->condition('n.uid', $uid)
+      ->condition('n.tid', $ticket->tid)
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(1, (int) $count, 'Three rapid events on one ticket produce only one notification row.');
+  }
+
+  /**
+   * A notification on a different ticket is not suppressed by the dedup window.
+   */
+  public function testDeduplicationDoesNotSuppressOtherTickets() {
+    $project = $this->createTestProject();
+    $ticket1 = $this->createTestTicket($project, array('title' => 'Ticket A'));
+    $ticket2 = $this->createTestTicket($project, array('title' => 'Ticket B'));
+    $uid     = $this->adminUser->uid;
+    $actor   = $this->backdropCreateUser(array('access droptickets'));
+
+    droptickets_notify_create($uid, $ticket1->tid, NULL, 'updated', $actor->uid);
+    droptickets_notify_create($uid, $ticket2->tid, NULL, 'updated', $actor->uid);
+
+    $count = db_select('drop_notification', 'n')
+      ->condition('n.uid', $uid)
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual(2, (int) $count, 'One notification per distinct ticket is preserved.');
+  }
+
+  /**
    * Last-used project pid is persisted via state API and pre-selected on the form.
    */
   public function testLastUsedProjectPreSelected() {
