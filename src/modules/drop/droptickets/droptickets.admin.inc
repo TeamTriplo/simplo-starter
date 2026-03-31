@@ -73,7 +73,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#default_value' => $is_edit ? $ticket->type : 'task',
     '#required'      => TRUE,
     '#prefix'        => '<div class="droptickets-form-sidebar">',
-    '#weight'        => -19,
+    '#weight'        => -18,
     '#attributes'    => array('class' => array('droptickets-type-select')),
   );
 
@@ -132,7 +132,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#empty_option'  => t('— Select project —'),
     '#required'      => FALSE,
     '#default_value' => $default_pid,
-    '#weight'        => -18,
+    '#weight'        => -17,
     '#attributes'    => array('class' => array('droptickets-project-select')),
   );
 

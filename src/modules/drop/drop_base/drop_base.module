@@ -377,19 +377,48 @@ function _drop_base_report_in_section(array $report, $section) {
  *   Rendered nav HTML, or FALSE if no items to display.
  */
 function _drop_base_render_section_nav(array $links, array $extras = array()) {
-  $current = current_path();
-  $items   = array();
+  $current       = current_path();
+  $current_query = $_GET;
+  unset($current_query['q']);
+  $items = array();
+
+  // Collect all query fingerprints used by query-bearing links so that plain
+  // path links can exclude themselves when one of those fingerprints is active.
+  $query_link_fingerprints = array();
+  foreach ($links as $link) {
+    if (!empty($link['options']['query'])) {
+      $query_link_fingerprints[] = $link['options']['query'];
+    }
+  }
 
   foreach ($links as $link) {
-    $href = $link['href'];
+    $href       = $link['href'];
+    $link_query = !empty($link['options']['query']) ? $link['options']['query'] : NULL;
 
-    // Determine active state: exact match or any declared active_path.
-    $active = ($current === $href);
-    if (!$active && !empty($link['active_paths'])) {
-      foreach ($link['active_paths'] as $ap) {
-        if ($current === $ap || strpos($current, $ap . '/') === 0) {
-          $active = TRUE;
-          break;
+    if ($link_query) {
+      // Query-bearing link: active only when path and all query params match.
+      $path_match  = ($current === $href);
+      $query_match = !array_diff_assoc($link_query, $current_query);
+      $active = $path_match && $query_match;
+    }
+    else {
+      // Plain path link: active on path match, but NOT when the current query
+      // matches a query-bearing sibling link (e.g. ?status=discussions).
+      $active = ($current === $href);
+      if ($active) {
+        foreach ($query_link_fingerprints as $fp) {
+          if (!array_diff_assoc($fp, $current_query)) {
+            $active = FALSE;
+            break;
+          }
+        }
+      }
+      if (!$active && !empty($link['active_paths'])) {
+        foreach ($link['active_paths'] as $ap) {
+          if ($current === $ap || strpos($current, $ap . '/') === 0) {
+            $active = TRUE;
+            break;
+          }
         }
       }
     }

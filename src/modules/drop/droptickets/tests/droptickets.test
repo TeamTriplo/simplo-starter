@@ -1595,3 +1595,202 @@ class DropTicketsReadUnreadTest extends DropTicketsTestBase {
     $this->assertNoRaw('droptickets-comment--unread', 'Comment read before last visit has no unread class.');
   }
 }
+
+// ---------------------------------------------------------------------------
+// Discussion ticket tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests for the Discussion ticket type.
+ */
+class DropTicketsDiscussionTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Discussion Type',
+      'description' => 'Discussion tickets: no project required, default status, status labels.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+    ));
+  }
+
+  /**
+   * A discussion ticket can be saved without a project (pid = 0).
+   */
+  public function testDiscussionTicketNoProjectRequired() {
+    $ticket = entity_create('drop_ticket', array(
+      'pid'    => 0,
+      'title'  => 'Discussion without project',
+      'type'   => 'discussion',
+      'status' => 'disc_open',
+    ));
+    $ticket->save();
+
+    $loaded = entity_load('drop_ticket', array($ticket->tid), array(), TRUE);
+    $this->assertFalse(empty($loaded), 'Discussion ticket saved without a project.');
+    $this->assertEqual(0, (int) reset($loaded)->pid, 'Discussion ticket pid is 0.');
+  }
+
+  /**
+   * A discussion ticket submitted via the form defaults to disc_open status.
+   */
+  public function testDiscussionTicketDefaultsToDiscOpen() {
+    $this->backdropLogin($this->adminUser);
+
+    $edit = array(
+      'title'       => 'New discussion ticket',
+      'type'        => 'discussion',
+      'body[value]' => 'Discussion body.',
+    );
+    $this->backdropPost('drop/tickets/add', $edit, t('Add ticket'));
+
+    $row = db_select('drop_ticket', 't')
+      ->fields('t', array('tid', 'status'))
+      ->condition('t.title', 'New discussion ticket')
+      ->execute()
+      ->fetch();
+
+    $this->assertNotNull($row, 'Discussion ticket was created.');
+    $this->assertEqual('disc_open', $row->status, 'New discussion ticket defaults to disc_open status.');
+  }
+
+  /**
+   * disc_active status displays the human label "Active", not the machine name.
+   */
+  public function testDiscussionStatusLabelDisplayed() {
+    $project = $this->createTestProject();
+    $this->createTestTicket($project, array(
+      'type'   => 'discussion',
+      'status' => 'disc_active',
+    ));
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('drop/tickets', array('query' => array('status' => 'discussions')));
+
+    $this->assertText('Active', 'Human label "Active" appears in discussions list.');
+    $this->assertNoText('disc_active', 'Machine name "disc_active" does not appear in discussions list.');
+  }
+
+  /**
+   * droptickets_all_status_options() includes disc_* keys alongside regular ones.
+   */
+  public function testAllStatusOptionsIncludesDiscussionStatuses() {
+    $options = droptickets_all_status_options();
+    $this->assertTrue(isset($options['disc_open']),      'disc_open is in all_status_options.');
+    $this->assertTrue(isset($options['disc_active']),    'disc_active is in all_status_options.');
+    $this->assertTrue(isset($options['disc_concluded']), 'disc_concluded is in all_status_options.');
+    $this->assertTrue(isset($options['open']),           'Regular open status still present.');
+  }
+
+  /**
+   * A non-discussion ticket submitted without a project fails validation.
+   */
+  public function testNonDiscussionTicketRequiresProject() {
+    $this->backdropLogin($this->adminUser);
+
+    $edit = array(
+      'title'       => 'Task without project',
+      'type'        => 'task',
+      'body[value]' => 'Body.',
+      'pid'         => '',
+    );
+    $this->backdropPost('drop/tickets/add', $edit, t('Add ticket'));
+    $this->assertText('Project is required', 'Validation error shown when project missing for task ticket.');
+
+    $count = db_select('drop_ticket', 't')
+      ->condition('t.title', 'Task without project')
+      ->countQuery()->execute()->fetchField();
+    $this->assertEqual(0, (int) $count, 'Task ticket without project was not saved.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Notification tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Tests for notification counting and last-used project state.
+ */
+class DropTicketsNotificationsTest extends DropTicketsTestBase {
+
+  public static function getInfo() {
+    return array(
+      'name'        => 'DropTickets Notifications',
+      'description' => 'Notification count reflects distinct tickets; last-used project persists.',
+      'group'       => 'DropTickets',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('droptickets');
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access droptickets',
+      'administer droptickets',
+    ));
+  }
+
+  /**
+   * droptickets_unread_count() returns distinct ticket count, not event count.
+   */
+  public function testUnreadCountDistinctTickets() {
+    $project = $this->createTestProject();
+    $ticket1 = $this->createTestTicket($project, array('title' => 'Ticket A'));
+    $ticket2 = $this->createTestTicket($project, array('title' => 'Ticket B'));
+    $uid     = $this->adminUser->uid;
+    $actor   = $this->backdropCreateUser(array('access droptickets'));
+
+    // 2 notifications on ticket1, 1 on ticket2 = 3 events across 2 tickets.
+    droptickets_notify_create($uid, $ticket1->tid, NULL, 'updated',   $actor->uid);
+    droptickets_notify_create($uid, $ticket1->tid, NULL, 'commented', $actor->uid);
+    droptickets_notify_create($uid, $ticket2->tid, NULL, 'updated',   $actor->uid);
+
+    $count = droptickets_unread_count($uid);
+    $this->assertEqual(2, $count, 'Unread count is 2 distinct tickets, not 3 events.');
+  }
+
+  /**
+   * Marking all notifications read resets the unread count to zero.
+   */
+  public function testMarkAllReadResetsCount() {
+    $project = $this->createTestProject();
+    $ticket  = $this->createTestTicket($project);
+    $uid     = $this->adminUser->uid;
+    $actor   = $this->backdropCreateUser(array('access droptickets'));
+
+    droptickets_notify_create($uid, $ticket->tid, NULL, 'updated',   $actor->uid);
+    droptickets_notify_create($uid, $ticket->tid, NULL, 'commented', $actor->uid);
+
+    $this->assertEqual(1, droptickets_unread_count($uid), 'One unread ticket before marking read.');
+
+    db_update('drop_notification')
+      ->fields(array('is_read' => 1))
+      ->condition('uid', $uid)
+      ->execute();
+
+    $this->assertEqual(0, droptickets_unread_count($uid), 'Zero unread tickets after marking all read.');
+  }
+
+  /**
+   * Last-used project pid is persisted via state API and pre-selected on the form.
+   */
+  public function testLastUsedProjectPreSelected() {
+    $project = $this->createTestProject('My Project');
+    $uid     = $this->adminUser->uid;
+
+    state_set('droptickets_last_pid_' . $uid, $project->pid);
+
+    $retrieved = state_get('droptickets_last_pid_' . $uid, NULL);
+    $this->assertEqual($project->pid, $retrieved, 'Last-used project pid stored and retrieved via state API.');
+
+    $this->backdropLogin($this->adminUser);
+    $this->backdropGet('drop/tickets/add');
+    $this->assertOptionSelected('edit-pid', $project->pid, 'Last-used project is pre-selected on new ticket form.');
+  }
+}

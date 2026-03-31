@@ -39,3 +39,15 @@ name = DropTickets Emoji Reactions
 description = Emoji reactions can be added and removed via the correct AJAX endpoint.
 group = DropTickets
 file = droptickets.test
+
+[DropTicketsDiscussionTest]
+name = DropTickets Discussion Type
+description = Discussion tickets: no project required, default status, status labels.
+group = DropTickets
+file = droptickets.test
+
+[DropTicketsNotificationsTest]
+name = DropTickets Notifications
+description = Notification count reflects distinct tickets; last-used project persists.
+group = DropTickets
+file = droptickets.test
