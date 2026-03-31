@@ -891,15 +891,13 @@ function droptickets_reactions_get($tid, $tcid = 0) {
 }
 
 /**
- * Returns the unread notification count for a user.
+ * Returns the number of distinct tickets with unread notifications for a user.
  */
 function droptickets_unread_count($uid) {
-  return (int) db_select('drop_notification', 'n')
-    ->condition('n.uid', $uid)
-    ->condition('n.is_read', 0)
-    ->countQuery()
-    ->execute()
-    ->fetchField();
+  return (int) db_query(
+    'SELECT COUNT(DISTINCT tid) FROM {drop_notification} WHERE uid = :uid AND is_read = 0',
+    array(':uid' => $uid)
+  )->fetchField();
 }
 
 // ---------------------------------------------------------------------------
@@ -1817,6 +1815,19 @@ function droptickets_discussion_status_options() {
 }
 
 /**
+ * Returns all status options across all ticket types (regular + discussion).
+ *
+ * Use this when resolving a status key to a human-readable label, where the
+ * ticket type is not known or the list may include discussion tickets.
+ */
+function droptickets_all_status_options() {
+  return array_merge(
+    droptickets_status_options(),
+    droptickets_discussion_status_options()
+  );
+}
+
+/**
  * Returns ticket status options.
  */
 function droptickets_status_options() {
@@ -1941,7 +1952,7 @@ function droptickets_dropcrm_contact_view_alter(&$output, $contact) {
       ->fetchAll();
 
     $projects = entity_load('drop_project', $pids);
-    $status_options = droptickets_status_options();
+    $status_options = droptickets_all_status_options();
     $rows = array();
     foreach ($tickets as $ticket) {
       $project = isset($projects[$ticket->pid]) ? $projects[$ticket->pid] : NULL;
@@ -2032,6 +2043,17 @@ function droptickets_drop_section_links($section) {
       'active_paths' => array('drop/tickets/flagged'),
     );
   }
+
+  $disc_count = db_query(
+    "SELECT COUNT(*) FROM {drop_ticket} WHERE type = 'discussion' AND status = 'disc_active'"
+  )->fetchField();
+  $links['discussions'] = array(
+    'title'   => t('Discussions'),
+    'href'    => 'drop/tickets',
+    'options' => array('query' => array('status' => 'discussions')),
+    'weight'  => -5,
+    'badge'   => $disc_count ? (int) $disc_count : NULL,
+  );
 
   $links['kanban'] = array(
     'title'  => t('Kanban'),

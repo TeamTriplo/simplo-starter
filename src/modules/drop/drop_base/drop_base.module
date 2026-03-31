@@ -260,6 +260,8 @@ function _drop_base_nav_is_active($link_path, $current_path) {
  *   - title: (string) Human-readable label.
  *   - href: (string) Backdrop path for the link.
  *   - weight: (int) Sort order (lower = further left).
+ *   - options: (array, optional) Options passed to l() — supports 'query',
+ *     'fragment', 'attributes', etc.
  *   - badge: (int|string, optional) Short text rendered as a badge pill.
  *   - admin_only: (bool, optional) Renders link de-emphasised; does not
  *     enforce access — callers must check permissions before adding the link.
@@ -408,8 +410,10 @@ function _drop_base_render_section_nav(array $links, array $extras = array()) {
       $badge = '<span class="drop-snav__badge">' . check_plain((string) $link['badge']) . '</span>';
     }
 
-    $title_html = check_plain($link['title']) . $badge;
-    $item_html  = l($title_html, $href, array('html' => TRUE));
+    $title_html  = check_plain($link['title']) . $badge;
+    $link_options = isset($link['options']) ? $link['options'] : array();
+    $link_options['html'] = TRUE;
+    $item_html  = l($title_html, $href, $link_options);
     $items[]    = '<li class="' . implode(' ', $classes) . '">' . $item_html . '</li>';
   }
 

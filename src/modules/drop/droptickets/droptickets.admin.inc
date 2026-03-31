@@ -40,6 +40,9 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     ));
   }
 
+  // Per-user last-used project (persists across devices via state API).
+  $last_pid = state_get('droptickets_last_pid_' . $user->uid, NULL);
+
   // Open two-column layout wrapper and main column.
   $form['title'] = array(
     '#type'          => 'textfield',
@@ -61,8 +64,18 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     '#weight'        => -19,
   );
 
-  // Open sidebar column. Client + Project chained selects are first.
-  global $user;
+  // Open sidebar column. Type is first — determines what else is shown.
+
+  $form['type'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Type'),
+    '#options'       => droptickets_type_options(),
+    '#default_value' => $is_edit ? $ticket->type : 'task',
+    '#required'      => TRUE,
+    '#prefix'        => '<div class="droptickets-form-sidebar">',
+    '#weight'        => -19,
+    '#attributes'    => array('class' => array('droptickets-type-select')),
+  );
 
   // Load all active projects with their contact (client) info.
   $project_rows = db_select('drop_project', 'p')
@@ -72,7 +85,7 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     ->execute()
     ->fetchAll();
 
-  // Build a map of cid => client name for clients that have projects.
+  // Build a map of cid => sorted client name.
   $cids = array_filter(array_unique(array_map(function($r) { return $r->cid; }, $project_rows)));
   $client_names = array();
   if ($cids) {
@@ -84,87 +97,43 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
     asort($client_names);
   }
 
-  // Build a map of pid => cid for use in JS/AJAX.
-  $projects_by_client = array();
-  $ungrouped_projects = array();
+  // Build grouped options: client name => array(pid => project name).
+  $grouped_options = array();
+  $ungrouped = array();
   foreach ($project_rows as $row) {
     if (!empty($row->cid) && isset($client_names[$row->cid])) {
-      $projects_by_client[$row->cid][$row->pid] = $row->name;
+      $grouped_options[$client_names[$row->cid]][$row->pid] = $row->name;
     }
     else {
-      $ungrouped_projects[$row->pid] = $row->name;
+      $ungrouped[$row->pid] = $row->name;
     }
   }
-
-  // Determine the currently selected client from form state or existing ticket.
-  $selected_cid = NULL;
-  if (!empty($form_state['values']['client_cid'])) {
-    $selected_cid = (int) $form_state['values']['client_cid'];
-  }
-  elseif ($is_edit && !empty($ticket->pid)) {
-    // Derive cid from the existing project.
-    foreach ($project_rows as $row) {
-      if ($row->pid == $ticket->pid) {
-        $selected_cid = $row->cid ?: 0;
-        break;
-      }
-    }
+  ksort($grouped_options);
+  $pid_options = $grouped_options;
+  if ($ungrouped) {
+    $pid_options[t('— No client —')] = $ungrouped;
   }
 
-  // Client options: sorted clients + an "No client" option for ungrouped.
-  $client_options = array();
-  foreach ($client_names as $cid => $name) {
-    $client_options[$cid] = $name;
+  // Determine default pid: explicit edit value, URL param, or last used.
+  if ($is_edit) {
+    $default_pid = $ticket->pid ?: NULL;
   }
-  if ($ungrouped_projects) {
-    $client_options[0] = t('— No client —');
-  }
-
-  $form['client_cid'] = array(
-    '#type'          => 'select',
-    '#title'         => t('Client'),
-    '#options'       => $client_options,
-    '#empty_option'  => t('— Select client —'),
-    '#default_value' => $selected_cid,
-    '#required'      => TRUE,
-    '#prefix'        => '<div class="droptickets-form-sidebar">',
-    '#weight'        => -19,
-    '#ajax'          => array(
-      'callback' => 'droptickets_project_ajax',
-      'wrapper'  => 'droptickets-project-wrapper',
-      'effect'   => 'fade',
-    ),
-  );
-
-  // Project options filtered by selected client.
-  if ($selected_cid !== NULL) {
-    $project_options = ($selected_cid == 0)
-      ? $ungrouped_projects
-      : (isset($projects_by_client[$selected_cid]) ? $projects_by_client[$selected_cid] : array());
+  elseif (!empty($_GET['pid'])) {
+    $default_pid = (int) $_GET['pid'];
   }
   else {
-    $project_options = array();
+    $default_pid = $last_pid;
   }
 
   $form['pid'] = array(
     '#type'          => 'select',
     '#title'         => t('Project'),
-    '#options'       => $project_options,
-    '#empty_option'  => $selected_cid === NULL ? t('— Select a client first —') : t('— Select —'),
-    '#required'      => TRUE,
-    '#default_value' => $is_edit ? $ticket->pid : (!empty($_GET['pid']) ? (int) $_GET['pid'] : NULL),
-    '#prefix'        => '<div id="droptickets-project-wrapper">',
-    '#suffix'        => '</div>',
+    '#options'       => $pid_options,
+    '#empty_option'  => t('— Select project —'),
+    '#required'      => FALSE,
+    '#default_value' => $default_pid,
     '#weight'        => -18,
-  );
-
-  $form['type'] = array(
-    '#type'          => 'select',
-    '#title'         => t('Type'),
-    '#options'       => droptickets_type_options(),
-    '#default_value' => $is_edit ? $ticket->type : 'task',
-    '#required'      => TRUE,
-    '#weight'        => -17,
+    '#attributes'    => array('class' => array('droptickets-project-select')),
   );
 
   $form['priority'] = array(
@@ -368,6 +337,11 @@ function droptickets_ticket_form($form, &$form_state, $ticket = NULL) {
  * Validation handler for droptickets_ticket_form().
  */
 function droptickets_ticket_form_validate($form, &$form_state) {
+  // Project is required for all ticket types except discussion.
+  if ($form_state['values']['type'] !== 'discussion' && empty($form_state['values']['pid'])) {
+    form_set_error('pid', t('Project is required.'));
+  }
+
   $due = trim($form_state['values']['due_date']);
   if ($due && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $due)) {
     form_set_error('due_date', t('Due date must be in YYYY-MM-DD format.'));
@@ -400,13 +374,6 @@ function droptickets_ticket_form_validate($form, &$form_state) {
 }
 
 /**
- * AJAX callback: returns the project select element after a client is chosen.
- */
-function droptickets_project_ajax($form, &$form_state) {
-  return $form['pid'];
-}
-
-/**
  * Submit handler for droptickets_ticket_form().
  */
 function droptickets_ticket_form_submit($form, &$form_state) {
@@ -420,7 +387,13 @@ function droptickets_ticket_form_submit($form, &$form_state) {
     $ticket = new DropTicket();
   }
 
-  $ticket->pid         = (int) $values['pid'];
+  $ticket->pid = (int) $values['pid'];
+
+  // Remember last-used project per user (across devices).
+  if ($ticket->pid && $ticket->type !== 'discussion') {
+    global $user;
+    state_set('droptickets_last_pid_' . $user->uid, $ticket->pid);
+  }
   $ticket->title       = trim($values['title']);
   $ticket->body        = $values['body']['value'];
   $ticket->body_format = $values['body']['format'];

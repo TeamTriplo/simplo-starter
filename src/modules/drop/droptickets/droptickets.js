@@ -2,6 +2,27 @@
  * @file
  * DropTickets — datepicker, body toggle, emoji reactions, inline status, activity log.
  */
+
+(function ($) {
+  Backdrop.behaviors.dropticketsTypeProjectToggle = {
+    attach: function (context, settings) {
+      var $type = $('.droptickets-type-select', context).once('type-project-toggle');
+      if (!$type.length) { return; }
+      var $projectItem = $type.closest('.droptickets-form-sidebar').find('.form-item-pid');
+
+      function toggleProject() {
+        if ($type.val() === 'discussion') {
+          $projectItem.hide();
+        } else {
+          $projectItem.show();
+        }
+      }
+
+      toggleProject();
+      $type.on('change', toggleProject);
+    }
+  };
+}(jQuery));
 (function ($) {
   Backdrop.behaviors.dropticketsDatpicker = {
     attach: function (context, settings) {

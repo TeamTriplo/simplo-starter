@@ -374,7 +374,7 @@ function droptickets_list_page() {
   $accounts      = $assignee_uids ? user_load_multiple($assignee_uids) : array();
 
   $type_options     = droptickets_type_options();
-  $status_options   = droptickets_status_options();
+  $status_options   = droptickets_all_status_options();
   $priority_labels  = drop_base_priority_labels();
 
   // Load current flags for quick lookup.
@@ -516,7 +516,7 @@ function droptickets_member_page($account) {
     '#weight' => -10,
   );
 
-  $status_options   = droptickets_status_options();
+  $status_options   = droptickets_all_status_options();
   $priority_labels  = drop_base_priority_labels();
 
   // Fetch assigned tickets (active statuses only).
@@ -1064,7 +1064,7 @@ function droptickets_ticket_view(DropTicket $ticket) {
       ->execute();
   }
 
-  $status_options  = droptickets_status_options();
+  $status_options  = droptickets_all_status_options();
   $type_options    = droptickets_type_options();
   $priority_labels = drop_base_priority_labels();
 
@@ -1927,7 +1927,7 @@ function droptickets_notifications_page() {
   $actor_uids = array_unique(array_column((array) $notifications, 'actor_uid'));
   $actors = $actor_uids ? user_load_multiple($actor_uids) : array();
 
-  $status_options = droptickets_status_options();
+  $status_options = droptickets_all_status_options();
   $rows = array();
   $unread_nids = array();
 
@@ -2307,7 +2307,7 @@ function droptickets_recent_page() {
   $commenter_accounts = $commenter_uids ? user_load_multiple($commenter_uids) : array();
   $accounts = $accounts + $commenter_accounts;
 
-  $status_options   = droptickets_status_options();
+  $status_options   = droptickets_all_status_options();
   $priority_labels  = drop_base_priority_labels();
   $flagged_tids     = db_select('drop_ticket_flag', 'f')->fields('f', array('tid'))->execute()->fetchCol();
   $flagged_tids     = array_flip($flagged_tids);
@@ -2430,7 +2430,7 @@ function droptickets_flagged_page() {
   $accounts      = $all_uids ? user_load_multiple($all_uids) : array();
 
   $type_options   = droptickets_type_options();
-  $status_options = droptickets_status_options();
+  $status_options = droptickets_all_status_options();
   $can_flag       = user_access('flag droptickets');
 
   $rows = array();
@@ -2694,7 +2694,7 @@ function droptickets_stale_report_page() {
   $accounts      = $assignee_uids ? user_load_multiple($assignee_uids) : array();
 
   $type_options   = droptickets_type_options();
-  $status_options = droptickets_status_options();
+  $status_options = droptickets_all_status_options();
   $now            = REQUEST_TIME;
 
   $rows = array();
@@ -2933,7 +2933,7 @@ function droptickets_review_page() {
   $auids = array_filter(array_unique(array_column($tickets_raw, 'assignee_uid')));
   $projects = $pids  ? entity_load('drop_project', $pids)  : array();
   $accounts = $auids ? user_load_multiple($auids) : array();
-  $status_options = droptickets_status_options();
+  $status_options = droptickets_all_status_options();
 
   // Index tickets by tid for easy lookup.
   $tickets_by_tid = array();
