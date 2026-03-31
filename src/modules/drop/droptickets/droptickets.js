@@ -269,3 +269,125 @@
     }
   };
 }(jQuery));
+
+(function ($) {
+  /**
+   * Image lightbox for ticket body and comment images.
+   *
+   * Clicking any image inside .droptickets-body-inner or
+   * .droptickets-comment-body opens it in a fullscreen overlay.
+   * Zoom in/out via +/- buttons, mouse wheel, or +/- keyboard keys.
+   * Close by clicking the overlay background, the × button, or pressing Escape.
+   */
+  Backdrop.behaviors.dropticketImageLightbox = {
+    attach: function (context, settings) {
+      // Build the lightbox DOM once, on first attach.
+      if (!$('#droptickets-lightbox').length) {
+        var $lb = $(
+          '<div id="droptickets-lightbox" class="droptickets-lightbox" role="dialog" aria-modal="true">' +
+            '<div class="droptickets-lightbox-toolbar">' +
+              '<button class="droptickets-lightbox-zoom-out" aria-label="' + Backdrop.t('Zoom out') + '">&#8722;</button>' +
+              '<span class="droptickets-lightbox-zoom-level">100%</span>' +
+              '<button class="droptickets-lightbox-zoom-in"  aria-label="' + Backdrop.t('Zoom in') + '">&#43;</button>' +
+              '<button class="droptickets-lightbox-zoom-reset" aria-label="' + Backdrop.t('Reset zoom') + '">' + Backdrop.t('Reset') + '</button>' +
+              '<button class="droptickets-lightbox-close" aria-label="' + Backdrop.t('Close') + '">&times;</button>' +
+            '</div>' +
+            '<div class="droptickets-lightbox-stage">' +
+              '<img src="" alt="" />' +
+            '</div>' +
+          '</div>'
+        );
+        $('body').append($lb);
+
+        var scale     = 1;
+        var STEP      = 0.25;
+        var MIN_SCALE = 0.25;
+        var MAX_SCALE = 4;
+
+        function applyZoom() {
+          $lb.find('.droptickets-lightbox-stage img').css('transform', 'scale(' + scale + ')');
+          $lb.find('.droptickets-lightbox-zoom-level').text(Math.round(scale * 100) + '%');
+        }
+
+        function zoomIn() {
+          scale = Math.min(MAX_SCALE, +(scale + STEP).toFixed(2));
+          applyZoom();
+        }
+
+        function zoomOut() {
+          scale = Math.max(MIN_SCALE, +(scale - STEP).toFixed(2));
+          applyZoom();
+        }
+
+        function resetZoom() {
+          scale = 1;
+          applyZoom();
+        }
+
+        function openLightbox(src, alt) {
+          resetZoom();
+          $lb.find('.droptickets-lightbox-stage img').attr({ src: src, alt: alt });
+          $lb.addClass('is-open');
+        }
+
+        function closeLightbox() {
+          $lb.removeClass('is-open');
+        }
+
+        // Zoom buttons.
+        $lb.find('.droptickets-lightbox-zoom-in').on('click', function (e) {
+          e.stopPropagation();
+          zoomIn();
+        });
+        $lb.find('.droptickets-lightbox-zoom-out').on('click', function (e) {
+          e.stopPropagation();
+          zoomOut();
+        });
+        $lb.find('.droptickets-lightbox-zoom-reset').on('click', function (e) {
+          e.stopPropagation();
+          resetZoom();
+        });
+
+        // Close button.
+        $lb.find('.droptickets-lightbox-close').on('click', function (e) {
+          e.stopPropagation();
+          closeLightbox();
+        });
+
+        // Close on overlay background click (not toolbar, not image).
+        $lb.on('click', function (e) {
+          if ($(e.target).is('#droptickets-lightbox, .droptickets-lightbox-stage')) {
+            closeLightbox();
+          }
+        });
+
+        // Mouse wheel zoom.
+        $lb[0].addEventListener('wheel', function (e) {
+          if (!$lb.hasClass('is-open')) { return; }
+          e.preventDefault();
+          if (e.deltaY < 0) { zoomIn(); } else { zoomOut(); }
+        }, { passive: false });
+
+        // Keyboard shortcuts.
+        $(document).on('keydown.dropticket-lightbox', function (e) {
+          if (!$lb.hasClass('is-open')) { return; }
+          if (e.key === 'Escape')               { closeLightbox(); }
+          else if (e.key === '+' || e.key === '=') { zoomIn(); }
+          else if (e.key === '-')               { zoomOut(); }
+          else if (e.key === '0')               { resetZoom(); }
+        });
+
+        // Expose openLightbox so the click handler below can use it.
+        $lb.data('open', openLightbox);
+      }
+
+      // Attach click handler to images in body and comment areas.
+      $('.droptickets-body-inner img, .droptickets-comment-body img', context)
+        .once('dropticket-lightbox')
+        .on('click', function () {
+          var $img = $(this);
+          $('#droptickets-lightbox').data('open')($img.attr('src'), $img.attr('alt') || '');
+        });
+    }
+  };
+}(jQuery));
