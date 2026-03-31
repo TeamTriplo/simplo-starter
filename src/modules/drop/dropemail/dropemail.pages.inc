@@ -531,6 +531,25 @@ function dropemail_ticket_form_submit($form, &$form_state) {
     }
   }
 
+  // Create a ticket comment so the sent email appears in the conversation thread.
+  if ($sent_count > 0) {
+    $to_names = array();
+    foreach ($recipients as $r) {
+      $to_names[] = $r['name'] . ' <' . $r['email'] . '>';
+    }
+    $comment_body = '<p><strong>' . t('To:') . '</strong> ' . check_plain(implode(', ', $to_names)) . '<br>'
+      . '<strong>' . t('Subject:') . '</strong> ' . check_plain($subject) . '</p>'
+      . '<p>' . nl2br(check_plain($body)) . '</p>';
+
+    $comment = new DropTicketComment();
+    $comment->tid         = $ticket->tid;
+    $comment->uid         = $user->uid;
+    $comment->body        = $comment_body;
+    $comment->body_format = 'filtered_html';
+    $comment->source      = 'email_out';
+    $comment->save();
+  }
+
   if ($sent_count === count($recipients)) {
     backdrop_set_message(format_plural($sent_count,
       'Email sent to 1 recipient and logged.',

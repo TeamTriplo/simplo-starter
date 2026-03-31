@@ -1519,17 +1519,35 @@ function droptickets_ticket_view(DropTicket $ticket) {
     else {
       $comment = $item['data'];
       $is_unread = $last_read > 0 && $item['created'] > $last_read;
-      $comment_classes = 'droptickets-comment' . ($is_unread ? ' droptickets-comment--unread' : '');
+      $source = isset($comment->source) ? $comment->source : 'comment';
+      $comment_classes = 'droptickets-comment';
+      if ($is_unread) {
+        $comment_classes .= ' droptickets-comment--unread';
+      }
+      if ($source === 'email_out') {
+        $comment_classes .= ' droptickets-comment--email-out';
+      }
+      elseif ($source === 'email_in') {
+        $comment_classes .= ' droptickets-comment--email-in';
+      }
       $avatar_letter = backdrop_strtoupper(backdrop_substr($author, 0, 1));
       $avatar_color  = (int) $comment->uid % 6;
       $main .= '<div class="' . $comment_classes . '">';
       $main .= '<div class="droptickets-comment-avatar droptickets-comment-avatar--' . $avatar_color . '">' . $avatar_letter . '</div>';
       $main .= '<div class="droptickets-comment-content">';
       $new_badge = $is_unread ? '<span class="droptickets-comment-new">' . t('New') . '</span>' : '';
+      $email_badge = '';
+      if ($source === 'email_out') {
+        $email_badge = '<span class="droptickets-comment-email-badge droptickets-comment-email-badge--out">' . t('Email sent') . '</span>';
+      }
+      elseif ($source === 'email_in') {
+        $email_badge = '<span class="droptickets-comment-email-badge droptickets-comment-email-badge--in">' . t('Email received') . '</span>';
+      }
       $main .= '<div class="droptickets-comment-meta">'
         . '<strong class="droptickets-comment-author">' . $author . '</strong>'
         . '<span class="droptickets-comment-date">' . $date . '</span>'
-        . $new_badge;
+        . $new_badge
+        . $email_badge;
       if (droptickets_comment_access('update', (object) $comment)) {
         $main .= '<span class="droptickets-comment-actions">'
           . l(t('Edit'), 'drop/tickets/' . $ticket->tid . '/comment/' . $comment->tcid . '/edit')

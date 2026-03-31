@@ -542,6 +542,31 @@
   border-left: 3px solid var(--drop-primary, #1565c0);
   background: #f0f7ff;
 }
+.droptickets-comment--email-out {
+  border-left: 3px solid #0891b2;
+  background: #f0fdfa;
+}
+.droptickets-comment--email-in {
+  border-left: 3px solid #7c3aed;
+  background: #faf5ff;
+}
+.droptickets-comment-email-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+.droptickets-comment-email-badge--out {
+  background: #ccfbf1;
+  color: #0e7490;
+}
+.droptickets-comment-email-badge--in {
+  background: #ede9fe;
+  color: #6d28d9;
+}
 
 /* Avatar circle */
 .droptickets-comment-avatar {

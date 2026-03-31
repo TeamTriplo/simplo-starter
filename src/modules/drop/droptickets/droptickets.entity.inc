@@ -138,6 +138,7 @@ class DropTicketComment extends Entity {
   public $uid         = 0;
   public $created     = 0;
   public $changed     = 0;
+  public $source      = 'comment';
 
   /** {@inheritdoc} */
   public function id() {

@@ -436,6 +436,7 @@ function _dropbridge_create_comment_from_email($ticket, $email) {
     'body'        => $full_body,
     'body_format' => 'plain_text',
     'uid'         => 0,
+    'source'      => 'email_in',
   ));
   $comment->save();
 }

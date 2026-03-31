@@ -192,6 +192,13 @@ function droptickets_schema() {
       'uid'     => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
       'created' => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
       'changed'  => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
+      'source' => array(
+        'type'        => 'varchar',
+        'length'      => 16,
+        'not null'    => TRUE,
+        'default'     => 'comment',
+        'description' => 'Origin: comment, email_out, email_in.',
+      ),
     ),
     'primary key' => array('tcid'),
     'indexes' => array(
@@ -1041,6 +1048,21 @@ function droptickets_update_1024() {
     ));
     // All existing tickets are considered verified.
     db_update('drop_ticket')->fields(array('is_verified' => 1))->execute();
+  }
+}
+
+/**
+ * Add source column to drop_ticket_comment for email thread integration.
+ */
+function droptickets_update_1025() {
+  if (!db_field_exists('drop_ticket_comment', 'source')) {
+    db_add_field('drop_ticket_comment', 'source', array(
+      'type'        => 'varchar',
+      'length'      => 16,
+      'not null'    => TRUE,
+      'default'     => 'comment',
+      'description' => 'Origin: comment, email_out, email_in.',
+    ));
   }
 }
 
