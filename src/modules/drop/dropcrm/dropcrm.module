@@ -182,7 +182,7 @@ function dropcrm_entity_info() {
         'label' => t('Project'),
         'admin' => array(
           'path'             => 'drop/crm/projects/manage',
-          'access arguments' => array('administer dropcrm'),
+          'access arguments' => array('administer crm'),
         ),
       ),
     ),
@@ -1130,6 +1130,15 @@ function dropcrm_menu() {
     'file'             => 'dropcrm.admin.inc',
     'type'             => MENU_CALLBACK,
   );
+  // Field UI parent path for drop_project bundle admin.
+  $items['drop/crm/projects/manage'] = array(
+    'title'            => 'Manage project fields',
+    'page callback'    => 'backdrop_goto',
+    'page arguments'   => array('drop/crm/projects/manage/fields'),
+    'access arguments' => array('administer crm'),
+    'type'             => MENU_CALLBACK,
+  );
+
   $items['drop/crm/projects/add'] = array(
     'title'            => 'Add project',
     'page callback'    => 'backdrop_get_form',
