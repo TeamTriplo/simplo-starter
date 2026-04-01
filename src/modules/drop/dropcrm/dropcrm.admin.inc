@@ -784,6 +784,17 @@ function crm_contact_form($form, &$form_state, $entity, $op = 'edit') {
   // Attach field API fields for this bundle.
   field_attach_form('crm_contact', $entity, $form, $form_state, LANGUAGE_NONE);
 
+  // Duplicate person confirmation checkbox — shown after validation detects a match.
+  if ($bundle === 'crm_person') {
+    $show = !empty($form_state['duplicate_person_detected']);
+    $form['confirm_duplicate_person'] = array(
+      '#type'   => 'checkbox',
+      '#title'  => t('I confirm this is a different person with the same name'),
+      '#weight' => 49,
+      '#access' => $show,
+    );
+  }
+
   // Submit button.
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
@@ -792,6 +803,70 @@ function crm_contact_form($form, &$form_state, $entity, $op = 'edit') {
   );
 
   return $form;
+}
+
+/**
+ * Form validation callback for crm_contact_form.
+ *
+ * Organizations: blocks exact duplicate names.
+ * People: warns if a person with the same first + last name already exists.
+ */
+function crm_contact_form_validate($form, &$form_state) {
+  $entity = $form_state['crm_contact'];
+  $bundle = $entity->bundle();
+  $is_new = empty($entity->cid);
+  $lang   = LANGUAGE_NONE;
+
+  if ($bundle === 'crm_organization' || $bundle === 'crm_household') {
+    $name = trim($form_state['values']['name']);
+    if ($name !== '') {
+      $query = db_select('crm_contact', 'c')
+        ->fields('c', array('cid', 'name'))
+        ->condition('c.type', $bundle)
+        ->condition('c.name', $name);
+      if (!$is_new) {
+        $query->condition('c.cid', $entity->cid, '!=');
+      }
+      $existing = $query->execute()->fetchObject();
+      if ($existing) {
+        $link = l($existing->name, 'drop/crm/contact/' . $existing->cid);
+        form_set_error('name', t('An organization named "!name" already exists: !link', array(
+          '!name' => check_plain($name),
+          '!link' => $link,
+        )));
+      }
+    }
+  }
+  elseif ($bundle === 'crm_person') {
+    $first = '';
+    $last  = '';
+    if (!empty($form_state['values']['field_crm_first_name'][$lang][0]['value'])) {
+      $first = trim($form_state['values']['field_crm_first_name'][$lang][0]['value']);
+    }
+    if (!empty($form_state['values']['field_crm_last_name'][$lang][0]['value'])) {
+      $last = trim($form_state['values']['field_crm_last_name'][$lang][0]['value']);
+    }
+    $full_name = trim($first . ' ' . $last);
+    if ($full_name !== '' && empty($form_state['values']['confirm_duplicate_person'])) {
+      $query = db_select('crm_contact', 'c')
+        ->fields('c', array('cid', 'name'))
+        ->condition('c.type', 'crm_person')
+        ->condition('c.name', $full_name);
+      if (!$is_new) {
+        $query->condition('c.cid', $entity->cid, '!=');
+      }
+      $existing = $query->execute()->fetchObject();
+      if ($existing) {
+        $link = l($existing->name, 'drop/crm/contact/' . $existing->cid);
+        form_set_error('confirm_duplicate_person', t('A person named "!name" already exists: !link. Check the box below to save anyway if this is a different person.', array(
+          '!name' => check_plain($full_name),
+          '!link' => $link,
+        )));
+        $form_state['duplicate_person_detected'] = TRUE;
+        $form_state['rebuild'] = TRUE;
+      }
+    }
+  }
 }
 
 /**
@@ -2406,6 +2481,34 @@ function dropcrm_project_form($form, &$form_state, $project = NULL) {
   );
 
   return $form;
+}
+
+/**
+ * Validation handler for dropcrm_project_form().
+ *
+ * Blocks duplicate project names.
+ */
+function dropcrm_project_form_validate($form, &$form_state) {
+  $name = trim($form_state['values']['name']);
+  if ($name === '') {
+    return;
+  }
+  $pid = !empty($form_state['values']['pid']) ? (int) $form_state['values']['pid'] : 0;
+
+  $query = db_select('drop_project', 'p')
+    ->fields('p', array('pid', 'name'))
+    ->condition('p.name', $name);
+  if ($pid) {
+    $query->condition('p.pid', $pid, '!=');
+  }
+  $existing = $query->execute()->fetchObject();
+  if ($existing) {
+    $link = l($existing->name, 'drop/crm/projects/' . $existing->pid);
+    form_set_error('name', t('A project named "!name" already exists: !link', array(
+      '!name' => check_plain($name),
+      '!link' => $link,
+    )));
+  }
 }
 
 /**

@@ -1086,7 +1086,11 @@ function droptickets_ticket_view(DropTicket $ticket) {
     $chips = array();
     foreach ($tids as $tid) {
       if (!empty($terms[$tid])) {
-        $chips[] = '<span class="droptickets-tag">' . check_plain($terms[$tid]->name) . '</span>';
+        $chips[] = l(check_plain($terms[$tid]->name), 'drop/tickets', array(
+          'query' => array('tag' => $tid),
+          'attributes' => array('class' => array('droptickets-tag')),
+          'html' => TRUE,
+        ));
       }
     }
     if ($chips) {

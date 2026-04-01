@@ -177,6 +177,15 @@ function dropcrm_entity_info() {
     'uri callback'    => 'entity_class_uri',
     'access callback' => 'dropcrm_project_access',
     'module'          => 'dropcrm',
+    'bundles'         => array(
+      'drop_project' => array(
+        'label' => t('Project'),
+        'admin' => array(
+          'path'             => 'drop/crm/projects/manage',
+          'access arguments' => array('administer dropcrm'),
+        ),
+      ),
+    ),
   );
 
   return $info;
